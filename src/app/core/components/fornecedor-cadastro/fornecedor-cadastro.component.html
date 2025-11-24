@@ -1,0 +1,393 @@
+<p-table *ngIf="listaFornecedores && listaFornecedores.length > 0" 
+  [value]="listaFornecedores" 
+  selectionMode="single" 
+  [(selection)]="fornecedorSelecionado"
+  [paginator]="true" 
+  [rows]="5" 
+  [rowsPerPageOptions]="[5, 10, 20]" 
+  responsiveLayout="scroll">
+  <ng-template pTemplate="header">
+      <tr>
+          <th>Nome Fantasia</th>
+          <th>Tipo</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Ações</th>
+      </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-fornecedor>
+      <tr (click)="selecionarFornecedor(fornecedor)">
+          <td>{{ fornecedor.nomeFantasia }}</td>
+          <td>{{ fornecedor.tipoDePessoa }}</td>
+          <td>{{ fornecedor.telefone }}</td>
+          <td>{{ fornecedor.email }}</td>
+          <td>
+              <button pButton type="button" icon="pi pi-check" (click)="selecionarFornecedor(fornecedor)"></button>
+          </td>
+      </tr>
+  </ng-template>
+</p-table>
+
+<div *ngIf="!exibirTabelaPesquisa">
+<p-tabView>
+    <!-- Aba Dados Básicos -->
+    <p-tabPanel header="Dados Básicos">
+      
+    
+      <form [formGroup]="fornecedorForm">
+        <div class="form-section">
+          
+        
+          <div class="linha">
+           
+            <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+              <label for="tipoDePessoa">Tipo de Pessoa</label>
+              <p-dropdown 
+                  id="tipoDePessoa" 
+                  formControlName="tipoDePessoa" 
+                  [options]="opcoesTipoDePessoa" 
+                  placeholder="Selecione o tipo">
+              </p-dropdown>
+          </div>
+          
+                   
+  
+          </div>
+  
+          <div class="separador"></div>
+  
+          <div>
+            <div class="linha">
+              
+              <!-- Nome Fantasia -->
+
+          
+              <!-- Nome / Nome Fantasia -->
+              <div class="field third-width" [ngClass]="{
+                'erro-campo': !isModoConsulta && fornecedorForm.get('nomeFantasia')?.invalid && fornecedorForm.get('nomeFantasia')?.touched,
+                'modo-consulta': isModoConsulta,
+                'borda-consulta': isModoConsulta 
+            }">
+                <label for="nomeFantasia">{{ isPessoaJuridica() ? 'Nome Fantasia' : 'Nome' }}</label>
+                <input id="nomeFantasia" type="text" pInputText formControlName="nomeFantasia" />
+            
+                <!-- 🔥 Exibe erro se o validador falhar -->
+                <small *ngIf="!isModoConsulta && fornecedorForm.get('nomeFantasia')?.hasError('nomeObrigatorio') && fornecedorForm.get('nomeFantasia')?.touched">
+                    ⚠️ Nome é obrigatório para Pessoas Físicas!
+                </small>
+            </div>
+            
+          
+
+
+
+
+              <div class="field third-width" *ngIf="!isPessoaJuridica()" [ngClass]="{'modo-consulta borda-consulta': isModoConsulta}" >
+                <label for="dataNascimento">Data Nascimento</label>
+                <input id="dataNascimento" type="text" pInputText formControlName="dataNascimento"  />
+              </div>
+              <div class="field third-width" *ngIf="!isPessoaJuridica()" [ngClass]="{'modo-consulta borda-consulta': isModoConsulta}">
+                <label for="rg">RG</label>
+                <input id="documentoRgIe" type="text" pInputText formControlName="documentoRgIe"  />
+              </div>
+            
+             
+              <!-- 🔹 SOMENTE EXIBE SE FOR PESSOA JURÍDICA -->
+              <div class="field third-width" *ngIf="isPessoaJuridica()" [ngClass]="{'erro-campo': fornecedorForm.get('documento')?.invalid && fornecedorForm.get('documento')?.touched,
+                'modo-consulta': isModoConsulta,
+                'borda-consulta': isModoConsulta 
+              }">
+                <label for="razaoSocial">Razão Social</label>
+                <input id="razaoSocial" type="text" pInputText formControlName="razaoSocial" />
+  
+                <!-- 🔥 Exibe erro caso seja obrigatório -->
+             
+                <small *ngIf="fornecedorForm.get('razaoSocial')?.invalid && fornecedorForm.get('razaoSocial')?.touched">
+                  ⚠️ {{ isPessoaJuridica() ? 'Razão Social ' : '' }} é obrigatória!
+                </small>
+              </div>
+            
+  
+              <div class="field third-width" [ngClass]="{
+                'erro-campo': !isModoConsulta && fornecedorForm.get('documentoCpfCnpj')?.invalid && fornecedorForm.get('documentoCpfCnpj')?.touched,
+                'modo-consulta': isModoConsulta,
+                'borda-consulta': isModoConsulta 
+          }">
+              <label for="documentoCpfCnpj">{{ isPessoaJuridica() ? 'CNPJ' : 'CPF' }}</label>
+              <input id="documentoCpfCnpj" type="text" pInputText formControlName="documentoCpfCnpj"
+                  [mask]="isPessoaJuridica() ? '00.000.000/0000-00' : '000.000.000-00'" />
+          
+              <!-- 🔥 Exibe erro se o validador falhar, mas apenas no modo cadastro -->
+              <small *ngIf="!isModoConsulta && fornecedorForm.get('documentoCpfCnpj')?.invalid && fornecedorForm.get('documentoCpfCnpj')?.touched">
+                  ⚠️ {{ isPessoaJuridica() ? 'CNPJ' : 'CPF' }} inválido!
+              </small>
+          </div>
+          
+
+              <div class="field third-width " *ngIf="isPessoaJuridica()" [ngClass]="{'modo-consulta borda-consulta': isModoConsulta}">
+                <label for="documentoRgIe">Inscrição Estadual</label>
+                <input id="documentoRgIe" type="text" pInputText formControlName="documentoRgIe"  />
+              </div>
+  
+            </div>
+  
+            <div class="linha">
+             
+              <div class="field third-width " [ngClass]="{'modo-consulta borda-consulta': isModoConsulta}">
+                <label for="emai">Email</label>
+                <input id="email" type="text" pInputText formControlName="email"  />
+              </div>
+              
+                <div class="field third-width" [ngClass]="{'modo-consulta borda-consulta': isModoConsulta}">
+                  <label for="whatsApp">WhatsApp </label>
+                  <input id="whatsApp" type="text" pInputText formControlName="whatsApp"  />
+                </div>
+                <div class="field third-width" [ngClass]="{'modo-consulta borda-consulta': isModoConsulta}">
+                  <label for="telefone">Telefone</label>
+                  <input id="telefone" type="text" pInputText formControlName="telefone"  />
+                </div>
+                <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label for="site">Site</label>
+                  <input id="site" type="text" pInputText formControlName="site"  />
+                </div>
+    
+               
+              </div>
+  
+              <div class="separador"></div>
+             
+              <!-- <div>
+                <p-panel header="Contatos" class="contato-panel">
+                  <p-table class="p-table" [value]="contatosFormArray.controls" responsiveLayout="scroll"  >
+                    <ng-template pTemplate="header">
+                      <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>WhatsApp</th>
+                        <th>Ações</th>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-contato let-i="rowIndex" >
+                      <tr [formGroup]="contato">
+                        <td [ngClass]="{'modo-consulta': isModoConsulta}" >
+                          <input type="text" pInputText formControlName="nome" />
+                        </td>
+                        <td [ngClass]="{'modo-consulta': isModoConsulta}">
+                          <input type="email" pInputText formControlName="email" />
+                        </td>
+                        <td [ngClass]="{'modo-consulta': isModoConsulta}">
+                          <input type="text" pInputText formControlName="telefone" />
+                        </td>
+                        <td [ngClass]="{'modo-consulta': isModoConsulta}">
+                          <input type="text" pInputText formControlName="whatsApp" />
+                        </td>
+                        <td>
+                          <button pButton type="button" icon="pi pi-trash" class="p-button-danger"
+                            (click)="removerContato(i)" [disabled]="contatosFormArray.length === 1">
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                
+                  <button 
+                    pButton 
+                    label="Adicionar Contato" 
+                    icon="pi pi-plus" 
+                    class="p-button-success"
+                    (click)="adicionarContato()" 
+                    [disabled]="isModoConsulta">
+                  </button>
+
+                </p-panel>
+              </div>  -->
+              <div>
+                <p-panel header="Contatos" class="contato-panel">
+              
+                  <!-- 🔥 Adicione o formArrayName aqui -->
+                  <div formArrayName="contatos">
+                    <p-table class="p-table" [value]="contatosFormArray.controls" responsiveLayout="scroll">
+                      <ng-template pTemplate="header">
+                        <tr>
+                          <th>Nome</th>
+                          <th>Email</th>
+                          <th>Telefone</th>
+                          <th>WhatsApp</th>
+                          <th>Ações</th>
+                        </tr>
+                      </ng-template>
+              
+                      <ng-template pTemplate="body" let-contato let-i="rowIndex">
+                        <!-- 🔥 Aqui usa [formGroupName] -->
+                        <tr [formGroupName]="i">
+                          <td [ngClass]="{'modo-consulta': isModoConsulta}">
+                            <input type="text" pInputText formControlName="nome" />
+                          </td>
+                          <td [ngClass]="{'modo-consulta': isModoConsulta}">
+                            <input type="email" pInputText formControlName="email" />
+                          </td>
+                          <td [ngClass]="{'modo-consulta': isModoConsulta}">
+                            <input type="text" pInputText formControlName="telefone" />
+                          </td>
+                          <td [ngClass]="{'modo-consulta': isModoConsulta}">
+                            <input type="text" pInputText formControlName="whatsApp" />
+                          </td>
+                          <td>
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-danger"
+                              (click)="removerContato(i)" [disabled]="contatosFormArray.length === 1">
+                            </button>
+                          </td>
+                        </tr>
+                      </ng-template>
+                    </p-table>
+                  </div>
+              
+                  <button 
+                    pButton 
+                    label="Adicionar Contato" 
+                    icon="pi pi-plus" 
+                    class="p-button-success"
+                    (click)="adicionarContato()" 
+                    [disabled]="isModoConsulta">
+                  </button>
+              
+                </p-panel>
+              </div>
+              
+           
+          </div>
+        
+        </div>
+        
+    
+        
+        
+      </form>
+    </p-tabPanel>
+  
+    <!-- Aba Endereço -->
+    <p-tabPanel header="Endereço">
+      <form [formGroup]="fornecedorForm">
+        <div>
+          <div formGroupName="endereco">
+            <div class="linha">
+              <div class="field half-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="logradouro">Logradouro</label>
+                <input id="logradouro" type="text" pInputText formControlName="logradouro"  />
+              </div>
+  
+              <div class="field small-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="numero">Número</label>
+                <input id="numero" type="text" pInputText formControlName="numero"  />
+              </div>
+            </div>
+  
+          <div class="linha">
+            <div class="field half-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+              <label for="complemento">Complemento</label>
+              <input id="complemento" type="text" pInputText formControlName="complemento"  />
+            </div>
+
+            <div class="field small-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+              <label for="bairro">Bairro</label>
+              <input id="bairro" type="text" pInputText formControlName="bairro"  />
+            </div>
+          </div>
+            <div class="uf-municipio-cep">
+  
+              <div formGroupName="municipio">
+
+                <div class="espacamento-entre-campos">
+                  
+                  <!-- UF -->
+                  <div class="field small-width" [ngClass]="{'modo-consulta': isModoConsulta
+                    
+                  }">
+
+                    <label for="uf">Estado (UF)</label>
+                    <select id="uf" formControlName="uf" (change)="onUfChange($event)"
+                    [ngClass]="{'modo-consulta-select ': isModoConsulta,'borda-consulta': isModoConsulta }">
+                      <option value="" disabled selected hidden>Selecione o Estado</option>
+                      <option *ngFor="let estado of listaDeUfs" [value]="estado">{{ estado }}</option>
+                    </select>
+                  </div>
+              
+                  <!-- Município -->
+                  <div class="field municipio"
+                  [ngClass]="{
+                    'modo-consulta': isModoConsulta,
+                    'erro-campo': fornecedorForm.get('endereco.municipio.municipioIbge')?.invalid &&
+                                  fornecedorForm.get('endereco.municipio.municipioIbge')?.touched
+                  }">
+               <label for="municipioIbge">Município</label>
+             
+               <select id="municipioIbge"
+                       formControlName="municipioIbge"
+                       [ngClass]="{
+                         'modo-consulta-select': isModoConsulta
+                       }">
+                 <option value="" disabled selected hidden>Selecione um município</option>
+                 <option *ngFor="let municipio of listaMunicipios" [value]="municipio.nome">
+                   {{ municipio.nome }}
+                 </option>
+               </select>
+             
+               <small *ngIf="!isModoConsulta && fornecedorForm.get('endereco.municipio.municipioIbge')?.invalid &&
+                                        fornecedorForm.get('endereco.municipio.municipioIbge')?.touched">
+                 ⚠️ Município é obrigatório!
+               </small>
+             </div>
+             
+               
+              
+                </div>
+              
+              </div>
+              
+              
+                
+                  
+  
+              <div class="field cep" [ngClass]="{'modo-consulta': isModoConsulta}" >
+                <label for="cep">CEP</label>
+                <input id="cep" type="text" pInputText formControlName="cep"
+                  [value]="fornecedorForm.get('endereco.cep')?.value || ''" />
+              </div>
+           
+            </div>
+         
+          </div>
+       
+        </div>
+        <div class="separador"></div>
+        <div  class="field" [ngClass]="{'modo-consulta': isModoConsulta}">
+          <label for="observacao">Observação</label>
+          <textarea id="observacao" pInputTextarea formControlName="observacao"></textarea>
+        </div>
+      </form>
+    </p-tabPanel>
+  
+    <p-tabPanel header="Parâmetros">
+      <form [formGroup]="fornecedorForm">
+  
+     
+  
+        <div [ngClass]="{'modo-consulta': isModoConsulta}" >
+            <label for="ativo">Status</label>
+          
+            <p-dropdown id="ativo" formControlName="ativo" [options]="ativo"
+             >
+            </p-dropdown>
+          </div>
+  
+  
+      
+  
+      </form>
+    </p-tabPanel>
+  
+  
+  </p-tabView>
+
+</div>

@@ -1,0 +1,46 @@
+<section class="plan-subscription">
+  <div class="container">
+    <h2>Adesão ao Plano Básico</h2>
+    <p>Complete as informações abaixo para ativar seu plano.</p>
+
+    <form (ngSubmit)="submitSubscription()">
+      <div class="form-group">
+        <label for="name">Nome Completo / Razão Social</label>
+        <input type="text" id="name" class="form-control" [(ngModel)]="subscriptionData.name" required />
+      </div>
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" class="form-control" [(ngModel)]="subscriptionData.email" required />
+      </div>
+      <div class="form-group">
+        <label for="document">CPF / CNPJ</label>
+        <input type="text" id="document" class="form-control" [(ngModel)]="subscriptionData.document" required />
+      </div>
+      <div class="form-group">
+        <label for="address">Endereço</label>
+        <input type="text" id="address" class="form-control" [(ngModel)]="subscriptionData.address" required />
+      </div>
+
+      <div class="form-group">
+        <h3>Forma de Pagamento</h3>
+        <label>
+          <input type="radio" name="payment" [(ngModel)]="subscriptionData.paymentMethod" value="credit-card" required />
+          Cartão de Crédito
+        </label>
+        <label>
+          <input type="radio" name="payment" [(ngModel)]="subscriptionData.paymentMethod" value="boleto" required />
+          Boleto Bancário
+        </label>
+        <label>
+          <input type="radio" name="payment" [(ngModel)]="subscriptionData.paymentMethod" value="pix" required />
+          Pix
+        </label>
+      </div>
+
+      <button type="submit" class="cta-btn" routerLink="/configurador">Confirmar e Pagar</button>
+      <a routerLink="/pagamento">
+        <button>Finalizar Compra</button>
+      </a>
+    </form>
+  </div>
+</section>

@@ -1,0 +1,97 @@
+.edital-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.titulo {
+  margin: 0;
+}
+
+.card {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.formulario textarea,
+.formulario input[type="number"] {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-row {
+  margin-bottom: 0.75rem;
+}
+
+.form-row.linha {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.form-row .col {
+  flex: 1;
+}
+
+.check-col {
+  display: flex;
+  align-items: center;
+}
+
+.botoes {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+button.secundario {
+  background: #eee;
+}
+
+button.perigo {
+  background: #f56565;
+  color: #fff;
+}
+
+.erro {
+  color: #e53e3e;
+  font-size: 0.8rem;
+}
+
+.lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+}
+
+th, td {
+  border-bottom: 1px solid #eee;
+  padding: 0.4rem 0.3rem;
+  text-align: left;
+}
+
+td.acoes {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.nenhum {
+  margin-top: 0.5rem;
+  font-style: italic;
+}

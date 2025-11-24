@@ -1,0 +1,388 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+/* 🔹 Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.separador {
+  width: 100%;
+  height: 2px;
+  background: #ccc;
+}
+
+/* 🔹 Estilo geral do formulário */
+form {
+  max-width: 100% !important;
+  height: 100%;
+}
+
+/* 🔹 Layout Principal */
+.form-section,
+.configuracao-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.linha,
+.linha1,
+.contato,
+.container-endereco,
+.uf-municipio-cep {
+  display: flex;
+  gap: 10px;
+}
+
+.linha1 {
+  background: red;
+}
+
+.contato {
+  margin-top: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  flex: 1;
+}
+
+.select,
+.field select,
+.field input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.e-campo-de-consulta {
+  background: red;
+}
+
+.borda-consulta input {
+  border-left: 3px solid #007bff;
+  padding-left: 8px;
+}
+
+/* 🔹 Foco nos inputs */
+.field select:focus,
+.field input:focus,
+.field textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+  outline: none;
+}
+
+/* 🔹 Tamanhos Ajustados */
+.half-width {
+  flex: 1;
+}
+
+.quarter-width {
+  flex: 0.25;
+}
+
+.third-width {
+  flex: 0.33;
+}
+
+.small-width {
+  flex: 0.15;
+  min-width: 120px;
+}
+
+.large-width {
+  flex: 2;
+  min-width: 250px;
+}
+
+.cep input {
+  width: 15rem;
+}
+
+.municipio select {
+  width: 35.5dvw;
+}
+
+/* 🔹 Logotipo */
+.logo,
+.logo-container,
+.logotipo-container {
+  width: 100%;
+  display: block;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border-radius: 8px;
+  background: #d8e5f3db;
+  height: 25dvh;
+}
+
+.logo-container,
+.logotipo-container {
+  width: 6dvw;
+  height: 12dvh;
+}
+
+.imagem-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.logo-label,
+.caminho-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 300px;
+  max-height: 300px;
+  overflow: hidden;
+  border: 2px dashed #ccc;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+  transition: border 0.3s ease-in-out;
+}
+
+.logo-preview-container:hover {
+  border: 2px solid #007bff;
+}
+
+.logo-preview {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  width: 20dvw;
+  height: auto;
+}
+
+/* 🔹 Aba de Configuração */
+.configuracao-container {
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.configuracao-container .field {
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 12px 15px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.configuracao-container label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+  margin-right: 10px;
+}
+
+.configuracao-container select,
+.configuracao-container input,
+.configuracao-container p-dropdown {
+  flex: 2;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+/* 🔥 Validação e estados */
+.erro-campo input,
+.erro-campo select {
+  border: 2px solid red !important;
+  background-color: #ffe6e6;
+}
+
+.erro-campo small {
+  color: red;
+  font-weight: bold;
+}
+
+:host ::ng-deep .erro-campo .p-dropdown,
+:host ::ng-deep .erro-campo select {
+  background-color: #ffe6e6 !important;
+  border-left: 4px solid #dc3545 !important;
+  border-radius: 3px;
+}
+
+.modo-consulta input,
+.modo-consulta textarea {
+  background-color: #ffff99 !important;
+}
+
+:host ::ng-deep .modo-consulta .p-dropdown,
+.modo-consulta-select {
+  background-color: #ffff99 !important;
+  border-left: 3px solid #007bff !important;
+}
+
+/* 🔹 Estilização do PrimeNG Dropdown */
+:deep(p-dropdown) {
+  width: 100%;
+  max-width: 300px;
+  display: block;
+}
+
+:deep(p-dropdown .p-dropdown) {
+  border-radius: 8px;
+  border: 1px solid #afde16;
+  padding: 8px;
+  font-size: 16px;
+  background-color: rgb(218, 26, 26);
+  transition: all 0.3s ease-in-out;
+}
+
+:deep(p-dropdown .p-dropdown-item:hover) {
+  background-color: #1ee114;
+  color: white;
+}
+
+/* 🔹 Painel de Contatos */
+.contato-panel {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+/* 🔹 Tabela */
+.p-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.p-table th {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #ccc;
+  font-weight: bold;
+}
+
+.p-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.p-table td input {
+  width: calc(100% - 10px);
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* 🔹 Botões */
+.adicionar-contato {
+  width: auto;
+  padding: 8px 12px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto;
+  background-color: #4CAF50;
+  border-radius: 4px;
+}
+
+.botao-excluir {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.botao-excluir:hover {
+  background-color: #c0392b;
+}
+
+td:last-child {
+  text-align: center;
+}
+
+/* 🔹 Espaçamento */
+.espacamento-entre-campos {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-direction: row;
+}
+
+/* 🔹 Responsividade */
+@media (max-width: 768px) {
+  .linha,
+  .espacamento-entre-campos,
+  .configuracao-container {
+    flex-direction: column;
+  }
+
+  .field,
+  .configuracao-container .field {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .configuracao-container label {
+    margin-bottom: 5px;
+  }
+
+  .uf-municipio-cep {
+    display: block;
+  }
+
+  .p-table {
+    font-size: 14px;
+  }
+
+  .p-table td,
+  .p-table th {
+    padding: 6px;
+  }
+
+  .adicionar-contato {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .botao-excluir {
+    padding: 4px 6px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .linha,
+  .espacamento-entre-campos {
+    flex-direction: column;
+  }
+
+  .cep input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .uf-municipio-cep {
+    display: block;
+    flex-direction: column;
+  }
+}

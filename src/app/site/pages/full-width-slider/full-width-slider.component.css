@@ -1,0 +1,61 @@
+
+.full-width-image {
+   
+    background-size: cover; /* Faz a imagem preencher o container */
+    background-position: center 18% !important; /* Centraliza a imagem */
+    background-repeat: no-repeat; /* Evita repetição da imagem */
+    width: 100%; /* Ocupa toda a largura da tela */
+    height: 60dvh; /* Altura fixa de 300px */
+    display: flex; /* Alinha o texto sobreposto */
+    
+
+    position: relative; /* Necessário para a sobreposição */
+  }
+  .full-width-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+     object-position: center 40%; /* Move a imagem 20% para baixo */
+  
+}
+
+.full-width-image::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, rgb(13, 49, 118), transparent);
+    z-index: 2; /* Mantém o degradê sobre a imagem */
+    pointer-events: none; /* Impede que bloqueie cliques */
+}
+
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+}
+
+.slide.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+
+  @media (max-width: 768px) {
+.full-width-image {
+   
+    background-size: cover; /* Faz a imagem preencher o container */
+    background-position: center 18% !important; /* Centraliza a imagem */
+    background-repeat: no-repeat; /* Evita repetição da imagem */
+    width: 100%; /* Ocupa toda a largura da tela */
+    height: 30dvh; /* Altura fixa de 300px */
+    display: flex; /* Alinha o texto sobreposto */
+    position: relative; /* Necessário para a sobreposição */
+  }
+  }

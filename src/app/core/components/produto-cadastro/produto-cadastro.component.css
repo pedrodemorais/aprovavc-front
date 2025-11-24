@@ -1,0 +1,952 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+/* 🔹 Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+  .cabecalho{
+
+ padding: 10px 18px;         /* Espaçamento interno */
+  font-size: 12px;          /* Tamanho da fonte */
+  box-sizing: border-box;  
+}
+.separador {
+  width: 100%;
+  height: 2px;
+  background: #ccc;
+}
+
+::ng-deep .tela-transparente {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+
+
+/* 🔹 Estilo geral do formulário */
+form {
+  max-width: 100% !important;
+  
+}
+
+/* 🔹 Layout Principal */
+.form-section,
+.configuracao-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.linha,
+.linha1
+{
+  display: flex;
+  gap: 10px;
+  min-height: 65px;
+  
+  height: 0.1rem;
+ 
+  
+}
+.dropdown-insumo {
+  width: 250px !important; /* ou o tamanho que preferir */
+  min-width: 200px;
+  max-width: 100%;
+}
+
+.botao-grade{
+  
+    display: flex;
+    align-items: center;
+    gap: 10px;       
+}
+
+.linha1 {
+  background: red;
+}
+
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  flex: 1;
+}
+
+.field-tabela-composicao-insumos {
+ 
+  padding-bottom: 0px !important;
+ 
+}
+.field select,
+.field input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.select,
+.field-tabela-composicao-insumos select,
+.field-tabela-composicao-insumos input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.field-tabela-composicao-insumos select:focus,
+.field-tabela-composicao-insumos input:focus,
+.field-tabela-composicao-insumos textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+  outline: none;
+}
+
+.e-campo-de-consulta {
+  background: red;
+}
+
+.borda-consulta input {
+  border-left: 3px solid #007bff;
+  padding-left: 8px;
+}
+
+/* 🔹 Foco nos inputs */
+.field select:focus,
+.field input:focus,
+.field textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+  outline: none;
+}
+.text-lucro {
+  color: blue;
+}
+.text-prejuizo {
+  color: red;
+}
+:host ::ng-deep .p-table td,
+:host ::ng-deep .p-table th {
+  white-space: normal !important;
+  word-break: break-word;
+}
+
+.input-data-promocao {
+  width: 120px;
+  height: 32px;
+  padding: 4px 8px;
+  font-size: 1em;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.erro {
+  color: #e74c3c;
+  font-size: 0.95em;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  display: block;
+  line-height: 1.3;
+  white-space: normal;
+  /* Se quiser pode até dar um background leve */
+  /* background: #ffeaea; padding: 2px 6px; border-radius: 4px; */
+}
+
+
+/* 🔹 Tamanhos Ajustados */
+.half-width {
+  flex: 1;
+}
+
+.quarter-width {
+  flex: 0.25;
+  
+}
+
+
+.campo-pequeno {
+  flex: 0.07;
+}
+.third-width {
+  flex: 0.33;
+}
+
+.small-width {
+  flex: 0.15;
+  min-width: 120px;
+}
+
+.large-width {
+  flex: 2;
+  min-width: 250px;
+}
+
+.linha0 {
+    display: flex;
+    align-items: baseline;
+  
+    gap: 10px;        /* Espaçamento horizontal e vertical entre os campos */
+        /* Espaço interno opcional */
+    
+  }
+
+  .fabricacao-propria{
+    display: block;
+    align-items: baseline;
+  }
+
+  .drop-fabricacao-propria{
+    margin-left: 1rem;
+
+  }
+
+  .linha0 .p-dropdown{
+    gap: 10px !important; 
+  }
+  
+
+.municipio select {
+  width: 35.5dvw;
+}
+
+/* 🔹 Logotipo */
+.logo,
+.logo-container,
+.logotipo-container {
+  width: 100%;
+  display: block;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border-radius: 8px;
+  background: #d8e5f3db;
+  height: 25dvh;
+}
+
+.logo-container,
+.logotipo-container {
+  width: 6dvw;
+  height: 12dvh;
+}
+
+.imagem-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.logo-label,
+.caminho-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 300px;
+  max-height: 300px;
+  overflow: hidden;
+  border: 2px dashed #ccc;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+  transition: border 0.3s ease-in-out;
+}
+
+.logo-preview-container:hover {
+  border: 2px solid #007bff;
+}
+
+.logo-preview {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  width: 20dvw;
+  height: auto;
+}
+
+/* 🔹 Aba de Configuração */
+.configuracao-container {
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.configuracao-container .field {
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 12px 15px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.configuracao-container label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+  margin-right: 10px;
+}
+
+.configuracao-container select,
+.configuracao-container input,
+.configuracao-container p-dropdown {
+  flex: 2;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+/* 🔥 Validação e estados */
+.erro-campo input,
+.erro-campo select {
+  border: 2px solid red !important;
+  background-color: #ffe6e6;
+}
+
+.erro-campo small {
+  color: red;
+  font-weight: bold;
+}
+
+:host ::ng-deep .erro-campo .p-dropdown,
+:host ::ng-deep .erro-campo select {
+  background-color: #ffe6e6 !important;
+  border-left: 4px solid #dc3545 !important;
+  border-radius: 3px;
+}
+
+.modo-consulta input,
+.modo-consulta textarea {
+  background-color: #ffff99 !important;
+}
+
+:host ::ng-deep .modo-consulta .p-dropdown,
+.modo-consulta-select {
+  background-color: #ffff99 !important;
+  border-left: 3px solid #007bff !important;
+}
+
+/* 🔹 Estilização do PrimeNG Dropdown */
+:deep(p-dropdown) {
+  width: 100%;
+  max-width: 300px;
+  display: block;
+}
+
+:deep(p-dropdown .p-dropdown) {
+  border-radius: 8px;
+  border: 1px solid #afde16;
+  padding: 8px;
+  font-size: 16px;
+  background-color: rgb(218, 26, 26);
+  transition: all 0.3s ease-in-out;
+}
+
+:deep(p-dropdown .p-dropdown-item:hover) {
+  background-color: #1ee114 !important;
+  color: white;
+}
+
+/* 🔹 Painel de Contatos */
+.contato-panel {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+/* 🔹 Tabela */
+.p-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.p-table th {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #ccc;
+  font-weight: bold;
+}
+
+.p-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.p-table td input {
+  width: calc(100% - 10px);
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* 🔹 Botões */
+.adicionar-contato {
+  width: auto;
+  padding: 8px 12px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto;
+  background-color: #4CAF50;
+  border-radius: 4px;
+}
+
+.botao-excluir {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.botao-excluir:hover {
+  background-color: #c0392b;
+}
+
+td:last-child {
+  text-align: center;
+}
+
+
+  
+
+
+/* 🔹 Responsividade */
+@media (max-width: 768px) {
+  .linha,
+  .espacamento-entre-campos,
+  .configuracao-container {
+    flex-direction: column;
+  }
+
+  .field,
+  .configuracao-container .field {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .configuracao-container label {
+    margin-bottom: 5px;
+  }
+
+  .uf-municipio-cep {
+    display: block;
+  }
+
+  .p-table {
+    font-size: 14px;
+  }
+
+  .p-table td,
+  .p-table th {
+    padding: 6px;
+  }
+
+  .adicionar-contato {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .botao-excluir {
+    padding: 4px 6px;
+  }
+}
+
+@media (max-width: 1920px) {
+
+
+.cabecalho{
+  
+  margin-top: -10px;
+
+}
+
+.campo-pequeno {
+  flex: 0.13;
+  
+}
+
+.linha,
+.linha1{
+  
+  height: 4rem;
+  margin-bottom: 1px;
+}
+
+
+.form-section,
+.configuracao-container {
+  background: #c00861;
+  margin-top: -20px;
+  
+}
+
+.field label {
+  margin-bottom: 0px; /* ou 0 se quiser colado */
+  display: inline-block; /* garante que o margin funcione corretamente */
+ 
+}
+
+.field input,
+.field .p-inputtext {
+  margin-top: 0px; /* garante que o input não crie espaço desnecessário */
+}
+
+
+
+}
+
+@media (max-width: 1024px) {
+  .linha,
+  .espacamento-entre-campos {
+    flex-direction: column;
+  }
+
+  .cabecalho{
+    background-color: #179d8d;
+    background: #38bdc7;
+
+ 
+ 
+}
+
+ 
+}
+h3 {
+  margin-top: 20px;
+  font-size: 1.5rem;
+  color: #343a40;
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titulo-tabela-precificacao {
+  display: flex;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 12px;
+  font-weight: bold;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  margin: 20px 0 10px 0;
+}
+
+.titulo-tabela-precificacao > div {
+  flex: 1;
+  text-align: center;
+  color: #555;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.scrollable-area {
+  max-height: 300px;
+  
+  border-radius: 8px;
+  background-color: #fefefe;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  background-color: transparent;
+}
+
+.table-bordered td {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  vertical-align: middle;
+}
+
+.table input {
+  width: 100%;
+  padding: 6px;
+  font-size: 0.95rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.btn {
+  margin: 4px 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 5px;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.tabela-resumo {
+  width: 100%;
+  margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 10px;
+  border-collapse: collapse;
+}
+
+.tabela-resumo td {
+  padding: 10px;
+  border-top: 1px solid #dee2e6;
+}
+
+.tabela-resumo input {
+  width: 100%;
+  padding: 6px;
+  font-size: 0.95rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.shadow {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.pi {
+  font-size: 1rem;
+}
+.grafico-pizza {
+  margin-top: 25px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.grafico-pizza h4 {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #343a40;
+  font-size: 1.1rem;
+}
+.grafico-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+:host ::ng-deep canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+.resumo-kit {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  text-align: right;
+}
+:host ::ng-deep .p-chips {
+  width: 100%;
+}
+
+.shadow {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #fff;
+}
+/* produto-cadastro.component.css */
+
+/* Tabela de insumos mais compacta */
+:host ::ng-deep .p-datatable-sm .p-datatable-thead > tr > th,
+:host ::ng-deep .p-datatable-sm .p-datatable-tbody > tr > td {
+  padding: 0.5rem 0.5rem;
+}
+:host ::ng-deep .p-datatable{
+ padding: 0rem 0rem;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr > td {
+    text-align: left;
+ 
+    border-width: 0 0 0px 0;
+    
+}
+
+/* Inputs numéricos compactos */
+:host ::ng-deep input[pInputText][type=number] {
+  height: 1.5rem;
+  line-height: 0rem;
+  padding: 0.0rem 0rem;
+}
+
+/* Botões ícone/texto pequenos */
+:host ::ng-deep .p-button-sm {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Gaps na grid de resumo */
+:host ::ng-deep .p-grid {
+  row-gap: 0.5rem;
+  column-gap: 0.5rem;
+}
+
+/* Cores de lucro/prejuízo */
+.text-prejuizo {
+  color: #c62828; /* vermelho */
+}
+.text-lucro {
+  color: #2e7d32; /* verde */
+}
+
+/* Se ainda usar área scrollable: */
+.scrollable-area {
+  max-height: 200px;
+  overflow-y: auto;
+}
+.insumos{
+
+ height: auto;
+
+}
+
+.infoCusto {
+  display: flex;
+  justify-content: space-between; /* um filho vai pra esquerda, outro pra direita */
+  align-items: center;
+ background: #007bff;
+  padding: 0.5rem;
+}
+
+.esquerda,
+.direita {
+  background: #fff;                                 /* fundo branco */
+  border: 1px solid rgba(0,0,0,0.1);                /* borda suave */
+  border-radius: 0.5rem;                            /* cantos arredondados */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);             /* sombra básica */
+  padding: 1rem;                                    /* espaço interno */
+  transition: box-shadow 0.3s ease;                 /* animação suave */
+  /* opcional: largura mínima, margens, etc:
+  min-width: 200px;
+  margin: 0.5rem;
+  */
+}
+
+.esquerda:hover,
+.direita:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);           /* sombra mais intensa ao passar o mouse */
+}
+
+.infoCusto > .direita {
+  margin-left: auto; /* “empurra” essa div para a direita */
+}
+.linha-custos{
+  margin-top: 1rem;
+                                /* fundo branco */
+  border: 1px solid rgba(0,0,0,0.1);                /* borda suave */
+  border-radius: 0.5rem;                            /* cantos arredondados */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);             /* sombra básica */
+  padding: 1rem;                                    /* espaço interno */
+  transition: box-shadow 0.3s ease;                 /* animação suave */
+
+}
+.rodape-insumos {
+  display: flex;
+  justify-content: space-between; /* empurra um item à esquerda e outro à direita */
+  align-items: center;            /* opcional, centra verticalmente */
+  padding: 0.5rem;                /* só um espaçamento interno */
+}
+.custo-unidade,.markup{
+  display: flex;
+   
+          /* borda suave */
+  border-radius: 0.2rem;                 
+   align-items: center;
+   padding: 0.1dvh;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.grade-variacoes {
+  padding: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+
+.grade-variacoes h4 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.p-datatable-sm th {
+  background-color: #f4f4f4;
+  text-align: center;
+}
+
+.p-datatable-sm td {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.p-datatable-sm input {
+  width: 100%;
+  text-align: center;
+}
+.grade-variacoes {
+  padding: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+}
+
+.linha-variacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.campo {
+  flex: 1;
+  min-width: 250px;
+}
+
+.botao-gerar {
+  margin: 1rem 0;
+}
+.grade-variacoes {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
+}
+
+.grade-variacoes h3 {
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #2f4858;
+  border-bottom: 1px solid #dcdcdc;
+  padding-bottom: 0.5rem;
+}
+
+.linha-variacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.linha-variacoes .campo {
+  flex: 1;
+  min-width: 250px;
+}
+
+.linha-variacoes .campo label {
+  font-weight: 500;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.linha-variacoes .campo input[type="text"] {
+  width: 100%;
+}
+
+.botao-gerar {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.botao-gerar button {
+  background-color: #2196f3;
+  color: white;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.botao-gerar button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Tabela das variações */
+::ng-deep .p-table .p-inputtext {
+  font-size: 0.85rem;
+  padding: 0.3rem;
+}
+
+::ng-deep .p-table td input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+::ng-deep .p-table td {
+  vertical-align: middle;
+}
+
+::ng-deep .p-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.75rem;
+}
+
+::ng-deep .p-table td:last-child,
+::ng-deep .p-table th:last-child {
+  text-align: center;
+  width: 60px;
+}
+
+::ng-deep .p-chip {
+  margin-top: 0.4rem;
+  margin-right: 0.4rem;
+}
+
+/* Responsividade extra */
+@media (max-width: 768px) {
+  .linha-variacoes {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .botao-gerar {
+    margin-top: 1rem;
+  }
+}

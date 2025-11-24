@@ -1,0 +1,38 @@
+<div class="configuracao-os-container">
+  
+  <div class="form-grid ">
+    <div class="form-group ">
+      <label>Título Padrão:</label>
+      <input type="text" [(ngModel)]="configuracao.tituloPadrao">
+    </div>
+
+    <div class="form-group full-width">
+      <label>Descrição Padrão:</label>
+      <textarea [(ngModel)]="configuracao.descricaoPadrao"></textarea>
+    </div>
+
+    <div class="form-group full-width">
+      <label>Observações Padrão:</label>
+      <textarea [(ngModel)]="configuracao.observacoesPadrao"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Rodapé Padrão:</label>
+      <input type="text" [(ngModel)]="configuracao.rodapePadrao">
+    </div>
+
+    <div class="form-group checkbox">
+      <label>
+        <input type="checkbox" [(ngModel)]="configuracao.exibirLogo">
+        Exibir Logo na Impressão
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>Cor do Tema:</label>
+      <input type="color" [(ngModel)]="configuracao.corTema">
+    </div>
+  </div>
+
+
+</div>

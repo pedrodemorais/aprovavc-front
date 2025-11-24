@@ -1,0 +1,51 @@
+<div class="pagina-edital">
+
+  <!-- FILTROS -->
+  <section class="card filtros">
+    <h2>Configurar edital verticalizado</h2>
+
+    <div class="form-group">
+      <label for="prova">Prova</label>
+      <select
+        id="prova"
+        [(ngModel)]="provaSelecionadaId"
+        (change)="onProvaChange()">
+        <option [ngValue]="undefined">Selecione a prova</option>
+        <option *ngFor="let p of provas" [ngValue]="p.id">
+          {{ p.nome }}
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="materia">Matéria</label>
+      <select
+        id="materia"
+        [(ngModel)]="materiaSelecionadaId"
+        (change)="onMateriaChange()"
+        [disabled]="!provaSelecionadaId">
+        <option [ngValue]="undefined">Selecione a matéria</option>
+        <option *ngFor="let m of materiasFiltradas" [ngValue]="m.id">
+          {{ m.nome }}
+        </option>
+      </select>
+    </div>
+  </section>
+
+  <!-- COMPONENTE DE CADASTRO DO EDITAL -->
+  <app-topico-edital-cadastro
+    *ngIf="empresaId && provaSelecionadaId && materiaSelecionadaId"
+    [empresaId]="empresaId"
+    [provaId]="provaSelecionadaId!"
+    [materiaId]="materiaSelecionadaId!"
+    [provaNome]="provaSelecionada?.nome"
+    [materiaNome]="materiaSelecionada?.nome">
+  </app-topico-edital-cadastro>
+
+  <!-- MENSAGEM QUANDO NÃO TIVER SELEÇÃO -->
+  <div
+    class="card aviso"
+    *ngIf="!(empresaId && provaSelecionadaId && materiaSelecionadaId)">
+    Selecione uma prova e uma matéria para configurar o edital.
+  </div>
+</div>

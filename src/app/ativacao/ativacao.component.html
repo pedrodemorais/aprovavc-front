@@ -1,0 +1,22 @@
+<div class="container">
+  <div class="card">
+    <div *ngIf="sucesso; else erroTemplate" class="content">
+       <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="green" viewBox="0 0 24 24">
+    <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41 20 7.41 18.59 6 9 15.59z"/>
+  </svg>
+      <h2>Conta ativada com sucesso!</h2>
+      <p>Você será redirecionado para o login em instantes.</p>
+    </div>
+    
+    <ng-template #erroTemplate>
+      <div class="content error">
+       <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="red" viewBox="0 0 24 24">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 
+    15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+  </svg>
+        <h2>Ops! Algo deu errado...</h2>
+        <p>{{ mensagem }}</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

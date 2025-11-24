@@ -1,0 +1,115 @@
+<div class="proposta-container">
+
+
+  <div class="erro" *ngIf="mensagemStatus">{{ mensagemStatus }}</div>
+  <form [formGroup]="propostaForm" (ngSubmit)="gerarProposta()">
+
+    <!-- Card de dados do cliente -->
+    <div >
+      <h3>Dados do Cliente</h3>
+      <div class="grid-2">
+          <div class="form-group">
+      <label>Número da Proposta</label>
+      <input type="text"
+       [value]="(propostaForm.get('numero')?.value | number:'3.0-0')"
+       readonly>
+    </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" formControlName="data">
+        </div>
+     <div class="form-group"
+     [class.campo-obrigatorio]="propostaForm.get('cliente')?.invalid && propostaForm.get('cliente')?.touched">
+  <label>Cliente <span class="asterisco">*</span></label>
+  <input type="text" formControlName="cliente" placeholder="Nome do cliente">
+</div>
+      <div class="form-group"
+     [class.campo-obrigatorio]="propostaForm.get('telefone')?.invalid && propostaForm.get('telefone')?.touched">
+  <label>Telefone / WhatsApp <span class="asterisco">*</span></label>
+  <input type="tel" formControlName="telefone" placeholder="(99) 99999-9999">
+</div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" formControlName="email" placeholder="cliente@email.com">
+        </div>
+        <div class="form-group full-width">
+          <label>Origem do Lead</label>
+          <select formControlName="origemLead">
+            <option value="">Selecione...</option>
+            <option value="indicação">Indicação</option>
+            <option value="instagram">Instagram</option>
+            <option value="google">Google</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card descrição da proposta -->
+    <div >
+      <h3>Descrição da Proposta</h3>
+      <textarea formControlName="descricao" rows="3" class="card"></textarea>
+    </div>
+
+    <!-- Card de itens -->
+    <div >
+      <h3>Itens da Proposta</h3>
+      <div class="table-wrapper">
+  <table class="resp-table">
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Qtd</th>
+        <th>Unidade</th>
+        <th>Preço à Vista</th>
+        <th>Preço Parcelado</th>
+        <th>Desconto (%)</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+
+    <tbody formArrayName="itens">
+      <tr *ngFor="let item of itens.controls; let i = index; trackBy: trackByIndex" [formGroupName]="i">
+        <td [attr.data-label]="'Descrição'">
+          <input type="text" formControlName="descricao">
+        </td>
+        <td [attr.data-label]="'Qtd'">
+          <input type="number" formControlName="quantidade" min="1" inputmode="numeric">
+        </td>
+        <td [attr.data-label]="'Unidade'">
+          <input type="text" formControlName="unidade">
+        </td>
+        <td [attr.data-label]="'Preço à Vista'">
+          <input type="number" formControlName="precoVista" min="0" step="0.01" inputmode="decimal">
+        </td>
+        <td [attr.data-label]="'Preço Parcelado'">
+          <input type="number" formControlName="precoPrazo" min="0" step="0.01" inputmode="decimal">
+        </td>
+        <td [attr.data-label]="'Desconto (%)'">
+          <input type="number" formControlName="desconto" min="0" max="100" step="1" inputmode="numeric">
+        </td>
+        <td [attr.data-label]="'Ações'">
+          <button type="button" class="icon-btn" (click)="removerItem(i)" aria-label="Remover item">X</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+      <button type="button" class="botao-add-item" (click)="adicionarItem()">Adicionar Item</button>
+
+      <div class="totais">
+        <p><strong>Total à Vista:</strong> R$ {{ totalVista | number:'1.2-2' }}</p>
+        <p><strong>Total Parcelado:</strong> R$ {{ totalPrazo | number:'1.2-2' }}</p>
+      </div>
+    </div>
+
+    <!-- Card observações -->
+    <div >
+      <h3>Observações e Condições</h3>
+      <textarea formControlName="observacoes" rows="3" class="card" ></textarea>
+    </div>
+
+   
+  </form>
+</div>

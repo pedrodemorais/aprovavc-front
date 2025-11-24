@@ -1,0 +1,138 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Container principal */
+  .register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(to right, #3498db, #2c3e50);
+  }
+  
+  /* Cartão de Cadastro */
+  .card {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+  
+  /* Título */
+  .title {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* Formulário */
+  .form-group {
+    text-align: left;
+    margin-bottom: 15px;
+  }
+  
+  /* Rótulos */
+  label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  /* Input Wrapper para Ícones */
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .input-wrapper i {
+    position: absolute;
+    left: 10px;
+    color: #888;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    transition: border 0.3s;
+  }
+  
+  .form-control:focus {
+    border-color: #3498db;
+  }
+  
+  /* Botão de Cadastro */
+  .btn-register {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    color: white;
+    background: #3498db;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .btn-register:hover {
+    background: #2980b9;
+  }
+  
+  .btn-register:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+  }
+  
+  /* Mensagem de erro */
+  .error {
+    color: #e74c3c;
+    font-size: 13px;
+    margin-top: 5px;
+  }
+  
+  /* Link para login */
+  .login-link {
+    margin-top: 15px;
+  }
+  
+  .login-link a {
+    color: #3498db;
+    text-decoration: none;
+  }
+  
+  .login-link a:hover {
+    text-decoration: underline;
+  }
+  .success-message {
+    background-color: #e6f9e6; /* Verde claro */
+    color: #2d7a2d; /* Verde escuro */
+    border: 1px solid #2d7a2d; /* Borda verde */
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .success-message i {
+    font-size: 20px;
+    color: #2d7a2d; /* Cor do ícone */
+  }
+  

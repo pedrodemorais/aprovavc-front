@@ -1,0 +1,41 @@
+
+
+<div class="main">
+
+  <div class="topo-login-site"> 
+  
+    <img class="logo" src="assets/img/logo/mei5.png" alt="Logo">
+    <a routerLink="/home">
+    <h1 >
+      <span style="color: #ffffff; font-weight: 300; letter-spacing: 1px; margin-right: 5px;">Dynamo</span>
+      <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">Soft</span>
+    </h1>
+  </a>
+  </div>
+<div class="painel">
+
+<div>
+       
+    <div class="container">
+      <a routerLink="/home"><img class="logo" src="assets/img/logo/mei3.png" alt="Logo"></a>
+      <h2>🔑 Redefinir Senha</h2>
+    
+      <p *ngIf="mensagem" class="mensagem">{{ mensagem }}</p>
+      <p *ngIf="erro" class="erro">{{ erro }}</p>
+    
+      <div *ngIf="!erro">
+        <input type="password" [(ngModel)]="novaSenha" placeholder="Nova senha" required>
+        <button (click)="redefinirSenha()">Alterar Senha</button>
+      </div>
+    </div>
+   
+   
+ 
+
+ 
+
+   
+   
+
+  </div>
+

@@ -1,0 +1,64 @@
+#termos-de-uso {
+    padding: 50px 15px;
+    background-color: #f9f9f9;
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  #termos-de-uso .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+  }
+
+  
+  #termos-de-uso h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #007bff;
+  }
+  
+  #termos-de-uso h2 {
+    font-size: 1.5rem;
+    color: #007bff;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    display: inline-block;
+  }
+  
+  #termos-de-uso p {
+    margin-bottom: 15px;
+    font-size: 1rem;
+    text-align: justify;
+  }
+  
+  #termos-de-uso ul {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    list-style: disc;
+  }
+  
+  #termos-de-uso ul li {
+    margin-bottom: 10px;
+  }
+  
+  #termos-de-uso a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  #termos-de-uso a:hover {
+    text-decoration: underline;
+  }
+  
+  #termos-de-uso .container p:last-child {
+    text-align: center;
+    font-weight: bold;
+  }
+  

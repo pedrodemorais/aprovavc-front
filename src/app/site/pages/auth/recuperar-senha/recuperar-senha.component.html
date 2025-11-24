@@ -1,0 +1,40 @@
+<div class="main">
+
+    <div class="topo-login-site"> 
+    
+      <img class="logo" src="assets/img/logo/mei5.png" alt="Logo">
+      <a routerLink="/home">
+      <h1 >
+        <span style="color: #ffffff; font-weight: 300; letter-spacing: 1px; margin-right: 5px;">Dynamo</span>
+        <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">SOFT</span>
+      </h1>
+    </a>
+    </div>
+  <div class="painel">
+  <div class="recuperar-senha-container">
+    <a routerLink="/home"><img class="logo" src="assets/img/logo/mei3.png" alt="Logo"></a>
+    <h2>🔑 Esqueceu sua senha?</h2>
+    <p>Insira seu e-mail para receber as instruções de recuperação.</p>
+  
+    <form (ngSubmit)="onSubmit()">
+      <div class="input-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" [(ngModel)]="email" name="email" required placeholder="Digite seu e-mail">
+      </div>
+  
+      <button type="submit" class="btn-enviar">Enviar</button>
+  
+      <!-- 🔹 Exibir Mensagem de Sucesso -->
+    <div *ngIf="mensagemSucesso" class="mensagem-sucesso">
+        {{ mensagemSucesso }}
+    </div>
+
+    <!-- 🔹 Exibir Mensagem de Erro -->
+    <div *ngIf="mensagemErro" class="mensagem-erro">
+        {{ mensagemErro }}
+    </div>
+    </form>
+  
+    <a routerLink="/login" class="voltar-link">Voltar ao login</a>
+  </div>
+  

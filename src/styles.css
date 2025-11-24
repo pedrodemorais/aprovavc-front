@@ -1,0 +1,320 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.min.css";
+
+
+
+
+
+/* Evita barra de rolagem horizontal */
+html, body {
+  width: 100%;
+  max-width: 100%;
+ overflow-x: hidden;  /* Nunca mostra barra horizontal */
+overflow-y: auto;    /* Mostra vertical apenas se necessário */
+
+ 
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+ height: 100%;
+ max-height: 100%;
+  -webkit-text-size-adjust: 100%; /* Para mobile */
+  background-color: #ffffff;
+
+  color: #2a2929d9;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+  background-color: #ffffff;
+}
+
+.site-container {
+  max-width: 1360px; /* largura máxima */
+  margin: 0 auto;    /* centraliza horizontalmente */
+  
+  
+}
+
+.site-container-menu {
+  max-width: 1360px; /* largura máxima */
+  margin: 0 auto;    /* centraliza horizontalmente */
+
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Garantir que imagens e vídeos nunca ultrapassem o container */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Remove estilos padrão de listas */
+ul, ol {
+  list-style: none;
+ 
+  margin: 10px 0;  /* Espaço externo (em cima e embaixo) */
+    font-size: 16px;
+   font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+}
+
+/* Remove sublinhado padrão de links */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Botões e inputs com aparência consistente */
+ input, textarea, select {
+  font: inherit;
+  border: none;
+  background: none;
+  outline: none;
+  background: rgb(240, 236, 236);
+  font-size: 16px;
+   font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+  display: block;
+  
+  margin-bottom: 0.5rem;
+  color: #414441; /* Cor do texto */
+  font-size: medium;
+     border-radius: 4px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    background: #24586c22;
+      font-size: 16px;
+}
+
+
+
+/* Previne zoom estranho em dispositivos iOS */
+input, textarea {
+  font-size: 16px;
+}
+
+header{
+   position: fixed;      /* Fixa no topo da tela */
+  top: 0;               /* Alinha no topo */
+  left: 0;              /* Garante que fique alinhada à esquerda */
+  width: 100%;          /* Ocupa toda a largura */
+ 
+  background-color: #fff; /* Cor de fundo */
+  z-index: 1000;         /* Fica acima de outros elementos */
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Opcional: sombra */
+}
+/* Garantir que seções não criem overflow */
+section,  footer, main, nav, div {
+  max-width: 100%;
+}
+
+/* Forçar palavras grandes a quebrarem e não criarem scroll horizontal */
+body {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+
+.field label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+  display: block;
+  
+  margin-bottom: 0.5rem;
+  color: #414441; /* Cor do texto */
+  font-size: medium;
+
+}
+.p-component{
+  font-size: large;
+}
+
+.p-dropdown{
+   height: 2rem;
+  font-size: 1rem;
+  align-items: center;
+  background: #41424211;
+}
+
+.campo-invalido {
+  border: 2px solid red !important;
+  background-color: #fff0e6;
+}
+
+  /* Reduzindo o tamanho dos campos de entrada */
+  .field input,
+  .field textarea,
+  
+ 
+  .field p-inputtext {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 4px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+      color: #063a77;
+    background: #24586c22;
+    }
+
+    .field select{
+      width: 100%;
+      padding: 0.5rem;
+      font-size:1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    
+
+    .p-menubar .p-submenu-list {
+      z-index: 10000;
+    }
+
+    ::ng-deep .custom-dialog-cliente .p-dialog {
+  width: 95vw !important;
+  max-width: 600px !important;
+}
+
+::ng-deep .full-width-image {
+   
+    background-size: cover; /* Faz a imagem preencher o container */
+    background-position: center 10%; /* Centraliza a imagem */
+    background-repeat: no-repeat; /* Evita repetiÃ§Ã£o da imagem */
+    width: 100%; /* Ocupa toda a largura da tela */
+    height: 90dvh; /* Altura fixa de 300px */
+    display: flex; /* Alinha o texto sobreposto */
+    
+
+    position: relative; /* NecessÃ¡rio para a sobreposiÃ§Ã£o */
+  }
+
+  .full-width-image{
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+/* FLAT total: sem borda/sombra/raio/“cards” e sem espaçamento */
+.p-panelmenu.menu-flat,
+.p-panelmenu.menu-flat .p-panelmenu-panel,
+.p-panelmenu.menu-flat .p-panelmenu-header,
+.p-panelmenu.menu-flat .p-panelmenu-header-content,
+.p-panelmenu.menu-flat .p-panelmenu-header-action,
+.p-panelmenu.menu-flat .p-panelmenu-content,
+.p-panelmenu.menu-flat .p-submenu-list,
+.p-panelmenu.menu-flat .p-menuitem-link {
+  border: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Tira o “card” e o espaço entre seções */
+.p-panelmenu.menu-flat .p-panelmenu-panel { margin: 0 !important; }
+
+/* Header como item simples (sem caixinha) */
+.p-panelmenu.menu-flat .p-panelmenu-header-action {
+ 
+}
+
+/* Submenu sem box e com leve indentação */
+.p-panelmenu.menu-flat .p-panelmenu-content { padding: 0 !important; }
+.p-panelmenu.menu-flat .p-submenu-list { padding: 0 0 0 14px !important; margin: 0 !important; }
+.p-panelmenu.menu-flat .p-menuitem { margin: 0 !important; }
+
+/* (opcional) hover discreto */
+.p-panelmenu.menu-flat .p-panelmenu-header-action:hover,
+.p-panelmenu.menu-flat .p-menuitem-link:hover {
+  background: rgba(23, 152, 192, 0.396) !important;
+}
+
+/* Garanta que a própria sidebar não tenha linha/sombra */
+.sidebar, nav.sidebar, .layout-sidebar {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+
+
+@media (max-width: 768px) {
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+ 
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+ height: 100%;
+ max-height: 100%;
+  -webkit-text-size-adjust: 100%; /* Para mobile */
+  
+
+  color: #333;
+}
+
+.field label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+  display: block;
+  
+  margin-bottom: 0.5rem;
+  color: #414441; /* Cor do texto */
+  font-size: small;
+}
+
+ .field input,
+  .field textarea,
+ 
+  .field p-inputtext {
+      width: 100%;
+      padding: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-radius: 2px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    
+        color: #063a77;
+    background: #41424211;
+    }
+
+    .select-estado{
+  
+      padding: 0.5rem;
+      font-size: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+       .field select{
+      padding: 0.5rem;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    .p-dropdown{
+ height: 1.8rem;
+  font-size: 0.85rem;
+  align-items: center;
+}
+
+}
+

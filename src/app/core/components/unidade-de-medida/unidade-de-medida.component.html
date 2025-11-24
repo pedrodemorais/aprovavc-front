@@ -1,0 +1,112 @@
+
+
+<p-table *ngIf="listaUnidades && listaUnidades.length > 0" 
+    [value]="listaUnidades" 
+    selectionMode="single" 
+    [(selection)]="unidadeSelecionada"
+    [paginator]="true" 
+    [rows]="5" 
+    [rowsPerPageOptions]="[5, 10, 20]" 
+    responsiveLayout="scroll">
+    
+    
+    <ng-template pTemplate="header">
+        <tr>
+            <th>Nome</th>
+        
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-unidade>
+        <tr (click)="selecionarUnidade(unidade)">
+            <td>{{unidade.descricao}}</td>
+      
+            <td>
+                <button pButton type="button" icon="pi pi-check" (click)="selecionarUnidade(unidade)"></button>
+            </td>
+        </tr>
+    </ng-template>
+  </p-table>
+  
+ <div *ngIf="!exibirTabelaPesquisa">
+  <form [formGroup]="unidadeForm" class="form-section">
+    <div class="linha">
+
+    <!-- Sigla -->
+    <div class="field third-width" [ngClass]="{
+      'erro-campo': !isModoConsulta && unidadeForm.get('sigla')?.invalid && unidadeForm.get('sigla')?.touched,
+      'modo-consulta': isModoConsulta,
+      'borda-consulta': isModoConsulta
+    }">
+      <label for="sigla">Sigla</label>
+      <input id="sigla" type="text" pInputText formControlName="sigla" />
+    </div>
+
+    <!-- Descrição -->
+    <div class="field third-width" [ngClass]="{
+      'erro-campo': !isModoConsulta && unidadeForm.get('descricao')?.invalid && unidadeForm.get('descricao')?.touched,
+      'modo-consulta': isModoConsulta,
+      'borda-consulta': isModoConsulta
+    }">
+      <label for="descricao">Descrição</label>
+      <input id="descricao" type="text" pInputText formControlName="descricao" />
+    </div>
+
+    <!-- Fator de Conversão -->
+    <div class="field third-width" [ngClass]="{
+      'erro-campo': !isModoConsulta && unidadeForm.get('fatorConversao')?.invalid && unidadeForm.get('fatorConversao')?.touched,
+      'modo-consulta': isModoConsulta,
+      'borda-consulta': isModoConsulta
+    }">
+      <label for="fatorConversao">Fator Conversão</label>
+      <input id="fatorConversao" type="number" pInputText formControlName="fatorConversao" />
+    </div>
+
+    <!-- Fracionável -->
+    <div class="field third-width" [ngClass]="{
+      'modo-consulta': isModoConsulta,
+      'borda-consulta': isModoConsulta
+    }">
+      <label for="fracionavel">Fracionável?</label>
+      <p-dropdown
+        id="fracionavel"
+        [options]="[
+          { label: 'Sim', value: true },
+          { label: 'Não', value: false }
+        ]"
+        formControlName="fracionavel">
+      </p-dropdown>
+    </div>
+
+<!-- Casas Decimais (só aparece se fracionável for true) -->
+<div *ngIf="unidadeForm.get('fracionavel')?.value" 
+     class="field third-width"
+     [ngClass]="{
+       'erro-campo': !isModoConsulta && unidadeForm.get('casasDecimais')?.invalid && unidadeForm.get('casasDecimais')?.touched,
+       'modo-consulta': isModoConsulta,
+       'borda-consulta': isModoConsulta
+     }">
+  <label for="casasDecimais">Casas Decimais</label>
+  <input id="casasDecimais" type="number" pInputText formControlName="casasDecimais" />
+</div>
+
+    <!-- Tipo de Unidade -->
+    <div class="field third-width" [ngClass]="{
+      'erro-campo': !isModoConsulta && unidadeForm.get('tipo')?.invalid && unidadeForm.get('tipo')?.touched,
+      'modo-consulta': isModoConsulta,
+      'borda-consulta': isModoConsulta
+    }">
+      <label for="tipo">Tipo</label>
+      <p-dropdown
+        id="tipo"
+        [options]="tipoUnidades"
+        optionLabel="label"
+        optionValue="value"
+        formControlName="tipo">
+      </p-dropdown>
+    </div>
+
+    
+</div>
+    
+  </form>
+</div>

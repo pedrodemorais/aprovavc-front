@@ -1,0 +1,70 @@
+<div class="register-container">
+  <div class="card">
+    <h2 class="title">Criar Conta</h2>
+
+    <form (ngSubmit)="register()" #registerForm="ngForm" novalidate>
+      
+      <!-- Nome -->
+      <div class="form-group">
+        <label for="name">Nome</label>
+        <div class="input-wrapper">
+          <i class="fas fa-user"></i>
+          <input type="text" id="name" class="form-control" placeholder="Digite seu nome" [(ngModel)]="name" name="name" #nameRef="ngModel" required />
+        </div>
+        <p *ngIf="nameRef.invalid && nameRef.touched" class="error">Nome obrigatório.</p>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="email" class="form-control" placeholder="Digite seu email" [(ngModel)]="email" name="email" #emailRef="ngModel" required email />
+        </div>
+        <p *ngIf="emailRef.invalid && emailRef.touched" class="error">Email inválido.</p>
+      </div>
+
+      <!-- Senha -->
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" class="form-control" placeholder="Digite sua senha" [(ngModel)]="password" name="password" #passwordRef="ngModel" required minlength="6" />
+        </div>
+        <p *ngIf="passwordRef.invalid && passwordRef.touched" class="error">Senha deve ter pelo menos 6 caracteres.</p>
+      </div>
+
+      <!-- Confirmar Senha -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar Senha</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="confirmPassword" class="form-control" placeholder="Confirme sua senha" [(ngModel)]="confirmPassword" name="confirmPassword" #confirmPasswordRef="ngModel" required />
+        </div>
+        <p *ngIf="confirmPassword !== password && confirmPasswordRef.touched" class="error">As senhas não coincidem.</p>
+      </div>
+
+      <!-- Indicador de Processamento -->
+      <div *ngIf="loading" class="loading-indicator">
+        <i class="fas fa-spinner fa-spin"></i> Processando...
+      </div>
+
+      <!-- Botão de Cadastro -->
+      <button type="submit" class="btn-register" [disabled]="registerForm.invalid || loading">
+        Cadastrar
+      </button>
+    </form>
+
+   <!-- Mensagem de Sucesso Formatada -->
+<p *ngIf="successMessage" class="success-message">
+  <i class="fas fa-check-circle"></i> {{ successMessage }}
+</p>
+
+
+    <!-- Link para login -->
+    <p class="login-link">Já tem uma conta? <a routerLink="/login">Faça login</a></p>
+
+    <!-- Exibir mensagem de erro geral -->
+    <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+  </div>
+</div>

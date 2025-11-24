@@ -1,0 +1,202 @@
+<div class="revisao-container">
+<!-- SELETOR DE PROVA -->
+<section class="card card-prova-seletor" *ngIf="provas.length > 1">
+  <label for="prova">Selecione a prova</label>
+  <select id="prova" class="filtro-input" [(ngModel)]="provaSelecionadaId" (change)="alterarProva()">
+    <option *ngFor="let p of provas" [ngValue]="p.id">
+      {{ p.nome }}
+    </option>
+  </select>
+</section>
+
+<!-- Caso tenha só uma, mostra direto -->
+<section class="card card-prova-seletor" *ngIf="provas.length === 1">
+  <div class="prova-info">
+    📌 Estudando: <strong>{{ provas[0].nome }}</strong>
+  </div>
+</section>
+
+  <!-- FORM DE CADASTRO -->
+  <section class="card">
+    <h2>Cadastrar tópico de estudo</h2>
+
+    <form [formGroup]="form" (ngSubmit)="salvar()">
+
+  <!-- <div class="form-group">
+    <label for="materia">Matéria</label>
+    <select id="materia" formControlName="materiaId" class="filtro-input">
+       <option [ngValue]="null">Selecione a matéria</option>
+       <option *ngFor="let m of materias" [ngValue]="m.id">
+          {{ m.nome }}
+       </option>
+       </select>
+     <div class="erro" *ngIf="campoInvalido('materiaId')">
+       Selecione a matéria.
+      </div>
+  </div> -->
+  <div class="form-group">
+  <label for="materia">Matéria</label>
+  <select
+    id="materia"
+    formControlName="materiaId"
+    class="filtro-input"
+    (change)="onMateriaChange()">
+    <option [ngValue]="null">Selecione a matéria</option>
+    <option *ngFor="let m of materias" [ngValue]="m.id">
+      {{ m.nome }}
+    </option>
+  </select>
+  <div class="erro" *ngIf="campoInvalido('materiaId')">
+    Selecione a matéria.
+  </div>
+</div>
+
+<!-- NOVO: seleção de tópico do edital (opcional) -->
+<div class="form-group" *ngIf="topicosEdital.length > 0">
+  <label for="topicoEdital">Tópico do edital (opcional)</label>
+  <select
+    id="topicoEdital"
+    formControlName="topicoEditalId"
+    class="filtro-input">
+    <option [ngValue]="null">Selecione o tópico</option>
+    <option *ngFor="let t of topicosEdital" [ngValue]="t.id">
+      {{ t.ordem }} - {{ t.descricao }}
+    </option>
+  </select>
+  <small *ngIf="carregandoTopicosEdital">Carregando tópicos do edital...</small>
+</div>
+
+
+      <div class="form-group">
+        <label for="assunto">Assunto</label>
+        <textarea id="assunto" rows="3" formControlName="assunto"></textarea>
+        <div class="erro" *ngIf="campoInvalido('assunto')">
+          Informe o assunto que será revisado.
+        </div>
+      </div>
+
+   <button type="submit"
+        class="btn btn-primary"
+        [disabled]="salvando || form.invalid">
+  {{ salvando ? 'Salvando...' : 'Salvar tópico' }}
+</button>
+    </form>
+  </section>
+
+  <!-- REVISÃO DE HOJE -->
+  <section class="card">
+    <!-- LEGENDA DE STATUS -->
+<div class="status-legenda">
+  <span class="status-item">
+    <span class="status-bolinha status-atrasado"></span>
+    <span>🔴 Atrasado</span>
+  </span>
+
+  <span class="status-item">
+    <span class="status-bolinha status-hoje"></span>
+    <span>🟠 Hoje</span>
+  </span>
+
+  <span class="status-item">
+    <span class="status-bolinha status-futuro"></span>
+    <span>🟢 Futuro</span>
+  </span>
+</div>
+    <h2>Revisão de hoje</h2>
+
+    <div *ngIf="carregandoHoje">Carregando...</div>
+    <div *ngIf="!carregandoHoje && topicosHoje.length === 0">
+      Nenhum tópico para revisar hoje.
+    </div>
+
+    <table *ngIf="!carregandoHoje && topicosHoje.length > 0">
+      <thead>
+  <tr>
+    <th>Status</th>
+    <th>Matéria</th>
+    <th>Assunto</th>
+    <th>Próxima revisão</th>
+    <th>Nível</th>
+    <th>Ações</th>
+  </tr>
+</thead>
+      <tbody>
+        <tr *ngFor="let t of topicosHoje" [ngClass]="getClasseLinha(t)">
+  <td>{{ getEmojiStatus(t) }}</td>
+  <td>{{ t.materiaNome }}</td>
+  <td>{{ t.assunto }}</td>
+  <td>{{ t.dataProximaRevisao | date:'dd/MM/yyyy' }}</td>
+  <td>{{ t.nivelRevisao }}</td>
+  <td>
+    <button (click)="marcarRevisado(t)">Revisado</button>
+    <button (click)="excluir(t)">Excluir</button>
+  </td>
+</tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- LISTA GERAL -->
+  <section class="card">
+    <h2>Todos os tópicos cadastrados</h2>
+
+    <div class="filtro">
+      <input
+  type="text"
+  class="filtro-input"
+  placeholder="Filtrar por matéria ou assunto"
+  [(ngModel)]="filtroGeral"
+  (keyup.enter)="aplicarFiltro()">
+      <button class="btn btn-secondary" (click)="aplicarFiltro()">Filtrar</button>
+<button class="btn btn-light" (click)="limparFiltro()">Limpar</button>
+    </div>
+
+    <div *ngIf="carregandoTodos">Carregando...</div>
+
+    <table *ngIf="!carregandoTodos && todosTopicos.length > 0">
+      <thead>
+        <tr>
+    <th>Status</th>
+    <th>Matéria</th>
+    <th>Assunto</th>
+    <th>Primeiro estudo</th>
+    <th>Última revisão</th>
+    <th>Próxima revisão</th>
+    <th>Nível</th>
+    <th>Ações</th>
+  </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of todosTopicos" [ngClass]="getClasseLinha(t)">
+    <td>{{ getEmojiStatus(t) }}</td>
+   <td>{{ t.materiaNome }}</td>
+    <td>{{ t.assunto }}</td>
+    <td>{{ t.dataPrimeiroEstudo | date:'dd/MM/yyyy' }}</td>
+    <td>{{ t.dataUltimaRevisao   | date:'dd/MM/yyyy' }}</td>
+    <td>{{ t.dataProximaRevisao  | date:'dd/MM/yyyy' }}</td>
+    <td>{{ t.nivelRevisao }}</td>
+   <td>
+  <button
+    class="btn btn-icon btn-success"
+    title="Marcar como revisado"
+    (click)="marcarRevisado(t)">
+    ✓
+  </button>
+
+  <button
+    class="btn btn-icon btn-danger"
+    title="Excluir tópico"
+    (click)="excluir(t)">
+    🗑
+  </button>
+</td>
+  </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="!carregandoTodos && todosTopicos.length === 0">
+      Nenhum tópico cadastrado.
+    </div>
+  </section>
+
+</div>

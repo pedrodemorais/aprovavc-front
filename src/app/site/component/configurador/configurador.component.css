@@ -1,0 +1,214 @@
+/* 🎨 Configuração Geral */
+body {
+  font-family: 'Poppins', sans-serif;
+  
+
+  height: 100vh;
+  margin: 0;
+}
+.main{
+  display: block;
+  width: 100%;
+  height: 100%;
+  justify-content: center !important;
+  align-items: center;
+  background: linear-gradient(135deg, #007bff, #00d4ff);
+  background: linear-gradient(to bottom, #007bff, #00d4ff);
+  
+ 
+}
+.painel{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100dvw;
+  height: 88dvh;
+
+}
+::ng-deep .topo-login-site{
+  display: flex;
+  align-items: baseline;
+  justify-content: center; /* Centraliza o conteúdo */
+  background: rgb(48, 47, 47);
+  
+  
+  height: 5rem;
+  width: 100%;
+}
+::ng-deep .topo-login-site a{
+  text-decoration: none;
+}
+
+
+.logo{
+  height: 40px;
+  width: auto;
+}
+
+
+/* 🏠 Container Principal */
+.configurador-container {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+
+}
+
+/* 📝 Títulos */
+h2 {
+  color: #374151;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+h3 {
+  color: #1f2937;
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+/* 📄 Parágrafo */
+p {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* 📌 Estilização dos Campos */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 5px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+  border-color: #2563eb;
+  box-shadow: 0px 0px 6px rgba(37, 99, 235, 0.3);
+}
+
+/* ⚠️ Mensagens de Erro */
+.error {
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 5px;
+}
+
+/* 🎯 Botões de Navegação */
+.acoes {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.btn-voltar,
+.btn-proximo,
+.btn-confirmar {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-voltar {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.btn-proximo {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.btn-confirmar {
+  background-color: #10b981;
+  color: #fff;
+}
+
+.btn-voltar:hover {
+  background-color: #d1d5db;
+}
+
+.btn-proximo:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-confirmar:hover {
+  background-color: #059669;
+}
+
+/* 🔲 Botões de Seleção do Tipo de Negócio */
+.tipo-negocio-container, .subtipo-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tipo-negocio-btn, .subtipo-btn {
+  padding: 8px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.tipo-negocio-btn:hover, .subtipo-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.tipo-negocio-btn.ativo, .subtipo-btn.ativo {
+  background-color: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.error-message {
+  background-color: #ffdddd;
+  color: #d8000c;
+  border-left: 5px solid #d8000c;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+
+/* 📏 Responsividade */
+@media (max-width: 500px) {
+  .configurador-container {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .btn-voltar, .btn-proximo, .btn-confirmar {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}

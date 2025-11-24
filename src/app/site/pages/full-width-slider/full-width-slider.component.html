@@ -1,0 +1,6 @@
+<div class="full-width-image">
+  <img *ngFor="let slide of slides; let i = index" [src]="slide.image" [class.active]="i === currentIndex" class="slide"
+    alt="Imagem dinâmica">
+
+ 
+</div>

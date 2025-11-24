@@ -1,0 +1,175 @@
+<form [formGroup]="produtoForm" class="produto-form">
+  <!-- IDENTIFICAÇÃO -->
+  <section class="card">
+    <h2>Identificação</h2>
+
+    <div class="linha">
+      <div class="field third">
+        <label for="codigo">Código *</label>
+        <input id="codigo" pInputText formControlName="codigo" autocomplete="off" />
+        <small class="erro" *ngIf="isInvalid('codigo')">Informe o código.</small>
+      </div>
+
+      <div class="field third">
+        <label for="codigoBarras">Código de Barras</label>
+        <input id="codigoBarras" pInputText formControlName="codigoBarras" />
+      </div>
+
+      <div class="field third">
+        <label for="ativo">Status</label>
+        <p-dropdown id="ativo" formControlName="ativo"
+          [options]="[{label:'Ativo',value:true},{label:'Inativo',value:false}]"></p-dropdown>
+      </div>
+    </div>
+
+    <div class="linha">
+      <div class="field half">
+        <label for="descricao">Descrição *</label>
+        <input id="descricao" pInputText formControlName="descricao"
+               placeholder="Ex: iPhone 12 128GB Preto / Ar-Condicionado Split 9000 BTU" />
+        <small class="erro" *ngIf="isInvalid('descricao')">Informe a descrição.</small>
+      </div>
+
+      <div class="field third">
+        <label for="categoria">Categoria *</label>
+        <p-dropdown id="categoria" formControlName="categoria" [options]="categorias"
+                    optionLabel="label" optionValue="value" placeholder="Selecione"></p-dropdown>
+        <small class="erro" *ngIf="isInvalid('categoria')">Selecione a categoria.</small>
+      </div>
+    </div>
+
+    <div class="linha">
+      <div class="field third">
+        <label for="marca">Marca</label>
+        <input id="marca" pInputText formControlName="marca" placeholder="Ex: Apple, Samsung, LG" />
+      </div>
+
+      <div class="field third">
+        <label for="modelo">Modelo</label>
+        <input id="modelo" pInputText formControlName="modelo" placeholder="Ex: A2403, AS09, RT38" />
+      </div>
+
+      <div class="field third">
+        <label for="referencia">Referência</label>
+        <input id="referencia" pInputText formControlName="referencia" />
+      </div>
+    </div>
+
+    <div class="linha">
+      <div class="field third">
+        <label for="exigeSerie">Exige Nº de Série / IMEI?</label>
+        <p-dropdown id="exigeSerie" formControlName="exigeSerie"
+                    [options]="[{label:'Sim',value:true},{label:'Não',value:false}]"></p-dropdown>
+      </div>
+
+      <div class="field half" *ngIf="produtoForm.get('exigeSerie')?.value">
+        <label for="numeroSerie">Nº de Série / IMEI</label>
+        <input id="numeroSerie" pInputText formControlName="numeroSerie" />
+      </div>
+    </div>
+  </section>
+
+  <!-- PREÇOS E ESTOQUE -->
+  <section class="card">
+    <h2>Preço & Estoque</h2>
+
+    <div class="linha">
+      <div class="field third">
+        <label for="precoCompra">Preço de Compra</label>
+        <input id="precoCompra" pInputText formControlName="precoCompra"
+               (blur)="formatarMoeda('precoCompra')" placeholder="0,00" />
+      </div>
+
+      <div class="field third">
+        <label for="precoVenda">Preço de Venda</label>
+        <input id="precoVenda" pInputText formControlName="precoVenda"
+               (blur)="formatarMoeda('precoVenda')" placeholder="0,00" />
+      </div>
+
+      <div class="field third">
+        <label for="estoqueAtual">Estoque Atual</label>
+        <input id="estoqueAtual" type="number" pInputText formControlName="estoqueAtual" min="0" />
+      </div>
+    </div>
+
+    <div class="linha">
+      <div class="field third">
+        <label for="estoqueMinimo">Estoque Mínimo</label>
+        <input id="estoqueMinimo" type="number" pInputText formControlName="estoqueMinimo" min="0" />
+      </div>
+
+      <div class="field half">
+        <label for="localizacaoEstoque">Localização no Estoque</label>
+        <input id="localizacaoEstoque" pInputText formControlName="localizacaoEstoque" placeholder="Ex: Prateleira A3" />
+      </div>
+    </div>
+  </section>
+
+  <!-- DIMENSÕES (OPCIONAL) -->
+  <section class="card">
+    <h2>Dimensões & Peso (opcional)</h2>
+    <div class="linha">
+      <div class="field third">
+        <label for="altura">Altura (cm)</label>
+        <input id="altura" type="number" pInputText formControlName="altura" min="0" step="0.01" />
+      </div>
+      <div class="field third">
+        <label for="largura">Largura (cm)</label>
+        <input id="largura" type="number" pInputText formControlName="largura" min="0" step="0.01" />
+      </div>
+      <div class="field third">
+        <label for="profundidade">Profundidade (cm)</label>
+        <input id="profundidade" type="number" pInputText formControlName="profundidade" min="0" step="0.01" />
+      </div>
+    </div>
+    <div class="linha">
+      <div class="field third">
+        <label for="pesoLiquido">Peso Líquido (kg)</label>
+        <input id="pesoLiquido" type="number" pInputText formControlName="pesoLiquido" min="0" step="0.01" />
+      </div>
+      <div class="field third">
+        <label for="pesoBruto">Peso Bruto (kg)</label>
+        <input id="pesoBruto" type="number" pInputText formControlName="pesoBruto" min="0" step="0.01" />
+      </div>
+    </div>
+  </section>
+
+  <!-- DESCRIÇÕES -->
+  <section class="card">
+    <h2>Descrições</h2>
+    <div class="field">
+      <label for="descricaoPublica">Descrição Pública</label>
+      <textarea id="descricaoPublica" pInputTextarea rows="3" formControlName="descricaoPublica"
+                placeholder="Texto visível para NF/cliente/loja."></textarea>
+    </div>
+
+    <div class="field">
+      <label for="observacoesInternas">Observações Internas</label>
+      <textarea id="observacoesInternas" pInputTextarea rows="3" formControlName="observacoesInternas"
+                placeholder="Notas internas, peças comuns, particularidades."></textarea>
+    </div>
+  </section>
+
+  <!-- ANEXOS -->
+  <section class="card">
+    <h2>Anexos</h2>
+    <div class="linha">
+      <div class="field half">
+        <label for="imagemPrincipal">Imagem Principal</label>
+        <input id="imagemPrincipal" type="file" accept="image/*" (change)="onUploadImagem($event)" />
+      </div>
+      <div class="field half">
+        <label for="fichaTecnica">Ficha Técnica (PDF)</label>
+        <input id="fichaTecnica" type="file" accept=".pdf" (change)="onUploadFicha($event)" />
+      </div>
+    </div>
+  </section>
+
+  <!-- AÇÕES -->
+  <div class="acoes">
+    <button pButton type="button" label="Salvar" icon="pi pi-check"
+            (click)="onSalvar()" [disabled]="produtoForm.invalid"></button>
+    <button pButton type="button" label="Limpar" icon="pi pi-refresh"
+            class="p-button-secondary" (click)="onLimpar()"></button>
+  </div>
+</form>

@@ -1,0 +1,78 @@
+<div class="conteudo">
+  
+  <div class="titulo-tela">
+    <span class="texto-tela">{{ tituloTela }}</span>
+    <button type="button" routerLink="/area-restrita/" class="btn-fechar">X</button>
+  </div>
+
+
+
+  <!-- Painel padrão: só aparece se NÃO for Proposta OS -->
+  <div class="painel-botoes" *ngIf="!isPropostaOS && !isMeuCadastro">
+     <!-- Botões de navegação -->
+  <button class="btn navegar" (click)="onPrimeiro()">
+    <img src="assets/icons/primeiro.png" alt="PRIMEIRO" style="width:25px; height:25px;">
+  </button>
+  <button class="btn navegar" (click)="onAnterior()">
+    <img src="assets/icons/voltar.png" alt="VOLTAR" style="width:25px; height:25px;">
+  </button>
+  <button class="btn navegar" (click)="onProximo()">
+     <img src="assets/icons/avancar.png" alt="AVANCAR" style="width:25px; height:25px;">
+  </button>
+  <button class="btn navegar" (click)="onUltimo()">
+  <img src="assets/icons/ultimo.png" alt="ULTIMO" style="width:25px; height:25px;">
+  </button>
+    <button class="btn novo" (click)="onNovo()">
+         <img src="assets/icons/mais.png" alt="NOVO" style="width:25px; height:25px;">
+    </button>
+    <button class="btn salvar" (click)="onSalvar()">
+       <img src="assets/icons/save.png" alt="SAVE" style="width:25px; height:25px;">
+    </button>
+    <button class="btn excluir" (click)="onExcluir()">
+          <img src="assets/icons/bin.png" alt="EXCLUIR" style="width:25px; height:25px;">
+    </button>
+    <button class="btn pesquisar" (click)="onPesquisar()">
+      <img src="assets/icons/search.png" alt="SEARCH" style="width:25px; height:25px;">
+    </button>
+    <button class="btn imprimir" (click)="onImprimir()">
+          <img src="assets/icons/printer.png" alt="PRINTER" style="width:25px; height:25px;">
+    </button>
+  </div>
+
+  <!-- Botões da Proposta OS: só aparece se for Proposta OS -->
+  <!-- Botões da Proposta OS -->
+<div class="painel-botoes" *ngIf="isPropostaOS">
+  <button type="button" (click)="onGerarPDF()">
+    <img src="assets/icons/pdf-icon.png" alt="PDF" style="width:25px; height:25px;">
+  </button>
+  <button type="button" (click)="onGerarPDF()">
+   <img src="assets/icons/search.png" alt="PDF" style="width:25px; height:25px;">
+  </button>
+  <button type="button" (click)="onWhatsApp()">
+    <img src="assets/icons/whatsapp.png" alt="PDF" style="width:25px; height:25px;">
+  </button>
+  <button type="button" (click)="onSalvarLead()">
+    <img src="assets/icons/save.png" alt="SAVE" style="width:25px; height:25px;">
+  </button>
+  <button type="button" (click)="onConfigurar()">
+    <img src="assets/icons/settings.png" alt="PDF" style="width:25px; height:25px;">
+  </button>
+</div>
+
+    <div class="painel-botoes" *ngIf="!isPropostaOS && isMeuCadastro">
+    
+    <button class="btn salvar" (click)="onSalvar()">
+      <img src="assets/icons/save.png" alt="SAVE" style="width:25px; height:25px;">
+    </button>
+   
+    <button class="btn imprimir" (click)="onImprimir()">
+    <img src="assets/icons/printer.png" alt="SAVE" style="width:25px; height:25px;">
+    </button>
+  </div>
+
+  <div class="conteudo-scroll">
+    <router-outlet></router-outlet>
+    <div class="area-mensagem"></div>
+  </div>
+
+</div>

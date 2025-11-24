@@ -1,0 +1,109 @@
+<div class="page-container">
+
+  <!-- CARD: Formulário -->
+  <section class="card">
+    <h2>{{ editandoId ? 'Editar matéria' : 'Cadastrar matéria' }}</h2>
+
+    <form [formGroup]="form" (ngSubmit)="salvar()">
+      <div class="form-group">
+        <label for="nome">Nome da matéria</label>
+        <input
+          id="nome"
+          type="text"
+          class="input-text"
+          formControlName="nome"
+          placeholder="Ex: Direito Penal, Português, Informática..."
+        />
+        <div class="erro" *ngIf="campoInvalido('nome')">
+          Informe o nome da matéria (máx. 100 caracteres).
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="descricao">Descrição (opcional)</label>
+        <textarea
+          id="descricao"
+          class="input-text"
+          formControlName="descricao"
+          rows="2"
+          placeholder="Use para anotações gerais, se quiser."
+        ></textarea>
+      </div>
+
+      <div class="form-group inline">
+        <label>
+          <input type="checkbox" formControlName="ativo" />
+          Ativo
+        </label>
+      </div>
+
+      <div class="botoes-form">
+        <button type="submit" class="btn btn-primario" [disabled]="salvando">
+          {{ editandoId ? 'Salvar alterações' : 'Salvar matéria' }}
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-secundario"
+          *ngIf="editandoId"
+          (click)="cancelarEdicao()"
+        >
+          Cancelar edição
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- CARD: Listagem -->
+  <section class="card">
+    <h2>Matérias cadastradas</h2>
+
+    <div class="filtro-container">
+      <input
+        class="filtro-input"
+        type="text"
+        [(ngModel)]="filtroNome"
+        placeholder="Filtrar por nome da matéria"
+      />
+      <button class="btn btn-secundario" (click)="aplicarFiltro()">Filtrar</button>
+      <button class="btn btn-terciario" (click)="limparFiltro()">Limpar</button>
+    </div>
+
+    <div *ngIf="carregandoLista">Carregando...</div>
+
+    <table class="tabela" *ngIf="!carregandoLista && materias.length > 0">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Status</th>
+          <th class="col-acoes">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of materias">
+          <td>{{ m.nome }}</td>
+          <td>{{ m.descricao }}</td>
+          <td>
+            <span [class.badge-ativo]="m.ativo" [class.badge-inativo]="!m.ativo">
+              {{ m.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <td class="col-acoes">
+            <button class="btn-icone btn-editar" (click)="editar(m)" title="Editar">
+              ✏️
+            </button>
+            <button class="btn-icone btn-excluir" (click)="excluir(m)" title="Excluir">
+              🗑
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="!carregandoLista && materias.length === 0">
+      Nenhuma matéria cadastrada ainda.
+    </div>
+  </section>
+
+</div>

@@ -1,0 +1,56 @@
+<div class="main">
+
+  <div class="topo-login-site">
+
+    <div class="nome-site-topo-login">
+      <img class="logo" src="assets/img/logo/aprovavc.png" alt="Logo" style="margin-right: 10px;">
+      <a routerLink="/home">
+        
+        <h1>
+
+          <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">Dynamo</span>
+          <span style="color: #79b8ea; font-weight: 400; letter-spacing: 0.5px;">Soft</span>
+        </h1>
+
+      </a>
+      
+    </div>
+  </div>
+  <div class="painel">
+
+    <div class="container">
+
+      <a routerLink="/home">Voltar</a>
+
+      <div class="boas-vindas">
+        Olá! Você já possui uma conta?
+        Digite o seu e-mail e senha:
+      </div>
+
+
+      <form (ngSubmit)="login()">
+        <input type="email" placeholder="Email" [(ngModel)]="email" name="email" required />
+        <input type="password" placeholder="Senha" [(ngModel)]="password" name="password" required />
+        <div *ngIf="mensagem" class="success-message">
+          {{mensagem}}
+        </div>
+        <button type="submit">LOGIN</button>
+      </form>
+
+
+
+      <!-- Mensagem de erro -->
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+      <p> <a routerLink="/recuperar-senha">ESQUECEU A SENHA?</a></p>
+
+      <div>
+        <p>Ainda não tem uma conta?</p>
+        <p class="cadastro-link"><a routerLink="/configurador">CADASTRE-SE AQUI</a></p>
+      </div>
+
+
+
+
+    </div>

@@ -1,0 +1,32 @@
+<div class="planner-container">
+ 
+  <div class="navigation">
+    <button mat-button (click)="navegarMes(-1)">Anterior</button>
+    <span>{{ mesAtual | date: 'MMMM yyyy' }}</span>
+    <button mat-button (click)="navegarMes(1)">Próximo</button>
+  </div>
+
+  <table mat-table [dataSource]="dias" class="mat-elevation-z8">
+    <ng-container matColumnDef="dia">
+      <th mat-header-cell *matHeaderCellDef> Dia </th>
+      <td mat-cell *matCellDef="let dia">
+        <div>{{ dia.data | date: 'dd/MM/yyyy' }}</div>
+        <div class="dia-semana">{{ dia.data | date: 'EEEE' | titlecase }}</div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="eventos">
+      <th mat-header-cell *matHeaderCellDef> Eventos </th>
+      <td mat-cell *matCellDef="let dia">
+        <div class="eventos-container">
+          <div *ngFor="let evento of dia.eventos" class="evento">
+            <span>{{ evento.title }}</span>
+          </div>
+        </div>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>

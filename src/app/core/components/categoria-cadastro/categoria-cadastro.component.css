@@ -1,0 +1,54 @@
+.modo-consulta input,
+.modo-consulta textarea {
+  background-color: #ffff99 !important;
+}
+
+:host ::ng-deep .modo-consulta .p-dropdown,
+.modo-consulta-select {
+  background-color: #ffff99 !important;
+  border-left: 3px solid #007bff !important;
+}
+.subcategorias-container {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  .subcategorias-container label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+  }
+  
+  .subcategoria-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .subcategoria-item input {
+    flex: 1;
+  }
+  
+  .subcategoria-item button {
+    min-width: 40px;
+    height: 40px;
+  }
+  
+  button[label="Adicionar Subcategoria"] {
+    margin-top: 1rem;
+  }
+  .conteudo{
+  padding: 20px 20px 20px 20px;
+  background: white;
+  width: 100%;
+  height: 72.3dvh; /* Corrige o estouro */
+   position: relative;
+   overflow: hidden; /* Barra só quando o conteúdo ultrapassar */
+   
+  
+}

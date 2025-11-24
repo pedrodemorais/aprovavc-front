@@ -1,0 +1,14 @@
+.logo{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90dvw;
+    height: 82dvh;
+
+}
+.logo img{
+    width: 20dvw;
+    height: auto;
+    opacity: 0.2; /* 0.0 (totalmente transparente) a 1.0 (totalmente visível) */
+    
+}

@@ -1,0 +1,178 @@
+.assine-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 50px 20px;
+    background: #f9f9f9;
+}
+
+
+.main {
+   
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-top: -5rem;
+}
+
+/* Título principal */
+.headline h1 {
+    font-size: 2rem;
+    color: #003d82;
+    margin-bottom: 10px;
+}
+
+.headline p {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+/* Benefícios */
+.benefits h2 {
+    font-size: 1.5rem;
+    margin-top: 20px;
+    color: #007bff;
+}
+
+.benefits ul {
+    list-style: none;
+    text-align: left;
+    margin: 20px auto;
+    max-width: 800px;
+    padding: 0;
+    color: #666;
+}
+
+.benefits li {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Preço e CTA */
+.preco {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-top: 20px;
+}
+.call-to-action{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+.btn-assine {
+    background: #003d82;
+    color: white;
+    border: none;
+    padding: 15px;
+    width: 100%;
+    max-width: 300px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+    margin-top: 10px;
+}
+
+.btn-assine:hover {
+    background: #0056b3;
+}
+
+.garantia {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 10px;
+}
+@media (max-width: 768px) {
+.assine-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 50px 20px;
+    background: #f9f9f9;
+}
+
+.main {
+   
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-top: -10rem;
+}
+
+/* Título principal */
+.headline h1 {
+    font-size: 1rem;
+    color: #003d82;
+    margin-bottom: 10px;
+}
+
+.headline p {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Benefícios */
+.benefits h2 {
+    font-size: 1rem;
+    margin-top: 20px;
+    color: #007bff;
+}
+
+.benefits ul {
+    list-style: none;
+    text-align: left;
+    margin: 20px auto;
+    max-width: 800px;
+    padding: 0;
+}
+
+.benefits li {
+    font-size: 0.7rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Preço e CTA */
+.preco {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-top: 20px;
+}
+
+.btn-assine {
+
+    padding: 10px;
+    width: 100%;
+    max-width: 200px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+    margin-top: 10px;
+}
+
+.btn-assine:hover {
+    background: #0056b3;
+}
+
+.garantia {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 10px;
+}
+
+}

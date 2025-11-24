@@ -1,0 +1,811 @@
+<div class="tela-transparente">
+
+
+  <p-table #table *ngIf="listaProdutos && listaProdutos.length > 0" [value]="listaProdutos" selectionMode="single"
+    [(selection)]="produtoSelecionado" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5, 10, 20]"
+    responsiveLayout="scroll" [resizableColumns]="true" [reorderableColumns]="true" [showCurrentPageReport]="true"
+    currentPageReportTemplate="Exibindo {first} a {last} de {totalRecords} produtos"
+    [globalFilterFields]="['codigo', 'descricao', 'categoria', 'marca']" [sortField]="'descricao'" [sortOrder]="1">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="codigo">Código <p-sortIcon field="codigo"></p-sortIcon></th>
+        <th pSortableColumn="descricao">Descrição <p-sortIcon field="descricao"></p-sortIcon></th>
+        <th pSortableColumn="categoria">Categoria <p-sortIcon field="categoria"></p-sortIcon></th>
+        <th pSortableColumn="marca">Marca <p-sortIcon field="marca"></p-sortIcon></th>
+        <th pSortableColumn="unidade">Estoque <p-sortIcon field="unidade"></p-sortIcon></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-produto>
+      <tr (click)="selecionarProduto(produto)" style="cursor: pointer;">
+        <td>{{ produto.codigo }}</td>
+        <td>{{ produto.descricao }}</td>
+        <td>{{ getNomeCategoria(produto) }}</td>
+        <td>{{ getNomeMarca(produto) }}</td>
+        <td>{{ produto.unidade }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="text-center">Nenhum produto encontrado.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+
+  <div *ngIf="!exibirTabelaPesquisa">
+    <form [formGroup]="produtoForm">
+      <div class="cabecalho">
+
+        <div class="linha">
+          <div class="field campo-pequeno"
+            [ngClass]="{'modo-consulta': isModoConsulta,'borda-consulta': isModoConsulta}">
+
+            <label for="codigo">Código </label>
+            <input id="codigo" type="text" pInputText formControlName="codigo" />
+
+          </div>
+
+          <div class="field campo-pequeno"
+            [ngClass]="{'modo-consulta': isModoConsulta,'borda-consulta': isModoConsulta}">
+
+            <label for="codigoProprio">Cód. Própio </label>
+            <input id="codigoProprio" type="text" pInputText formControlName="codigoProprio" #codigoInput />
+
+          </div>
+
+
+          <div class="field" [ngClass]="{'modo-consulta': isModoConsulta,'borda-consulta': isModoConsulta}">
+            <label for="descricao">Descrição</label>
+            <input id="descricao" type="text" pInputText formControlName="descricao" #descricaoInput />
+          </div>
+        </div>
+
+        <div class="linha">
+
+          <!-- CATEGORIA -->
+          <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+            <label for="categoria">Categoria</label>
+            <p-dropdown formControlName="categoria" [options]="categorias" optionLabel="nome"
+              placeholder="Selecione a categoria" [filter]="true" [style]="{ width: '100%' }"
+              (onChange)="carregarSubcategorias($event.value)">
+            </p-dropdown>
+          </div>
+
+          <!-- SUBCATEGORIA -->
+          <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+            <label for="subCategorias">Subcategoria</label>
+
+            <p-dropdown formControlName="subCategoria" [options]="subCategorias" optionLabel="nome"
+              placeholder="Selecione a subcategoria" [filter]="true" [style]="{ width: '100%' }">
+            </p-dropdown>
+          </div>
+
+
+
+          <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+            <label for="marcaId">Marca</label>
+            <p-dropdown formControlName="marcaId" [options]="marcas" optionLabel="nome" optionValue="id"
+              placeholder="Selecione a Marca" [filter]="true" [style]="{ width: '100%' }" (onShow)="carregarMarcas()">
+            </p-dropdown>
+
+          </div>
+
+
+          <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+            <label for="referencia">Referência</label>
+            <input id="referencia" type="text" pInputText formControlName="referencia" />
+          </div>
+
+        </div>
+      </div>
+    </form>
+    <div *ngIf="!exibirTabelaPesquisa">
+      <p-tabView>
+
+        <!-------------------------------------------------------------------- Aba GERAL ------------------------------------------------------- -->
+        <p-tabPanel header="Geral">
+
+          <form [formGroup]="produtoForm">
+            <div class="aba-geral">
+
+              <div class="linha">
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label>É kit?</label>
+                  <p-dropdown id="Kit" formControlName="kit" [options]="kit" placeholder="Selecione o tipo"
+                    class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label>É Fabricação Própria?</label>
+                  <p-dropdown #fabricaDropdown id="fabricacaoPropria" formControlName="fabricacaoPropria"
+                    [options]="fabricacaoPropria" placeholder="Selecione o tipo" class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label>É insumo?</label>
+                  <p-dropdown id="insumo" formControlName="insumo" [options]="insumo" placeholder="Selecione"
+                    class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+
+
+
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label for="ativo">Status</label>
+
+                  <p-dropdown id="ativo" formControlName="ativo" [options]="ativo" class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+
+              </div> <!--FIM LINHA-->
+
+              <div class="linha">
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label>É um itém de venda?</label>
+                  <p-dropdown id="itemDeVenda" formControlName="itemDeVenda" [options]="itemDeVenda"
+                    placeholder="Selecione o tipo" class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label>Calcula Estoque?</label>
+                  <p-dropdown id="calculaEstoque" formControlName="calculaEstoque" [options]="calculaEstoque"
+                    placeholder="Selecione o tipo" class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label>Utiliza Tamanho/Cor?</label>
+                  <p-dropdown id="utilizaVariacao" formControlName="utilizaVariacao" [options]="utilizaVariacao"
+                    placeholder="Selecione" class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+
+                <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                  <label>Mostrar na loja virtual?</label>
+                  <p-dropdown id="mostrarNaLojaVirtual" formControlName="mostrarNaLojaVirtual"
+                    [options]="mostrarNaLojaVirtual" placeholder="Selecione" class="field campo-pequeno">
+                  </p-dropdown>
+                </div>
+              </div>
+
+
+              <div>
+
+
+
+              </div>
+            </div>
+          </form>
+        </p-tabPanel>
+
+        <!-------ABA - PREÇOS E CUSTOS-->
+        <p-tabPanel header="Preços e Custos" *ngIf="!isModoConsulta ">
+          <form [formGroup]="produtoForm">
+            <div class="p-fluid">
+              <div class="linha">
+                <!-- Preço de compra -->
+                <div class="field quarter-width">
+                  <label for="precoCompra">Preço de Compra (Custo Unitário)</label>
+
+                  <input id="precoCompra" type="text" formControlName="precoCompra" thousandSeparator="."
+                    decimalMarker="," placeholder="0,00" class="input-valor" autocomplete="off"
+                    (blur)="formatarValor('precoCompra')" />
+
+                </div>
+
+                <!-- Preço de venda varejo e atacado -->
+                <div class="field quarter-width">
+                  <label for="precoVendaVarejo">Preço de Venda - Varejo</label>
+                  <div class="input-group">
+
+                    <input id="precoVendaVarejo" type="text" formControlName="precoVendaVarejo" thousandSeparator="."
+                      decimalMarker="," placeholder="0,00" class="input-valor" autocomplete="off"
+                      (blur)="formatarValor('precoVendaVarejo')" />
+                  </div>
+                </div>
+                <div class="field quarter-width">
+                  <label for="precoVendaAtacado">Preço de Venda - Atacado</label>
+                  <div class="input-group">
+
+                    <input id="precoVendaAtacado" type="text" formControlName="precoVendaAtacado" thousandSeparator="."
+                      decimalMarker="," placeholder="0,00" class="input-valor" autocomplete="off"
+                      (blur)="formatarValor('precoVendaAtacado')" />
+                  </div>
+                </div>
+
+
+              </div>
+              <div class="linha">
+                <!-- Preço promocional com data -->
+
+                <div class="field quarter-width">
+                  <label for="precoPromocional">Preço Promocional</label>
+
+                  <input id="precoPromocional" type="text" formControlName="precoPromocional" thousandSeparator="."
+                    decimalMarker="," placeholder="0,00" class="input-valor" autocomplete="off"
+                    (blur)="formatarValor('precoPromocional')" />
+                </div>
+
+                <div class="field quarter-width">
+                  <label for="dataInicioPromocao">Início Promoção</label>
+                  <input id="dataInicioPromocao" type="text" formControlName="dataInicioPromocao" mask="d0/M0/0000"
+                    placeholder="dd/mm/aaaa" class="calendario-promocao-input" autocomplete="off"
+                    (blur)="onCampoBlur('dataInicioPromocao')" />
+                  <span
+                    *ngIf="produtoForm.errors?.['dataInicioPromocao'] && produtoForm.get('dataInicioPromocao')?.touched"
+                    class="erro">
+                    {{ produtoForm.errors?.['dataInicioPromocao'] }}
+                  </span>
+
+                </div>
+
+                <div class="field quarter-width">
+                  <label for="dataFimPromocao">Fim Promoção</label>
+                  <input id="dataFimPromocao" type="text" formControlName="dataFimPromocao" mask="d0/M0/0000"
+                    placeholder="dd/mm/aaaa" class="calendario-promocao-input" autocomplete="off" />
+                  <div *ngIf="
+                      produtoForm.get('dataFimPromocao')?.touched &&
+                       produtoForm.errors?.['dataFimPromocao']
+                     " class="erro">
+                    {{ produtoForm.errors?.['dataFimPromocao'] }}
+                  </div>
+                </div>
+
+
+              </div>
+
+              <div class="linha">
+                <!-- Markup / Margem de lucro -->
+
+                <div class="field quarter-width">
+                  <label for="markup">Markup (%)</label>
+                  <input id="markup" type="number" pInputText formControlName="markup" />
+                </div>
+                <div class="field quarter-width">
+                  <label for="margemLucro">Margem de Lucro (%)</label>
+                  <input id="margemLucro" type="number" pInputText formControlName="margemLucro" />
+                </div>
+
+
+                <!-- Descontos permitidos -->
+                <div class="field quarter-width">
+                  <label for="descontoPermitido">Desconto Máximo Permitido (%)</label>
+                  <input id="descontoPermitido" type="number" pInputText formControlName="descontoPermitido" />
+                </div>
+              </div>
+
+            </div>
+          </form>
+        </p-tabPanel>
+
+        <!--ABA COMPOSIÇÃO-->
+        <p-tabPanel header="Composição" *ngIf="mostrarAbaComposicao && !isModoConsulta">
+          <form [formGroup]="produtoForm">
+            <div class="insumos">
+
+              <!-- INSUMOS: tabela PrimeNG mais enxuta -->
+              <div formArrayName="insumos">
+
+                <p-table [value]="insumosFA.controls" [paginator]="false" [showCurrentPageReport]="false"
+                  [responsiveLayout]="'scroll'" class="p-datatable-sm">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Cod</th>
+                      <th>Insumo</th>
+                      <th style="width:5rem">Un.</th>
+                      <th style="width:6rem">Qtd</th>
+                      <th style="width:8rem">Custo</th>
+                      <th style="width:3rem"></th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-grupo let-i="rowIndex">
+                    <tr [formGroupName]="i">
+                      <td>
+                        <div class="third-width">
+                          <span> {{ getCodigoInsumo(insumosFA.at(i).get('insumos')?.value) }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="field-tabela-composicao-insumos quarter-width">
+                          <p-dropdown [options]="getInsumos(i)" formControlName="insumos" optionLabel="descricao"
+                            optionValue="id" optionDisabled="disabled" placeholder="Selecione" [filter]="true"
+                            [autoZIndex]="true" [baseZIndex]="10000" appendTo="body" [style]="{ width: '100%' }"
+                            (onChange)="atualizarCustoInsumo(i)"></p-dropdown>
+                        </div>
+                      </td>
+                      <td>
+                        <span>{{ getUnidadeSigla(insumosFA.at(i).get('insumos')?.value) }}</span>
+                      </td>
+                      <td>
+                        <div class="field-tabela-composicao-insumos quarter-width">
+                          <input pInputText type="text" formControlName="quantidade" inputmode="numeric"
+                            pattern="^[1-9]\d*$" title="Informe um número inteiro maior que zero" />
+
+                        </div>
+                      </td>
+                      <td>
+                        <div class="field-tabela-composicao-insumos quarter-width">
+                          <span class="valor-custo">{{ insumosFA.at(i).get('custo')?.value | currency:'BRL' }}</span>
+                        </div>
+
+                      </td>
+                      <td class="p-text-center">
+                        <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-sm"
+                          (click)="removerInsumo(i)"></button>
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+
+              </div>
+
+              <div class="rodape-insumos">
+
+                <div class="botao-adicionar">
+                  <!-- BOTÃO DE ADICIONAR INSUMOS -->
+                  <div class="p-mb-4">
+                    <button pButton type="button" icon="pi pi-plus" label="Adicionar insumo"
+                      class="p-button-outlined p-button-sm" (click)="adicionarInsumo()"></button>
+                  </div>
+                </div>
+                <div class="valor-total"></div>
+                <div class="p-col-12 p-md-4 p-d-flex p-ai-center">
+                  <strong class="p-mr-2">Custo Total:</strong>
+                  {{ calcularTotalCusto() | currency:'BRL' }}
+                </div>
+              </div>
+
+
+              <div class="linha-custos">
+
+                <!-- RESUMO CUSTOS EM GRID -->
+                <div class="linha">
+                  <!-- Markup / Margem de lucro -->
+                  <div class="field quarter-width">
+                    <strong class="p-mr-2">Rendimento:</strong>
+                    <input pInputText type="number" formControlName="rendimento" inputmode="numeric" />
+
+                  </div>
+
+                  <div class="field quarter-width">
+                    <strong class="p-mr-2">Custo/Unid:</strong>
+                    <div class="custo-unidade">
+                      {{ calcularCustoPorUnidade() | currency:'BRL' }}
+                    </div>
+                  </div>
+
+
+                  <div class="field quarter-width">
+                    <strong for="markup">Markup (%)</strong>
+                    <input id="markup" type="number" pInputText formControlName="markup" min="0" step="0.01" />
+                  </div>
+
+                  <div class="field quarter-width">
+                    <strong for="margemLucro">Margem de Lucro (%)</strong>
+                    <input id="margemLucro" type="number" pInputText formControlName="margemLucro" min="0"
+                      step="0.01" />
+                  </div>
+
+
+                  <div class="field quarter-width">
+                    <strong for="valorVenda">Valor de Venda / Unid.</strong>
+                    <input id="valorVenda" type="number" pInputText formControlName="valorVenda" thousandSeparator="."
+                      decimalMarker="," placeholder="0,00" class="input-valor" autocomplete="off"
+                      (blur)="formatarValor('precoPromocional')" />
+                  </div>
+
+                </div>
+
+
+
+
+
+
+
+
+                <div class="p-col-6 p-d-flex p-ai-center p-mt-2">
+                  <strong [ngClass]="{ 'text-prejuizo': lucroUnitario < 0, 'text-lucro': lucroUnitario >= 0 }"
+                    class="p-mr-2">
+                    {{ labelUnitario }}:
+                  </strong>
+                  {{ lucroUnitario | currency:'BRL' }}
+                </div>
+                <div class="p-col-6 p-d-flex p-ai-center p-mt-2">
+                  <strong [ngClass]="{ 'text-prejuizo': lucroPercentual < 0, 'text-lucro': lucroPercentual >= 0 }"
+                    class="p-mr-2">
+                    {{ labelPercentual }}:
+                  </strong>
+                  {{ lucroPercentual | percent:'1.2-2' }}
+                </div>
+                <div class="p-col-12 p-d-flex p-ai-center p-mt-2">
+                  <strong [ngClass]="{ 'text-prejuizo': lucroTotal < 0, 'text-lucro': lucroTotal >= 0 }" class="p-mr-2">
+                    {{ labelTotal }}:
+                  </strong>
+                  {{ lucroTotal | currency:'BRL' }}
+                </div>
+
+              </div>
+            </div>
+
+          </form>
+        </p-tabPanel>
+
+
+        <!--ABA VARIAÇÕES/GRADE --->
+        
+<p-tabPanel header="Variações/Grade" *ngIf="mostrarAbaVariacoes && !isModoConsulta">
+  <div class="p-fluid">
+    <div class="grade-variacoes">
+      <h3>Grade: {{ nomeVariacao1 || 'Var.1' }} × {{ nomeVariacao2 || 'Var.2' }}</h3>
+
+      <!-- Nomes dos eixos -->
+      <div class="linha-variacoes">
+        <div class="campo">
+          <label>Nome da Variação 1</label>
+          <input type="text" pInputText [(ngModel)]="nomeVariacao1" placeholder="Ex: Tamanho" />
+        </div>
+        <div class="campo">
+          <label>Nome da Variação 2</label>
+          <input type="text" pInputText [(ngModel)]="nomeVariacao2" placeholder="Ex: Cor" />
+        </div>
+      </div>
+
+      <!-- Opções de cada variação -->
+      <div class="linha-variacoes">
+        <div class="campo">
+          <label>Opções {{ nomeVariacao1 || 'Var.1' }}</label>
+          <div class="p-inputgroup">
+            <input type="text" [(ngModel)]="novaOpcao1" name="novaOpcao1" />
+            <button pButton type="button" icon="pi pi-plus" (click)="addOpcao1()"></button>
+          </div>
+          <p-chip *ngFor="let opc of opcoes1; let i = index" [label]="opc" (onRemove)="removerOpcao1(i)"></p-chip>
+        </div>
+
+        <div class="campo">
+          <label>Opções {{ nomeVariacao2 || 'Var.2' }}</label>
+          <div class="p-inputgroup">
+            <input type="text" pInputText [(ngModel)]="novaOpcao2" placeholder="Ex: Azul, Vermelho" />
+            <button pButton icon="pi pi-plus" (click)="addOpcao2()"></button>
+          </div>
+          <p-chip *ngFor="let opc of opcoes2; let i = index" [label]="opc" (onRemove)="removerOpcao2(i)"></p-chip>
+        </div>
+      </div>
+
+      <!-- Botão de gerar combinações -->
+      <div class="botao-gerar">
+        <button pButton label="Gerar Combinações" icon="pi pi-th-large" (click)="gerarCombinacoes()"
+          [disabled]="!opcoes1.length || !opcoes2.length">
+        </button>
+      </div>
+
+      <!-- Tabela com as variações -->
+      <p-table [value]="variacoes" class="p-datatable-sm" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>{{ nomeVariacao1 || 'Var.1' }}</th>
+            <th>{{ nomeVariacao2 || 'Var.2' }}</th>
+            <th>Descrição</th>
+            <th>Preço</th>
+            <th>Estoque</th>
+            <th>Peso</th>
+            <th>Altura</th>
+            <th>Largura</th>
+            <th>Comprimento</th>
+            <th>Ativo</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-variacao let-i="rowIndex">
+          <tr>
+            <td>{{ variacao.variacao1 }}</td>
+            <td>{{ variacao.variacao2 }}</td>
+            <td><input pInputText [(ngModel)]="variacao.descricao" /></td>
+            <td><input type="number" pInputText [(ngModel)]="variacao.preco" /></td>
+            <td><input type="number" pInputText [(ngModel)]="variacao.estoque" /></td>
+            <td><input type="number" pInputText [(ngModel)]="variacao.peso" /></td>
+            <td><input type="number" pInputText [(ngModel)]="variacao.altura" /></td>
+            <td><input type="number" pInputText [(ngModel)]="variacao.largura" /></td>
+            <td><input type="number" pInputText [(ngModel)]="variacao.comprimento" /></td>
+            <td>
+              <p-checkbox [(ngModel)]="variacao.ativo" binary="true"></p-checkbox>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</p-tabPanel>
+
+
+        <!--ABAS DADOS COMPLEMENTARES-->
+        <p-tabPanel header="Dados Complementares" *ngIf="!isModoConsulta">
+          <form [formGroup]="produtoForm">
+            <div class="p-fluid">
+
+              <!-- Observações internas -->
+              <div class="field">
+                <label for="observacoes">Observações Internas</label>
+                <textarea id="observacoes" pInputTextarea rows="3" formControlName="observacoesInternas"></textarea>
+              </div>
+
+              <!-- Texto descritivo para catálogo -->
+              <div class="field">
+                <label for="descricaoCatalogo">Descrição para Catálogo / E-commerce</label>
+                <textarea id="descricaoCatalogo" pInputTextarea rows="4" formControlName="descricaoPublica"></textarea>
+              </div>
+              <br>
+              <div class="separador"></div>
+              <br>
+              <div class="linha">
+                <!-- Peso bruto e líquido -->
+
+                <div class="field quarter-width">
+                  <label for="pesoBruto">Peso Bruto (kg)</label>
+                  <input id="pesoBruto" type="number" pInputText formControlName="pesoBruto" />
+                </div>
+
+                <div class="field quarter-width">
+                  <label for="pesoLiquido">Peso Líquido (kg)</label>
+                  <input id="pesoLiquido" type="number" pInputText formControlName="pesoLiquido" />
+                </div>
+
+
+                <!-- Dimensões -->
+
+                <div class="field quarter-width">
+                  <label for="largura">Largura (cm)</label>
+                  <input id="largura" type="number" pInputText formControlName="largura" />
+                </div>
+                <div class="field quarter-width">
+                  <label for="altura">Altura (cm)</label>
+                  <input id="altura" type="number" pInputText formControlName="altura" />
+                </div>
+                <div class="field quarter-width">
+                  <label for="profundidade">Profundidade (cm)</label>
+                  <input id="profundidade" type="number" pInputText formControlName="profundidade" />
+                </div>
+
+
+                <!-- Volume (m³) -->
+                <div class="field quarter-width">
+                  <label for="volume">Volume (m³)</label>
+                  <input id="volume" type="number" pInputText formControlName="volume" />
+                </div>
+
+
+
+              </div>
+              <br>
+              <div class="separador"></div>
+
+              <div class="linha">
+
+                <!-- Imagem principal -->
+                <br>
+                <br>
+                <div class="field">
+
+                  <label for="imagemPrincipal">Imagem Principal</label>
+                  <input id="imagemPrincipal" type="file" accept="image/*" (change)="enviarImagemPrincipal($event)" />
+                </div>
+
+
+                <!-- Ficha técnica -->
+                <div class="field">
+                  <label for="fichaTecnica">Ficha Técnica (PDF)</label>
+                  <input id="fichaTecnica" type="file" accept=".pdf" (change)="enviarFichaTecnica($event)" />
+                </div>
+
+              </div>
+            </div>
+          </form>
+        </p-tabPanel>
+
+        <!--ABA ESTOQUE-->
+        <p-tabPanel header="Estoque" *ngIf="!isModoConsulta && produtoForm">
+          <form [formGroup]="produtoForm">
+            <div class="linha">
+
+              <!-- Estoque Atual -->
+              <div class="field quarter-width">
+                <label for="estoqueAtual">Estoque Atual</label>
+                <input id="estoqueAtual" type="number" pInputText formControlName="estoqueAtual" readonly />
+              </div>
+              <!-- Estoque Mínimo -->
+              <div class="field quarter-width">
+                <label for="estoqueMinimo">Estoque Mínimo</label>
+                <input id="estoqueMinimo" type="number" pInputText formControlName="estoqueMinimo" />
+              </div>
+              <div class="field quarter-width">
+                <label for="estoqueMaximo">Estoque Máximo</label>
+                <input id="estoqueMaximo" type="number" pInputText formControlName="estoqueMaximo" />
+              </div>
+              <div class="field quarter-width">
+                <label for="localizacaoEstoque">Localização no Estoque</label>
+                <input id="localizacaoEstoque" type="text" pInputText formControlName="localizacaoEstoque" />
+              </div>
+            </div>
+
+
+            <!-- Produto perecível -->
+            <div class="linha">
+              <div class="field quarter-width">
+                <label for="produtoPerecivel">Produto Perecível?</label>
+                <p-dropdown id="produtoPerecivel" formControlName="produtoPerecivel"
+                  [options]="[ {label: 'Sim', value: true}, {label: 'Não', value: false} ]" placeholder="Selecione"
+                  class="field quarter-width">
+                </p-dropdown>
+              </div>
+
+              <!-- Controle por número de série -->
+              <div class="field quarter-width">
+                <label for="controlaSerie">Controle por Nº de Série?</label>
+                <p-dropdown id="controlaSerie" formControlName="controlaSerie"
+                  [options]="[ {label: 'Sim', value: true}, {label: 'Não', value: false} ]" placeholder="Selecione"
+                  class="field quarter-width">
+                </p-dropdown>
+              </div>
+
+
+              <div class="field quarter-width" *ngIf="produtoForm.get('produtoPerecivel')?.value">
+                <label for="controlaValidade">Controla Validade?</label>
+                <p-dropdown id="controlaValidade" formControlName="controlaValidade"
+                  [options]="[ {label: 'Sim', value: true}, {label: 'Não', value: false} ]" placeholder="Selecione"
+                  class="field quarter-width">
+                </p-dropdown>
+              </div>
+
+              <div class="field quarter-width" *ngIf="produtoForm.get('produtoPerecivel')?.value">
+                <label for="controlaLote">Controla Lote?</label>
+                <p-dropdown id="controlaLote" formControlName="controlaLote"
+                  [options]="[ {label: 'Sim', value: true}, {label: 'Não', value: false} ]" placeholder="Selecione"
+                  class="field quarter-width">
+                </p-dropdown>
+              </div>
+
+            </div>
+
+            <!-- Se for perecível, exibe controle de validade e lote -->
+            <div class="p-fluid">
+
+              <div class="linha">
+                <!-- Unidade principal de estoque -->
+                <div class="field quarter-width">
+                  <label for="unidadeEstoqueId">Unidade Principal de Estoque</label>
+                  <p-dropdown id="unidadeEstoqueId" formControlName="unidadeEstoqueId" [options]="unidades"
+                    optionLabel="sigla" optionValue="id" placeholder="Selecione a unidade">
+                  </p-dropdown>
+                </div>
+
+                <!-- Unidade de compra -->
+                <div class="field quarter-width">
+                  <label for="unidadeCompraId">Unidade de Compra</label>
+                  <p-dropdown id="unidadeCompraId" formControlName="unidadeCompraId" [options]="unidades"
+                    optionLabel="sigla" optionValue="id" placeholder="Selecione a unidade">
+                  </p-dropdown>
+                </div>
+
+
+              </div>
+              <div *ngIf="exibirConversao">
+                <h3 class="mt-4"><i class="pi pi-sliders-h"></i> Conversão de Unidades</h3>
+
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Nível</th>
+                      <th>Unidade</th>
+                      <th>Fator de Conversão</th>
+                      <th>Resultado</th>
+                      <th>Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody formArrayName="conversoes">
+                    <tr *ngFor="let conversao of conversoes.controls; let i = index" [formGroupName]="i">
+                      <td>{{ i + 1 }}</td>
+                      <td>
+                        <p-dropdown [options]="unidades" optionLabel="sigla" formControlName="unidade"
+                          placeholder="Selecione a unidade">
+                        </p-dropdown>
+
+
+                      </td>
+                      <td>
+                        <input type="number" pInputText formControlName="fatorConversao" />
+                      </td>
+                      <td>
+                        <span *ngIf="i > 0">{{ getResultadoConversao(i) }}</span>
+                      </td>
+                      <td>
+                        <button type="button" class="btn btn-danger btn-sm" (click)="removerConversao(i)"
+                          *ngIf="conversoes.length > 1">
+                          <i class="pi pi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="mt-2">
+                  <button type="button" class="btn btn-primary btn-sm" (click)="adicionarConversao()">
+                    <i class="pi pi-plus"></i> Adicionar Nível
+                  </button>
+                </div>
+              </div>
+
+
+            </div>
+
+
+          </form>
+        </p-tabPanel>
+
+
+        <!--ABA KIT-->
+        <p-tabPanel header="Composição de Kit" *ngIf="mostrarAbaKit && !isModoConsulta && produtoForm">
+          <form [formGroup]="produtoForm">
+
+
+          </form>
+        </p-tabPanel>
+
+        <p-tabPanel header="Fiscal/Tributação" *ngIf="false">
+          <form [formGroup]="produtoForm">
+            <div class="linha">
+
+              <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="ncm">NCM</label>
+                <input id="ncm" type="text" pInputText formControlName="ncm" placeholder="ex: 1234.56.78" />
+              </div>
+
+              <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="cfop">CFOP</label>
+                <input id="cfop" type="text" pInputText formControlName="cfop" placeholder="ex: 5102" />
+              </div>
+
+              <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="cest">CEST</label>
+                <input id="cest" type="text" pInputText formControlName="cest" />
+              </div>
+
+              <div class="field quarter-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="origem">Origem da Mercadoria</label>
+                <p-dropdown id="origem" formControlName="origem" [options]="origens" optionLabel="descricao"
+                  placeholder="Selecione" class="field campo-pequeno">
+                </p-dropdown>
+              </div>
+
+            </div>
+
+            <div class="linha">
+              <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="cst">CST/CSOSN</label>
+                <p-dropdown id="cst" formControlName="cst" [options]="cstList" optionLabel="descricao"
+                  placeholder="Selecione" class="field campo-pequeno">
+                </p-dropdown>
+              </div>
+
+              <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="aliquotaIcms">ICMS (%)</label>
+                <input id="aliquotaIcms" type="number" formControlName="aliquotaIcms" pInputText />
+              </div>
+
+              <div class="field third-width" [ngClass]="{'modo-consulta': isModoConsulta}">
+                <label for="aliquotaIpi">IPI (%)</label>
+                <input id="aliquotaIpi" type="number" formControlName="aliquotaIpi" pInputText />
+              </div>
+            </div>
+
+          </form>
+        </p-tabPanel>
+
+      </p-tabView>
+      <div class="alert-consulta" *ngIf="isModoConsulta">
+        🔍 Você está no modo de consulta. Preencha os campos para buscar registros.
+      </div>
+    </div>
+
+  </div>
+</div>

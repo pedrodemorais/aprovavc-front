@@ -1,0 +1,10 @@
+/* Apenas os estilos relacionados ao AppComponent */
+header {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+}
+
+html, body {
+  overflow-y: auto; /* ou remova qualquer overflow:hidden */
+}

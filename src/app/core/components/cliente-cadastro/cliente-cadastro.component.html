@@ -1,0 +1,270 @@
+<div class="conteudo">
+
+  <!-- LISTA DE PESQUISA INLINE -->
+  <div class="table-wrapper" *ngIf="exibirTabelaPesquisa">
+    <p-table
+      [value]="listaClientes"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 20, 50]"
+      [responsiveLayout]="'scroll'">
+
+      <!-- Título / contagem -->
+      <ng-template pTemplate="caption">
+        <div class="caption">
+          <span>Pesquisa de Clientes</span>
+          <small *ngIf="listaClientes?.length"> ({{ listaClientes.length }} resultados)</small>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nome</th>
+          <th>Cidade</th>
+          <th>UF</th>
+          <th>WhatsApp</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-cliente>
+        <tr (click)="onRowClick(cliente)" style="cursor:pointer;">
+          <td>{{ cliente?.nomeFantasia }}</td>
+          <td>{{ cliente?.endereco?.municipio?.municipioIbge }}</td>
+          <td>{{ cliente?.endereco?.municipio?.uf }}</td>
+          <td>{{ cliente?.whatsApp }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+<div *ngIf="!exibirTabelaPesquisa">
+  <form [formGroup]="clienteForm">
+
+
+    <div class="mensagem" *ngIf="mensagemStatus">{{ mensagemStatus }}</div>
+    <div class="form-section">
+
+
+
+      <div class="field third-width">
+        <div class="tipo-status">
+          <div>
+            <label for="tipoDePessoa">Tipo de Pessoa*</label>
+            <select id="tipoDePessoa" formControlName="tipoDePessoa"
+              [ngClass]="{'campo-invalido': clienteForm.get('tipoDePessoa')?.invalid && clienteForm.get('tipoDePessoa')?.touched}">
+              <option value="" disabled selected>Selecione o tipo</option>
+              <option *ngFor="let tipo of opcoesTipoDePessoa" [value]="tipo.value">
+                {{ tipo.label }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label for="ativo">Status</label>
+            <select id="ativo" formControlName="ativo">
+              <option value="" disabled selected>Selecione o status</option>
+              <option *ngFor="let item of ativo" [value]="item.value">
+                {{ item.label }}
+              </option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+      <small *ngIf="clienteForm.get('tipoDePessoa')?.invalid && clienteForm.get('tipoDePessoa')?.touched">
+        ⚠️ Campo obrigatório!
+      </small>
+
+      <div class="separador"></div>
+
+      <div>
+
+
+        <div class="field quart-width">
+          <label for="nomeFantasia">
+            {{ isPessoaJuridica ? 'Nome Fantasia*' : 'Nome*' }}
+          </label>
+          <input id="nomeFantasia" type="text" pInputText formControlName="nomeFantasia"
+            [ngClass]="{ 'campo-invalido': clienteForm.get('nomeFantasia')?.invalid && clienteForm.get('nomeFantasia')?.touched }" />
+          <small *ngIf="clienteForm.get('nomeFantasia')?.invalid && clienteForm.get('nomeFantasia')?.touched">
+            ⚠️ Campo obrigatório!
+          </small>
+
+        </div>
+
+
+        <!-- 🔹 SOMENTE EXIBE SE FOR PESSOA JURÍDICA -->
+        <div class="field quart-width" *ngIf="isPessoaJuridica">
+          <label for="razaoSocial">Razão Social</label>
+          <input id="razaoSocial" type="text" pInputText formControlName="razaoSocial" />
+
+
+        </div>
+        <div class="linha">
+
+
+
+          <div class="telefone">
+
+
+          </div>
+        </div>
+        <div class="telefone">
+          <div class="field half-width" *ngIf="!isPessoaJuridica">
+            <label for="dataNascimento">Data Nascimento</label>
+            <input id="dataNascimento" type="text" pInputText formControlName="dataNascimento" mask="00/00/0000"
+              placeholder="dd/mm/aaaa" />
+          </div>
+          <div class="field half-width" *ngIf="!isPessoaJuridica">
+            <label for="rg">RG</label>
+            <input id="documentoRgIe" type="text" pInputText formControlName="documentoRgIe" />
+          </div>
+
+          <div class="field half-width" *ngIf="!isPessoaJuridica">
+
+            <label for="documentoCpfCnpj">CPF</label>
+            <input id="documentoCpfCnpj" type="text" pInputText formControlName="documentoCpfCnpj"
+              [mask]="'000.000.000-00'" />
+
+          </div>
+
+          <div class="field half-width" *ngIf="isPessoaJuridica">
+
+            <label for="documentoCpfCnpj">CNPJ</label>
+            <input id="documentoCpfCnpj" type="text" pInputText formControlName="documentoCpfCnpj"
+              [mask]="'00.000.000/0000-00'" />
+
+          </div>
+
+
+          <div class="field half-width " *ngIf="isPessoaJuridica">
+            <label for="documentoRgIe">Inscrição Estadual</label>
+            <input id="documentoRgIe" type="text" pInputText formControlName="documentoRgIe" />
+          </div>
+
+        </div>
+
+
+
+
+
+        <div>
+          <div class="telefone">
+            <div class="field half-width ">
+              <label for="emai">Email</label>
+              <input id="email" type="text" pInputText formControlName="email" />
+            </div>
+            <div class="field half-width">
+              <label for="whatsApp">WhatsApp*</label>
+              <input id="whatsApp" type="text" pInputText formControlName="whatsApp"
+                [ngClass]="{'campo-invalido': clienteForm.errors?.['telefoneOuWhatsApp'] && clienteForm.touched}" />
+            </div>
+            <div class="field half-width">
+              <label for="telefone">Telefone</label>
+              <input id="telefone" type="text" pInputText formControlName="telefone"
+                [ngClass]="{'campo-invalido': clienteForm.errors?.['telefoneOuWhatsApp'] && clienteForm.touched}" />
+            </div>
+          </div>
+          <small class="mensagem-erro" *ngIf="clienteForm.errors?.['telefoneOuWhatsApp'] && clienteForm.touched">
+            ⚠️ Preencha pelo menos o WhatsApp ou o Telefone!
+          </small>
+        </div>
+
+
+
+
+
+
+        <div class="separador">Endereco:</div>
+        <div>
+          <div formGroupName="endereco">
+            <div class="linha">
+              <div class="field half-width">
+                <label for="logradouro">Logradouro</label>
+                <input id="logradouro" type="text" pInputText formControlName="logradouro" />
+              </div>
+
+
+              <div class="numero-complemento">
+
+
+                <div class="field half-width">
+                  <label for="complemento">Complemento</label>
+                  <input id="complemento" type="text" pInputText formControlName="complemento" />
+                </div>
+              </div>
+
+              <div class="field half-width">
+                <label for="bairro">Bairro</label>
+                <input id="bairro" type="text" pInputText formControlName="bairro" />
+              </div>
+            </div>
+
+
+
+            <div class="linha">
+
+              <div class="cidade-estado">
+                <!-- UF -->
+                <div formGroupName="municipio" class="cidade-estado">
+
+                  <div class="field half-width">
+                    <label for="uf">Estado*</label>
+                    <select id="uf" formControlName="uf" (change)="onUfChange($event)" class="field half-width"
+                      [ngClass]="{'campo-invalido': clienteForm.get('endereco.municipio.uf')?.invalid && clienteForm.get('endereco.municipio.uf')?.touched}">
+                      <option value="" disabled selected hidden>UF</option>
+                      <option *ngFor="let estado of listaDeUfs" [value]="estado">{{ estado }}</option>
+                    </select>
+                    <small
+                      *ngIf="clienteForm.get('endereco.municipio.uf')?.invalid && clienteForm.get('endereco.municipio.uf')?.touched">
+                      ⚠️ Campo obrigatório!
+                    </small>
+                  </div>
+
+
+
+                  <!-- Município -->
+                  <div class="field half-width">
+                    <label for="municipioIbge">Município*</label>
+                    <select id="municipioIbge" formControlName="municipioIbge" [ngClass]="{
+      'campo-invalido': clienteForm.get('endereco.municipio.municipioIbge')?.invalid && clienteForm.get('endereco.municipio.municipioIbge')?.touched
+    }">
+                      <option value="" disabled>Selecione um município</option>
+                      <option *ngFor="let municipio of listaMunicipios" [value]="municipio.nome">
+                        {{ municipio.nome }}
+                      </option>
+                    </select>
+                    <small class="mensagem-erro"
+                      *ngIf="clienteForm.get('endereco.municipio.municipioIbge')?.invalid && clienteForm.get('endereco.municipio.municipioIbge')?.touched">
+                      ⚠️ Campo obrigatório!
+                    </small>
+                  </div>
+
+
+                </div>
+                <div class="field half-width">
+                  <label for="cep">CEP</label>
+                  <input id="cep" type="text" pInputText formControlName="cep"
+                    [value]="clienteForm.get('endereco.cep')?.value || ''" />
+                </div>
+
+
+              </div>
+
+            </div>
+
+
+          </div>
+        </div>
+
+
+
+        <div class="field">
+          <label for="observacao">Observação</label>
+          <textarea id="observacao" pInputTextarea formControlName="observacao"></textarea>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+</div>

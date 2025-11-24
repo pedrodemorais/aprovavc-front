@@ -1,0 +1,58 @@
+.plan-subscription {
+    background-color: #f9f9f9;
+    padding: 50px 20px;
+  }
+  
+  .plan-subscription .container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  .plan-subscription h2 {
+    font-size: 2rem;
+    color: #007bff;
+    margin-bottom: 20px;
+  }
+  
+  .plan-subscription p {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: #555;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+  }
+  
+  .form-group label {
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+  
+  .cta-btn {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .cta-btn:hover {
+    background-color: #0056b3;
+  }
+  
