@@ -80,7 +80,16 @@
       <tbody>
         <tr *ngFor="let t of topicos">
           <td class="ordem-col">{{ t.codigo }}</td>
-          <td>{{ t.descricao }}</td>
+         <td>
+ <span>
+  <ng-container *ngIf="getIndentacao(t.codigo) > 0">
+    └─ 
+  </ng-container>
+  {{ t.descricao }}
+</span>
+
+</td>
+
           <td>
             <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
               {{ t.ativo ? 'Ativo' : 'Inativo' }}

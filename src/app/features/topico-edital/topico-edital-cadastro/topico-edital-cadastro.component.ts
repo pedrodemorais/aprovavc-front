@@ -144,4 +144,23 @@ export class TopicoEditalCadastroComponent implements OnInit {
         error: (err) => console.error('Erro ao excluir tópico', err)
       });
   }
+
+getNivel(codigo: string | null | undefined): number {
+  if (!codigo) {
+    return 1;
+  }
+  return codigo.split('.').length;
+}
+
+getIndentacao(codigo: string | null | undefined): number {
+  const nivel = this.getNivel(codigo);
+
+  // antes devia estar algo como (nivel - 1) * 24
+  // vamos deixar bem menor:
+  const passo = 14; // teste com 10, 12, 14 pra ver o que você gosta mais
+  return Math.max(0, (nivel - 1) * passo);
+}
+
+
+
 }

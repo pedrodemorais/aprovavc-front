@@ -95,3 +95,13 @@ td.acoes {
   margin-top: 0.5rem;
   font-style: italic;
 }
+.indentado {
+  display: inline-block;
+  padding-left: 4px;
+  font-size: 14px;
+}
+
+.ordem-col {
+  font-weight: bold;
+  width: 60px;
+}
