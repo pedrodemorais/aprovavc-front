@@ -1,7 +1,7 @@
 <div class="edital-container" *ngIf="empresaId && provaId && materiaId">
 
 
-  <!-- FORMULÁRIO -->
+<!-- FORMULÁRIO -->
 <section class="card formulario">
   <h3>
     {{ editando ? 'Editar tópico do edital' : 'Adicionar tópico do edital' }}
@@ -9,17 +9,16 @@
   </h3>
 
   <form [formGroup]="form" (ngSubmit)="salvar()">
-
-    <!-- LINHA ÚNICA: nível + descrição + ativo -->
-    <div class="form-row linha linha-topico">
+    <!-- LINHA: nível + descrição + ativo -->
+    <div class="form-linha">
       <!-- NÍVEL -->
-      <div class="col col-nivel">
+      <div class="campo campo-nivel">
         <label for="codigo">Nível no edital</label>
         <input
           id="codigo"
           type="text"
           formControlName="codigo"
-          placeholder="Ex.: 1, 1.1, 1.1.2">
+          placeholder="Ex.: 1, 1.1, 1.1.2" />
         <div class="erro" *ngIf="codigo?.invalid && (codigo?.dirty || codigo?.touched)">
           <span *ngIf="codigo?.errors?.['required']">Nível é obrigatório.</span>
           <span *ngIf="codigo?.errors?.['pattern']">
@@ -28,15 +27,17 @@
         </div>
       </div>
 
-      <!-- DESCRIÇÃO -->
-      <div class="col col-descricao">
+      <!-- DESCRIÇÃO EM UMA LINHA -->
+      <div class="campo campo-descricao">
         <label for="descricao">Descrição do tópico</label>
-        <textarea
+        <input
           id="descricao"
+          type="text"
           formControlName="descricao"
-          rows="2"
-          placeholder="Ex.: Aplicação da lei penal no tempo (retroatividade, ultratividade, abolitio criminis)">
-        </textarea>
+          maxlength="400"
+          placeholder="Ex.: Aplicação da lei penal no tempo (retroatividade, ultratividade, abolitio criminis)" />
+        
+
         <div class="erro" *ngIf="descricao?.invalid && (descricao?.dirty || descricao?.touched)">
           <span *ngIf="descricao?.errors?.['required']">Descrição é obrigatória.</span>
           <span *ngIf="descricao?.errors?.['maxlength']">Máximo de 400 caracteres.</span>
@@ -44,33 +45,27 @@
       </div>
 
       <!-- ATIVO -->
-      <div class="col check-col col-ativo">
+      <div class="campo ">
         <label class="check-label">
-          <input type="checkbox" formControlName="ativo">
           <span>Ativo</span>
+          <input type="checkbox" formControlName="ativo" />
+          
         </label>
       </div>
     </div>
 
-    <!-- BOTÕES EMBAIXO -->
-<div class="botoes">
-  <button
-    type="submit"
-    class="btn btn-primary btn-salvar"
-    [disabled]="form.invalid">
-    {{ editando ? 'Salvar alterações' : 'Adicionar tópico' }}
-  </button>
-
-  <button
-    type="button"
-    class="btn btn-outline btn-novo"
-    (click)="novo()">
-    Novo
-  </button>
-</div>
-
+    <!-- BOTÕES -->
+    <div class="botoes">
+      <button type="submit" class="btn btn-primary">
+        {{ editando ? 'Salvar alterações' : 'Adicionar tópico' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="novo()">
+        Novo
+      </button>
+    </div>
   </form>
 </section>
+
 
 
   <!-- LISTA -->
