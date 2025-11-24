@@ -12,8 +12,6 @@ export class TopicoEditalCadastroComponent implements OnInit {
 
   @Input() empresaId!: number;
   @Input() provaId!: number;
-  @Input() materiaId!: number;
-  @Input() materiaNome?: string;
   @Input() provaNome?: string;
 
   form!: FormGroup;
@@ -34,26 +32,28 @@ export class TopicoEditalCadastroComponent implements OnInit {
       ativo: [true]
     });
 
-    if (this.empresaId && this.provaId && this.materiaId) {
+    if (this.empresaId && this.provaId) {
       this.carregarTopicos();
     }
   }
 
-  carregarTopicos(): void {
-    this.carregando = true;
-    this.topicoEditalService
-      .listarPorProvaEMateria(this.empresaId, this.provaId, this.materiaId)
-      .subscribe({
-        next: (lista) => {
-          this.topicos = lista;
-          this.carregando = false;
-        },
-        error: (err) => {
-          console.error('Erro ao carregar tópicos do edital', err);
-          this.carregando = false;
-        }
-      });
-  }
+ carregarTopicos(): void {
+  this.carregando = true;
+  this.topicoEditalService
+    .listarPorProva(this.empresaId, this.provaId)
+    .subscribe({
+      next: (lista) => {
+        // 👇 ordena antes de exibir
+        this.topicos = this.ordenarTopicosPorCodigo(lista);
+        this.carregando = false;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar tópicos do edital', err);
+        this.carregando = false;
+      }
+    });
+}
+
 
   novo(): void {
     this.editando = false;
@@ -83,9 +83,29 @@ export class TopicoEditalCadastroComponent implements OnInit {
     return this.form.get('descricao');
   }
 
-  salvar(): void {
-    console.log('CLICOU EM SALVAR', this.form.value, 'form inválido?', this.form.invalid);
+  excluir(topico: TopicoEdital): void {
+  if (!topico.id) {
+    return;
+  }
 
+  const confirma = confirm(`Deseja realmente excluir o tópico: "${topico.codigo} - ${topico.descricao}"?`);
+
+  if (!confirma) {
+    return;
+  }
+
+  this.topicoEditalService
+    .excluir(this.empresaId, topico.id)
+    .subscribe({
+      next: () => {
+        this.carregarTopicos();
+      },
+      error: (err) => console.error('Erro ao excluir tópico', err)
+    });
+}
+
+
+  salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -100,8 +120,7 @@ export class TopicoEditalCadastroComponent implements OnInit {
       ativo: formValue.ativo,
       empresaId: this.empresaId,
       provaId: this.provaId,
-      materiaId: this.materiaId
-      // ordem NÃO é enviada, é calculada no backend
+      materiaId: null
     };
 
     if (this.editando && payload.id) {
@@ -127,40 +146,47 @@ export class TopicoEditalCadastroComponent implements OnInit {
     }
   }
 
-  excluir(topico: TopicoEdital): void {
-    if (!topico.id) {
-      return;
-    }
+  // ====== helpers de nível/identação ======
 
-    const confirma = confirm(`Deseja realmente excluir o tópico: "${topico.descricao}"?`);
-    if (!confirma) {
-      return;
+  getNivel(codigo: string | null | undefined): number {
+    if (!codigo) {
+      return 1;
     }
-
-    this.topicoEditalService
-      .excluir(this.empresaId, topico.id)
-      .subscribe({
-        next: () => this.carregarTopicos(),
-        error: (err) => console.error('Erro ao excluir tópico', err)
-      });
+    return codigo.split('.').length;
   }
 
-getNivel(codigo: string | null | undefined): number {
-  if (!codigo) {
-    return 1;
+  getIndentacao(codigo: string | null | undefined): number {
+    const nivel = this.getNivel(codigo);
+    const passo = 18; // px por nível
+    return Math.max(0, (nivel - 1) * passo);
   }
-  // "1" -> 1 nível | "1.1" -> 2 níveis | "1.1.1" -> 3 níveis...
-  return codigo.split('.').length;
+
+  private compararCodigo(c1?: string | null, c2?: string | null): number {
+  // trata nulos
+  if (!c1 && !c2) { return 0; }
+  if (!c1) { return 1; }
+  if (!c2) { return -1; }
+
+  const partes1 = c1.split('.').map(p => parseInt(p, 10));
+  const partes2 = c2.split('.').map(p => parseInt(p, 10));
+
+  const maxLen = Math.max(partes1.length, partes2.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const n1 = partes1[i] ?? 0;
+    const n2 = partes2[i] ?? 0;
+
+    if (n1 < n2) { return -1; }
+    if (n1 > n2) { return 1; }
+  }
+
+  // se chegou aqui, são "iguais" numericamente
+  return 0;
 }
 
-getIndentacao(codigo: string | null | undefined): number {
-  const nivel = this.getNivel(codigo);
-
-  // nível 1 = 0px, nível 2 = 20px, nível 3 = 40px, etc.
-  const passo = 20;
-  return (nivel - 1) * passo;
+private ordenarTopicosPorCodigo(lista: TopicoEdital[]): TopicoEdital[] {
+  // cria cópia pra não mutar o array original
+  return [...lista].sort((a, b) => this.compararCodigo(a.codigo, b.codigo));
 }
-
-
 
 }

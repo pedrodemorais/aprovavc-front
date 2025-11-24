@@ -1,128 +1,137 @@
-<div class="edital-container" *ngIf="empresaId && provaId && materiaId">
+<div class="edital-container" *ngIf="empresaId && provaId">
 
+  <!-- TOPO DO CARD: título + botões -->
+  <section class="card formulario">
 
-<!-- FORMULÁRIO -->
-<section class="card formulario">
-  <h3>
-    {{ editando ? 'Editar tópico do edital' : 'Adicionar tópico do edital' }}
-    - {{ provaNome || 'Prova' }} / {{ materiaNome || 'Matéria' }}
-  </h3>
+    <div class="card-topo">
+      <h3>
+        {{ editando ? 'Editar tópico do edital' : 'Adicionar tópico do edital' }}
+        – {{ provaNome || 'Prova' }}
+      </h3>
 
-  <form [formGroup]="form" (ngSubmit)="salvar()">
-    <!-- LINHA: nível + descrição + ativo -->
-    <div class="form-linha">
-      <!-- NÍVEL -->
-      <div class="campo campo-nivel">
-        <label for="codigo">Nível no edital</label>
-        <input
-          id="codigo"
-          type="text"
-          formControlName="codigo"
-          placeholder="Ex.: 1, 1.1, 1.1.2" />
-        <div class="erro" *ngIf="codigo?.invalid && (codigo?.dirty || codigo?.touched)">
-          <span *ngIf="codigo?.errors?.['required']">Nível é obrigatório.</span>
-          <span *ngIf="codigo?.errors?.['pattern']">
-            Use apenas números e pontos. Ex.: 1, 1.1, 2.3.10
-          </span>
-        </div>
-      </div>
-
-      <!-- DESCRIÇÃO EM UMA LINHA -->
-      <div class="campo campo-descricao">
-        <label for="descricao">Descrição do tópico</label>
-        <input
-          id="descricao"
-          type="text"
-          formControlName="descricao"
-          maxlength="400"
-          placeholder="Ex.: Aplicação da lei penal no tempo (retroatividade, ultratividade, abolitio criminis)" />
-        
-
-        <div class="erro" *ngIf="descricao?.invalid && (descricao?.dirty || descricao?.touched)">
-          <span *ngIf="descricao?.errors?.['required']">Descrição é obrigatória.</span>
-          <span *ngIf="descricao?.errors?.['maxlength']">Máximo de 400 caracteres.</span>
-        </div>
-      </div>
-
-      <!-- ATIVO -->
-      <div class="campo ">
-        <label class="check-label">
-          <span>Ativo</span>
-          <input type="checkbox" formControlName="ativo" />
-          
-        </label>
+      <div class="botoes-topo">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="novo()">
+          Novo
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          (click)="salvar()">
+          {{ editando ? 'Salvar alterações' : 'Adicionar tópico' }}
+        </button>
       </div>
     </div>
 
-    <!-- BOTÕES -->
-    <div class="botoes">
-      <button type="submit" class="btn btn-primary">
-        {{ editando ? 'Salvar alterações' : 'Adicionar tópico' }}
-      </button>
-      <button type="button" class="btn btn-secondary" (click)="novo()">
-        Novo
-      </button>
-    </div>
-  </form>
-</section>
+    <form [formGroup]="form" (ngSubmit)="salvar()">
 
+      <div class="form-row linha">
 
+        <!-- Nível -->
+        <div class="col col-nivel">
+          <label for="codigo">Nível no edital</label>
+          <input
+            id="codigo"
+            type="text"
+            formControlName="codigo"
+            placeholder="Ex.: 1, 1.1, 1.1.2">
+          <div class="erro" *ngIf="codigo?.invalid && (codigo?.dirty || codigo?.touched)">
+            <span *ngIf="codigo?.errors?.['required']">Nível é obrigatório.</span>
+            <span *ngIf="codigo?.errors?.['pattern']">
+              Use apenas números e pontos. Ex.: 1, 1.1, 2.3.10
+            </span>
+          </div>
+        </div>
+
+        <!-- Descrição -->
+        <div class="col col-descricao">
+          <label for="descricao">Descrição do tópico</label>
+          <input
+            id="descricao"
+            type="text"
+            formControlName="descricao"
+            placeholder="Ex.: Aplicação da lei penal no tempo (retroatividade, ultratividade, abolitio criminis)">
+          <div class="erro" *ngIf="descricao?.invalid && (descricao?.dirty || descricao?.touched)">
+            <span *ngIf="descricao?.errors?.['required']">Descrição é obrigatória.</span>
+            <span *ngIf="descricao?.errors?.['maxlength']">Máximo de 400 caracteres.</span>
+          </div>
+        </div>
+
+        <!-- Ativo -->
+        <div class="col col-ativo">
+          <label class="check-label">
+            <input type="checkbox" formControlName="ativo">
+            <span>Ativo</span>
+          </label>
+        </div>
+      </div>
+
+    </form>
+  </section>
 
   <!-- LISTA -->
- <section class="card lista">
-  <div class="lista-header">
-  
-    <span *ngIf="carregando">Carregando...</span>
-  </div>
+  <section class="card lista">
+    <div class="lista-header">
+      
+      <span *ngIf="carregando">Carregando...</span>
+    </div>
 
-  <table *ngIf="topicos && topicos.length > 0; else vazio">
-    <thead>
-      <tr>
-        <th>Tópico do edital</th>
-        <th style="width: 90px;">Status</th>
-        <th style="width: 140px;">Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let t of topicos">
-        <td class="descricao-col">
-          <span
-            class="descricao-wrapper"
-            [ngStyle]="{ 'padding-left.px': getIndentacao(t.codigo) }"
-          >
-            <!-- só mostra “galhozinho” em subníveis -->
-            <span class="nivel-prefix" *ngIf="getNivel(t.codigo) > 1">
-              └─
+    <table *ngIf="topicos && topicos.length > 0; else vazio">
+   <thead>
+  <tr>
+    <th style="width: 88%; text-align: left; padding-left: 16px;">
+      Tópico do edital
+    </th>
+    <th style="width: 90px;">Status</th>
+    <th style="width: 140px;">Ações</th>
+  </tr>
+</thead>
+      <tbody>
+        <tr *ngFor="let t of topicos">
+          <td class="descricao-col">
+            <span
+              class="descricao-wrapper"
+              [style.padding-left.px]="getIndentacao(t.codigo)">
+              <span class="nivel-prefix" *ngIf="getNivel(t.codigo) > 1">└─ </span>
+              {{ t.codigo }} - {{ t.descricao }}
             </span>
-            {{ t.codigo }} - {{ t.descricao }}
-          </span>
-        </td>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
+              {{ t.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+     <td class="acoes">
+  <button
+    type="button"
+    class="btn btn-sm btn-icon btn-secondary"
+    title="Editar tópico"
+    (click)="editar(t)">
+    ✏️
+  </button>
 
-        <td>
-          <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
-            {{ t.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
-        </td>
-        <td class="acoes">
-          <button type="button" class="btn btn-sm btn-secondary" (click)="editar(t)">
-            Editar
-          </button>
-          <button type="button" class="btn btn-sm btn-danger" (click)="excluir(t)">
-            Excluir
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <button
+    type="button"
+    class="btn btn-sm btn-icon btn-danger"
+    title="Excluir tópico"
+    (click)="excluir(t)">
+    🗑
+  </button>
+</td>
 
-  <ng-template #vazio>
-    <p class="nenhum">Nenhum tópico cadastrado ainda.</p>
-  </ng-template>
-</section>
+        </tr>
+      </tbody>
+    </table>
 
+    <ng-template #vazio>
+      <p class="nenhum">Nenhum tópico cadastrado ainda para este edital.</p>
+    </ng-template>
+  </section>
 
 </div>
 
-<div *ngIf="!(empresaId && provaId && materiaId)">
-  <p>Selecione uma prova e uma matéria para configurar o edital.</p>
+<div *ngIf="!(empresaId && provaId)">
+  <p>Selecione uma prova para configurar o edital.</p>
 </div>

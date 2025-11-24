@@ -3,7 +3,7 @@ export interface TopicoEdital {
   empresaId?: number;
   provaId: number;
   provaNome?: string;
-  materiaId: number;
+  materiaId:  null;
   materiaNome?: string;
   descricao: string;
   
