@@ -60,7 +60,7 @@
     class="filtro-input">
     <option [ngValue]="null">Selecione o tópico</option>
     <option *ngFor="let t of topicosEdital" [ngValue]="t.id">
-      {{ t.ordem }} - {{ t.descricao }}
+      {{ t.descricao }}
     </option>
   </select>
   <small *ngIf="carregandoTopicosEdital">Carregando tópicos do edital...</small>

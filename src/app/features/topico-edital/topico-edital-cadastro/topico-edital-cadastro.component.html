@@ -5,119 +5,103 @@
   </h2>
 
   <!-- FORMULÁRIO -->
- <section class="card formulario">
-  <h3>{{ editando ? 'Editar tópico do edital' : 'Adicionar tópico ao edital' }}</h3>
+  <section class="card formulario">
+    <h3>{{ editando ? 'Editar tópico do edital' : 'Adicionar tópico ao edital' }}</h3>
 
-  <form [formGroup]="form" (ngSubmit)="salvar()">
+    <form [formGroup]="form" (ngSubmit)="salvar()">
 
-    <!-- LINHA: código + ordem + ativo -->
-    <div class="form-row linha">
-      <div class="col">
-        <label for="codigo">Nível no edital</label>
-        <input
-          id="codigo"
-          type="text"
-          formControlName="codigo"
-          placeholder="Ex.: 1, 1.1, 1.1.2">
-        <div class="erro" *ngIf="codigo?.invalid && (codigo?.dirty || codigo?.touched)">
-          <span *ngIf="codigo?.errors?.['required']">Nível é obrigatório.</span>
-          <span *ngIf="codigo?.errors?.['pattern']">
-            Use apenas números e pontos. Ex.: 1, 1.1, 2.3.10
-          </span>
+      <!-- LINHA: código + ativo -->
+      <div class="form-row linha">
+        <div class="col">
+          <label for="codigo">Nível no edital</label>
+          <input
+            id="codigo"
+            type="text"
+            formControlName="codigo"
+            placeholder="Ex.: 1, 1.1, 1.1.2">
+          <div class="erro" *ngIf="codigo?.invalid && (codigo?.dirty || codigo?.touched)">
+            <span *ngIf="codigo?.errors?.['required']">Nível é obrigatório.</span>
+            <span *ngIf="codigo?.errors?.['pattern']">
+              Use apenas números e pontos. Ex.: 1, 1.1, 2.3.10
+            </span>
+          </div>
+        </div>
+
+        <div class="col check-col">
+          <label class="check-label">
+            <input type="checkbox" formControlName="ativo">
+            <span>Ativo</span>
+          </label>
         </div>
       </div>
 
-      <div class="col">
-        <label for="ordem">Ordem visual</label>
-        <input
-          id="ordem"
-          type="number"
-          formControlName="ordem"
-          min="1">
-        <div class="erro" *ngIf="ordem?.invalid && (ordem?.dirty || ordem?.touched)">
-          <span *ngIf="ordem?.errors?.['required']">Ordem é obrigatória.</span>
-          <span *ngIf="ordem?.errors?.['min']">Valor mínimo é 1.</span>
-          <span *ngIf="ordem?.errors?.['ordemRepetida']">
-            Já existe um tópico com essa ordem para esta matéria.
-          </span>
+      <!-- LINHA: descrição -->
+      <div class="form-row">
+        <label for="descricao">Descrição do tópico</label>
+        <textarea
+          id="descricao"
+          formControlName="descricao"
+          rows="3"
+          placeholder="Ex.: Aplicação da lei penal no tempo (retroatividade, ultratividade, abolitio criminis)">
+        </textarea>
+        <div class="erro" *ngIf="descricao?.invalid && (descricao?.dirty || descricao?.touched)">
+          <span *ngIf="descricao?.errors?.['required']">Descrição é obrigatória.</span>
+          <span *ngIf="descricao?.errors?.['maxlength']">Máximo de 400 caracteres.</span>
         </div>
       </div>
 
-      <div class="col check-col">
-        <label class="check-label">
-          <input type="checkbox" formControlName="ativo">
-          <span>Ativo</span>
-        </label>
+      <div class="botoes">
+        <button type="submit">
+          {{ editando ? 'Salvar alterações' : 'Adicionar tópico' }}
+        </button>
+        <button type="button" class="secundario" (click)="novo()">
+          Novo
+        </button>
       </div>
-    </div>
-
-    <!-- LINHA: descrição -->
-    <div class="form-row">
-      <label for="descricao">Descrição do tópico</label>
-      <textarea
-        id="descricao"
-        formControlName="descricao"
-        rows="3"
-        placeholder="Ex.: Aplicação da lei penal no tempo (retroatividade, ultratividade, abolitio criminis)">
-      </textarea>
-      <div class="erro" *ngIf="descricao?.invalid && (descricao?.dirty || descricao?.touched)">
-        <span *ngIf="descricao?.errors?.['required']">Descrição é obrigatória.</span>
-        <span *ngIf="descricao?.errors?.['maxlength']">Máximo de 400 caracteres.</span>
-      </div>
-    </div>
-
-    <div class="botoes">
-      <button type="submit">
-        {{ editando ? 'Salvar alterações' : 'Adicionar tópico' }}
-      </button>
-      <button type="button" class="secundario" (click)="novo()">
-        Novo
-      </button>
-    </div>
-  </form>
-</section>
+    </form>
+  </section>
 
   <!-- LISTA -->
- <section class="card lista">
-  <div class="lista-header">
-    <h3>Tópicos cadastrados</h3>
-    <span *ngIf="carregando">Carregando...</span>
-  </div>
+  <section class="card lista">
+    <div class="lista-header">
+      <h3>Tópicos cadastrados</h3>
+      <span *ngIf="carregando">Carregando...</span>
+    </div>
 
-  <table *ngIf="topicos && topicos.length > 0; else vazio">
-    <thead>
-      <tr>
-        <th style="width: 80px;">Nível</th>
-        <th>Tópico do edital</th>
-        <th style="width: 90px;">Status</th>
-        <th style="width: 140px;">Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let t of topicos">
-        <td class="ordem-col">{{ t.codigo }}</td>
-        <td>{{ t.descricao }}</td>
-        <td>
-          <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
-            {{ t.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
-        </td>
-        <td class="acoes">
-          <button type="button" class="btn btn-sm btn-secondary" (click)="editar(t)">
-            Editar
-          </button>
-          <button type="button" class="btn btn-sm btn-danger" (click)="excluir(t)">
-            Excluir
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+    <table *ngIf="topicos && topicos.length > 0; else vazio">
+      <thead>
+        <tr>
+          <th style="width: 80px;">Nível</th>
+          <th>Tópico do edital</th>
+          <th style="width: 90px;">Status</th>
+          <th style="width: 140px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of topicos">
+          <td class="ordem-col">{{ t.codigo }}</td>
+          <td>{{ t.descricao }}</td>
+          <td>
+            <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
+              {{ t.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <td class="acoes">
+            <button type="button" class="btn btn-sm btn-secondary" (click)="editar(t)">
+              Editar
+            </button>
+            <button type="button" class="btn btn-sm btn-danger" (click)="excluir(t)">
+              Excluir
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-  <ng-template #vazio>
-    <p class="nenhum">Nenhum tópico cadastrado ainda para esta matéria.</p>
-  </ng-template>
-</section>
+    <ng-template #vazio>
+      <p class="nenhum">Nenhum tópico cadastrado ainda para esta matéria.</p>
+    </ng-template>
+  </section>
 
 </div>
 

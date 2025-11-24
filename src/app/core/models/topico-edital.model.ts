@@ -6,7 +6,7 @@ export interface TopicoEdital {
   materiaId: number;
   materiaNome?: string;
   descricao: string;
-  ordem: number;
+  
   ativo: boolean;
   codigo?: string; 
 }
