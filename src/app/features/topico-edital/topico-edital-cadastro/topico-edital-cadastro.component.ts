@@ -149,16 +149,16 @@ getNivel(codigo: string | null | undefined): number {
   if (!codigo) {
     return 1;
   }
+  // "1" -> 1 nível | "1.1" -> 2 níveis | "1.1.1" -> 3 níveis...
   return codigo.split('.').length;
 }
 
 getIndentacao(codigo: string | null | undefined): number {
   const nivel = this.getNivel(codigo);
 
-  // antes devia estar algo como (nivel - 1) * 24
-  // vamos deixar bem menor:
-  const passo = 14; // teste com 10, 12, 14 pra ver o que você gosta mais
-  return Math.max(0, (nivel - 1) * passo);
+  // nível 1 = 0px, nível 2 = 20px, nível 3 = 40px, etc.
+  const passo = 20;
+  return (nivel - 1) * passo;
 }
 
 

@@ -105,3 +105,107 @@ td.acoes {
   font-weight: bold;
   width: 60px;
 }
+.descricao-col .descricao-wrapper {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nivel-prefix {
+  margin-right: 4px;
+  color: #999;
+  font-size: 0.9rem;
+}
+/* linha única: nível + descrição + ativo */
+.formulario .linha-topico {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.formulario .col-nivel {
+  flex: 0 0 140px; /* largura fixa pro nível */
+}
+
+.formulario .col-descricao {
+  flex: 1;        /* ocupa o resto */
+}
+
+.formulario .col-ativo {
+  flex: 0 0 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px; /* alinhar com os campos */
+}
+
+.formulario textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+/* se já tiver .botoes estilizado, pode manter;
+   se não, algo simples: */
+.formulario .botoes {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+/* Container dos botões */
+.formulario .botoes {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Base dos botões */
+.btn {
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  font-weight: 500;
+}
+
+/* Primário (Adicionar / Salvar) */
+.btn-primary {
+  background-color: #2f80ed;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2564b8;
+}
+
+/* Secundário (Novo) */
+.btn-outline {
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  color: #555;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+/* Estado desabilitado */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Responsivo: empilha no mobile */
+@media (max-width: 600px) {
+  .formulario .botoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .formulario .botoes .btn {
+    width: 100%;
+  }
+}
