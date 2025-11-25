@@ -1,4 +1,4 @@
-<div class="edital-container" *ngIf="empresaId && provaId">
+<div class="edital-container" *ngIf=" provaId">
 
   <!-- TOPO DO CARD: título + botões -->
   <section class="card formulario">
@@ -26,6 +26,13 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="salvar()">
+<div *ngIf="erroBackend" class="alert alert-danger mt-2">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M12 9v2m0 4h.01M4.93 4.93a10 10 0 0114.14 14.14A10 10 0 014.93 4.93z" />
+  </svg>
+  {{ erroBackend }}
+</div>
 
       <div class="form-row linha">
 
@@ -132,6 +139,6 @@
 
 </div>
 
-<div *ngIf="!(empresaId && provaId)">
+<div *ngIf="!(provaId)">
   <p>Selecione uma prova para configurar o edital.</p>
 </div>

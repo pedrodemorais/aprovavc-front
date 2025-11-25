@@ -149,7 +149,7 @@ export class TopicoRevisaoComponent implements OnInit {
     this.carregandoTopicosEdital = true;
 
     this.topicoEditalService
-      .listarPorProvaEMateria(this.empresaId, this.provaSelecionadaId!, materiaId)
+      .listarPorProvaEMateria(this.provaSelecionadaId!, materiaId)
       .subscribe({
         next: (lista) => {
           this.topicosEdital = lista || [];

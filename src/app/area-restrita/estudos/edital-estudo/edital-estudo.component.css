@@ -1,0 +1,71 @@
+.pagina-edital {
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background-color: #fafafa;
+  border-radius: 6px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.header h3 {
+  margin: 0 0 4px 0;
+}
+
+.subtitulo {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.tabela-edital {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-edital th,
+.tabela-edital td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.tabela-edital thead {
+  background: #f9fafb;
+}
+
+.nivel {
+  display: inline-block;
+}
+
+.col-status {
+  width: 120px;
+  text-align: right;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.badge-ativo {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-inativo {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.aviso {
+  color: #4b5563;
+  font-size: 0.9rem;
+}

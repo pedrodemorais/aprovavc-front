@@ -1,3 +1,5 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { OnDestroy } from '@angular/core';
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TopicoEditalService } from 'src/app/core/services/topico-edital.service';
@@ -10,7 +12,7 @@ import { TopicoEdital } from 'src/app/core/models/topico-edital.model';
 })
 export class TopicoEditalCadastroComponent implements OnInit {
 
-  @Input() empresaId!: number;
+
   @Input() provaId!: number;
   @Input() provaNome?: string;
 
@@ -18,13 +20,17 @@ export class TopicoEditalCadastroComponent implements OnInit {
   topicos: TopicoEdital[] = [];
   carregando = false;
   editando = false;
-
+  erroBackend?: string; 
+   private erroTimeout: any; 
   constructor(
     private fb: FormBuilder,
     private topicoEditalService: TopicoEditalService
   ) {}
 
   ngOnInit(): void {
+    if (this.erroTimeout) {
+      clearTimeout(this.erroTimeout);
+    }
     this.form = this.fb.group({
       id: [null],
       codigo: ['', [Validators.required, Validators.pattern(/^[0-9]+(\.[0-9]+)*$/)]],
@@ -32,7 +38,7 @@ export class TopicoEditalCadastroComponent implements OnInit {
       ativo: [true]
     });
 
-    if (this.empresaId && this.provaId) {
+    if (this.provaId) {
       this.carregarTopicos();
     }
   }
@@ -40,7 +46,7 @@ export class TopicoEditalCadastroComponent implements OnInit {
  carregarTopicos(): void {
   this.carregando = true;
   this.topicoEditalService
-    .listarPorProva(this.empresaId, this.provaId)
+    .listarPorProva(this.provaId)
     .subscribe({
       next: (lista) => {
         // 👇 ordena antes de exibir
@@ -95,7 +101,7 @@ export class TopicoEditalCadastroComponent implements OnInit {
   }
 
   this.topicoEditalService
-    .excluir(this.empresaId, topico.id)
+    .excluir(topico.id)
     .subscribe({
       next: () => {
         this.carregarTopicos();
@@ -105,46 +111,82 @@ export class TopicoEditalCadastroComponent implements OnInit {
 }
 
 
-  salvar(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    const formValue = this.form.value;
-
-    const payload: TopicoEdital = {
-      id: formValue.id,
-      codigo: formValue.codigo,
-      descricao: formValue.descricao,
-      ativo: formValue.ativo,
-      empresaId: this.empresaId,
-      provaId: this.provaId,
-      materiaId: null
-    };
-
-    if (this.editando && payload.id) {
-      this.topicoEditalService
-        .atualizar(this.empresaId, payload.id, payload)
-        .subscribe({
-          next: () => {
-            this.carregarTopicos();
-            this.novo();
-          },
-          error: (err) => console.error('Erro ao atualizar tópico', err)
-        });
-    } else {
-      this.topicoEditalService
-        .criar(this.empresaId, payload)
-        .subscribe({
-          next: () => {
-            this.carregarTopicos();
-            this.novo();
-          },
-          error: (err) => console.error('Erro ao criar tópico', err)
-        });
-    }
+ salvar(): void {
+  if (this.form.invalid) {
+    this.form.markAllAsTouched();
+    return;
   }
+
+  const payload: TopicoEdital = {
+    id: this.form.value.id,
+    codigo: this.form.value.codigo,
+    descricao: this.form.value.descricao,
+    ativo: this.form.value.ativo,
+    provaId: this.provaId,
+    materiaId: null,
+    nivel: this.form.value.codigo,
+    nivelTopico: this.form.value.codigo
+  };
+
+  this.erroBackend = undefined; // limpa erro anterior
+
+  if (this.editando && payload.id) {
+    this.topicoEditalService
+      .atualizar(payload.id, payload)
+      .subscribe({
+        next: () => {
+          this.carregarTopicos();
+          this.novo();
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Erro ao atualizar tópico', err);
+          this.tratarErroBackend(err);
+        }
+      });
+  } else {
+    this.topicoEditalService
+      .criar(payload)
+      .subscribe({
+        next: () => {
+          this.carregarTopicos();
+          this.novo();
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Erro ao criar tópico', err);
+          this.tratarErroBackend(err);
+        }
+      });
+  }
+}
+private tratarErroBackend(err: HttpErrorResponse): void {
+  let msg = 'Não foi possível salvar o tópico do edital.';
+
+  if (err.error) {
+    if (err.error.mensagem) {
+      msg = err.error.mensagem;
+    } else if (err.error.message) {
+      msg = err.error.message;
+    } else if (typeof err.error === 'string') {
+      msg = err.error;
+    }
+  } else {
+    msg = 'Erro de comunicação com o servidor.';
+  }
+
+  this.erroBackend = msg;
+
+  // limpa timeout anterior, se existir
+  if (this.erroTimeout) {
+    clearTimeout(this.erroTimeout);
+  }
+
+  // depois de 4 segundos, some com a mensagem
+  this.erroTimeout = setTimeout(() => {
+    this.erroBackend = undefined;
+  }, 4000);
+}
+
+
 
   // ====== helpers de nível/identação ======
 

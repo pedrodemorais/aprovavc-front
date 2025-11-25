@@ -9,17 +9,13 @@ import { ProvaEstudoService } from 'src/app/core/services/prova-estudo.service';
 })
 export class EditalVerticalizadoComponent implements OnInit {
 
-  empresaId = 346; // depois vem do JWT
-
   provas: ProvaEstudo[] = [];
   provaSelecionadaId?: number;
   provaSelecionada?: ProvaEstudo;
 
   carregandoProvas = false;
 
-  constructor(
-    private provaService: ProvaEstudoService
-  ) {}
+  constructor(private provaService: ProvaEstudoService) {}
 
   ngOnInit(): void {
     this.carregarProvas();
@@ -27,12 +23,20 @@ export class EditalVerticalizadoComponent implements OnInit {
 
   carregarProvas(): void {
     this.carregandoProvas = true;
-    this.provaService.listar('').subscribe({
+
+    this.provaService.listar().subscribe({
       next: (lista) => {
         this.provas = lista || [];
         this.carregandoProvas = false;
+
+        // 🔥 Se quiser já abrir automático quando só tiver 1 prova:
+        if (this.provas.length === 1) {
+          this.provaSelecionadaId = this.provas[0].id!;
+          this.provaSelecionada = this.provas[0];
+        }
       },
-      error: () => {
+      error: (err) => {
+        console.error('Erro ao listar provas:', err);
         this.provas = [];
         this.carregandoProvas = false;
       }
@@ -40,6 +44,7 @@ export class EditalVerticalizadoComponent implements OnInit {
   }
 
   onProvaChange(): void {
+    console.log('ID prova selecionada:', this.provaSelecionadaId);
     this.provaSelecionada = this.provas.find(p => p.id === this.provaSelecionadaId);
   }
 }

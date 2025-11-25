@@ -25,6 +25,7 @@ import { MateriaEstudoComponent } from './features/materias/materia-estudo/mater
 import { ProvaEstudoComponent } from './features/revisao/prova-estudo/prova-estudo.component';
 import { TopicoEditalCadastroComponent } from './features/topico-edital/topico-edital-cadastro/topico-edital-cadastro.component';
 import { EditalVerticalizadoComponent } from './features/topico-edital/edital-verticalizado/edital-verticalizado.component';
+import { EditalEstudoComponent } from './area-restrita/estudos/edital-estudo/edital-estudo.component';
 
 registerLocaleData(localePt, 'pt-BR'); 
 
@@ -43,6 +44,7 @@ registerLocaleData(localePt, 'pt-BR');
     ProvaEstudoComponent,
     TopicoEditalCadastroComponent,
     EditalVerticalizadoComponent,
+    EditalEstudoComponent,
    
   ],
   imports: [

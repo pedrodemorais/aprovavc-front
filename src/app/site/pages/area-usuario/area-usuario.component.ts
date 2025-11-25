@@ -4,6 +4,8 @@ import { AuthService } from 'src/app/site/services/auth.service';
 import { filter } from 'rxjs/operators';
 import { MenuItem } from 'primeng/api';
 import { ViewEncapsulation } from '@angular/core';
+import { ProvaEstudoDTO } from 'src/app/area-restrita/services/prova.service';
+import { ProvaEstudoService } from 'src/app/core/services/prova-estudo.service';
 
 @Component({
   selector: 'app-area-usuario',
@@ -13,25 +15,28 @@ import { ViewEncapsulation } from '@angular/core';
 })
 export class AreaUsuarioComponent implements OnInit {
   user: any;
-  menuAberto = false;        // sidebar mobile
+  menuAberto = false;
   userInitials = '';
   isHome = true;
 
-
   items: MenuItem[] = [];
+  provas: ProvaEstudoDTO[] = [];
 
-  // rotas que pertencem a "Cadastro"
   private cadastroRotas = [
-    '/area-restrita/content/revisao-estudos',
-    '/area-restrita/content/marcas',
-    '/area-restrita/content/equipamentos',
-    '/area-restrita/content/categorias'
+    '/area-restrita/cad-prova',
+    '/area-restrita/cad-materias',
+    '/area-restrita/meu-cadastro',
+    '/area-restrita/edital-verticalizado'
   ];
 
-  @ViewChild('sidebar', { static: false }) sidebarRef!: ElementRef; // <nav #sidebar>
-  @ViewChild('menuToggle', { static: false }) toggleRef!: ElementRef; // botão hamburguer (se tiver)
+  @ViewChild('sidebar', { static: false }) sidebarRef!: ElementRef;
+  @ViewChild('menuToggle', { static: false }) toggleRef!: ElementRef;
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+     private provaEstudoService: ProvaEstudoService         // <<< injeta service
+  ) {
     this.user = this.authService.getUser();
     if (!this.user) this.router.navigate(['/login']);
 
@@ -39,9 +44,9 @@ export class AreaUsuarioComponent implements OnInit {
       .pipe(filter(e => e instanceof NavigationEnd))
       .subscribe((e: any) => {
         const url = e.urlAfterRedirects || e.url;
-        this.isHome = url === '/area-restrita/gestor';
-        this.menuAberto = false; // fecha sidebar mobile ao navegar
-        this.rebuildItems(url);  // mantém "Cadastro" expandido certo
+        this.isHome = url === '/area-restrita';
+        this.menuAberto = false;
+        this.rebuildItems(url);  // sempre reconstrói com as provas já carregadas
       });
   }
 
@@ -51,55 +56,81 @@ export class AreaUsuarioComponent implements OnInit {
     if (userName) this.getUserInitials(userName);
     if (!this.user) this.router.navigate(['/login']);
 
-    // monta itens inicialmente
-    this.rebuildItems(this.router.url);
+    // carrega provas e depois monta o menu
+    this.carregarProvas();
   }
+
+private carregarProvas() {
+  this.provaEstudoService.listar().subscribe({
+    next: (provas) => {
+      console.log('Provas vindas da API:', provas);
+      this.provas = provas;                     // ✅ agora o tipo bate
+      this.rebuildItems(this.router.url);
+    },
+    error: (err) => {
+      console.error('Erro ao carregar provas para o menu', err);
+      this.provas = [];
+      this.rebuildItems(this.router.url);
+    }
+  });
+}
+
 
   // === MENU MODEL ===
 private rebuildItems(url: string) {
-  const abertoPorRota = this.cadastroRotas.some(r => url.startsWith(r));
+  const abertoPorRotaCadastro = this.cadastroRotas.some(r => url.startsWith(r));
+
+  const provasItems: MenuItem[] = this.provas.map(p => ({
+    label: p.nome,  // <<< aqui usa o campo do DTO (confere no JSON)
+    icon: 'pi pi-book',
+    routerLink: ['/area-restrita/provas', p.id, 'edital']
+  }));
+
+  if (provasItems.length === 0) {
+    provasItems.push({
+      label: 'Nenhuma prova cadastrada',
+      disabled: true
+    });
+  }
+
   this.items = [
     { label: 'Início', icon: 'pi pi-home', routerLink: ['/area-restrita'] },
+
     {
       label: 'Cadastro',
       icon: 'pi pi-folder-open',
-      expanded: abertoPorRota,      // abre se a rota atual for de um filho
-      // ⚠️ sem command aqui!
+      expanded: abertoPorRotaCadastro,
       items: [
-        { label: 'Provas',     icon: 'pi pi-user',   routerLink: ['/area-restrita/cad-prova'] },
-        
-        
-        { label: 'Matérias da Prova',     icon: 'pi pi-user',   routerLink: ['/area-restrita/cad-materias'] },
-       // { label: 'Revisão',     icon: 'pi pi-user',   routerLink: ['/area-restrita/materias'] },
-       // { label: 'Categorias',   icon: 'pi pi-list',   routerLink: ['/area-restrita/content/categorias'] },
-       { label: 'Meu Cadastro',  icon: 'pi pi-id-card',   routerLink: ['/area-restrita/meu-cadastro'] },
-       { label: 'Edital Verticalizado',  icon: 'pi pi-id-card',   routerLink: ['/area-restrita/edital-verticalizado'] },
-          
+        { label: 'Matérias',  icon: 'pi pi-list',      routerLink: ['/area-restrita/cad-materias'] },
+        { label: 'Provas',             icon: 'pi pi-briefcase', routerLink: ['/area-restrita/cad-prova'] },
+        { label: 'Edital Verticalizado', icon: 'pi pi-sitemap', routerLink: ['/area-restrita/edital-verticalizado'] },
+        { label: 'Meu Cadastro',       icon: 'pi pi-user',      routerLink: ['/area-restrita/meu-cadastro'] },
       ]
     },
-   
-    { label: 'Meu Cadastro',  icon: 'pi pi-id-card',   routerLink: ['/area-restrita/content/meu-cadastro'] },
-    { label: 'Minhas Revisões',     icon: 'pi pi-box',       routerLink: ['/area-restrita/materias'] }
+
+    {
+      label: 'Minhas Provas',
+      icon: 'pi pi-check-square',
+      items: provasItems
+    },
+
+    { label: 'Minhas Revisões', icon: 'pi pi-history', routerLink: ['/area-restrita/materias'] }
   ];
 }
 
 
-  // Encontra o grupo "Cadastro" e alterna seu expanded persistindo
-
-
-  // === UI / UX ===
+  // resto da classe igual
   toggleMenu() { this.menuAberto = !this.menuAberto; }
 
-@HostListener('document:click', ['$event'])
-fecharMenu(event: Event) {
-  if (!this.menuAberto) return; // só no modo mobile
-  const target = event.target as Node;
-  const sideEl = this.sidebarRef?.nativeElement as HTMLElement | undefined;
-  const toggleEl = this.toggleRef?.nativeElement as HTMLElement | undefined;
-
-  if (sideEl?.contains(target) || toggleEl?.contains(target)) return; // clique dentro -> não fecha
-  this.menuAberto = false;
-}
+  @HostListener('document:click', ['$event'])
+  fecharMenu(event: Event) {
+    if (!this.menuAberto) return;
+    const target = event.target as Node;
+    const sideEl = this.sidebarRef?.nativeElement as HTMLElement | undefined;
+    const toggleEl = this.toggleRef?.nativeElement as HTMLElement | undefined;
+    if (sideEl?.contains(target) || toggleEl?.contains(target)) return;
+    this.menuAberto = false;
+  }
 
   getUserInitials(fullName: string) {
     if (!fullName) { this.userInitials = '??'; return; }

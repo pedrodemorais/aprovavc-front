@@ -264,40 +264,14 @@ export class ConfiguradorComponent implements OnInit {
     if (this.isSubmitting) return;
     this.errorMessage = null; // 🔥 Limpar erros anteri
     const municipioIbgeValue = this.configuradorForm.get('endereco.municipio.municipioIbge')?.value;
-    // const usuarioDTO = {
-    //   nome: this.configuradorForm.get('nome')?.value,
-    //   email: this.configuradorForm.get('email')?.value,
-    //   senha: this.configuradorForm.get('senha')?.value,
-    //   role: this.configuradorForm.get('role')?.value,
-    //   empresa: { // EmpresaDTO dentro do usuário
-    //     nomeFantasia: this.configuradorForm.get('nomeFantasia')?.value,
-    //     razaoSocial: this.configuradorForm.get('razaoSocial')?.value,
-    //     documento: this.configuradorForm.get('documento')?.value,
-    //     segmentoAtividade: this.configuradorForm.get('segmentoAtividade')?.value,
-    //     tipoDeNegocio: this.configuradorForm.get('tipoDeNegocio')?.value,
-    //     tipoDePessoa: this.configuradorForm.get('tipoDePessoa')?.value,
-    //     email: this.configuradorForm.get('emailEmpresa')?.value,
-    //     telefone: this.configuradorForm.get('telefone')?.value,
-    //     endereco: {
-    //       logradouro: this.configuradorForm.get('endereco.logradouro')?.value,
-    //       numero: this.configuradorForm.get('endereco.numero')?.value,
-    //       complemento: this.configuradorForm.get('endereco.complemento')?.value,
-    //       bairro: this.configuradorForm.get('endereco.bairro')?.value,
-    //       cep: this.configuradorForm.get('endereco.cep')?.value,
-    //       municipio: {
-    //         municipioIbge: municipioIbgeValue, // ✅ Valor correto para o backend
-    //         uf: this.configuradorForm.get('endereco.municipio.uf')?.value
-    //       }
-    //     }
-    //   }
-    // };
+    
   
     const usuarioDTO = {
       nome: this.configuradorForm.get('nome')?.value,
       email: this.configuradorForm.get('email')?.value,
       senha: this.configuradorForm.get('senha')?.value,
       role: this.configuradorForm.get('role')?.value,
-      empresa: { // EmpresaDTO dentro do usuário
+      aluno: { // AlunoDTO dentro do usuário
         nomeFantasia: this.configuradorForm.get('nomeFantasia')?.value,
         razaoSocial: this.configuradorForm.get('razaoSocial')?.value,
         documento: this.configuradorForm.get('documento')?.value,

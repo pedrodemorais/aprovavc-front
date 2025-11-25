@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { TopicoEdital } from '../models/topico-edital.model';
 import { environment } from 'src/environments/environment';
 
@@ -9,46 +9,47 @@ import { environment } from 'src/environments/environment';
 })
 export class TopicoEditalService {
 
-  private baseUrl = `${environment.apiUrl}/empresas`;
+  private baseUrl = `${environment.apiUrl}/topicos-edital`;
 
   constructor(private http: HttpClient) {}
 
-  listarPorProva(empresaId: number, provaId: number): Observable<TopicoEdital[]> {
-    const url = `${this.baseUrl}/${empresaId}/topicos-edital`;
-    const params = new HttpParams().set('provaId', provaId.toString());
-    return this.http.get<TopicoEdital[]>(url, { params });
+  private handleError(error: any) {
+    console.error('Erro na API TopicoEdital:', error);
+    return throwError(() => error);
   }
 
-  // mantém se quiser filtrar por matéria em outros lugares
-  listarPorProvaEMateria(
-    empresaId: number,
-    provaId: number,
-    materiaId: number
-  ): Observable<TopicoEdital[]> {
-    const url = `${this.baseUrl}/${empresaId}/topicos-edital`;
+  listarPorProva(provaId: number): Observable<TopicoEdital[]> {
+    const params = new HttpParams().set('provaId', provaId.toString());
+    return this.http.get<TopicoEdital[]>(this.baseUrl, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  listarPorProvaEMateria(provaId: number, materiaId: number): Observable<TopicoEdital[]> {
     const params = new HttpParams()
       .set('provaId', provaId.toString())
       .set('materiaId', materiaId.toString());
-    return this.http.get<TopicoEdital[]>(url, { params });
+
+    return this.http.get<TopicoEdital[]>(this.baseUrl, { params })
+      .pipe(catchError(this.handleError));
   }
 
-  buscarPorId(empresaId: number, id: number): Observable<TopicoEdital> {
-    const url = `${this.baseUrl}/${empresaId}/topicos-edital/${id}`;
-    return this.http.get<TopicoEdital>(url);
+  buscarPorId(id: number): Observable<TopicoEdital> {
+    return this.http.get<TopicoEdital>(`${this.baseUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  criar(empresaId: number, topico: TopicoEdital): Observable<TopicoEdital> {
-    const url = `${this.baseUrl}/${empresaId}/topicos-edital`;
-    return this.http.post<TopicoEdital>(url, topico);
+criar(topico: TopicoEdital): Observable<TopicoEdital> {
+  return this.http.post<TopicoEdital>(this.baseUrl, topico)
+    .pipe(catchError(err => this.handleError(err)));
+}
+
+  atualizar(id: number, topico: TopicoEdital): Observable<TopicoEdital> {
+    return this.http.put<TopicoEdital>(`${this.baseUrl}/${id}`, topico)
+      .pipe(catchError(this.handleError));
   }
 
-  atualizar(empresaId: number, id: number, topico: TopicoEdital): Observable<TopicoEdital> {
-    const url = `${this.baseUrl}/${empresaId}/topicos-edital/${id}`;
-    return this.http.put<TopicoEdital>(url, topico);
-  }
-
-  excluir(empresaId: number, id: number): Observable<void> {
-    const url = `${this.baseUrl}/${empresaId}/topicos-edital/${id}`;
-    return this.http.delete<void>(url);
+  excluir(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 }

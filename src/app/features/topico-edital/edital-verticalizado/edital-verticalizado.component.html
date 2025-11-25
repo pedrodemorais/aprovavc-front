@@ -1,6 +1,6 @@
 <div class="pagina-edital">
 
-  <!-- FILTRO: só PROVA -->
+  <!-- FILTRO: Prova -->
   <section class="card filtros">
     <h3>Configurar edital verticalizado</h3>
 
@@ -10,6 +10,7 @@
         id="prova"
         [(ngModel)]="provaSelecionadaId"
         (change)="onProvaChange()">
+
         <option [ngValue]="undefined">Selecione a prova</option>
         <option *ngFor="let p of provas" [ngValue]="p.id">
           {{ p.nome }}
@@ -18,18 +19,15 @@
     </div>
   </section>
 
-  <!-- COMPONENTE DE CADASTRO DO EDITAL -->
+  <!-- COMPONENTE CADASTRO DO EDITAL (só aparece com prova escolhida) -->
   <app-topico-edital-cadastro
-    *ngIf="empresaId && provaSelecionadaId"
-    [empresaId]="empresaId"
+    *ngIf="provaSelecionadaId"
     [provaId]="provaSelecionadaId!"
     [provaNome]="provaSelecionada?.nome">
   </app-topico-edital-cadastro>
 
-  <!-- MENSAGEM QUANDO NÃO TIVER PROVA -->
-  <div
-    class="card aviso"
-    *ngIf="!(empresaId && provaSelecionadaId)">
+  <!-- MENSAGEM QUANDO NÃO TIVER PROVA SELECIONADA -->
+  <div class="card aviso" *ngIf="!provaSelecionadaId">
     Selecione uma prova para configurar o edital.
   </div>
 </div>

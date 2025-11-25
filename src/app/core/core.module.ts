@@ -1,9 +1,6 @@
 import { NgModule,CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ClienteCadastroComponent } from './components/cliente-cadastro/cliente-cadastro.component';
-import { FornecedorCadastroComponent } from './components/fornecedor-cadastro/fornecedor-cadastro.component';
 
-import { PedidosVendaComponent } from './components/pedidos-venda/pedidos-venda.component';
 import { EmpresaCadastroComponent } from './components/empresa-cadastro/empresa-cadastro.component';
 import { PlannerComponent } from './components/planner/planner.component';
 import { FormsModule,ReactiveFormsModule } from '@angular/forms'; // Importação necessária para ngModel
@@ -21,18 +18,13 @@ import { MenubarModule } from 'primeng/menubar';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { MatTableModule } from '@angular/material/table';
-import { CategoriaCadastroComponent } from './components/categoria-cadastro/categoria-cadastro.component';
 import { DropdownModule } from 'primeng/dropdown';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { SubCategoriaComponent } from './components/sub-categoria/sub-categoria.component';
 import { FormaDePagamentoComponent } from './components/forma-de-pagamento/forma-de-pagamento.component';
-import { InsumosComponent } from './components/insumos/insumos.component';
-import { UnidadeDeMedidaComponent } from './components/unidade-de-medida/unidade-de-medida.component';
 import { HttpClientModule } from '@angular/common/http';
 import { NgxMaskModule } from 'ngx-mask';
 import { TableModule } from 'primeng/table';
-import { ProdutoCadastroComponent } from './components/produto-cadastro/produto-cadastro.component';
-import { MarcaCadastroComponent } from './components/marca-cadastro/marca-cadastro.component';
 import { ChartModule } from 'primeng/chart';
 import { CalendarModule } from 'primeng/calendar';
 // Importe a função para registrar o locale
@@ -51,9 +43,7 @@ import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePipe } from '@angular/common'; // <-- importe aqui
-import { PropostaOsComponent } from './components/proposta-os/proposta-os.component'; // Importação do componente PropostaOsComponent
 import { ConfiguracaoOsComponent } from './components/proposta-os/configuracao-os/configuracao-os.component';
-import { EquipamentoCadastroComponent } from './components/equipamento-cadastro/equipamento-cadastro.component';
 
 import { AutoCompleteModule } from 'primeng/autocomplete';
 registerLocaleData(localePt);
@@ -65,22 +55,12 @@ registerLocaleData(localePt);
   declarations: [
     
     JanelaPadraoComponent,
-    FornecedorCadastroComponent, 
-    PropostaOsComponent,
-    ProdutoCadastroComponent,
-    PedidosVendaComponent, 
     EmpresaCadastroComponent, 
     PlannerComponent, 
-    ClienteCadastroComponent, 
     TimelineComponent,
-    CategoriaCadastroComponent,
-    MarcaCadastroComponent,
     SubCategoriaComponent,
     FormaDePagamentoComponent,
-    InsumosComponent,
-    UnidadeDeMedidaComponent,
     ConfiguracaoOsComponent,
-    EquipamentoCadastroComponent,
     
   
     
