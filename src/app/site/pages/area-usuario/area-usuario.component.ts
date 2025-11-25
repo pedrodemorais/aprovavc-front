@@ -1,11 +1,12 @@
 import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { AuthService } from 'src/app/site/services/auth.service';
-import { filter } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { MenuItem } from 'primeng/api';
 import { ViewEncapsulation } from '@angular/core';
 import { ProvaEstudoDTO } from 'src/app/area-restrita/services/prova.service';
 import { ProvaEstudoService } from 'src/app/core/services/prova-estudo.service';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-area-usuario',
@@ -21,6 +22,7 @@ export class AreaUsuarioComponent implements OnInit {
 
   items: MenuItem[] = [];
   provas: ProvaEstudoDTO[] = [];
+private destroy$ = new Subject<void>();
 
   private cadastroRotas = [
     '/area-restrita/cad-prova',
@@ -58,6 +60,13 @@ export class AreaUsuarioComponent implements OnInit {
 
     // carrega provas e depois monta o menu
     this.carregarProvas();
+
+      this.provaEstudoService.refresh$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.carregarProvas();
+      });
+    
   }
 
 private carregarProvas() {
@@ -74,6 +83,11 @@ private carregarProvas() {
     }
   });
 }
+
+ ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
 
   // === MENU MODEL ===
