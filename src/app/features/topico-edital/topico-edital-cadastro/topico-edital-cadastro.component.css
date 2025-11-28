@@ -155,9 +155,7 @@ tbody tr:hover {
   background-color: #eef2ff;
 }
 
-.descricao-col {
-  /* sem fundo chapado, só usa o hover/zebra */
-}
+
 
 .descricao-wrapper {
   display: inline-block;

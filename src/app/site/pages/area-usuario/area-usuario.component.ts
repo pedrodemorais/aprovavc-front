@@ -111,24 +111,24 @@ private rebuildItems(url: string) {
     { label: 'Início', icon: 'pi pi-home', routerLink: ['/area-restrita'] },
 
     {
-      label: 'Cadastro',
+      label: 'Cadastrar',
       icon: 'pi pi-folder-open',
       expanded: abertoPorRotaCadastro,
       items: [
         { label: 'Matérias',  icon: 'pi pi-list',      routerLink: ['/area-restrita/cad-materias'] },
-        { label: 'Provas',             icon: 'pi pi-briefcase', routerLink: ['/area-restrita/cad-prova'] },
+        { label: 'Prova',             icon: 'pi pi-briefcase', routerLink: ['/area-restrita/cad-prova'] },
         { label: 'Edital Verticalizado', icon: 'pi pi-sitemap', routerLink: ['/area-restrita/edital-verticalizado'] },
         { label: 'Meu Cadastro',       icon: 'pi pi-user',      routerLink: ['/area-restrita/meu-cadastro'] },
       ]
     },
 
     {
-      label: 'Minhas Provas',
+      label: 'Estudar',
       icon: 'pi pi-check-square',
       items: provasItems
     },
 
-    { label: 'Minhas Revisões', icon: 'pi pi-history', routerLink: ['/area-restrita/materias'] }
+    { label: 'Revisar', icon: 'pi pi-history', routerLink: ['/area-restrita/materias'] }
   ];
 }
 

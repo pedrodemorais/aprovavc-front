@@ -22,10 +22,9 @@ import { ProdutoCadComponent } from './core/components/produto-cad/produto-cad.c
 import { TipoEquipamentoCadastroComponent } from './core/components/tipo-equipamento-cadastro/tipo-equipamento-cadastro.component';
 import { TopicoRevisaoComponent } from './features/revisao/topico-revisao/topico-revisao.component';
 import { MateriaEstudoComponent } from './features/materias/materia-estudo/materia-estudo.component';
-import { ProvaEstudoComponent } from './features/revisao/prova-estudo/prova-estudo.component';
-import { TopicoEditalCadastroComponent } from './features/topico-edital/topico-edital-cadastro/topico-edital-cadastro.component';
-import { EditalVerticalizadoComponent } from './features/topico-edital/edital-verticalizado/edital-verticalizado.component';
-import { EditalEstudoComponent } from './area-restrita/estudos/edital-estudo/edital-estudo.component';
+
+
+
 
 registerLocaleData(localePt, 'pt-BR'); 
 
@@ -41,10 +40,7 @@ registerLocaleData(localePt, 'pt-BR');
     TipoEquipamentoCadastroComponent,
     TopicoRevisaoComponent,
     MateriaEstudoComponent,
-    ProvaEstudoComponent,
-    TopicoEditalCadastroComponent,
-    EditalVerticalizadoComponent,
-    EditalEstudoComponent,
+    
    
   ],
   imports: [
@@ -55,7 +51,10 @@ registerLocaleData(localePt, 'pt-BR');
     SiteModule,
     NgChartsModule,
     ReactiveFormsModule,
-    ServiceWorkerModule.register('ngsw-worker.js', {
+    
+    FormsModule,     
+   
+        ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       // Register the ServiceWorker as soon as the application is stable
       // or after 30 seconds (whichever comes first).

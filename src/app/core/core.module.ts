@@ -1,6 +1,6 @@
 import { NgModule,CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
+import { QuillModule } from 'ngx-quill';
 import { EmpresaCadastroComponent } from './components/empresa-cadastro/empresa-cadastro.component';
 import { PlannerComponent } from './components/planner/planner.component';
 import { FormsModule,ReactiveFormsModule } from '@angular/forms'; // Importação necessária para ngModel
@@ -47,6 +47,19 @@ import { ConfiguracaoOsComponent } from './components/proposta-os/configuracao-o
 
 import { AutoCompleteModule } from 'primeng/autocomplete';
 registerLocaleData(localePt);
+import { LOCALE_ID, isDevMode } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { EditorModule } from 'primeng/editor';
+import { ProvaEstudoComponent } from '../features/revisao/prova-estudo/prova-estudo.component';
+import { TopicoEditalCadastroComponent } from '../features/topico-edital/topico-edital-cadastro/topico-edital-cadastro.component';
+import { EditalVerticalizadoComponent } from '../features/topico-edital/edital-verticalizado/edital-verticalizado.component';
+import { EditalEstudoComponent } from '../area-restrita/estudos/edital-estudo/edital-estudo.component';
+import { SalaEstudoComponent } from '../area-restrita/estudos/sala-estudo/sala-estudo.component';
+import { EditorTesteComponent } from '../editor-teste/editor-teste.component';
+import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
+
+
+
 
 
 
@@ -61,6 +74,14 @@ registerLocaleData(localePt);
     SubCategoriaComponent,
     FormaDePagamentoComponent,
     ConfiguracaoOsComponent,
+    ProvaEstudoComponent,
+       TopicoEditalCadastroComponent,
+       EditalVerticalizadoComponent,
+       EditalEstudoComponent,
+       SalaEstudoComponent,
+       
+       EditorTesteComponent,
+       EditorTesteComponent,  // <-- adiciona aq
     
   
     
@@ -79,6 +100,7 @@ registerLocaleData(localePt);
     DialogModule,
     ButtonModule,
     TimelineModule,
+    QuillModule.forRoot(),  // <-- adicione isto
     BrowserAnimationsModule, // Importe aqui
     TabViewModule, // Adicionado
     MatTableModule,
@@ -93,13 +115,19 @@ registerLocaleData(localePt);
     InputMaskModule,
     ConfirmDialogModule,
      AutoCompleteModule,
-     
-   
+       BrowserAnimationsModule,
+  BrowserAnimationsModule,   // PRECISA estar aqui
+    FormsModule,   
+    BrowserAnimationsModule,  
+     FormsModule,
+   EditorModule, 
+   BrowserModule,
+    BrowserAnimationsModule,
+    RichTextEditorModule,
+  BrowserAnimationsModule,   // PRECISA estar aqui
     NgxMaskModule.forChild()
   ],
-  exports: [
-    
-  ],
+
   providers: [
     MessageService, // ✅ <-- ISSO AQUI RESOLVE
      ConfirmationService, // 👈 Adicione isso aqui

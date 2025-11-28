@@ -28,6 +28,7 @@ import { MateriaEstudoComponent } from './features/materias/materia-estudo/mater
 import { ProvaEstudoComponent } from './features/revisao/prova-estudo/prova-estudo.component';
 import { EditalVerticalizadoComponent } from './features/topico-edital/edital-verticalizado/edital-verticalizado.component';
 import { EditalEstudoComponent } from './area-restrita/estudos/edital-estudo/edital-estudo.component';
+import { SalaEstudoComponent } from './area-restrita/estudos/sala-estudo/sala-estudo.component';
 
 
 
@@ -64,6 +65,9 @@ const routes: Routes = [
           { path: 'materias', component: TopicoRevisaoComponent } ,  
           { path: 'cad-materias', component: MateriaEstudoComponent }  ,
           { path: 'cad-prova', component: ProvaEstudoComponent }  ,
+          {
+  path: 'estudos/sala/:provaId/:topicoId', component: SalaEstudoComponent},
+
           { path: 'edital-verticalizado', component: EditalVerticalizadoComponent }  ,
           { path: 'meu-cadastro', component: EmpresaCadastroComponent },
           { path: 'provas/:provaId/edital',component: EditalEstudoComponent},

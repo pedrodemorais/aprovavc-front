@@ -1,46 +1,45 @@
-<!-- src/app/area-restrita/estudos/edital-estudo/edital-estudo.component.html -->
-<div class="pagina-edital">
+<section class="card tabela-topicos" *ngIf="!carregando && topicos.length">
 
-  <section class="card header">
-    <div>
-      <h3>{{ prova?.nome || 'Prova' }}</h3>
-      <p class="subtitulo">Edital verticalizado</p>
-    </div>
-  </section>
+  <table class="tabela-edital">
+    <thead>
+      <tr>
+        <th>Tópico do edital</th>
+        <th class="col-status">Status</th>
+        <th class="col-acoes">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of topicos">
+        <td>
+          <span
+            class="nivel"
+            [style.marginLeft.px]="getIndentPx(t)"
+          >
+            {{ (t.nivelTopico || t.nivel || t.codigo) }} - {{ t.descricao }}
+          </span>
+        </td>
 
-  <section class="card tabela-topicos" *ngIf="!carregando && topicos.length">
+        <td class="col-status">
+          <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
+            {{ t.ativo ? 'Ativo' : 'Inativo' }}
+          </span>
+        </td>
 
-    <table class="tabela-edital">
-      <thead>
-        <tr>
-          <th>Tópico do edital</th>
-          <th class="col-status">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let t of topicos">
-          <td>
-            <span class="nivel" [style.marginLeft.px]="getIndentPx(t)">
-  {{ (t.nivelTopico || t.nivel || t.codigo) }} - {{ t.descricao }}
-</span>
+        <td class="col-acoes">
+          <button
+            class="btn-estudar"
+           
+            (click)="abrirSalaEstudo(t)"
+          >
+            Estudar
+          </button>
 
-          </td>
-          <td class="col-status">
-            <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
-              {{ t.ativo ? 'Ativo' : 'Inativo' }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          <div  class="hint-filhos">
+            
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-  </section>
-
-  <section *ngIf="!carregando && !topicos.length" class="card aviso">
-    Não há tópicos cadastrados para esta prova.
-  </section>
-
-  <section *ngIf="carregando" class="card aviso">
-    Carregando edital...
-  </section>
-</div>
+</section>

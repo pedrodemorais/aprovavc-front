@@ -9,4 +9,6 @@ export interface TopicoEdital {
 
   nivel: string;
   nivelTopico: string;
+    subtopicos?: TopicoEdital[];  // <<--- ADICIONE ISSO
+    filhos?: TopicoEdital[];     // se o backend mandar assim
 }
