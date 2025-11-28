@@ -1,45 +1,48 @@
 <section class="card tabela-topicos" *ngIf="!carregando && topicos.length">
-
   <table class="tabela-edital">
     <thead>
       <tr>
+        <th class="col-revisao">Revisão</th>
         <th>Tópico do edital</th>
-        <th class="col-status">Status</th>
-        <th class="col-acoes">Ações</th>
+        <th class="col-status">Situação</th>
       </tr>
     </thead>
-    <tbody>
-      <tr *ngFor="let t of topicos">
-        <td>
-          <span
-            class="nivel"
-            [style.marginLeft.px]="getIndentPx(t)"
-          >
-            {{ (t.nivelTopico || t.nivel || t.codigo) }} - {{ t.descricao }}
-          </span>
-        </td>
 
-        <td class="col-status">
-          <span class="badge" [ngClass]="t.ativo ? 'badge-ativo' : 'badge-inativo'">
-            {{ t.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
-        </td>
+  <tbody>
+  <tr
+    *ngFor="let t of topicos"
+    class="linha-topico"
+    [ngClass]="{ 'linha-materia': isMateria(t) }"
+    (click)="abrirSalaEstudo(t)"
+    tabindex="0"
+    (keydown.enter)="abrirSalaEstudo(t)"
+    (keydown.space)="abrirSalaEstudo(t); $event.preventDefault()"
+  >
+    <td class="col-revisao" (click)="$event.stopPropagation()">
+      <span
+        class="dot"
+        [ngClass]="t.id ? getDotClassByTopicoId(t.id) : 'dot-sem'"
+        [title]="t.id ? getDotTitleByTopicoId(t.id) : 'Sem revisão'"
+      ></span>
+    </td>
 
-        <td class="col-acoes">
-          <button
-            class="btn-estudar"
-           
-            (click)="abrirSalaEstudo(t)"
-          >
-            Estudar
-          </button>
+    <td>
+      <span
+        class="nivel"
+        [ngClass]="{ 'texto-materia': isMateria(t) }"
+        [style.marginLeft.px]="getIndentPx(t)"
+      >
+        {{ (t.nivelTopico || t.nivel || t.codigo) }} - {{ t.descricao }}
+      </span>
+    </td>
 
-          <div  class="hint-filhos">
-            
-          </div>
-        </td>
-      </tr>
-    </tbody>
+    <td class="col-status" (click)="$event.stopPropagation()">
+      <span class="badge" [ngClass]="t.id ? getSituacaoClassById(t.id) : 'badge-nao-iniciado'">
+        {{ t.id ? getSituacaoLabelById(t.id) : 'Não iniciado' }}
+      </span>
+    </td>
+  </tr>
+</tbody>
+
   </table>
-
 </section>
