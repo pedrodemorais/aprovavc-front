@@ -44,6 +44,7 @@ registerLocaleData(localePt);
 import { BrowserModule } from '@angular/platform-browser';
 import { EditorModule } from 'primeng/editor';
 import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
+import { MateriaCadastroComponent } from './pages/materias/materia-cadastro/materia-cadastro.component';
 
 
 
@@ -54,7 +55,8 @@ import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
 @NgModule({
   declarations: [
     
-    EmpresaCadastroComponent, 
+    EmpresaCadastroComponent,
+         MateriaCadastroComponent, 
        
     
   

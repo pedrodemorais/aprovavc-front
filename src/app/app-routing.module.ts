@@ -18,6 +18,7 @@ import { ContentComponent } from './site/pages/content/content.component';
 import { InicioComponent } from './site/pages/inicio/inicio.component';
 
 import { EmpresaCadastroComponent } from './site/pages/empresa-cadastro/empresa-cadastro.component';
+import { MateriaCadastroComponent } from './core/pages/materias/materia-cadastro/materia-cadastro.component';
 
 
 
@@ -36,19 +37,15 @@ const routes: Routes = [
     children: [
           { path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
           { path: 'content', component: ContentComponent,
-             children: [
-                        { path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
+             children: [{ path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
                         
-                         
-                        
-                         { path: 'meu-cadastro', component: EmpresaCadastroComponent },
          
     ] 
 
            },
          
           { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
-
+ { path: 'cad-materias', component: MateriaCadastroComponent },
           { path: 'meu-cadastro', component: EmpresaCadastroComponent },
            
      

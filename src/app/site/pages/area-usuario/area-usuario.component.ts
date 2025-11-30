@@ -86,12 +86,12 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
         icon: 'pi pi-book',
         items: [
           {
-            label: 'Dashboard',
+            label: 'Materias',
             icon: 'pi pi-chart-line',
-            routerLink: ['/area-restrita/dashboard']
+            routerLink: ['/area-restrita/cad-materias']
           },
           {
-            label: 'Biblioteca de Matérias',
+            label: 'cad-materias',
             icon: 'pi pi-bookmark',
             routerLink: ['/area-restrita/cad-materias']
           },
