@@ -1,0 +1,219 @@
+
+
+
+<div class="main">
+
+  <div class="topo-login-site"> 
+  
+    <img class="logo" src="assets/img/logo/aprovavc.png" alt="Logo">
+    <a routerLink="/home">
+    <h1 >
+      <span style="color: #ffffff; font-weight: 300; letter-spacing: 1px; margin-right: 5px;">Aprova</span>
+      <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">VC</span>
+    </h1>
+  </a>
+  </div>
+<div class="painel">
+<div class="configurador-container">
+  <h2>Bem-vindo ao Configurador Inicial!</h2>
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+  
+  <p>Preencha as informações abaixo para criar o usuário que irá logar no sistema:</p>
+
+  <form [formGroup]="configuradorForm" (ngSubmit)="onSubmit()">
+
+    <!-- Etapa 1: Dados do Usuário -->
+    <div *ngIf="step === 1">
+      <h3>Dados do Usuário</h3>
+
+      <div class="form-group">
+        <label for="nome">Nome</label>
+        <input type="text" id="nome" class="form-control" placeholder="Digite seu nome" formControlName="nome" required />
+        <p *ngIf="configuradorForm.get('nome')?.invalid && configuradorForm.get('nome')?.touched" class="error">
+          Nome obrigatório.
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" class="form-control" placeholder="Digite seu email" formControlName="email" required />
+        <p *ngIf="configuradorForm.get('email')?.invalid && configuradorForm.get('email')?.touched" class="error">
+          Email inválido.
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" class="form-control" placeholder="Digite sua senha" formControlName="senha" required minlength="6" />
+        <p *ngIf="configuradorForm.get('senha')?.invalid && configuradorForm.get('senha')?.touched" class="error">
+          Senha deve ter pelo menos 6 caracteres.
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmSenha">Confirmar Senha</label>
+        <input type="password" id="confirmSenha" class="form-control" placeholder="Confirme sua senha" formControlName="confirmSenha" required />
+        <p *ngIf="configuradorForm.get('confirmSenha')?.value !== configuradorForm.get('senha')?.value && configuradorForm.get('confirmSenha')?.touched" class="error">
+          As senhas não coincidem.
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label for="tipoDePessoa">Você é Pessoa Física ou Jurídica?</label>
+        <select id="tipoDePessoa" formControlName="tipoDePessoa" (change)="atualizarTipoPessoa()">
+          <option value="">Selecione...</option>
+          <option value="Jurídica">Jurídica</option>
+          <option value="Física">Física</option>
+        </select>
+      </div>
+      
+    </div>
+    <div *ngIf="step === 2">
+      <h3>Selecione o Tipo do Seu Negócio</h3>
+  
+      <!-- Botões de Seleção do Tipo de Negócio -->
+<div class="tipo-negocio-container">
+  <button *ngFor="let tipo of getSegmentoKeys()" 
+          type="button" 
+          class="tipo-negocio-btn" 
+          [class.ativo]="configuradorForm.get('segmentoAtividade')?.value === tipo"
+          (click)="selecionarSegmento(tipo)">
+    {{ tipo }}
+  </button>
+</div>
+
+<!-- Botões de Seleção do Subtipo -->
+<div *ngIf="segmentoSelecionado">
+  <h4>Selecione o Subtipo</h4>
+  <div class="subtipo-container">
+    <button *ngFor="let sub of segmentosDetalhados[segmentoSelecionado]" 
+            type="button" 
+            class="subtipo-btn" 
+            [class.ativo]="configuradorForm.get('tipoDeNegocio')?.value === sub"
+            (click)="selecionarSubsegmento(sub)">
+      {{ sub }}
+    </button>
+  </div>
+</div>
+
+
+
+    
+    </div>
+    <!-- Etapa 2: Dados da Empresa -->
+    <div *ngIf="step === 3">
+      <h3>Dados da Empresa</h3>
+
+      <!-- Nome Fantasia (Sempre Exibido) -->
+<div class="form-group">
+  <label for="nomeFantasia">Nome Fantasia</label>
+  <input type="text" id="nomeFantasia" formControlName="nomeFantasia" class="form-control" required />
+</div>
+
+<!-- Razão Social (Aparece apenas para Jurídica) -->
+<div class="form-group" *ngIf="tipoPessoa === 'Jurídica'">
+  <label for="razaoSocial">Razão Social</label>
+  <input type="text" id="razaoSocial" formControlName="razaoSocial" class="form-control" required />
+</div>
+
+<!-- CNPJ (Caso seja Pessoa Jurídica) -->
+<div class="form-group" *ngIf="configuradorForm.get('tipoDePessoa')?.value === 'Jurídica'">
+  <label for="documento">CNPJ</label>
+  <input type="text" id="documento" formControlName="documento" class="form-control"
+         mask="00.000.000/0000-00" required />
+  <p *ngIf="configuradorForm.get('documento')?.hasError('invalid')" class="error">
+    {{ errorMessage }}
+  </p>
+</div>
+
+<!-- CPF (Caso seja Pessoa Física) -->
+<div class="form-group" *ngIf="configuradorForm.get('tipoDePessoa')?.value === 'Física'">
+  <label for="documento">CPF</label>
+  <input type="text" id="documento" formControlName="documento" class="form-control"
+         mask="000.000.000-00" required />
+  
+         <p *ngIf="configuradorForm.get('documento')?.hasError('invalid')" class="error">
+    {{ errorMessage }}
+  </p>
+</div>
+
+
+     
+      <div class="form-group">
+        <label for="emailEmpresa">E-mail da Empresa</label>
+        <input type="emailEmpresa" id="emailEmpresa" formControlName="emailEmpresa" class="form-control" required />
+      </div>
+
+      <div class="form-group">
+        <label for="telefone">Telefone</label>
+        <input type="text" id="telefone" formControlName="telefone" class="form-control"  mask="(00) 0 0000-0000" required />
+      </div>
+    </div>
+
+    <!-- Etapa 3: Endereço (com Município dentro) -->
+    <div *ngIf="step === 4" formGroupName="endereco">
+      <h3>Endereço</h3>
+
+      <div class="form-group">
+        <label for="logradouro">Logradouro</label>
+        <input type="text" id="logradouro" formControlName="logradouro" class="form-control" required />
+      </div>
+
+      <div class="form-group">
+        <label for="numero">Número</label>
+        <input type="text" id="numero" formControlName="numero" class="form-control" required />
+      </div>
+
+      <div class="form-group">
+        <label for="complemento">Complemento</label>
+        <input type="text" id="complemento" formControlName="complemento" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label for="bairro">Bairro</label>
+        <input type="text" id="bairro" formControlName="bairro" class="form-control" required />
+      </div>
+
+      <div class="form-group">
+        <label for="cep">CEP</label>
+        <input type="text" id="cep" formControlName="cep" class="form-control" mask="00000-000"   required />
+      </div>
+
+      <!-- Estado e Município dentro de Endereço -->
+      <div formGroupName="municipio">
+        <div class="form-group">
+          <label for="estado">Estado</label>
+          <select id="estado" formControlName="uf" (change)="onEstadoChange()" required>
+            <option value="">Selecione um estado</option>
+            <option *ngFor="let estado of uf" [value]="estado">{{ estado }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="cidade">Município</label>
+          <select id="cidade" formControlName="municipioIbge" required>
+            <option value="">Selecione um município</option>
+            <option *ngFor="let municipio of municipios" [value]="municipio.nome">
+              {{ municipio.nome }} <!-- ✅ Pegando o nome correto agora! -->
+            </option>
+          </select>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões de Navegação -->
+    <div class="acoes">
+      <button type="button" class="btn-voltar" (click)="voltar()" *ngIf="step > 1">Voltar</button>
+      <button type="button" class="btn-proximo" (click)="avancar()" *ngIf="step < totalSteps">Próximo</button>
+
+      <button type="submit" class="btn-confirmar" *ngIf="step === totalSteps" [disabled]="isSubmitting">
+        Confirmar
+      </button>
+    </div>
+  </form>
+</div>
+</div>
+</div>

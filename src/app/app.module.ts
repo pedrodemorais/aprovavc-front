@@ -6,22 +6,17 @@ import { CoreModule } from './core/core.module';
 import { AppRoutingModule } from './app-routing.module';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
-import { AtivacaoComponent } from './ativacao/ativacao.component'; // Importação correta do serviço
+import { AtivacaoComponent } from './site/ativacao/ativacao.component'; // Importação correta do serviço
 import { FormsModule } from '@angular/forms';
 import { PaymentComponent } from './site/pages/payment/payment.component';
 import { RecuperarSenhaComponent } from './site/pages/auth/recuperar-senha/recuperar-senha.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { AuthInterceptor } from './site/interceptors/auth.interceptor';
+import { AuthInterceptor } from './site/pages/interceptors/auth.interceptor';
 import { NgChartsModule } from 'ng2-charts';
-import { MenuComponent } from './core/components/menu/menu.component';
 import { ContentComponent } from './site/pages/content/content.component';
 import { ConfirmationService } from 'primeng/api';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { ProdutoCadComponent } from './core/components/produto-cad/produto-cad.component';
-import { TipoEquipamentoCadastroComponent } from './core/components/tipo-equipamento-cadastro/tipo-equipamento-cadastro.component';
-import { TopicoRevisaoComponent } from './features/revisao/topico-revisao/topico-revisao.component';
-import { MateriaEstudoComponent } from './features/materias/materia-estudo/materia-estudo.component';
 
 
 
@@ -34,12 +29,7 @@ registerLocaleData(localePt, 'pt-BR');
     AtivacaoComponent,
     PaymentComponent,
     RecuperarSenhaComponent,
-    MenuComponent,
     ContentComponent,
-    ProdutoCadComponent,
-    TipoEquipamentoCadastroComponent,
-    TopicoRevisaoComponent,
-    MateriaEstudoComponent,
     
    
   ],

@@ -1,5 +1,5 @@
 import { Component, AfterViewInit } from '@angular/core';
-import { PaymentService } from '../../../services/payment.service';
+import { PaymentService } from '../../services/payment.service';
 
 declare var MercadoPago: any;
 

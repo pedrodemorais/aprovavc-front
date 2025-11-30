@@ -1,8 +1,7 @@
 import { NgModule,CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QuillModule } from 'ngx-quill';
-import { EmpresaCadastroComponent } from './components/empresa-cadastro/empresa-cadastro.component';
-import { PlannerComponent } from './components/planner/planner.component';
+import { EmpresaCadastroComponent } from '../site/pages/empresa-cadastro/empresa-cadastro.component';
 import { FormsModule,ReactiveFormsModule } from '@angular/forms'; // Importação necessária para ngModel
 import { TimelineModule } from 'primeng/timeline';
 import { TabViewModule } from 'primeng/tabview'; // Adicionado
@@ -10,8 +9,6 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; // Importação necessária
 // Componentes do CoreModule
 
-import { JanelaPadraoComponent } from './components/janela-padrao/janela-padrao.component';
-import { TimelineComponent } from './components/timeline/timeline.component';
 
 // Módulos de Terceiros (PrimeNG, etc.)
 import { MenubarModule } from 'primeng/menubar';
@@ -20,8 +17,6 @@ import { ButtonModule } from 'primeng/button';
 import { MatTableModule } from '@angular/material/table';
 import { DropdownModule } from 'primeng/dropdown';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { SubCategoriaComponent } from './components/sub-categoria/sub-categoria.component';
-import { FormaDePagamentoComponent } from './components/forma-de-pagamento/forma-de-pagamento.component';
 import { HttpClientModule } from '@angular/common/http';
 import { NgxMaskModule } from 'ngx-mask';
 import { TableModule } from 'primeng/table';
@@ -43,19 +38,11 @@ import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePipe } from '@angular/common'; // <-- importe aqui
-import { ConfiguracaoOsComponent } from './components/proposta-os/configuracao-os/configuracao-os.component';
 
 import { AutoCompleteModule } from 'primeng/autocomplete';
 registerLocaleData(localePt);
-import { LOCALE_ID, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { EditorModule } from 'primeng/editor';
-import { ProvaEstudoComponent } from '../features/revisao/prova-estudo/prova-estudo.component';
-import { TopicoEditalCadastroComponent } from '../features/topico-edital/topico-edital-cadastro/topico-edital-cadastro.component';
-import { EditalVerticalizadoComponent } from '../features/topico-edital/edital-verticalizado/edital-verticalizado.component';
-import { EditalEstudoComponent } from '../area-restrita/estudos/edital-estudo/edital-estudo.component';
-import { SalaEstudoComponent } from '../area-restrita/estudos/sala-estudo/sala-estudo.component';
-import { EditorTesteComponent } from '../editor-teste/editor-teste.component';
 import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
 
 
@@ -67,21 +54,8 @@ import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
 @NgModule({
   declarations: [
     
-    JanelaPadraoComponent,
     EmpresaCadastroComponent, 
-    PlannerComponent, 
-    TimelineComponent,
-    SubCategoriaComponent,
-    FormaDePagamentoComponent,
-    ConfiguracaoOsComponent,
-    ProvaEstudoComponent,
-       TopicoEditalCadastroComponent,
-       EditalVerticalizadoComponent,
-       EditalEstudoComponent,
-       SalaEstudoComponent,
        
-       EditorTesteComponent,
-       EditorTesteComponent,  // <-- adiciona aq
     
   
     
