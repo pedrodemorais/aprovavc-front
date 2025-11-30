@@ -1,0 +1,25 @@
+.sala-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.sala-container h2 {
+  margin: 0 0 12px;
+  font-size: 1.4rem;
+  color: #1f2933;
+}
+
+.sala-container p {
+  margin: 4px 0;
+  color: #4b5563;
+}
+
+.sala-container .hint {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}

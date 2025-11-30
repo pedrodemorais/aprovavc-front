@@ -44,7 +44,8 @@ registerLocaleData(localePt);
 import { BrowserModule } from '@angular/platform-browser';
 import { EditorModule } from 'primeng/editor';
 import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
-import { MateriaCadastroComponent } from './pages/materias/materia-cadastro/materia-cadastro.component';
+import { MateriaCadastroComponent } from './components/materia-cadastro/materia-cadastro.component';
+import { SalaEstudoComponent } from './components/sala-estudo/sala-estudo.component';
 
 
 
@@ -56,7 +57,8 @@ import { MateriaCadastroComponent } from './pages/materias/materia-cadastro/mate
   declarations: [
     
     EmpresaCadastroComponent,
-         MateriaCadastroComponent, 
+         MateriaCadastroComponent,
+         SalaEstudoComponent, 
        
     
   

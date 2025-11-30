@@ -18,42 +18,46 @@ import { ContentComponent } from './site/pages/content/content.component';
 import { InicioComponent } from './site/pages/inicio/inicio.component';
 
 import { EmpresaCadastroComponent } from './site/pages/empresa-cadastro/empresa-cadastro.component';
-import { MateriaCadastroComponent } from './core/pages/materias/materia-cadastro/materia-cadastro.component';
+import { MateriaCadastroComponent } from './core/components/materia-cadastro/materia-cadastro.component';
+import { SalaEstudoComponent } from './core/components/sala-estudo/sala-estudo.component';
 
 
 
 
 
 const routes: Routes = [
-{ path: 'ativacao', component: AtivacaoComponent }, 
+  { path: 'ativacao', component: AtivacaoComponent },
 
-{ path: 'adesao', component: AdesaoPlanoComponent },
-{ path: 'configurador', component: ConfiguradorComponent },
-{ path: 'politica-privacidade', component: PoliticaPrivacidadeComponent },
-{ path: 'termos-de-uso', component: TermosDeUsoComponent},
-{ path: 'home', component: InicioComponent }, 
-{ path: 'login', component: LoginSiteComponent },    
-{ path: 'area-restrita', component: AreaUsuarioComponent,  canActivate: [AuthGuard],
+  { path: 'adesao', component: AdesaoPlanoComponent },
+  { path: 'configurador', component: ConfiguradorComponent },
+  { path: 'politica-privacidade', component: PoliticaPrivacidadeComponent },
+  { path: 'termos-de-uso', component: TermosDeUsoComponent },
+  { path: 'home', component: InicioComponent },
+  { path: 'login', component: LoginSiteComponent },
+  {
+    path: 'area-restrita', component: AreaUsuarioComponent, canActivate: [AuthGuard],
     children: [
-          { path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
-          { path: 'content', component: ContentComponent,
-             children: [{ path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
-                        
-         
-    ] 
+      { path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
+      {
+        path: 'content', component: ContentComponent,
+        children: [{ path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
 
-           },
-         
-          { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
- { path: 'cad-materias', component: MateriaCadastroComponent },
-          { path: 'meu-cadastro', component: EmpresaCadastroComponent },
-           
-     
-    ] 
 
-   },   
-  { path: 'register', component: RegisterComponent },    
-  { path: 'pagamento', component: PaymentComponent }, 
+        ]
+
+      },
+
+      { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
+      { path: 'cad-materias', component: MateriaCadastroComponent },
+      { path: 'meu-cadastro', component: EmpresaCadastroComponent },
+       { path: 'sala-estudo/:topicoId', component: SalaEstudoComponent },
+
+
+    ]
+
+  },
+  { path: 'register', component: RegisterComponent },
+  { path: 'pagamento', component: PaymentComponent },
   { path: 'recuperar-senha', component: RecuperarSenhaComponent },
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
   { path: 'assine', component: AssineComponent },
@@ -65,4 +69,4 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }
