@@ -1,8 +1,167 @@
-<div class="sala-container">
-  <h2>Sala de estudo</h2>
-  <p>Topico selecionado: <strong>{{ materiaId }}</strong></p>
+<div class="sala-container" *ngIf="!carregando; else loadingTpl">
 
-  <p class="hint">
-    Depois a gente pluga aqui as anotações, timer, flashcards etc.
-  </p>
+  <!-- CABEÇALHO DA SALA -->
+  <section class="card sala-header">
+    <div class="sala-header-esquerda">
+      <p class="sala-subtitulo">Sala de estudo</p>
+      <h1 class="sala-titulo">
+        {{ materia?.nome || 'Matéria' }}
+      </h1>
+      <p class="sala-descricao" *ngIf="materia">
+        Foque seus estudos, faça anotações e acompanhe o tempo dedicado a esta matéria.
+      </p>
+    </div>
+
+    <div class="sala-header-direita">
+      <div class="timer-box">
+        <span class="timer-label">Tempo de estudo</span>
+        <span class="timer-valor">{{ tempoFormatado }}</span>
+
+        <div class="timer-botoes">
+          <button type="button"
+                  class="btn primario"
+                  (click)="toggleTimer()">
+            {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
+          </button>
+          <button type="button"
+                  class="btn secundario"
+                  (click)="zerarTimer()"
+                  [disabled]="tempoTotalSegundos === 0">
+            Zerar
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CORPO DA SALA -->
+  <section class="card sala-body">
+
+    <!-- COLUNA ESQUERDA: LISTA DE TÓPICOS -->
+    <aside class="coluna-esquerda">
+      <div class="coluna-header">
+        <h2>Tópicos da matéria</h2>
+        <p class="hint">
+          Clique em um tópico para focar o estudo.
+        </p>
+      </div>
+
+      <!-- LISTA HIERÁRQUICA -->
+      <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
+        <li *ngFor="let t of topicos"
+            class="item-topico"
+            (click)="selecionarTopico(t)"
+            [class.selecionado]="topicoSelecionado?.id === t.id">
+
+          <div class="linha-topico"
+               [style.paddingLeft.px]="(t.nivel || 0) * 20">
+            <span class="marcador-nivel" [ngClass]="'nivel-' + (t.nivel || 0)"></span>
+            <span class="descricao-topico">
+              {{ t.descricao }}
+            </span>
+          </div>
+        </li>
+      </ul>
+
+      <ng-template #semTopicos>
+        <p class="muted">
+          Esta matéria ainda não possui tópicos cadastrados.
+          <br>
+          Volte ao cadastro de matérias para criar sua árvore de tópicos.
+        </p>
+      </ng-template>
+    </aside>
+
+    <!-- COLUNA DIREITA: CONTEÚDO DA SALA -->
+    <main class="coluna-direita">
+
+      <!-- Abas do modo -->
+      <div class="abas-modo">
+        <button type="button"
+                class="aba"
+                [class.ativa]="modo === 'estudar'"
+                (click)="mudarModo('estudar')">
+          Estudar
+        </button>
+
+        <button type="button"
+                class="aba"
+                [class.ativa]="modo === 'revisar'"
+                (click)="mudarModo('revisar')">
+          Revisar
+        </button>
+      </div>
+
+      <!-- MODO ESTUDAR -->
+      <section *ngIf="modo === 'estudar'" class="modo-conteudo">
+
+        <div *ngIf="topicoSelecionado; else selecioneTopico">
+          <h2 class="titulo-section">
+            Estudando:
+            <span>{{ topicoSelecionado.descricao }}</span>
+          </h2>
+        </div>
+
+        <ng-template #selecioneTopico>
+          <h2 class="titulo-section">
+            Selecione um tópico ao lado para começar a estudar.
+          </h2>
+        </ng-template>
+
+        <div class="bloco">
+          <label for="anotacoes" class="label-area">
+            Anotações deste tópico
+          </label>
+          <textarea id="anotacoes"
+                    [(ngModel)]="anotacoes"
+                    rows="8"
+                    class="area-texto"
+                    placeholder="Escreva aqui seu resumo, pontos importantes, fórmulas, observações...">
+          </textarea>
+        </div>
+
+        <div class="bloco flashcards-bloco">
+          <div class="flashcards-header">
+            <h3>Flashcards deste tópico</h3>
+            <span class="tag-breve">em breve</span>
+          </div>
+          <p class="muted">
+            Em uma próxima etapa, você poderá criar cartões de pergunta e resposta
+            aqui, diretamente vinculados a este tópico, para revisar depois no modo Revisar.
+          </p>
+        </div>
+      </section>
+
+      <!-- MODO REVISAR -->
+      <section *ngIf="modo === 'revisar'" class="modo-conteudo">
+        <h2 class="titulo-section">
+          Revisão desta matéria
+        </h2>
+        <p class="muted">
+          Aqui você verá revisões agendadas, tópicos atrasados e poderá revisar
+          as anotações e flashcards construídos no modo Estudar.
+        </p>
+
+        <div class="bloco painel-revisao-placeholder">
+          <p>
+            • Em breve: lista de revisões do dia / atrasadas / futuras.<br>
+            • Atalhos para voltar diretamente para o tópico a ser revisado.<br>
+            • Métricas do progresso nessa matéria.
+          </p>
+        </div>
+      </section>
+
+    </main>
+  </section>
+
+</div>
+
+<ng-template #loadingTpl>
+  <div class="sala-loading">
+    Carregando sala de estudo...
+  </div>
+</ng-template>
+
+<div *ngIf="erro" class="mensagem-erro">
+  {{ erro }}
 </div>
