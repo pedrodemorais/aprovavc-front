@@ -33,8 +33,10 @@ export class MateriaService {
 
 // materia.service.ts (parte de tópicos)
 listarTopicos(materiaId: number): Observable<Topico[]> {
+  console.log('[SERVICE] GET tópicos de materiaId =', materiaId);
   return this.http.get<Topico[]>(`${this.apiUrl}/${materiaId}/topicos`);
 }
+
 
 salvarTopico(materiaId: number, topico: Topico): Observable<Topico> {
   return this.http.post<Topico>(`${this.apiUrl}/${materiaId}/topicos`, topico);

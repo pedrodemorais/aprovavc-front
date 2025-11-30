@@ -19,6 +19,7 @@ export class MateriaCadastroComponent implements OnInit {
   topicos: Topico[] = [];
   novoTopicoDescricao: string = '';
 
+  // tópico onde o subtópico será criado (se tiver seleção)
   topicoSelecionado?: Topico | null;
 
   carregandoMaterias = false;
@@ -94,7 +95,10 @@ export class MateriaCadastroComponent implements OnInit {
   }
 
   novaMateria(): void {
-    this.materiaForm.reset();
+    this.materiaForm.reset({
+      id: null,
+      nome: ''
+    });
     this.materiaSelecionada = undefined;
     this.topicos = [];
     this.topicoSelecionado = null;
@@ -131,6 +135,8 @@ export class MateriaCadastroComponent implements OnInit {
       return;
     }
 
+    const ehNovo = !dto.id;
+
     this.salvando = true;
 
     this.materiaService.salvarMateria(dto).subscribe({
@@ -147,6 +153,16 @@ export class MateriaCadastroComponent implements OnInit {
 
         this.materiaSelecionada = salva;
         this.carregarTopicos(salva);
+
+        if (ehNovo) {
+          this.materiaForm.reset({
+            id: null,
+            nome: ''
+          });
+        } else {
+          this.materiaForm.patchValue(salva);
+        }
+
         this.focarNomeMateria();
       },
       error: () => {
@@ -180,24 +196,92 @@ export class MateriaCadastroComponent implements OnInit {
 
   // ---------- TÓPICOS ----------
 
-  private carregarTopicos(m: Materia): void {
-    if (!m.id) { return; }
+  /**
+   * Monta árvore a partir da lista "plana" que vem do backend.
+   * Assumindo que cada Topico tem um campo "topicoPaiId" no JSON.
+   * Se no seu DTO o nome for outro (ex: idTopicoPai), troque abaixo.
+   */
+private montarArvoreTopicos(lista: Topico[]): Topico[] {
+  console.log('[ARVORE] Montando árvore a partir da lista plana...');
+  const mapa = new Map<number, Topico>();
 
-    this.carregandoTopicos = true;
-    this.topicos = [];
-    this.topicoSelecionado = null;
+  // garante filhos inicializado e preenche o mapa
+  lista.forEach((t) => {
+    (t as any).filhos = (t as any).filhos || [];
+    if ((t as any).id != null) {
+      mapa.set((t as any).id, t);
+      console.log('[ARVORE] Registrando no mapa -> id=', (t as any).id, 'desc=', t.descricao);
+    } else {
+      console.warn('[ARVORE] Topico sem id vindo do backend:', t);
+    }
+  });
 
-    this.materiaService.listarTopicos(m.id).subscribe({
-      next: (lista) => {
-        this.topicos = lista || [];
-        this.carregandoTopicos = false;
-      },
-      error: () => {
-        this.carregandoTopicos = false;
-        this.mensagemErro = 'Erro ao carregar tópicos da matéria.';
+  const raiz: Topico[] = [];
+
+  lista.forEach((t) => {
+    const paiId = (t as any).topicoPaiId as number | null | undefined; // TROCAR NOME SE PRECISO
+
+    if (paiId) {
+      const pai = mapa.get(paiId);
+      if (pai) {
+        (pai as any).filhos = (pai as any).filhos || [];
+        (pai as any).filhos.push(t);
+        console.log(
+          `[ARVORE] Vinculando filho "${t.descricao}" (id=${(t as any).id}) ao pai id=${paiId} ("${(pai as any).descricao}")`
+        );
+      } else {
+        console.warn(
+          `[ARVORE] paiId=${paiId} não encontrado no mapa. Enviando "${t.descricao}" como raiz.`
+        );
+        raiz.push(t);
       }
-    });
+    } else {
+      console.log(
+        `[ARVORE] "${t.descricao}" (id=${(t as any).id}) não tem pai. Vai como raiz.`
+      );
+      raiz.push(t);
+    }
+  });
+
+  console.log('[ARVORE] Resultado final (raiz):', raiz);
+  return raiz;
+}
+
+
+private carregarTopicos(m: Materia): void {
+  if (!m.id) {
+    console.warn('[TOPICOS] Matéria sem ID ao tentar carregar tópicos:', m);
+    return;
   }
+
+  this.carregandoTopicos = true;
+  this.topicos = [];
+  this.topicoSelecionado = null;
+
+  console.log('========================================');
+  console.log('[TOPICOS] Chamando backend (árvore) para materiaId =', m.id);
+
+  this.materiaService.listarTopicos(m.id).subscribe({
+    next: (lista) => {
+      const listaSegura = lista || [];
+      console.log('[TOPICOS] DTO bruto vindo do backend:', listaSegura);
+
+      // 🔁 aqui a mágica: converte cada raiz (com seus subtopicos)
+      this.topicos = listaSegura.map((dto: any) => this.converterDtoParaTopico(dto, 0));
+
+      console.log('[TOPICOS] Árvore adaptada para o template (this.topicos):', this.topicos);
+      this.carregandoTopicos = false;
+      console.log('========================================');
+    },
+    error: (err) => {
+      this.carregandoTopicos = false;
+      this.mensagemErro = 'Erro ao carregar tópicos da matéria.';
+      console.error('[TOPICOS] Erro ao carregar tópicos:', err);
+      console.log('========================================');
+    }
+  });
+}
+
 
   private existeTopicoComMesmaDescricao(lista: Topico[], descricao: string): boolean {
     const normalizada = this.normalizarTexto(descricao);
@@ -216,42 +300,51 @@ export class MateriaCadastroComponent implements OnInit {
     this.focarNovoTopico();
   }
 
-  // 🔹 salva APENAS o tópico recém-criado no backend
-  private salvarTopicoAutomatico(topico: Topico): void {
-    if (!this.materiaSelecionada?.id) {
-      alert('Salve a matéria antes de adicionar tópicos.');
-      this.focarNomeMateria();
-      return;
-    }
-
-    // ⚠️ MUITO IMPORTANTE:
-    // Monta um payload SEM o campo "nivel" (que o DTO não conhece)
-    const payload: any = {
-      // se o back usar id pra update futuro, já vai junto:
-      id: (topico as any).id ?? null,
-      descricao: topico.descricao,
-      ativo: topico.ativo
-      // NÃO manda "nivel" aqui!
-      // NÃO manda "filhos" aqui (novo tópico sempre começa sem filhos)
-    };
-
-    this.salvando = true;
-    this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
-      next: (salvo) => {
-        this.salvando = false;
-        this.mensagemErro = undefined;
-
-        // sincroniza id retornado
-        if (salvo && (salvo as any).id) {
-          (topico as any).id = (salvo as any).id;
-        }
-      },
-      error: () => {
-        this.salvando = false;
-        this.mensagemErro = 'Erro ao salvar o tópico.';
-      }
-    });
+  // salva APENAS o tópico recém-criado no backend
+private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
+  if (!this.materiaSelecionada?.id) {
+    alert('Salve a matéria antes de adicionar tópicos.');
+    this.focarNomeMateria();
+    return;
   }
+
+  const payload: any = {
+    id: (topico as any).id ?? null,
+    descricao: topico.descricao,
+    ativo: topico.ativo
+  };
+
+  if (pai && (pai as any).id) {
+    // TROCAR "topicoPaiId" PELO NOME REAL DO CAMPO NO DTO
+    payload.topicoPaiId = (pai as any).id;
+  }
+
+  console.log('[SALVAR-TOPICO] Enviando payload para backend:', payload);
+
+  this.salvando = true;
+  this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
+    next: (salvo) => {
+      this.salvando = false;
+      console.log('[SALVAR-TOPICO] Resposta do backend:', salvo);
+
+      if (salvo && (salvo as any).id) {
+        (topico as any).id = (salvo as any).id;
+      }
+
+      // sempre recarrega do back pra sincronizar árvore
+      if (this.materiaSelecionada) {
+        console.log('[SALVAR-TOPICO] Recarregando tópicos da matéria', this.materiaSelecionada.id);
+        this.carregarTopicos(this.materiaSelecionada);
+      }
+    },
+    error: (err) => {
+      this.salvando = false;
+      this.mensagemErro = 'Erro ao salvar o tópico.';
+      console.error('[SALVAR-TOPICO] Erro ao salvar tópico:', err);
+    }
+  });
+}
+
 
   adicionarTopico(): void {
     const descricao = this.novoTopicoDescricao?.trim();
@@ -261,22 +354,23 @@ export class MateriaCadastroComponent implements OnInit {
     }
 
     let novo: Topico;
+    let pai: Topico | undefined;
 
     // subtópico se tiver pai selecionado
     if (this.topicoSelecionado) {
-      if (!this.topicoSelecionado.filhos) {
-        this.topicoSelecionado.filhos = [];
+      if (!(this.topicoSelecionado as any).filhos) {
+        (this.topicoSelecionado as any).filhos = [];
       }
 
-      if (this.existeTopicoComMesmaDescricao(this.topicoSelecionado.filhos, descricao)) {
+      if (this.existeTopicoComMesmaDescricao((this.topicoSelecionado as any).filhos, descricao)) {
         alert('Já existe um subtópico com esse nome nesse nível.');
         this.focarNovoTopico();
         return;
       }
 
-      // nível só existe pro layout, não pro back
-      novo = this.criarTopico(descricao, (this.topicoSelecionado as any).nivel + 1 || 1);
-      this.topicoSelecionado.filhos.push(novo);
+      novo = this.criarTopico(descricao, ((this.topicoSelecionado as any).nivel || 0) + 1);
+      (this.topicoSelecionado as any).filhos.push(novo);
+      pai = this.topicoSelecionado;
     } else {
       // tópico raiz
       if (this.existeTopicoComMesmaDescricao(this.topicos, descricao)) {
@@ -287,20 +381,19 @@ export class MateriaCadastroComponent implements OnInit {
 
       novo = this.criarTopico(descricao, 0);
       this.topicos.push(novo);
+      pai = undefined;
     }
 
     this.novoTopicoDescricao = '';
     this.focarNovoTopico();
 
-    // ✅ salva no backend (POST /api/materias/{id}/topicos com UM TopicoDTO)
-    this.salvarTopicoAutomatico(novo);
+    // ✅ salva no backend (com info do pai, se tiver)
+    this.salvarTopicoAutomatico(novo, pai);
   }
 
   private criarTopico(descricao: string, nivel: number): Topico {
     return {
-      // id será preenchido após o POST
       descricao,
-      // nível só para o front (indentação)
       nivel,
       ativo: true,
       filhos: []
@@ -320,14 +413,37 @@ export class MateriaCadastroComponent implements OnInit {
       this.topicoSelecionado = null;
     }
 
-    // se o back tiver endpoint de exclusão, usa aqui
     if (this.materiaSelecionada?.id && (topico as any).id) {
       this.materiaService.excluirTopico(this.materiaSelecionada.id, (topico as any).id)
         .subscribe({
+          next: () => {
+            if (this.materiaSelecionada) {
+              this.carregarTopicos(this.materiaSelecionada);
+            }
+          },
           error: () => {
             this.mensagemErro = 'Erro ao excluir o tópico.';
           }
         });
     }
   }
+
+  // Converte o DTO vindo do backend (com campo "subtopicos")
+// para o modelo usado na tela (com campo "filhos" e "nivel")
+private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
+  const filhos: Topico[] = (dto.subtopicos || []).map((sub: any) =>
+    this.converterDtoParaTopico(sub, nivel + 1)
+  );
+
+  const topico: Topico = {
+    id: dto.id,
+    descricao: dto.descricao,
+    ativo: dto.ativo ?? true,
+    nivel,
+    filhos
+  };
+
+  return topico;
+}
+
 }
