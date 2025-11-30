@@ -8,17 +8,23 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class SalaEstudoComponent implements OnInit {
 
-  topicoId!: number;
+  materiaId!: number;
 
   constructor(
     private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
-    const param = this.route.snapshot.paramMap.get('topicoId');
-    this.topicoId = param ? Number(param) : 0;
+    // tenta pegar primeiro por 'materiaId', se não achar pega 'id'
+    const param =
+      this.route.snapshot.paramMap.get('materiaId') ??
+      this.route.snapshot.paramMap.get('id');
 
-    // aqui depois a gente chama o backend:
-    // this.salaEstudoService.carregarPorTopico(this.topicoId)...
+    this.materiaId = param ? Number(param) : 0;
+
+    console.log('[SALA-ESTUDO] materiaId =', this.materiaId);
+
+    // depois aqui você chama o backend:
+    // this.salaEstudoService.carregarPorMateria(this.materiaId).subscribe(...)
   }
 }

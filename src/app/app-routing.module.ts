@@ -50,7 +50,7 @@ const routes: Routes = [
       { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
       { path: 'cad-materias', component: MateriaCadastroComponent },
       { path: 'meu-cadastro', component: EmpresaCadastroComponent },
-       { path: 'sala-estudo/:topicoId', component: SalaEstudoComponent },
+       { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent },
 
 
     ]
