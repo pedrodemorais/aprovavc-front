@@ -1,9 +1,9 @@
 /* CONTAINER GERAL DA PÁGINA */
 .page-container {
-  max-width: 1180px;
+  
   margin: 0 auto;
   padding: 16px 8px;
-  background: #206ebd;
+  background: #f9fafb;
 }
 
 .page-title {
@@ -28,6 +28,22 @@
   grid-template-columns: 1.05fr 1.35fr;
   gap: 12px;
 }
+.btn-icone {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icone .icone-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 
 @media (max-width: 900px) {
   .layout {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Materia } from 'src/app/core/models/materia.model';
 import { Topico } from 'src/app/core/models/topico.model';
@@ -24,6 +24,10 @@ export class MateriaCadastroComponent implements OnInit {
   salvando = false;
   mensagemErro?: string;
 
+  // 🔹 referências para dar focus
+  @ViewChild('nomeMateriaInput') nomeMateriaInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('novoTopicoInput') novoTopicoInput!: ElementRef<HTMLInputElement>;
+
   constructor(
     private fb: FormBuilder,
     private materiaService: MateriaService
@@ -44,6 +48,30 @@ export class MateriaCadastroComponent implements OnInit {
   campoInvalido(campo: string): boolean {
     const control = this.materiaForm.get(campo);
     return !!control && control.invalid && (control.dirty || control.touched);
+  }
+
+  // ---------- UTIL ----------
+
+  private normalizarTexto(texto: string | undefined | null): string {
+    return (texto || '').trim().toLowerCase();
+  }
+
+  private focarNomeMateria(): void {
+    setTimeout(() => {
+      if (this.nomeMateriaInput) {
+        this.nomeMateriaInput.nativeElement.focus();
+        this.nomeMateriaInput.nativeElement.select();
+      }
+    });
+  }
+
+  private focarNovoTopico(): void {
+    setTimeout(() => {
+      if (this.novoTopicoInput) {
+        this.novoTopicoInput.nativeElement.focus();
+        this.novoTopicoInput.nativeElement.select();
+      }
+    });
   }
 
   // ---------- MATÉRIA ----------
@@ -68,22 +96,40 @@ export class MateriaCadastroComponent implements OnInit {
     this.materiaForm.reset();
     this.materiaSelecionada = undefined;
     this.topicos = [];
+    this.focarNomeMateria();
   }
 
   editarMateria(m: Materia): void {
     this.materiaForm.patchValue(m);
     this.materiaSelecionada = m;
     this.carregarTopicos(m);
+    this.focarNomeMateria();
   }
 
   salvarMateria(): void {
     if (this.materiaForm.invalid) {
       this.materiaForm.markAllAsTouched();
+      this.focarNomeMateria();
+      return;
+    }
+
+    const dto: Materia = this.materiaForm.value;
+    const nomeNormalizado = this.normalizarTexto(dto.nome);
+
+    // 🔹 valida duplicado de matéria no front
+    const duplicado = this.materias.some(m =>
+      this.normalizarTexto(m.nome) === nomeNormalizado &&
+      m.id !== dto.id
+    );
+
+    if (duplicado) {
+      this.mensagemErro = 'Já existe uma matéria com esse nome.';
+      this.materiaForm.get('nome')?.setErrors({ duplicado: true });
+      this.focarNomeMateria();
       return;
     }
 
     this.salvando = true;
-    const dto: Materia = this.materiaForm.value;
 
     this.materiaService.salvarMateria(dto).subscribe({
       next: (salva) => {
@@ -99,10 +145,14 @@ export class MateriaCadastroComponent implements OnInit {
 
         this.materiaSelecionada = salva;
         this.carregarTopicos(salva);
+
+        // 🔹 volta foco pro input de nome
+        this.focarNomeMateria();
       },
       error: () => {
         this.salvando = false;
         this.mensagemErro = 'Erro ao salvar matéria.';
+        this.focarNomeMateria();
       }
     });
   }
@@ -117,10 +167,13 @@ export class MateriaCadastroComponent implements OnInit {
         this.materias = this.materias.filter(x => x.id !== m.id);
         if (this.materiaSelecionada?.id === m.id) {
           this.novaMateria();
+        } else {
+          this.focarNomeMateria();
         }
       },
       error: () => {
         this.mensagemErro = 'Não foi possível excluir a matéria.';
+        this.focarNomeMateria();
       }
     });
   }
@@ -145,22 +198,48 @@ export class MateriaCadastroComponent implements OnInit {
     });
   }
 
+  // verifica duplicado entre irmãos (lista recebida)
+  private existeTopicoComMesmaDescricao(lista: Topico[], descricao: string): boolean {
+    const normalizada = this.normalizarTexto(descricao);
+    return lista.some(t => this.normalizarTexto(t.descricao) === normalizada);
+  }
+
   adicionarTopicoRaiz(): void {
     const descricao = this.novoTopicoDescricao?.trim();
-    if (!descricao) { return; }
+    if (!descricao) {
+      this.focarNovoTopico();
+      return;
+    }
+
+    // 🔹 não permitir tópico raiz com o mesmo nome
+    if (this.existeTopicoComMesmaDescricao(this.topicos, descricao)) {
+      alert('Já existe um tópico raiz com esse nome.');
+      this.focarNovoTopico();
+      return;
+    }
 
     this.topicos.push(this.criarTopico(descricao, 0));
     this.novoTopicoDescricao = '';
+    this.focarNovoTopico();
   }
 
   adicionarSubtopico(pai: Topico): void {
-    const descricao = prompt('Descrição do subtópico:');
-    if (!descricao || !descricao.trim()) { return; }
+    const descricaoPrompt = prompt('Descrição do subtópico:');
+    const descricao = descricaoPrompt ? descricaoPrompt.trim() : '';
+
+    if (!descricao) { return; }
 
     if (!pai.filhos) {
       pai.filhos = [];
     }
-    pai.filhos.push(this.criarTopico(descricao.trim(), pai.nivel + 1));
+
+    // 🔹 não permitir subtopico igual entre irmãos
+    if (this.existeTopicoComMesmaDescricao(pai.filhos, descricao)) {
+      alert('Já existe um subtópico com esse nome nesse nível.');
+      return;
+    }
+
+    pai.filhos.push(this.criarTopico(descricao, pai.nivel + 1));
   }
 
   private criarTopico(descricao: string, nivel: number): Topico {
@@ -185,6 +264,7 @@ export class MateriaCadastroComponent implements OnInit {
   salvarTopicos(): void {
     if (!this.materiaSelecionada?.id) {
       alert('Salve a matéria antes de salvar os tópicos.');
+      this.focarNomeMateria();
       return;
     }
 
@@ -193,10 +273,12 @@ export class MateriaCadastroComponent implements OnInit {
       next: () => {
         this.salvando = false;
         alert('Tópicos salvos com sucesso.');
+        this.focarNovoTopico();
       },
       error: () => {
         this.salvando = false;
         this.mensagemErro = 'Erro ao salvar os tópicos.';
+        this.focarNovoTopico();
       }
     });
   }

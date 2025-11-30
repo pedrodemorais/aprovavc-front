@@ -10,21 +10,15 @@
 
     <!-- COLUNA ESQUERDA: MATÉRIA -->
     <section class="card coluna-esquerda">
-      <header class="card-header">
-        <h2>{{ materiaForm.get('id')?.value ? 'Editar matéria' : 'Nova matéria' }}</h2>
-      </header>
+
 
       <form [formGroup]="materiaForm" (ngSubmit)="salvarMateria()" class="card-body">
 
         <div class="form-group">
           <label for="nome">Nome da matéria <span class="obrigatorio">*</span></label>
-          <input
-            id="nome"
-            type="text"
-            class="input-text"
-            formControlName="nome"
-            placeholder="Ex: Português, Direito Penal, Informática..."
-          />
+          <input #nomeMateriaInput id="nome" type="text" class="input-text" formControlName="nome"
+            placeholder="Ex: Português, Direito Penal, Informática..." />
+
           <div class="erro" *ngIf="campoInvalido('nome')">
             Informe o nome da matéria (máx. 100 caracteres).
           </div>
@@ -56,10 +50,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let m of materias"
-              [class.selecionada]="materiaSelecionada?.id === m.id">
+          <tr *ngFor="let m of materias" [class.selecionada]="materiaSelecionada?.id === m.id">
             <td (click)="editarMateria(m)">{{ m.nome }}</td>
             <td class="acoes">
+              <button type="button" class="btn-icone" (click)="editarMateria(m)" title="Editar">
+                <img src="assets/icons/book.png" alt="Editar matéria" class="icone-img" />
+              </button>
+
               <button type="button" class="btn-icone" (click)="editarMateria(m)" title="Editar">
                 ✏️
               </button>
@@ -78,22 +75,13 @@
 
     <!-- COLUNA DIREITA: TÓPICOS -->
     <section class="card coluna-direita">
-      <header class="card-header">
-        <h2>
-          Tópicos da matéria
-          <span *ngIf="materiaSelecionada">: {{ materiaSelecionada.nome }}</span>
-        </h2>
-      </header>
+
 
       <div class="card-body" *ngIf="materiaSelecionada; else selecioneMateria">
         <div class="novo-topico">
-          <input
-            type="text"
-            [(ngModel)]="novoTopicoDescricao"
-            placeholder="Descrição do tópico raiz..."
-            class="input-text"
-            name="novoTopicoDescricao"
-          />
+          <input #novoTopicoInput type="text" [(ngModel)]="novoTopicoDescricao"
+            placeholder="Descrição do tópico raiz..." class="input-text" name="novoTopicoDescricao" />
+
           <button type="button" class="btn primario" (click)="adicionarTopicoRaiz()">
             + Adicionar tópico raiz
           </button>
@@ -107,8 +95,7 @@
 
           <ul class="lista-topicos" *ngIf="topicos.length; else listaVazia">
             <ng-container *ngFor="let t of topicos">
-              <ng-container
-                *ngTemplateOutlet="topicoTemplate;
+              <ng-container *ngTemplateOutlet="topicoTemplate;
                                     context: { $implicit: t, nivel: 0, parentArray: topicos }">
               </ng-container>
             </ng-container>
@@ -159,12 +146,10 @@
 
     <ul class="lista-topicos-filhos" *ngIf="topico.filhos?.length">
       <ng-container *ngFor="let filho of topico.filhos">
-        <ng-container
-          *ngTemplateOutlet="topicoTemplate;
+        <ng-container *ngTemplateOutlet="topicoTemplate;
                               context: { $implicit: filho, nivel: nivel + 1, parentArray: topico.filhos }">
         </ng-container>
       </ng-container>
     </ul>
   </li>
 </ng-template>
-
