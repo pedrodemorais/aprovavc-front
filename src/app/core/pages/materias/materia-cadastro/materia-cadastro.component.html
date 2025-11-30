@@ -11,13 +11,18 @@
     <!-- COLUNA ESQUERDA: MATÉRIA -->
     <section class="card coluna-esquerda">
 
-
       <form [formGroup]="materiaForm" (ngSubmit)="salvarMateria()" class="card-body">
 
         <div class="form-group">
           <label for="nome">Nome da matéria <span class="obrigatorio">*</span></label>
-          <input #nomeMateriaInput id="nome" type="text" class="input-text" formControlName="nome"
-            placeholder="Ex: Português, Direito Penal, Informática..." />
+          <input
+            #nomeMateriaInput
+            id="nome"
+            type="text"
+            class="input-text"
+            formControlName="nome"
+            placeholder="Ex: Português, Direito Penal, Informática..."
+          />
 
           <div class="erro" *ngIf="campoInvalido('nome')">
             Informe o nome da matéria (máx. 100 caracteres).
@@ -32,6 +37,10 @@
             Nova matéria
           </button>
         </div>
+
+        <p class="materia-selecionada" *ngIf="materiaSelecionada">
+          Matéria selecionada: <strong>{{ materiaSelecionada.nome }}</strong>
+        </p>
       </form>
 
       <hr />
@@ -50,17 +59,27 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let m of materias" [class.selecionada]="materiaSelecionada?.id === m.id">
+          <tr
+            *ngFor="let m of materias"
+            [class.selecionada]="materiaSelecionada?.id === m.id"
+          >
             <td (click)="editarMateria(m)">{{ m.nome }}</td>
             <td class="acoes">
-              <button type="button" class="btn-icone" (click)="editarMateria(m)" title="Editar">
+              <button
+                type="button"
+                class="btn-icone"
+                (click)="editarMateria(m)"
+                title="Editar"
+              >
                 <img src="assets/icons/book.png" alt="Editar matéria" class="icone-img" />
               </button>
 
-         <button type="button" class="btn-icone" (click)="editarMateria(m)" title="Editar">
-                <img src="assets/icons/edit.png" alt="Editar matéria" class="icone-img" />
-              </button>
-              <button type="button" class="btn-icone" (click)="excluirMateria(m)" title="Excluir">
+              <button
+                type="button"
+                class="btn-icone"
+                (click)="excluirMateria(m)"
+                title="Excluir"
+              >
                 🗑️
               </button>
             </td>
@@ -76,14 +95,48 @@
     <!-- COLUNA DIREITA: TÓPICOS -->
     <section class="card coluna-direita">
 
-
       <div class="card-body" *ngIf="materiaSelecionada; else selecioneMateria">
-        <div class="novo-topico">
-          <input #novoTopicoInput type="text" [(ngModel)]="novoTopicoDescricao"
-            placeholder="Descrição do tópico raiz..." class="input-text" name="novoTopicoDescricao" />
 
-          <button type="button" class="btn primario" (click)="adicionarTopicoRaiz()">
-            + Adicionar tópico raiz
+        <!-- cabeçalho contexto -->
+        <h2 class="titulo-topicos">
+          {{ materiaSelecionada.nome }}
+        </h2>
+        <p class="subtitulo-topicos">
+          Cadastre tópicos e subtópicos clicando no nível desejado e usando o campo abaixo.
+        </p>
+
+        <!-- contexto de onde será criado o novo tópico -->
+        <div class="contexto-topico">
+          <span *ngIf="!topicoSelecionado" class="tag-contexto">
+            Novo tópico raiz
+          </span>
+          <span *ngIf="topicoSelecionado" class="tag-contexto tag-sub">
+            Novo subtópico de:
+            <strong>{{ topicoSelecionado.descricao }}</strong>
+          </span>
+
+          <button
+            *ngIf="topicoSelecionado"
+            type="button"
+            class="btn secundario btn-menor"
+            (click)="limparTopicoSelecionado()"
+          >
+            Limpar seleção
+          </button>
+        </div>
+
+        <!-- input único para tópico / subtópico -->
+        <div class="novo-topico">
+          <input
+            #novoTopicoInput
+            type="text"
+            [(ngModel)]="novoTopicoDescricao"
+            placeholder="Digite o nome do tópico ou subtópico..."
+            class="input-text"
+            name="novoTopicoDescricao"
+          />
+          <button type="button" class="btn primario" (click)="adicionarTopico()">
+            + Adicionar
           </button>
         </div>
 
@@ -95,8 +148,10 @@
 
           <ul class="lista-topicos" *ngIf="topicos.length; else listaVazia">
             <ng-container *ngFor="let t of topicos">
-              <ng-container *ngTemplateOutlet="topicoTemplate;
-                                    context: { $implicit: t, nivel: 0, parentArray: topicos }">
+              <ng-container
+                *ngTemplateOutlet="topicoTemplate;
+                                  context: { $implicit: t, nivel: 0, parentArray: topicos }"
+              >
               </ng-container>
             </ng-container>
           </ul>
@@ -107,11 +162,7 @@
             </p>
           </ng-template>
 
-          <div class="acoes-bottom">
-            <button type="button" class="btn primario" (click)="salvarTopicos()" [disabled]="salvando">
-              {{ salvando ? 'Salvando...' : 'Salvar tópicos' }}
-            </button>
-          </div>
+         
         </div>
       </div>
 
@@ -130,15 +181,27 @@
 <!-- TEMPLATE RECURSIVO PARA ÁRVORE DE TÓPICOS -->
 <ng-template #topicoTemplate let-topico let-nivel="nivel" let-parentArray="parentArray">
   <li>
-    <div class="topico-linha" [style.paddingLeft.px]="nivel * 16">
-      <span class="topico-descricao">
-        {{ topico.descricao }}
-      </span>
-      <div class="topico-acoes">
-        <button type="button" class="btn-icone" (click)="adicionarSubtopico(topico)" title="Adicionar subtópico">
-          ➕
-        </button>
-        <button type="button" class="btn-icone" (click)="excluirTopico(topico, parentArray)" title="Excluir">
+    <div
+      class="topico-linha"
+      [style.paddingLeft.px]="nivel * 18"
+      [class.selecionado]="topicoSelecionado === topico"
+      (click)="selecionarTopico(topico)"
+    >
+      <div class="topico-info">
+        <span class="badge-nivel"></span>
+
+        <span class="topico-descricao">
+          {{ topico.descricao }}
+        </span>
+      </div>
+
+      <div class="topico-acoes" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="btn-icone"
+          (click)="excluirTopico(topico, parentArray)"
+          title="Excluir"
+        >
           🗑️
         </button>
       </div>
@@ -146,8 +209,10 @@
 
     <ul class="lista-topicos-filhos" *ngIf="topico.filhos?.length">
       <ng-container *ngFor="let filho of topico.filhos">
-        <ng-container *ngTemplateOutlet="topicoTemplate;
-                              context: { $implicit: filho, nivel: nivel + 1, parentArray: topico.filhos }">
+        <ng-container
+          *ngTemplateOutlet="topicoTemplate;
+                            context: { $implicit: filho, nivel: nivel + 1, parentArray: topico.filhos }"
+        >
         </ng-container>
       </ng-container>
     </ul>

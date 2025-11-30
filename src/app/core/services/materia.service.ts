@@ -29,11 +29,19 @@ export class MateriaService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  listarTopicos(materiaId: number): Observable<Topico[]> {
-    return this.http.get<Topico[]>(`${this.apiUrl}/${materiaId}/topicos`);
-  }
+  // ---------- TÓPICOS ----------
 
-  salvarTopicos(materiaId: number, topicos: Topico[]): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${materiaId}/topicos`, topicos);
-  }
+// materia.service.ts (parte de tópicos)
+listarTopicos(materiaId: number): Observable<Topico[]> {
+  return this.http.get<Topico[]>(`${this.apiUrl}/${materiaId}/topicos`);
+}
+
+salvarTopico(materiaId: number, topico: Topico): Observable<Topico> {
+  return this.http.post<Topico>(`${this.apiUrl}/${materiaId}/topicos`, topico);
+}
+
+excluirTopico(materiaId: number, topicoId: number): Observable<void> {
+  return this.http.delete<void>(`${this.apiUrl}/${materiaId}/topicos/${topicoId}`);
+}
+
 }

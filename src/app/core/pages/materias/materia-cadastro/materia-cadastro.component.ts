@@ -19,12 +19,13 @@ export class MateriaCadastroComponent implements OnInit {
   topicos: Topico[] = [];
   novoTopicoDescricao: string = '';
 
+  topicoSelecionado?: Topico | null;
+
   carregandoMaterias = false;
   carregandoTopicos = false;
   salvando = false;
   mensagemErro?: string;
 
-  // 🔹 referências para dar focus
   @ViewChild('nomeMateriaInput') nomeMateriaInput!: ElementRef<HTMLInputElement>;
   @ViewChild('novoTopicoInput') novoTopicoInput!: ElementRef<HTMLInputElement>;
 
@@ -96,12 +97,14 @@ export class MateriaCadastroComponent implements OnInit {
     this.materiaForm.reset();
     this.materiaSelecionada = undefined;
     this.topicos = [];
+    this.topicoSelecionado = null;
     this.focarNomeMateria();
   }
 
   editarMateria(m: Materia): void {
     this.materiaForm.patchValue(m);
     this.materiaSelecionada = m;
+    this.topicoSelecionado = null;
     this.carregarTopicos(m);
     this.focarNomeMateria();
   }
@@ -116,7 +119,6 @@ export class MateriaCadastroComponent implements OnInit {
     const dto: Materia = this.materiaForm.value;
     const nomeNormalizado = this.normalizarTexto(dto.nome);
 
-    // 🔹 valida duplicado de matéria no front
     const duplicado = this.materias.some(m =>
       this.normalizarTexto(m.nome) === nomeNormalizado &&
       m.id !== dto.id
@@ -145,8 +147,6 @@ export class MateriaCadastroComponent implements OnInit {
 
         this.materiaSelecionada = salva;
         this.carregarTopicos(salva);
-
-        // 🔹 volta foco pro input de nome
         this.focarNomeMateria();
       },
       error: () => {
@@ -185,6 +185,7 @@ export class MateriaCadastroComponent implements OnInit {
 
     this.carregandoTopicos = true;
     this.topicos = [];
+    this.topicoSelecionado = null;
 
     this.materiaService.listarTopicos(m.id).subscribe({
       next: (lista) => {
@@ -198,57 +199,112 @@ export class MateriaCadastroComponent implements OnInit {
     });
   }
 
-  // verifica duplicado entre irmãos (lista recebida)
   private existeTopicoComMesmaDescricao(lista: Topico[], descricao: string): boolean {
     const normalizada = this.normalizarTexto(descricao);
     return lista.some(t => this.normalizarTexto(t.descricao) === normalizada);
   }
 
-  adicionarTopicoRaiz(): void {
+  selecionarTopico(topico: Topico): void {
+    this.topicoSelecionado = topico;
+    this.novoTopicoDescricao = '';
+    this.focarNovoTopico();
+  }
+
+  limparTopicoSelecionado(): void {
+    this.topicoSelecionado = null;
+    this.novoTopicoDescricao = '';
+    this.focarNovoTopico();
+  }
+
+  // 🔹 salva APENAS o tópico recém-criado no backend
+  private salvarTopicoAutomatico(topico: Topico): void {
+    if (!this.materiaSelecionada?.id) {
+      alert('Salve a matéria antes de adicionar tópicos.');
+      this.focarNomeMateria();
+      return;
+    }
+
+    // ⚠️ MUITO IMPORTANTE:
+    // Monta um payload SEM o campo "nivel" (que o DTO não conhece)
+    const payload: any = {
+      // se o back usar id pra update futuro, já vai junto:
+      id: (topico as any).id ?? null,
+      descricao: topico.descricao,
+      ativo: topico.ativo
+      // NÃO manda "nivel" aqui!
+      // NÃO manda "filhos" aqui (novo tópico sempre começa sem filhos)
+    };
+
+    this.salvando = true;
+    this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
+      next: (salvo) => {
+        this.salvando = false;
+        this.mensagemErro = undefined;
+
+        // sincroniza id retornado
+        if (salvo && (salvo as any).id) {
+          (topico as any).id = (salvo as any).id;
+        }
+      },
+      error: () => {
+        this.salvando = false;
+        this.mensagemErro = 'Erro ao salvar o tópico.';
+      }
+    });
+  }
+
+  adicionarTopico(): void {
     const descricao = this.novoTopicoDescricao?.trim();
     if (!descricao) {
       this.focarNovoTopico();
       return;
     }
 
-    // 🔹 não permitir tópico raiz com o mesmo nome
-    if (this.existeTopicoComMesmaDescricao(this.topicos, descricao)) {
-      alert('Já existe um tópico raiz com esse nome.');
-      this.focarNovoTopico();
-      return;
+    let novo: Topico;
+
+    // subtópico se tiver pai selecionado
+    if (this.topicoSelecionado) {
+      if (!this.topicoSelecionado.filhos) {
+        this.topicoSelecionado.filhos = [];
+      }
+
+      if (this.existeTopicoComMesmaDescricao(this.topicoSelecionado.filhos, descricao)) {
+        alert('Já existe um subtópico com esse nome nesse nível.');
+        this.focarNovoTopico();
+        return;
+      }
+
+      // nível só existe pro layout, não pro back
+      novo = this.criarTopico(descricao, (this.topicoSelecionado as any).nivel + 1 || 1);
+      this.topicoSelecionado.filhos.push(novo);
+    } else {
+      // tópico raiz
+      if (this.existeTopicoComMesmaDescricao(this.topicos, descricao)) {
+        alert('Já existe um tópico raiz com esse nome.');
+        this.focarNovoTopico();
+        return;
+      }
+
+      novo = this.criarTopico(descricao, 0);
+      this.topicos.push(novo);
     }
 
-    this.topicos.push(this.criarTopico(descricao, 0));
     this.novoTopicoDescricao = '';
     this.focarNovoTopico();
-  }
 
-  adicionarSubtopico(pai: Topico): void {
-    const descricaoPrompt = prompt('Descrição do subtópico:');
-    const descricao = descricaoPrompt ? descricaoPrompt.trim() : '';
-
-    if (!descricao) { return; }
-
-    if (!pai.filhos) {
-      pai.filhos = [];
-    }
-
-    // 🔹 não permitir subtopico igual entre irmãos
-    if (this.existeTopicoComMesmaDescricao(pai.filhos, descricao)) {
-      alert('Já existe um subtópico com esse nome nesse nível.');
-      return;
-    }
-
-    pai.filhos.push(this.criarTopico(descricao, pai.nivel + 1));
+    // ✅ salva no backend (POST /api/materias/{id}/topicos com UM TopicoDTO)
+    this.salvarTopicoAutomatico(novo);
   }
 
   private criarTopico(descricao: string, nivel: number): Topico {
     return {
+      // id será preenchido após o POST
       descricao,
+      // nível só para o front (indentação)
       nivel,
       ativo: true,
       filhos: []
-    };
+    } as Topico;
   }
 
   excluirTopico(topico: Topico, parentArray: Topico[]): void {
@@ -259,27 +315,19 @@ export class MateriaCadastroComponent implements OnInit {
     if (idx >= 0) {
       parentArray.splice(idx, 1);
     }
-  }
 
-  salvarTopicos(): void {
-    if (!this.materiaSelecionada?.id) {
-      alert('Salve a matéria antes de salvar os tópicos.');
-      this.focarNomeMateria();
-      return;
+    if (this.topicoSelecionado === topico) {
+      this.topicoSelecionado = null;
     }
 
-    this.salvando = true;
-    this.materiaService.salvarTopicos(this.materiaSelecionada.id, this.topicos).subscribe({
-      next: () => {
-        this.salvando = false;
-        alert('Tópicos salvos com sucesso.');
-        this.focarNovoTopico();
-      },
-      error: () => {
-        this.salvando = false;
-        this.mensagemErro = 'Erro ao salvar os tópicos.';
-        this.focarNovoTopico();
-      }
-    });
+    // se o back tiver endpoint de exclusão, usa aqui
+    if (this.materiaSelecionada?.id && (topico as any).id) {
+      this.materiaService.excluirTopico(this.materiaSelecionada.id, (topico as any).id)
+        .subscribe({
+          error: () => {
+            this.mensagemErro = 'Erro ao excluir o tópico.';
+          }
+        });
+    }
   }
 }
