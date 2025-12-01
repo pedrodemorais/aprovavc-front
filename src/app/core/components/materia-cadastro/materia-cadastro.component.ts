@@ -295,16 +295,28 @@ export class MateriaCadastroComponent implements OnInit {
     return lista.some(t => this.normalizarTexto(t.descricao) === normalizada);
   }
 
-  selecionarTopico(topico: Topico): void {
-    this.topicoSelecionado = topico;
-    this.novoTopicoDescricao = '';
-    this.focarNovoTopico();
+// ajuste o tipo Topico conforme o seu model
+selecionarTopico(topico: any): void {
+  // se já está selecionado e clicou de novo, limpa a seleção
+  if (this.topicoSelecionado === topico) {
+    this.limparTopicoSelecionado();
+    return;
   }
+
+  // caso contrário, seleciona o tópico normalmente
+  this.topicoSelecionado = topico;
+
+  // opcional: limpa o texto do input de novo tópico
+  if (this.novoTopicoDescricao) {
+    this.novoTopicoDescricao = '';
+  }
+}
+
 
   limparTopicoSelecionado(): void {
     this.topicoSelecionado = null;
     this.novoTopicoDescricao = '';
-    this.focarNovoTopico();
+    
   }
 
   private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
@@ -349,47 +361,39 @@ export class MateriaCadastroComponent implements OnInit {
     });
   }
 
-  adicionarTopico(): void {
-    const descricao = this.novoTopicoDescricao?.trim();
-    if (!descricao) {
-      this.focarNovoTopico();
-      return;
-    }
-
-    let novo: Topico;
-    let pai: Topico | undefined;
-
-    if (this.topicoSelecionado) {
-      if (!(this.topicoSelecionado as any).filhos) {
-        (this.topicoSelecionado as any).filhos = [];
-      }
-
-      if (this.existeTopicoComMesmaDescricao((this.topicoSelecionado as any).filhos, descricao)) {
-        alert('Já existe um subtópico com esse nome nesse nível.');
-        this.focarNovoTopico();
-        return;
-      }
-
-      novo = this.criarTopico(descricao, ((this.topicoSelecionado as any).nivel || 0) + 1);
-      (this.topicoSelecionado as any).filhos.push(novo);
-      pai = this.topicoSelecionado;
-    } else {
-      if (this.existeTopicoComMesmaDescricao(this.topicos, descricao)) {
-        alert('Já existe um tópico raiz com esse nome.');
-        this.focarNovoTopico();
-        return;
-      }
-
-      novo = this.criarTopico(descricao, 0);
-      this.topicos.push(novo);
-      pai = undefined;
-    }
-
-    this.novoTopicoDescricao = '';
-    this.focarNovoTopico();
-
-    this.salvarTopicoAutomatico(novo, pai);
+adicionarTopico(): void {
+  const descricao = (this.novoTopicoDescricao || '').trim();
+  if (!descricao) {
+    return;
   }
+
+  // Monta o objeto do novo tópico
+  const novoTopico: any = {
+    id: undefined,           // o backend vai gerar
+    descricao: descricao,
+    ativo: true,
+    filhos: []
+  };
+
+  if (!this.topicoSelecionado) {
+    // ✅ Sem tópico selecionado: adiciona como TÓPICO RAIZ da matéria
+    this.topicos.push(novoTopico);
+  } else {
+    // ✅ Com tópico selecionado: adiciona como FILHO do tópico selecionado
+    if (!this.topicoSelecionado.filhos) {
+      this.topicoSelecionado.filhos = [];
+    }
+    this.topicoSelecionado.filhos.push(novoTopico);
+  }
+
+  // ✅ Limpa apenas o texto do campo
+  this.novoTopicoDescricao = '';
+
+  // ❌ NÃO LIMPE A SELEÇÃO AQUI
+  // this.topicoSelecionado = undefined;
+  // this.limparTopicoSelecionado();
+}
+
 
   private criarTopico(descricao: string, nivel: number): Topico {
     return {

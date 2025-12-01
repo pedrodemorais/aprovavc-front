@@ -355,7 +355,7 @@
 
 .topico-linha.selecionado {
   background: #eff6ff;
-  box-shadow: 0 0 0 1px #bfdbfe;
+  box-shadow: 0 0 0 0px #bfdbfe;
 }
 
 .topico-info {

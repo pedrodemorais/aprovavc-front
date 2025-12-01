@@ -114,11 +114,10 @@
         <!-- contexto de onde será criado o novo tópico -->
         <div class="contexto-topico">
           <span *ngIf="!topicoSelecionado" class="tag-contexto">
-            Novo tópico raiz
+            Adicione um tópico para {{ materiaSelecionada.nome }}
           </span>
           <span *ngIf="topicoSelecionado" class="tag-contexto tag-sub">
-            Novo subtópico de:
-            <strong>{{ topicoSelecionado.descricao }}</strong>
+            Adicione um Subtópico para {{ topicoSelecionado.descricao }}
           </span>
 
           <button
@@ -169,7 +168,7 @@
 
           <ng-template #listaVazia>
             <p class="vazio">
-              Nenhum tópico cadastrado. Comece adicionando um tópico raiz.
+              Nenhum tópico cadastrado. Comece adicionando um tópico da matéria  {{ materiaSelecionada.nome }} .
             </p>
           </ng-template>
 
