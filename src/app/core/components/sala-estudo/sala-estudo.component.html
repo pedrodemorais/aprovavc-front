@@ -1,6 +1,69 @@
 <div class="sala-container" *ngIf="!carregando; else loadingTpl">
 
+  <!-- CABEÇALHO DA SALA -->
+  <section class="card sala-header">
+    <div class="sala-header-esquerda">
+      <p class="sala-subtitulo">Sala de estudo</p>
+      <h1 class="sala-titulo">
+        {{ materia?.nome || 'Matéria' }}
+      </h1>
+      <p class="sala-descricao" *ngIf="materia">
+        Foque seus estudos, faça anotações e acompanhe o tempo dedicado a esta matéria.
+      </p>
+    </div>
 
+    <div class="sala-header-direita">
+
+      <!-- MODOS DO TIMER: LIVRE x POMODORO -->
+      <div class="timer-modos">
+        <button type="button"
+                class="btn-modo-timer"
+                [class.ativo]="modoTemporizador === 'livre'"
+                (click)="setModoTemporizador('livre')">
+          ⏱ Livre
+        </button>
+
+        <button type="button"
+                class="btn-modo-timer"
+                [class.ativo]="modoTemporizador === 'pomodoro'"
+                (click)="setModoTemporizador('pomodoro')">
+          🍅 Pomodoro
+        </button>
+      </div>
+
+      <div class="timer-box">
+        <div class="timer-header-linha">
+          <div class="timer-header-textos">
+            <span class="timer-label">
+              {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
+            </span>
+
+            <span *ngIf="modoTemporizador === 'pomodoro'" class="timer-fase">
+              {{ labelFasePomodoro }}
+            </span>
+          </div>
+        </div>
+
+        <!-- VALOR DO TIMER (formatação vem do TS) -->
+        <span class="timer-valor">{{ tempoFormatado }}</span>
+
+        <div class="timer-botoes">
+          <button type="button"
+                  class="btn primario"
+                  (click)="toggleTimer()">
+            {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
+          </button>
+          <button type="button"
+                  class="btn secundario"
+                  (click)="zerarTimer()"
+                  [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
+                              || (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
+            Zerar
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- CORPO DA SALA -->
   <section class="card sala-body">

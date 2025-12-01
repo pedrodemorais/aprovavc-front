@@ -1,16 +1,18 @@
+/* CONTAINER GERAL */
 .sala-container {
-  
+  max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  background: #f9fafb;
 }
 
-/* Cards reaproveitando vibe do cadastro */
+/* Cards seguindo o estilo do cadastro */
 .card {
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 16px 20px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
@@ -19,9 +21,9 @@
 
 .sala-header {
   display: flex;
-  align-items: stretch;
   justify-content: space-between;
-  gap: 24px;
+  align-items: flex-start;
+  gap: 16px;
 }
 
 .sala-header-esquerda {
@@ -51,28 +53,72 @@
   font-size: 0.95rem;
 }
 
+/* HEADER DIREITA + TIMER */
 .sala-header-direita {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
 }
 
+/* botões Livre / Pomodoro */
+.timer-modos {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-modo-timer {
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  background: #ffffff;
+  cursor: pointer;
+  color: #4b5563;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-modo-timer.ativo {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+/* CAIXA DO TIMER – CLARA, CLEAN */
 .timer-box {
   border-radius: 10px;
   border: 1px solid #e2e8f0;
   padding: 10px 14px;
-  min-width: 210px;
+  min-width: 230px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   background: #f8fafc;
 }
 
+.timer-header-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timer-header-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .timer-label {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #6b7280;
+}
+
+.timer-fase {
+  font-size: 0.8rem;
+  color: #0f766e;
 }
 
 .timer-valor {
@@ -87,8 +133,9 @@
   gap: 8px;
 }
 
+/* BOTÕES GENÉRICOS */
 .btn {
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 12px;
   font-size: 0.85rem;
   border: none;
@@ -147,6 +194,7 @@
   color: #6b7280;
 }
 
+/* Lista de tópicos */
 .lista-topicos {
   list-style: none;
   padding: 0;
@@ -156,25 +204,37 @@
   gap: 4px;
 }
 
-.lista-topicos li {
+.item-topico {
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 4px 6px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background 0.12s, transform 0.08s, box-shadow 0.08s;
+  transition: background 0.12s, box-shadow 0.08s;
 }
 
-.lista-topicos li:hover {
+.item-topico:hover {
   background: #f3f4f6;
 }
 
-.lista-topicos li.selecionado {
+.item-topico.selecionado {
   background: #dbeafe;
   box-shadow: 0 0 0 1px #60a5fa inset;
 }
 
-.topico-titulo {
+/* linha interna do tópico (usa paddingLeft via binding) */
+.linha-topico {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.marcador-nivel {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #cbd5f5;
+}
+
+.descricao-topico {
   font-size: 0.9rem;
   color: #111827;
 }
@@ -231,6 +291,7 @@
   color: #0284c7;
 }
 
+/* Blocos de conteúdo */
 .bloco {
   background: #f9fafb;
   border-radius: 10px;
@@ -312,7 +373,8 @@
   color: #6b7280;
 }
 
-/* Responsivo */
+/* ---------------- RESPONSIVO ---------------- */
+
 @media (max-width: 900px) {
   .sala-body {
     grid-template-columns: 1fr;
@@ -325,14 +387,24 @@
     padding-bottom: 12px;
     margin-bottom: 8px;
   }
-}
 
-@media (max-width: 720px) {
   .sala-header {
     flex-direction: column;
   }
 
   .sala-header-direita {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .timer-box {
+    width: 100%;
+  }
+
+  .timer-modos {
+    width: 100%;
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }

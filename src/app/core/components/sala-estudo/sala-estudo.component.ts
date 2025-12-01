@@ -26,10 +26,62 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   // modo da sala: estudar ou revisar
   modo: 'estudar' | 'revisar' = 'estudar';
 
-  // timer
-  tempoTotalSegundos = 0;
-  timerAtivo = false;
-  private intervalId: any;
+  // ======================= TIMER / POMODORO =======================
+
+  // modo do temporizador: livre ou pomodoro
+  modoTemporizador: 'livre' | 'pomodoro' = 'livre';
+
+  // ---- modo LIVRE (igual ao que você já tinha) ----
+  tempoTotalSegundos: number = 0;
+
+  // ---- estado geral do timer ----
+  timerAtivo: boolean = false;
+  private timerRef: any;
+
+  // ---- POMODORO ----
+  // tempos (ajustáveis depois)
+ // pomodoroDuracaoFoco: number = 25 * 60;        // 25 min
+  pomodoroDuracaoFoco: number = 30;        // 25 min
+  //pomodoroDuracaoPausaCurta: number = 5 * 60;   // 5 min
+  pomodoroDuracaoPausaCurta: number = 5;   // 5 min
+  pomodoroDuracaoPausaLonga: number = 15;  // 15 min
+  //pomodoroDuracaoPausaLonga: number = 15 * 60;  // 15 min
+  pomodoroCiclosParaLonga: number = 4;
+
+  pomodoroFase: 'foco' | 'pausa-curta' | 'pausa-longa' = 'foco';
+  pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
+  pomodoroCiclosConcluidos: number = 0;
+
+  get duracaoFaseAtual(): number {
+    switch (this.pomodoroFase) {
+      case 'foco':         return this.pomodoroDuracaoFoco;
+      case 'pausa-curta':  return this.pomodoroDuracaoPausaCurta;
+      case 'pausa-longa':  return this.pomodoroDuracaoPausaLonga;
+    }
+  }
+
+  get labelFasePomodoro(): string {
+    if (this.pomodoroFase === 'foco') return 'Foco';
+    if (this.pomodoroFase === 'pausa-curta') return 'Pausa curta';
+    return 'Pausa longa';
+  }
+
+  // texto mostrado na tela (usa livre OU pomodoro dependendo do modo)
+  get tempoFormatado(): string {
+    let totalSegundos = 0;
+
+    if (this.modoTemporizador === 'livre') {
+      totalSegundos = this.tempoTotalSegundos;
+    } else {
+      totalSegundos = this.pomodoroSegundosRestantes;
+    }
+
+    const h = Math.floor(totalSegundos / 3600);
+    const m = Math.floor((totalSegundos % 3600) / 60);
+    const s = totalSegundos % 60;
+
+    return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
+  }
 
   // anotações (depois você integra com backend)
   anotacoes: string = '';
@@ -38,6 +90,10 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private materiaService: MateriaService
   ) {}
+
+  // ================================================================
+  // CICLO DE VIDA
+  // ================================================================
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -57,12 +113,12 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
+    this.pararTimerInterno();
   }
 
-  // ------------ Carregamento de dados ------------
+  // ================================================================
+  // CARREGAMENTO DE DADOS
+  // ================================================================
 
   private carregarMateria(): void {
     this.carregando = true;
@@ -119,7 +175,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
         // guarda árvore original (caso use depois na UI)
         this.arvoreTopicos = listaSegura;
 
-        // 🔹 aqui achatamos TUDO: tópicos + subtópicos numa lista só
+        // 🔹 achatamos TUDO: tópicos + subtópicos numa lista só
         this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
         console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
@@ -135,47 +191,143 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ------------ Interação com tópicos ------------
+  // ================================================================
+  // INTERAÇÃO COM TÓPICOS
+  // ================================================================
 
   selecionarTopico(t: any): void {
     this.topicoSelecionado = t;
     console.log('[SALA-ESTUDO] Tópico selecionado:', t);
   }
 
-  // ------------ Timer ------------
-
-  get tempoFormatado(): string {
-    const h = Math.floor(this.tempoTotalSegundos / 3600);
-    const m = Math.floor((this.tempoTotalSegundos % 3600) / 60);
-    const s = this.tempoTotalSegundos % 60;
-
-    return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
-  }
+  // ================================================================
+  // CONTROLE DO TIMER / POMODORO
+  // ================================================================
 
   private pad(v: number): string {
     return v.toString().padStart(2, '0');
   }
 
-  toggleTimer(): void {
-    if (this.timerAtivo) {
-      this.timerAtivo = false;
-      if (this.intervalId) {
-        clearInterval(this.intervalId);
-        this.intervalId = null;
+  /**
+   * Troca entre modo livre e pomodoro.
+   * Usado pelos botões "⏱ Livre" e "🍅 Pomodoro" no cabeçalho.
+   */
+  setModoTemporizador(modo: 'livre' | 'pomodoro'): void {
+    if (this.modoTemporizador === modo) {
+      return;
+    }
+
+    // para o timer atual
+    this.pararTimerInterno();
+    this.timerAtivo = false;
+
+    this.modoTemporizador = modo;
+
+    if (modo === 'livre') {
+      // volta para o contador livre; mantém o valor acumulado
+      if (!this.tempoTotalSegundos) {
+        this.tempoTotalSegundos = 0;
       }
     } else {
-      this.timerAtivo = true;
-      this.intervalId = setInterval(() => {
-        this.tempoTotalSegundos++;
-      }, 1000);
+      // reset do pomodoro para fase de foco
+      this.pomodoroFase = 'foco';
+      this.pomodoroCiclosConcluidos = 0;
+      this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
     }
   }
 
-  zerarTimer(): void {
-    this.tempoTotalSegundos = 0;
+  /**
+   * Botão principal: Iniciar / Pausar.
+   */
+  toggleTimer(): void {
+    if (this.timerAtivo) {
+      // pausa
+      this.timerAtivo = false;
+      this.pararTimerInterno();
+      return;
+    }
+
+    // iniciar
+    this.timerAtivo = true;
+
+    if (this.modoTemporizador === 'livre') {
+      this.iniciarTimerLivre();
+    } else {
+      this.iniciarPomodoro();
+    }
   }
 
-  // ------------ Modo Estudar / Revisar ------------
+  /**
+   * Botão "Zerar".
+   */
+  zerarTimer(): void {
+    this.pararTimerInterno();
+    this.timerAtivo = false;
+
+    if (this.modoTemporizador === 'livre') {
+      this.tempoTotalSegundos = 0;
+    } else {
+      this.pomodoroFase = 'foco';
+      this.pomodoroCiclosConcluidos = 0;
+      this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
+    }
+  }
+
+  // ---------- implementação dos modos ----------
+
+  private iniciarTimerLivre(): void {
+    this.pararTimerInterno();
+
+    this.timerRef = setInterval(() => {
+      this.tempoTotalSegundos++;
+      // tempoFormatado é recalculado via getter
+    }, 1000);
+  }
+
+  private iniciarPomodoro(): void {
+    this.pararTimerInterno();
+
+    this.timerRef = setInterval(() => {
+      if (this.pomodoroSegundosRestantes > 0) {
+        this.pomodoroSegundosRestantes--;
+        return;
+      }
+
+      // terminou a fase atual → troca de fase
+      this.trocarFasePomodoro();
+    }, 1000);
+  }
+
+  private trocarFasePomodoro(): void {
+    if (this.pomodoroFase === 'foco') {
+      this.pomodoroCiclosConcluidos++;
+
+      if (this.pomodoroCiclosConcluidos % this.pomodoroCiclosParaLonga === 0) {
+        // pausa longa
+        this.pomodoroFase = 'pausa-longa';
+        this.pomodoroSegundosRestantes = this.pomodoroDuracaoPausaLonga;
+      } else {
+        // pausa curta
+        this.pomodoroFase = 'pausa-curta';
+        this.pomodoroSegundosRestantes = this.pomodoroDuracaoPausaCurta;
+      }
+    } else {
+      // volta para foco
+      this.pomodoroFase = 'foco';
+      this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
+    }
+  }
+
+  private pararTimerInterno(): void {
+    if (this.timerRef) {
+      clearInterval(this.timerRef);
+      this.timerRef = null;
+    }
+  }
+
+  // ================================================================
+  // MODO ESTUDAR / REVISAR
+  // ================================================================
 
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
