@@ -40,17 +40,21 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   // ---- POMODORO ----
   // tempos (ajustáveis depois)
- // pomodoroDuracaoFoco: number = 25 * 60;        // 25 min
-  pomodoroDuracaoFoco: number = 30;        // 25 min
-  //pomodoroDuracaoPausaCurta: number = 5 * 60;   // 5 min
-  pomodoroDuracaoPausaCurta: number = 5;   // 5 min
-  pomodoroDuracaoPausaLonga: number = 15;  // 15 min
-  //pomodoroDuracaoPausaLonga: number = 15 * 60;  // 15 min
+  // pomodoroDuracaoFoco: number = 25 * 60;        // 25 min
+  pomodoroDuracaoFoco: number = 30;        // para testes
+  // pomodoroDuracaoPausaCurta: number = 5 * 60;   // 5 min
+  pomodoroDuracaoPausaCurta: number = 5;   // para testes
+  pomodoroDuracaoPausaLonga: number = 15;  // para testes
+  // pomodoroDuracaoPausaLonga: number = 15 * 60;  // 15 min
   pomodoroCiclosParaLonga: number = 4;
 
   pomodoroFase: 'foco' | 'pausa-curta' | 'pausa-longa' = 'foco';
   pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos: number = 0;
+
+  // 🔔 controle do alarme
+  private audioAlarme?: HTMLAudioElement;
+  alarmeAtivo: boolean = false;
 
   get duracaoFaseAtual(): number {
     switch (this.pomodoroFase) {
@@ -217,14 +221,15 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // para o timer atual
+    // para o timer atual e silencia qualquer alarme tocando
     this.pararTimerInterno();
+    this.silenciarAlarme();
     this.timerAtivo = false;
 
     this.modoTemporizador = modo;
 
     if (modo === 'livre') {
-      // volta para o contador livre; mantém o valor acumulado
+      // volta para o contador livre; mantém o valor acumulado (se quiser zerar, o aluno usa o botão Zerar)
       if (!this.tempoTotalSegundos) {
         this.tempoTotalSegundos = 0;
       }
@@ -240,6 +245,9 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
    * Botão principal: Iniciar / Pausar.
    */
   toggleTimer(): void {
+    // sempre que o aluno mexer no timer, garantimos que o alarme pare
+    this.silenciarAlarme();
+
     if (this.timerAtivo) {
       // pausa
       this.timerAtivo = false;
@@ -262,6 +270,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
    */
   zerarTimer(): void {
     this.pararTimerInterno();
+    this.silenciarAlarme();
     this.timerAtivo = false;
 
     if (this.modoTemporizador === 'livre') {
@@ -293,12 +302,18 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // terminou a fase atual → troca de fase
+      // terminou a fase atual → troca de fase (e para o timer)
       this.trocarFasePomodoro();
     }, 1000);
   }
 
   private trocarFasePomodoro(): void {
+    // terminou a fase: para o timer e toca o alarme
+    this.pararTimerInterno();
+    this.timerAtivo = false;
+    this.tocarAlarme();
+
+    // prepara a PRÓXIMA fase, mas NÃO inicia automaticamente.
     if (this.pomodoroFase === 'foco') {
       this.pomodoroCiclosConcluidos++;
 
@@ -316,6 +331,9 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       this.pomodoroFase = 'foco';
       this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
     }
+
+    // A partir daqui, o aluno decide quando clicar em "Iniciar" de novo
+    // para começar a contagem da nova fase.
   }
 
   private pararTimerInterno(): void {
@@ -323,6 +341,37 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       clearInterval(this.timerRef);
       this.timerRef = null;
     }
+  }
+
+  // ------------ DESPERTADOR (ALARM CLOCK) ------------
+
+  private tocarAlarme(): void {
+    try {
+      if (!this.audioAlarme) {
+        this.audioAlarme = new Audio('assets/alarm-clock.mp3');
+      }
+
+      this.audioAlarme.currentTime = 0;
+      this.audioAlarme.loop = true; // toca em loop até silenciar
+
+      this.audioAlarme.play()
+        .then(() => {
+          this.alarmeAtivo = true;
+        })
+        .catch(err => {
+          console.warn('[POMODORO] Não foi possível tocar o som de alarme:', err);
+        });
+    } catch (e) {
+      console.warn('[POMODORO] Erro ao tentar tocar o som de alarme:', e);
+    }
+  }
+
+  private silenciarAlarme(): void {
+    if (this.audioAlarme) {
+      this.audioAlarme.pause();
+      this.audioAlarme.currentTime = 0;
+    }
+    this.alarmeAtivo = false;
   }
 
   // ================================================================
