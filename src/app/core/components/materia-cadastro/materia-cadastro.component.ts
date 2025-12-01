@@ -14,16 +14,21 @@ export class MateriaCadastroComponent implements OnInit {
 
   materiaForm!: FormGroup;
   submeteuMateria: boolean = false;
-modoEdicaoTopico: boolean = false;
-topicoEmEdicao: any | null = null;
+
+  // modo do campo superior
+  modoTopicoGlobal: boolean = false;
+
+  // edição de tópico
+  modoEdicaoTopico: boolean = false;
+  topicoEmEdicao: any | null = null;
 
   materias: Materia[] = [];
   materiaSelecionada?: Materia;
+  materiaExpandida?: Materia | null; // matéria com tópicos visíveis
 
   topicos: Topico[] = [];
   novoTopicoDescricao: string = '';
 
-  // tópico onde o subtópico será criado (se tiver seleção)
   topicoSelecionado?: Topico | null;
 
   carregandoMaterias = false;
@@ -52,18 +57,16 @@ topicoEmEdicao: any | null = null;
     });
   }
 
-campoInvalido(campo: string): boolean {
-  const control = this.materiaForm.get(campo);
-  if (!control) {
-    return false;
+  campoInvalido(campo: string): boolean {
+    const control = this.materiaForm.get(campo);
+    if (!control) {
+      return false;
+    }
+    return control.invalid && this.submeteuMateria;
   }
 
-  // ❗ Só mostra erro se o usuário tentou salvar a matéria
-  return control.invalid && this.submeteuMateria;
-}
+  // ---------- SALA DE ESTUDO ----------
 
-
-  // 🔹 Abrir sala de estudo POR MATÉRIA
   abrirSalaEstudoMateria(m: Materia): void {
     if (!m.id) {
       alert('Salve a matéria antes de entrar na sala de estudo.');
@@ -123,133 +126,165 @@ campoInvalido(campo: string): boolean {
       nome: ''
     });
     this.materiaSelecionada = undefined;
+    this.materiaExpandida = null;
+    this.modoTopicoGlobal = false;
     this.topicos = [];
     this.topicoSelecionado = null;
+    this.novoTopicoDescricao = '';
+    this.modoEdicaoTopico = false;
+    this.topicoEmEdicao = null;
+    this.submeteuMateria = false;
+    this.materiaForm.markAsPristine();
+    this.materiaForm.markAsUntouched();
     this.focarNomeMateria();
   }
-selecionarMateria(m: any): void {
-     this.materiaForm.reset({
-      id: null,
-      nome: ''
-    });
-  // não encosta no valor do form, só seleciona o contexto
-  this.materiaSelecionada = m;
-  this.topicoSelecionado = undefined;
-  this.novoTopicoDescricao = '';
-  this.modoEdicaoTopico = false;
-  this.topicoEmEdicao = null;
 
-  // evita erro de validação “preso”
-  this.submeteuMateria = false;
-  this.materiaForm.markAsPristine();
-  this.materiaForm.markAsUntouched();
-
-  // carrega os tópicos da matéria
-  this.carregarTopicos(m); // mantém se você já tiver esse método
-}
-
-
- editarMateria(m: Materia): void {
-  this.submeteuMateria = false;
-
-  this.materiaSelecionada = m;
-  this.topicoSelecionado = null;
-
-  // Carrega a matéria no formulário
-  this.materiaForm.reset({
-    id: m.id,
-    nome: m.nome
-  });
-
-  this.materiaForm.markAsPristine();
-  this.materiaForm.markAsUntouched();
-
-  this.carregarTopicos(m); // ou this.carregarTopicos(m.id) dependendo da sua assinatura
-
-  this.focarNomeMateria();
-}
-
-
-  iniciarEdicaoTopico(topico: any): void {
-  this.modoEdicaoTopico = true;
-  this.topicoEmEdicao = topico;
-  this.topicoSelecionado = topico; // mantém ele visualmente selecionado
-  this.novoTopicoDescricao = topico.descricao || '';
-
-  // foca no input, se o ViewChild estiver disponível
-  setTimeout(() => {
-    if (this.novoTopicoInput) {
-      this.novoTopicoInput.nativeElement.focus();
-      this.novoTopicoInput.nativeElement.select();
-    }
-  }, 0);
-}
-
-
-salvarMateria(): void {
-  this.submeteuMateria = true;
-
-  if (this.materiaForm.invalid) {
-    this.materiaForm.markAllAsTouched();
-    this.focarNomeMateria();
-    return;
-  }
-
-  const dto: Materia = this.materiaForm.value;
-  const nomeNormalizado = this.normalizarTexto(dto.nome);
-
-  const duplicado = this.materias.some(m =>
-    this.normalizarTexto(m.nome) === nomeNormalizado &&
-    m.id !== dto.id
-  );
-
-  if (duplicado) {
-    this.mensagemErro = 'Já existe uma matéria com esse nome.';
-    this.materiaForm.get('nome')?.setErrors({ duplicado: true });
-    this.focarNomeMateria();
-    return;
-  }
-
-  const ehNovo = !dto.id;
-
-  this.salvando = true;
-
-  this.materiaService.salvarMateria(dto).subscribe({
-    next: (salva) => {
-      this.salvando = false;
-      this.mensagemErro = undefined;
-
-      const idx = this.materias.findIndex(m => m.id === salva.id);
-      if (idx >= 0) {
-        this.materias[idx] = salva;   // atualiza lista
-      } else {
-        this.materias.push(salva);    // inclui nova
-      }
-
-      // mantém a matéria selecionada à direita
-      this.materiaSelecionada = salva;
-      this.carregarTopicos(salva);
-
-      // ✅ SEMPRE limpar o formulário, seja novo ou edição
-      this.materiaForm.reset({
-        id: null,
-        nome: ''
-      });
-
+  // abre/fecha a linha de tópicos da matéria e entra em modo tópico
+  toggleMateria(m: Materia): void {
+    if (this.materiaExpandida?.id === m.id) {
+      // recolher
+      this.materiaExpandida = null;
+      this.materiaSelecionada = undefined;
+      this.modoTopicoGlobal = false;
+      this.topicos = [];
+      this.topicoSelecionado = null;
+      this.novoTopicoDescricao = '';
+      this.modoEdicaoTopico = false;
+      this.topicoEmEdicao = null;
       this.submeteuMateria = false;
       this.materiaForm.markAsPristine();
       this.materiaForm.markAsUntouched();
-
-      this.focarNomeMateria();
-    },
-    error: () => {
-      this.salvando = false;
-      this.mensagemErro = 'Erro ao salvar matéria.';
-      this.focarNomeMateria();
+      return;
     }
-  });
-}
 
+    // expandir nova matéria e entrar em modo tópico
+    this.materiaExpandida = m;
+    this.selecionarMateria(m);
+    this.modoTopicoGlobal = true;
+    this.focarNovoTopico();
+  }
+
+  // NÃO carrega o nome no input da matéria; só define contexto e carrega tópicos
+  selecionarMateria(m: Materia): void {
+    this.materiaForm.reset({
+      id: null,
+      nome: ''
+    });
+
+    this.materiaSelecionada = m;
+    this.topicoSelecionado = undefined;
+    this.novoTopicoDescricao = '';
+    this.modoEdicaoTopico = false;
+    this.topicoEmEdicao = null;
+
+    this.submeteuMateria = false;
+    this.materiaForm.markAsPristine();
+    this.materiaForm.markAsUntouched();
+
+    this.carregarTopicos(m);
+  }
+
+  editarMateria(m: Materia): void {
+    this.submeteuMateria = false;
+
+    this.materiaSelecionada = m;
+    this.materiaExpandida = m;
+    this.topicoSelecionado = null;
+
+    // volta pro modo cadastro de matéria
+    this.modoTopicoGlobal = false;
+
+    this.materiaForm.reset({
+      id: m.id,
+      nome: m.nome
+    });
+
+    this.materiaForm.markAsPristine();
+    this.materiaForm.markAsUntouched();
+
+    this.carregarTopicos(m);
+    this.focarNomeMateria();
+  }
+
+  voltarParaCadastroMateria(): void {
+    this.modoTopicoGlobal = false;
+    this.topicoSelecionado = null;
+    this.novoTopicoDescricao = '';
+    this.modoEdicaoTopico = false;
+    this.topicoEmEdicao = null;
+    this.focarNomeMateria();
+  }
+
+  iniciarEdicaoTopico(topico: any): void {
+    this.modoTopicoGlobal = true; // garante que o campo está em modo tópico
+    this.modoEdicaoTopico = true;
+    this.topicoEmEdicao = topico;
+    this.topicoSelecionado = topico;
+    this.novoTopicoDescricao = topico.descricao || '';
+    this.focarNovoTopico();
+  }
+
+  salvarMateria(): void {
+    this.submeteuMateria = true;
+
+    if (this.materiaForm.invalid) {
+      this.materiaForm.markAllAsTouched();
+      this.focarNomeMateria();
+      return;
+    }
+
+    const dto: Materia = this.materiaForm.value;
+    const nomeNormalizado = this.normalizarTexto(dto.nome);
+
+    const duplicado = this.materias.some(m =>
+      this.normalizarTexto(m.nome) === nomeNormalizado &&
+      m.id !== dto.id
+    );
+
+    if (duplicado) {
+      this.mensagemErro = 'Já existe uma matéria com esse nome.';
+      this.materiaForm.get('nome')?.setErrors({ duplicado: true });
+      this.focarNomeMateria();
+      return;
+    }
+
+    this.salvando = true;
+
+    this.materiaService.salvarMateria(dto).subscribe({
+      next: (salva) => {
+        this.salvando = false;
+        this.mensagemErro = undefined;
+
+        const idx = this.materias.findIndex(m => m.id === salva.id);
+        if (idx >= 0) {
+          this.materias[idx] = salva;
+        } else {
+          this.materias.push(salva);
+        }
+
+        this.materiaSelecionada = salva;
+        this.materiaExpandida = salva;
+        this.carregarTopicos(salva);
+
+        // limpa o form de matéria
+        this.materiaForm.reset({
+          id: null,
+          nome: ''
+        });
+
+        this.submeteuMateria = false;
+        this.materiaForm.markAsPristine();
+        this.materiaForm.markAsUntouched();
+
+        this.focarNomeMateria();
+      },
+      error: () => {
+        this.salvando = false;
+        this.mensagemErro = 'Erro ao salvar matéria.';
+        this.focarNomeMateria();
+      }
+    });
+  }
 
   excluirMateria(m: Materia): void {
     if (!m.id) { return; }
@@ -259,8 +294,15 @@ salvarMateria(): void {
     this.materiaService.excluirMateria(m.id).subscribe({
       next: () => {
         this.materias = this.materias.filter(x => x.id !== m.id);
+
         if (this.materiaSelecionada?.id === m.id) {
           this.novaMateria();
+        } else if (this.materiaExpandida?.id === m.id) {
+          this.materiaExpandida = null;
+          this.topicos = [];
+          this.topicoSelecionado = null;
+          this.novoTopicoDescricao = '';
+          this.modoTopicoGlobal = false;
         } else {
           this.focarNomeMateria();
         }
@@ -274,51 +316,6 @@ salvarMateria(): void {
 
   // ---------- TÓPICOS ----------
 
-  private montarArvoreTopicos(lista: Topico[]): Topico[] {
-    console.log('[ARVORE] Montando árvore a partir da lista plana...');
-    const mapa = new Map<number, Topico>();
-
-    lista.forEach((t) => {
-      (t as any).filhos = (t as any).filhos || [];
-      if ((t as any).id != null) {
-        mapa.set((t as any).id, t);
-        console.log('[ARVORE] Registrando no mapa -> id=', (t as any).id, 'desc=', t.descricao);
-      } else {
-        console.warn('[ARVORE] Topico sem id vindo do backend:', t);
-      }
-    });
-
-    const raiz: Topico[] = [];
-
-    lista.forEach((t) => {
-      const paiId = (t as any).topicoPaiId as number | null | undefined;
-
-      if (paiId) {
-        const pai = mapa.get(paiId);
-        if (pai) {
-          (pai as any).filhos = (pai as any).filhos || [];
-          (pai as any).filhos.push(t);
-          console.log(
-            `[ARVORE] Vinculando filho "${t.descricao}" (id=${(t as any).id}) ao pai id=${paiId} ("${(pai as any).descricao}")`
-          );
-        } else {
-          console.warn(
-            `[ARVORE] paiId=${paiId} não encontrado no mapa. Enviando "${t.descricao}" como raiz.`
-          );
-          raiz.push(t);
-        }
-      } else {
-        console.log(
-          `[ARVORE] "${t.descricao}" (id=${(t as any).id}) não tem pai. Vai como raiz.`
-        );
-        raiz.push(t);
-      }
-    });
-
-    console.log('[ARVORE] Resultado final (raiz):', raiz);
-    return raiz;
-  }
-
   private carregarTopicos(m: Materia): void {
     if (!m.id) {
       console.warn('[TOPICOS] Matéria sem ID ao tentar carregar tópicos:', m);
@@ -329,63 +326,51 @@ salvarMateria(): void {
     this.topicos = [];
     this.topicoSelecionado = null;
 
-    console.log('========================================');
-    console.log('[TOPICOS] Chamando backend (árvore) para materiaId =', m.id);
-
     this.materiaService.listarTopicos(m.id).subscribe({
       next: (lista) => {
         const listaSegura = lista || [];
-        console.log('[TOPICOS] DTO bruto vindo do backend:', listaSegura);
 
         this.topicos = listaSegura.map((dto: any) =>
           this.converterDtoParaTopico(dto, 0)
         );
 
-        console.log('[TOPICOS] Árvore adaptada para o template (this.topicos):', this.topicos);
         this.carregandoTopicos = false;
-        console.log('========================================');
       },
       error: (err) => {
         this.carregandoTopicos = false;
         this.mensagemErro = 'Erro ao carregar tópicos da matéria.';
         console.error('[TOPICOS] Erro ao carregar tópicos:', err);
-        console.log('========================================');
       }
     });
   }
 
-  private existeTopicoComMesmaDescricao(lista: Topico[], descricao: string): boolean {
-    const normalizada = this.normalizarTexto(descricao);
-    return lista.some(t => this.normalizarTexto(t.descricao) === normalizada);
-  }
+  selecionarTopico(topico: any): void {
+    // se já está selecionado e clicar de novo, limpa
+    if (this.topicoSelecionado === topico) {
+      this.limparTopicoSelecionado();
+      return;
+    }
 
-// ajuste o tipo Topico conforme o seu model
-selecionarTopico(topico: any): void {
-  // se já está selecionado e clicou de novo, limpa a seleção
-  if (this.topicoSelecionado === topico) {
-    this.limparTopicoSelecionado();
-    return;
-  }
-
-  // caso contrário, seleciona o tópico normalmente
-  this.topicoSelecionado = topico;
-
-  // opcional: limpa o texto do input de novo tópico
-  if (this.novoTopicoDescricao) {
+    this.modoTopicoGlobal = true; // garante que o campo está em modo tópico
+    this.topicoSelecionado = topico;
     this.novoTopicoDescricao = '';
-  }
-}
+    this.modoEdicaoTopico = false;
+    this.topicoEmEdicao = null;
 
+    this.focarNovoTopico();
+  }
 
   limparTopicoSelecionado(): void {
     this.topicoSelecionado = null;
     this.novoTopicoDescricao = '';
-    
+    this.modoEdicaoTopico = false;
+    this.topicoEmEdicao = null;
+    this.focarNovoTopico();
   }
 
   private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
     if (!this.materiaSelecionada?.id) {
-      alert('Salve a matéria antes de adicionar tópicos.');
+      alert('Selecione e salve a matéria antes de adicionar tópicos.');
       this.focarNomeMateria();
       return;
     }
@@ -400,20 +385,16 @@ selecionarTopico(topico: any): void {
       payload.topicoPaiId = (pai as any).id;
     }
 
-    console.log('[SALVAR-TOPICO] Enviando payload para backend:', payload);
-
     this.salvando = true;
     this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
       next: (salvo) => {
         this.salvando = false;
-        console.log('[SALVAR-TOPICO] Resposta do backend:', salvo);
 
         if (salvo && (salvo as any).id) {
           (topico as any).id = (salvo as any).id;
         }
 
         if (this.materiaSelecionada) {
-          console.log('[SALVAR-TOPICO] Recarregando tópicos da matéria', this.materiaSelecionada.id);
           this.carregarTopicos(this.materiaSelecionada);
         }
       },
@@ -425,49 +406,51 @@ selecionarTopico(topico: any): void {
     });
   }
 
-  
-
-adicionarTopico(): void {
-  const descricao = (this.novoTopicoDescricao || '').trim();
-  if (!descricao) {
-    return;
-  }
-
-  // Monta o objeto do novo tópico
-  const novoTopico: any = {
-    id: undefined,           // o backend vai gerar
-    descricao: descricao,
-    ativo: true,
-    filhos: []
-  };
-
-  if (!this.topicoSelecionado) {
-    // ✅ Sem tópico selecionado: adiciona como TÓPICO RAIZ da matéria
-    this.topicos.push(novoTopico);
-  } else {
-    // ✅ Com tópico selecionado: adiciona como FILHO do tópico selecionado
-    if (!this.topicoSelecionado.filhos) {
-      this.topicoSelecionado.filhos = [];
+  adicionarTopico(): void {
+    const descricao = (this.novoTopicoDescricao || '').trim();
+    if (!descricao) {
+      return;
     }
-    this.topicoSelecionado.filhos.push(novoTopico);
-  }
 
-  // ✅ Limpa apenas o texto do campo
-  this.novoTopicoDescricao = '';
+    if (!this.materiaSelecionada?.id) {
+      alert('Selecione e salve a matéria antes de adicionar tópicos.');
+      return;
+    }
 
-  // ❌ NÃO LIMPE A SELEÇÃO AQUI
-  // this.topicoSelecionado = undefined;
-  // this.limparTopicoSelecionado();
-}
+    // MODO EDIÇÃO
+    if (this.modoEdicaoTopico && this.topicoEmEdicao) {
+      this.topicoEmEdicao.descricao = descricao;
+      this.salvarTopicoAutomatico(this.topicoEmEdicao);
+      this.novoTopicoDescricao = '';
+      this.modoEdicaoTopico = false;
+      this.topicoEmEdicao = null;
+      this.focarNovoTopico();
+      return;
+    }
 
-
-  private criarTopico(descricao: string, nivel: number): Topico {
-    return {
-      descricao,
-      nivel,
+    // MODO CRIAÇÃO
+    const novoTopico: any = {
+      id: undefined,
+      descricao: descricao,
       ativo: true,
       filhos: []
-    } as Topico;
+    };
+
+    if (!this.topicoSelecionado) {
+      // tópico raiz da matéria
+      this.topicos.push(novoTopico);
+      this.salvarTopicoAutomatico(novoTopico);
+    } else {
+      // subtópico do tópico selecionado
+      if (!this.topicoSelecionado.filhos) {
+        this.topicoSelecionado.filhos = [];
+      }
+      this.topicoSelecionado.filhos.push(novoTopico);
+      this.salvarTopicoAutomatico(novoTopico, this.topicoSelecionado);
+    }
+
+    this.novoTopicoDescricao = '';
+    this.focarNovoTopico();
   }
 
   excluirTopico(topico: Topico, parentArray: Topico[]): void {

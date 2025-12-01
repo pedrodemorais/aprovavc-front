@@ -1,38 +1,6 @@
 <div class="sala-container" *ngIf="!carregando; else loadingTpl">
 
-  <!-- CABEÇALHO DA SALA -->
-  <section class="card sala-header">
-    <div class="sala-header-esquerda">
-      <p class="sala-subtitulo">Sala de estudo</p>
-      <h1 class="sala-titulo">
-        {{ materia?.nome || 'Matéria' }}
-      </h1>
-      <p class="sala-descricao" *ngIf="materia">
-        Foque seus estudos, faça anotações e acompanhe o tempo dedicado a esta matéria.
-      </p>
-    </div>
 
-    <div class="sala-header-direita">
-      <div class="timer-box">
-        <span class="timer-label">Tempo de estudo</span>
-        <span class="timer-valor">{{ tempoFormatado }}</span>
-
-        <div class="timer-botoes">
-          <button type="button"
-                  class="btn primario"
-                  (click)="toggleTimer()">
-            {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
-          </button>
-          <button type="button"
-                  class="btn secundario"
-                  (click)="zerarTimer()"
-                  [disabled]="tempoTotalSegundos === 0">
-            Zerar
-          </button>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- CORPO DA SALA -->
   <section class="card sala-body">

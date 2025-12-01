@@ -21,20 +21,14 @@
   font-size: 0.85rem;
 }
 
-/* LAYOUT: 2 COLUNAS */
+/* LAYOUT */
 .layout {
   display: grid;
-  grid-template-columns: 1.05fr 1.35fr;
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* CARDS */
+/* CARD */
 .card {
   background: #ffffff;
   border-radius: 12px;
@@ -46,14 +40,12 @@
   font-size: 0.92rem;
 }
 
-/* Deixa as colunas alinhadas verticalmente e usando todo o espaço interno */
-.coluna-esquerda,
-.coluna-direita {
+.coluna-esquerda {
   display: flex;
   flex-direction: column;
 }
 
-/* FORMULÁRIO DE MATÉRIA / TÓPICO */
+/* FORM / CAMPO SUPERIOR */
 .form-group {
   margin-bottom: 10px;
 }
@@ -83,6 +75,11 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
   background-color: #f9fafb;
+}
+
+.input-text:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
 }
 
 .erro {
@@ -138,11 +135,6 @@
   font-size: 0.8rem;
 }
 
-/* BOTÃO PRINCIPAL NA COLUNA DIREITA */
-.btn-novo-topico {
-  white-space: nowrap;
-}
-
 /* BOTÕES DE ÍCONE */
 .btn-icone {
   border: none;
@@ -165,11 +157,64 @@
   object-fit: contain;
 }
 
-/* LINHA DIVISÓRIA DENTRO DO CARD */
+/* LINHA DIVISÓRIA */
 .card hr {
   border: none;
   border-top: 1px solid #e5e7eb;
   margin: 10px 0;
+}
+
+/* TOPO MODO TÓPICO */
+.topo-topico {
+  margin-bottom: 4px;
+}
+
+.cabecalho-topicos {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  justify-content: space-between;
+}
+
+.cabecalho-topicos-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.titulo-topicos {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.titulo-colorido {
+  color: #0284c7;
+}
+
+.grupo-botoes-topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* INPUT + BOTÃO TÓPICO NO TOPO */
+.novo-topico {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-bottom: 2px;
+  margin-top: 4px;
+}
+
+.novo-topico .input-text {
+  flex: 1 1 auto;
+}
+
+.btn-novo-topico {
+  white-space: nowrap;
 }
 
 /* TABELA DE MATÉRIAS */
@@ -209,122 +254,24 @@
   white-space: nowrap;
 }
 
-/* TEXTOS AUXILIARES */
-.vazio {
-  font-size: 0.86rem;
-  color: #6b7280;
-  margin-top: 6px;
+/* CÉLULA EXPANDIDA DE TÓPICOS */
+.celula-topicos {
+  padding: 0;
+  background: #f9fafb;
 }
 
-.loading {
-  font-size: 0.86rem;
-  color: #4b5563;
-  margin-top: 4px;
-}
-
-/* COLUNA DIREITA: ÁREA "NOVO TÓPICO" ALINHADA */
-.novo-topico {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  margin-top: 4px;
-}
-
-.novo-topico .input-text {
-  flex: 1 1 auto;
-}
-
-/* CABEÇALHO DA ÁREA DE TÓPICOS */
-.titulo-topicos {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-.titulo-colorido {
-  color: #0284c7;
-}
-
-.subtitulo-topicos {
-  margin: 2px 0 0;
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-.cabecalho-topicos {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-  justify-content: space-between;
-}
-
-.cabecalho-topicos-textos {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* título da matéria acima da lista de tópicos */
-.subtitulo-materia-direita {
-  margin: 0;
-}
-
-/* CONTEXTO */
-.contexto-topico {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-/* HEADER DA LISTA DE TÓPICOS NA DIREITA */
-.topicos-header-lista {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 4px;
-  margin-bottom: 6px;
-}
-
-.tag-materia {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #9ca3af;
-  margin: 0 0 2px;
-}
-
-.contador-topicos {
-  font-size: 0.8rem;
-  color: #4b5563;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: #eff6ff;
-}
-
-/* QUANDO NENHUMA MATÉRIA ESTÁ SELECIONADA NA DIREITA */
-.card-sem-materia {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 220px;
+.topicos-wrapper {
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
 }
 
 /* ÁRVORE DE TÓPICOS */
 .arvore-topicos {
-  margin-top: 6px;
   max-height: 420px;
   overflow: auto;
   padding-right: 4px;
   padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background: #ffffff;
 }
 
 .lista-topicos,
@@ -385,9 +332,195 @@
   margin-left: 0;
 }
 
-/* MENSAGEM MATÉRIA SELECIONADA (se usar) */
-.materia-selecionada {
+/* TEXTOS AUXILIARES */
+.vazio {
+  font-size: 0.86rem;
+  color: #6b7280;
   margin-top: 6px;
+}
+
+.loading {
   font-size: 0.86rem;
   color: #4b5563;
+  margin-top: 4px;
+}
+
+/* STATUS DO MODO (MATÉRIA / TÓPICO / SUBTÓPICO) */
+.modo-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.chip-icon {
+  font-size: 0.85rem;
+}
+
+/* MODO MATÉRIA */
+.chip-materia {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+/* MODO TÓPICO RAIZ */
+.chip-topico {
+  background: #ecfdf3;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+/* MODO SUBTÓPICO */
+.chip-subtopico {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fed7aa;
+}
+
+.chip-hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.chip-hint strong {
+  font-weight: 600;
+}
+
+/* ========================= */
+/*  RESPONSIVO PARA CELULAR  */
+/* ========================= */
+
+@media (max-width: 640px) {
+  .page-container {
+    padding: 12px 6px;
+  }
+
+  .page-title {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .card {
+    padding: 10px 10px;
+    border-radius: 10px;
+  }
+
+  .card-body {
+    font-size: 0.88rem;
+  }
+
+  .modo-status {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chip {
+    font-size: 0.76rem;
+  }
+
+  .chip-hint {
+    font-size: 0.78rem;
+  }
+
+  .acoes-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .acoes-form .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .novo-topico {
+    flex-wrap: wrap;
+  }
+
+  .novo-topico .input-text {
+    flex: 1 1 100%;
+  }
+
+  .btn-novo-topico {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Tabela rolagem horizontal se ficar apertado */
+  .tabela-materias {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .tabela-materias table {
+    width: 100%;
+  }
+
+  .tabela-materias th,
+  .tabela-materias td {
+    padding: 8px 6px;
+  }
+
+  .tabela-materias td.acoes {
+    text-align: right;
+  }
+
+  .celula-topicos {
+    padding: 0;
+  }
+
+  .arvore-topicos {
+    max-height: 320px;
+    padding: 6px 6px;
+  }
+
+  .topico-linha {
+    align-items: flex-start;
+  }
+
+  .topico-acoes {
+    gap: 2px;
+  }
+
+  .btn-icone .icone-img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .page-container {
+    padding: 10px 4px;
+  }
+
+  .card {
+    padding: 8px 8px;
+  }
+
+  .input-text {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .topico-descricao {
+    font-size: 0.82rem;
+  }
 }
