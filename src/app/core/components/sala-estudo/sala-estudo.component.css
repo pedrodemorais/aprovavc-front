@@ -408,3 +408,15 @@
     flex-wrap: wrap;
   }
 }
+/* Ajuste leve no editor para combinar com os cards */
+:host ::ng-deep .p-editor-container {
+  border-radius: 10px;
+}
+
+:host ::ng-deep .p-editor-toolbar {
+  border-radius: 10px 10px 0 0;
+}
+
+:host ::ng-deep .p-editor-content {
+  border-radius: 0 0 10px 10px;
+}

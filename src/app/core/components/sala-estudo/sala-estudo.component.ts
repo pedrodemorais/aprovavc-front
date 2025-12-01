@@ -12,6 +12,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   materiaId!: number;
   materia?: Materia;
+anotacoes: string = '';
 
   // 🔹 lista usada na tela (já com tópicos + subtópicos achatados)
   topicos: any[] = [];
@@ -87,8 +88,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
   }
 
-  // anotações (depois você integra com backend)
-  anotacoes: string = '';
+
 
   constructor(
     private route: ActivatedRoute,

@@ -139,17 +139,19 @@
           </h2>
         </ng-template>
 
-        <div class="bloco">
-          <label for="anotacoes" class="label-area">
-            Anotações deste tópico
-          </label>
-          <textarea id="anotacoes"
-                    [(ngModel)]="anotacoes"
-                    rows="8"
-                    class="area-texto"
-                    placeholder="Escreva aqui seu resumo, pontos importantes, fórmulas, observações...">
-          </textarea>
-        </div>
+    <div class="bloco">
+  <label for="anotacoes" class="label-area">
+    Anotações deste tópico
+  </label>
+
+  <p-editor
+    id="anotacoes"
+    [(ngModel)]="anotacoes"
+    [style]="{ height: '230px' }"
+    name="anotacoes">
+  </p-editor>
+</div>
+
 
         <div class="bloco flashcards-bloco">
           <div class="flashcards-header">
