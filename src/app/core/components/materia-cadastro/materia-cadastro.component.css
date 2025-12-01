@@ -1,6 +1,5 @@
 /* CONTAINER GERAL DA PÁGINA */
 .page-container {
-  
   margin: 0 auto;
   padding: 16px 8px;
   background: #f9fafb;
@@ -28,22 +27,6 @@
   grid-template-columns: 1.05fr 1.35fr;
   gap: 12px;
 }
-.btn-icone {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 2px 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-icone .icone-img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
-
 
 @media (max-width: 900px) {
   .layout {
@@ -59,21 +42,18 @@
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-.card-header {
-  margin-bottom: 8px;
-}
-
-.card-header h2 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
 .card-body {
   font-size: 0.92rem;
 }
 
-/* FORMULÁRIO DE MATÉRIA */
+/* Deixa as colunas alinhadas verticalmente e usando todo o espaço interno */
+.coluna-esquerda,
+.coluna-direita {
+  display: flex;
+  flex-direction: column;
+}
+
+/* FORMULÁRIO DE MATÉRIA / TÓPICO */
 .form-group {
   margin-bottom: 10px;
 }
@@ -95,12 +75,14 @@
   padding: 7px 10px;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  background-color: #ffffff;
 }
 
 .input-text:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+  background-color: #f9fafb;
 }
 
 .erro {
@@ -123,7 +105,7 @@
   padding: 7px 14px;
   font-size: 0.86rem;
   cursor: pointer;
-  transition: filter 0.15s ease, transform 0.05s ease;
+  transition: filter 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
 }
 
 .btn:active {
@@ -133,11 +115,17 @@
 .btn.primario {
   background: #2563eb;
   color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+
+.btn.primario:hover:not(:disabled) {
+  filter: brightness(1.05);
 }
 
 .btn.primario:disabled {
   opacity: 0.7;
   cursor: default;
+  box-shadow: none;
 }
 
 .btn.secundario {
@@ -145,19 +133,39 @@
   color: #111827;
 }
 
+.btn-menor {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+/* BOTÃO PRINCIPAL NA COLUNA DIREITA */
+.btn-novo-topico {
+  white-space: nowrap;
+}
+
+/* BOTÕES DE ÍCONE */
 .btn-icone {
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 1rem;
   padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
 }
 
 .btn-icone:hover {
   filter: brightness(0.9);
 }
 
-/* LINHA DIVISÓRIA */
+.btn-icone .icone-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* LINHA DIVISÓRIA DENTRO DO CARD */
 .card hr {
   border: none;
   border-top: 1px solid #e5e7eb;
@@ -214,88 +222,57 @@
   margin-top: 4px;
 }
 
-/* COLUNA DIREITA: TÓPICOS */
-.coluna-direita .novo-topico {
+/* COLUNA DIREITA: ÁREA "NOVO TÓPICO" ALINHADA */
+.novo-topico {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
-  margin-bottom: 10px;
-}
-
-.coluna-direita .novo-topico .input-text {
-  flex: 1 1 220px;
-}
-
-/* ÁRVORE DE TÓPICOS */
-.arvore-topicos {
+  margin-bottom: 12px;
   margin-top: 4px;
-  max-height: 420px;
-  overflow: auto;
-  padding-right: 4px;
 }
 
-.lista-topicos,
-.lista-topicos-filhos {
-  list-style: none;
-  margin: 0;
-  padding-left: 0;
+.novo-topico .input-text {
+  flex: 1 1 auto;
 }
 
-.topico-linha {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 0;
-}
-
-.topico-descricao {
-  font-size: 0.88rem;
-}
-
-.topico-acoes {
-  display: flex;
-  gap: 4px;
-}
-
-/* SUBLISTAS (filhos) */
-.lista-topicos-filhos {
-  margin-left: 0;
-}
-
-/* RESPIRO DOS NÍVEIS DE TÓPICO (padding é aplicado inline no HTML) */
-.topico-linha {
-  border-radius: 6px;
-}
-
-.topico-linha:hover {
-  background: #f3f4f6;
-}
-
-/* BOTÃO "SALVAR TÓPICOS" NO RODAPÉ */
-.acoes-bottom {
-  margin-top: 10px;
-  text-align: right;
-}
-.materia-selecionada {
-  margin-top: 6px;
-  font-size: 0.86rem;
-  color: #4b5563;
-}
-
-/* cabeçalho da coluna de tópicos */
+/* CABEÇALHO DA ÁREA DE TÓPICOS */
 .titulo-topicos {
-  margin: 0 0 4px;
-  font-size: 1.1rem;
+  margin: 0;
+  font-size: 1.05rem;
   font-weight: 600;
 }
 
+.titulo-colorido {
+  color: #0284c7;
+}
+
 .subtitulo-topicos {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
+  margin: 2px 0 0;
+  font-size: 0.8rem;
   color: #6b7280;
 }
 
-/* contexto de criação */
+.cabecalho-topicos {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  justify-content: space-between;
+}
+
+.cabecalho-topicos-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* título da matéria acima da lista de tópicos */
+.subtitulo-materia-direita {
+  margin: 0;
+}
+
+/* CONTEXTO */
 .contexto-topico {
   display: flex;
   align-items: center;
@@ -304,32 +281,50 @@
   margin-bottom: 6px;
 }
 
-.tag-contexto {
-  display: inline-flex;
+/* HEADER DA LISTA DE TÓPICOS NA DIREITA */
+.topicos-header-lista {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.tag-materia {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin: 0 0 2px;
+}
+
+.contador-topicos {
+  font-size: 0.8rem;
+  color: #4b5563;
   padding: 3px 8px;
   border-radius: 999px;
-  font-size: 0.78rem;
-  background: #eef2ff;
-  color: #4338ca;
+  background: #eff6ff;
 }
 
-.tag-contexto.tag-sub {
-  background: #ecfdf3;
-  color: #166534;
+/* QUANDO NENHUMA MATÉRIA ESTÁ SELECIONADA NA DIREITA */
+.card-sem-materia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
 }
 
-.btn-menor {
-  padding: 4px 10px;
-  font-size: 0.8rem;
-}
-
-/* árvore de tópicos */
+/* ÁRVORE DE TÓPICOS */
 .arvore-topicos {
   margin-top: 6px;
   max-height: 420px;
   overflow: auto;
   padding-right: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
 }
 
 .lista-topicos,
@@ -346,7 +341,7 @@
   padding: 4px 6px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.1s ease, box-shadow 0.1s ease;
+  transition: background 0.1s ease, box-shadow 0.1s ease, transform 0.05s ease;
 }
 
 .topico-linha:hover {
@@ -355,7 +350,7 @@
 
 .topico-linha.selecionado {
   background: #eff6ff;
-  box-shadow: 0 0 0 0px #bfdbfe;
+  box-shadow: 0 0 0 1px #bfdbfe;
 }
 
 .topico-info {
@@ -383,4 +378,16 @@
 .topico-acoes {
   display: flex;
   gap: 4px;
+}
+
+/* SUBLISTAS (filhos) */
+.lista-topicos-filhos {
+  margin-left: 0;
+}
+
+/* MENSAGEM MATÉRIA SELECIONADA (se usar) */
+.materia-selecionada {
+  margin-top: 6px;
+  font-size: 0.86rem;
+  color: #4b5563;
 }

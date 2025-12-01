@@ -1,6 +1,6 @@
 <div class="page-container">
 
-  <h1 class="page-title">Biblioteca de Matérias e Tópicos</h1>
+  <h1 class="page-title">Biblioteca de Matérias</h1>
 
   <div class="mensagem-erro" *ngIf="mensagemErro">
     {{ mensagemErro }}
@@ -14,7 +14,9 @@
       <form [formGroup]="materiaForm" (ngSubmit)="salvarMateria()" class="card-body">
 
         <div class="form-group">
-          <label for="nome">Nome da matéria <span class="obrigatorio">*</span></label>
+          <label for="nome" class="titulo-topicos">
+            Nome da matéria <span class="obrigatorio">*</span>
+          </label>
           <input
             #nomeMateriaInput
             id="nome"
@@ -33,19 +35,11 @@
           <button type="submit" class="btn primario" [disabled]="salvando">
             {{ salvando ? 'Salvando...' : 'Salvar matéria' }}
           </button>
-          <button type="button" class="btn secundario" (click)="novaMateria()">
-            Nova matéria
-          </button>
         </div>
 
-        <p class="materia-selecionada" *ngIf="materiaSelecionada">
-          Matéria selecionada: <strong>{{ materiaSelecionada.nome }}</strong>
-        </p>
       </form>
 
       <hr />
-
-      <h3>Minhas matérias</h3>
 
       <div *ngIf="carregandoMaterias" class="loading">
         Carregando matérias...
@@ -54,7 +48,7 @@
       <table class="tabela-materias" *ngIf="!carregandoMaterias && materias.length">
         <thead>
           <tr>
-            <th>Nome</th>
+            <th>Matérias</th>
             <th style="width: 130px;">Ações</th>
           </tr>
         </thead>
@@ -63,20 +57,27 @@
             *ngFor="let m of materias"
             [class.selecionada]="materiaSelecionada?.id === m.id"
           >
-            <td (click)="editarMateria(m)">{{ m.nome }}</td>
+            <td (click)="selecionarMateria(m)">{{ m.nome }}</td>
             <td class="acoes">
 
               <!-- 📚 Sala de estudo da matéria -->
-           
+              <button
+                type="button"
+                class="btn-icone"
+                (click)="abrirSalaEstudoMateria(m)"
+                title="Sala de estudo"
+              >
+                <img src="assets/icons/book.png" alt="Sala de estudo" class="icone-img" />
+              </button>
 
               <!-- ✏️ Editar matéria -->
               <button
                 type="button"
                 class="btn-icone"
-                 (click)="abrirSalaEstudoMateria(m)"
-                title="Editar"
+                (click)="editarMateria(m)"
+                title="Editar matéria"
               >
-                <img src="assets/icons/book.png" alt="Editar matéria" class="icone-img" />
+                <img src="assets/icons/edit.png" alt="Editar matéria" class="icone-img" />
               </button>
 
               <!-- 🗑️ Excluir matéria -->
@@ -84,9 +85,9 @@
                 type="button"
                 class="btn-icone"
                 (click)="excluirMateria(m)"
-                title="Excluir"
+                title="Excluir matéria"
               >
-                🗑️
+                <img src="assets/icons/delete.png" alt="Excluir matéria" class="icone-img" />
               </button>
             </td>
           </tr>
@@ -103,22 +104,18 @@
 
       <div class="card-body" *ngIf="materiaSelecionada; else selecioneMateria">
 
-        <!-- cabeçalho contexto -->
-        <h2 class="titulo-topicos">
-          {{ materiaSelecionada.nome }}
-        </h2>
-        <p class="subtitulo-topicos">
-          Cadastre tópicos e subtópicos clicando no nível desejado e usando o campo abaixo.
-        </p>
+        <!-- CABEÇALHO / CONTEXTO DE TÓPICO -->
+        <div class="cabecalho-topicos">
+          <div class="cabecalho-topicos-textos">
+            <span *ngIf="!topicoSelecionado" class="titulo-topicos">
+              Tópicos de <span class="titulo-colorido">{{ materiaSelecionada.nome }}</span>
+            </span>
+            <span *ngIf="topicoSelecionado" class="titulo-topicos">
+              Subtópicos de <span class="titulo-colorido">{{ topicoSelecionado.descricao }}</span>
+            </span>
 
-        <!-- contexto de onde será criado o novo tópico -->
-        <div class="contexto-topico">
-          <span *ngIf="!topicoSelecionado" class="tag-contexto">
-            Adicione um tópico para {{ materiaSelecionada.nome }}
-          </span>
-          <span *ngIf="topicoSelecionado" class="tag-contexto tag-sub">
-            Adicione um Subtópico para {{ topicoSelecionado.descricao }}
-          </span>
+            
+          </div>
 
           <button
             *ngIf="topicoSelecionado"
@@ -130,7 +127,7 @@
           </button>
         </div>
 
-        <!-- input único para tópico / subtópico -->
+        <!-- INPUT + BOTÃO DO TÓPICO / SUBTÓPICO -->
         <div class="novo-topico">
           <input
             #novoTopicoInput
@@ -140,14 +137,29 @@
             class="input-text"
             name="novoTopicoDescricao"
           />
+
           <button
             type="button"
-            class="btn-icone"
+            class="btn primario btn-novo-topico"
             (click)="adicionarTopico()"
             title="Adicionar"
           >
-            <img src="assets/icons/mais.png" alt="Adicionar tópico" class="icone-img" />
+            Salvar tópico
           </button>
+        </div>
+
+        <!-- HEADER DA LISTA DE TÓPICOS -->
+        <div class="topicos-header-lista">
+          <div>
+            <p class="tag-materia">Matéria selecionada</p>
+            <h2 class="titulo-topicos subtitulo-materia-direita">
+              {{ materiaSelecionada.nome }}
+            </h2>
+          </div>
+
+          <div class="contador-topicos" *ngIf="topicos.length">
+            {{ topicos.length }} tópico(s) raiz
+          </div>
         </div>
 
         <div *ngIf="carregandoTopicos" class="loading">
@@ -168,7 +180,7 @@
 
           <ng-template #listaVazia>
             <p class="vazio">
-              Nenhum tópico cadastrado. Comece adicionando um tópico da matéria  {{ materiaSelecionada.nome }} .
+              Nenhum tópico cadastrado. Comece adicionando um tópico da matéria {{ materiaSelecionada.nome }}.
             </p>
           </ng-template>
 
@@ -176,7 +188,7 @@
       </div>
 
       <ng-template #selecioneMateria>
-        <div class="card-body">
+        <div class="card-body card-sem-materia">
           <p class="vazio">
             Selecione ou salve uma matéria na coluna ao lado para gerenciar seus tópicos.
           </p>
@@ -205,13 +217,24 @@
       </div>
 
       <div class="topico-acoes" (click)="$event.stopPropagation()">
+        <!-- Excluir tópico -->
         <button
           type="button"
           class="btn-icone"
           (click)="excluirTopico(topico, parentArray)"
           title="Excluir"
         >
-          🗑️
+          <img src="assets/icons/delete.png" alt="Excluir tópico" class="icone-img" />
+        </button>
+
+        <!-- Editar tópico -->
+        <button
+          type="button"
+          class="btn-icone"
+          (click)="iniciarEdicaoTopico(topico)"
+          title="Editar"
+        >
+          <img src="assets/icons/edit.png" alt="Editar tópico" class="icone-img" />
         </button>
       </div>
     </div>

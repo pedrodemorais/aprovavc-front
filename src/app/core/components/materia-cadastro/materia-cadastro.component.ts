@@ -13,6 +13,9 @@ import { Router } from '@angular/router';
 export class MateriaCadastroComponent implements OnInit {
 
   materiaForm!: FormGroup;
+  submeteuMateria: boolean = false;
+modoEdicaoTopico: boolean = false;
+topicoEmEdicao: any | null = null;
 
   materias: Materia[] = [];
   materiaSelecionada?: Materia;
@@ -49,10 +52,16 @@ export class MateriaCadastroComponent implements OnInit {
     });
   }
 
-  campoInvalido(campo: string): boolean {
-    const control = this.materiaForm.get(campo);
-    return !!control && control.invalid && (control.dirty || control.touched);
+campoInvalido(campo: string): boolean {
+  const control = this.materiaForm.get(campo);
+  if (!control) {
+    return false;
   }
+
+  // ❗ Só mostra erro se o usuário tentou salvar a matéria
+  return control.invalid && this.submeteuMateria;
+}
+
 
   // 🔹 Abrir sala de estudo POR MATÉRIA
   abrirSalaEstudoMateria(m: Materia): void {
@@ -118,74 +127,129 @@ export class MateriaCadastroComponent implements OnInit {
     this.topicoSelecionado = null;
     this.focarNomeMateria();
   }
-
-  editarMateria(m: Materia): void {
-    this.materiaForm.patchValue(m);
-    this.materiaSelecionada = m;
-    this.topicoSelecionado = null;
-    this.carregarTopicos(m);
-    this.focarNomeMateria();
-  }
-
-  salvarMateria(): void {
-    if (this.materiaForm.invalid) {
-      this.materiaForm.markAllAsTouched();
-      this.focarNomeMateria();
-      return;
-    }
-
-    const dto: Materia = this.materiaForm.value;
-    const nomeNormalizado = this.normalizarTexto(dto.nome);
-
-    const duplicado = this.materias.some(m =>
-      this.normalizarTexto(m.nome) === nomeNormalizado &&
-      m.id !== dto.id
-    );
-
-    if (duplicado) {
-      this.mensagemErro = 'Já existe uma matéria com esse nome.';
-      this.materiaForm.get('nome')?.setErrors({ duplicado: true });
-      this.focarNomeMateria();
-      return;
-    }
-
-    const ehNovo = !dto.id;
-
-    this.salvando = true;
-
-    this.materiaService.salvarMateria(dto).subscribe({
-      next: (salva) => {
-        this.salvando = false;
-        this.mensagemErro = undefined;
-
-        const idx = this.materias.findIndex(m => m.id === salva.id);
-        if (idx >= 0) {
-          this.materias[idx] = salva;
-        } else {
-          this.materias.push(salva);
-        }
-
-        this.materiaSelecionada = salva;
-        this.carregarTopicos(salva);
-
-        if (ehNovo) {
-          this.materiaForm.reset({
-            id: null,
-            nome: ''
-          });
-        } else {
-          this.materiaForm.patchValue(salva);
-        }
-
-        this.focarNomeMateria();
-      },
-      error: () => {
-        this.salvando = false;
-        this.mensagemErro = 'Erro ao salvar matéria.';
-        this.focarNomeMateria();
-      }
+selecionarMateria(m: any): void {
+     this.materiaForm.reset({
+      id: null,
+      nome: ''
     });
+  // não encosta no valor do form, só seleciona o contexto
+  this.materiaSelecionada = m;
+  this.topicoSelecionado = undefined;
+  this.novoTopicoDescricao = '';
+  this.modoEdicaoTopico = false;
+  this.topicoEmEdicao = null;
+
+  // evita erro de validação “preso”
+  this.submeteuMateria = false;
+  this.materiaForm.markAsPristine();
+  this.materiaForm.markAsUntouched();
+
+  // carrega os tópicos da matéria
+  this.carregarTopicos(m); // mantém se você já tiver esse método
+}
+
+
+ editarMateria(m: Materia): void {
+  this.submeteuMateria = false;
+
+  this.materiaSelecionada = m;
+  this.topicoSelecionado = null;
+
+  // Carrega a matéria no formulário
+  this.materiaForm.reset({
+    id: m.id,
+    nome: m.nome
+  });
+
+  this.materiaForm.markAsPristine();
+  this.materiaForm.markAsUntouched();
+
+  this.carregarTopicos(m); // ou this.carregarTopicos(m.id) dependendo da sua assinatura
+
+  this.focarNomeMateria();
+}
+
+
+  iniciarEdicaoTopico(topico: any): void {
+  this.modoEdicaoTopico = true;
+  this.topicoEmEdicao = topico;
+  this.topicoSelecionado = topico; // mantém ele visualmente selecionado
+  this.novoTopicoDescricao = topico.descricao || '';
+
+  // foca no input, se o ViewChild estiver disponível
+  setTimeout(() => {
+    if (this.novoTopicoInput) {
+      this.novoTopicoInput.nativeElement.focus();
+      this.novoTopicoInput.nativeElement.select();
+    }
+  }, 0);
+}
+
+
+salvarMateria(): void {
+  this.submeteuMateria = true;
+
+  if (this.materiaForm.invalid) {
+    this.materiaForm.markAllAsTouched();
+    this.focarNomeMateria();
+    return;
   }
+
+  const dto: Materia = this.materiaForm.value;
+  const nomeNormalizado = this.normalizarTexto(dto.nome);
+
+  const duplicado = this.materias.some(m =>
+    this.normalizarTexto(m.nome) === nomeNormalizado &&
+    m.id !== dto.id
+  );
+
+  if (duplicado) {
+    this.mensagemErro = 'Já existe uma matéria com esse nome.';
+    this.materiaForm.get('nome')?.setErrors({ duplicado: true });
+    this.focarNomeMateria();
+    return;
+  }
+
+  const ehNovo = !dto.id;
+
+  this.salvando = true;
+
+  this.materiaService.salvarMateria(dto).subscribe({
+    next: (salva) => {
+      this.salvando = false;
+      this.mensagemErro = undefined;
+
+      const idx = this.materias.findIndex(m => m.id === salva.id);
+      if (idx >= 0) {
+        this.materias[idx] = salva;   // atualiza lista
+      } else {
+        this.materias.push(salva);    // inclui nova
+      }
+
+      // mantém a matéria selecionada à direita
+      this.materiaSelecionada = salva;
+      this.carregarTopicos(salva);
+
+      // ✅ SEMPRE limpar o formulário, seja novo ou edição
+      this.materiaForm.reset({
+        id: null,
+        nome: ''
+      });
+
+      this.submeteuMateria = false;
+      this.materiaForm.markAsPristine();
+      this.materiaForm.markAsUntouched();
+
+      this.focarNomeMateria();
+    },
+    error: () => {
+      this.salvando = false;
+      this.mensagemErro = 'Erro ao salvar matéria.';
+      this.focarNomeMateria();
+    }
+  });
+}
+
 
   excluirMateria(m: Materia): void {
     if (!m.id) { return; }
@@ -360,6 +424,8 @@ selecionarTopico(topico: any): void {
       }
     });
   }
+
+  
 
 adicionarTopico(): void {
   const descricao = (this.novoTopicoDescricao || '').trim();
