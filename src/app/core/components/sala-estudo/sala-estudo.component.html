@@ -12,48 +12,7 @@
       </p>
     </div>
 
-    <div class="sala-header-direita">
 
-      <!-- MODOS DO TIMER: LIVRE x POMODORO -->
-      <div class="timer-modos">
-        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
-          (click)="setModoTemporizador('livre')">
-          ⏱ Livre
-        </button>
-
-        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
-          (click)="setModoTemporizador('pomodoro')">
-          🍅 Pomodoro
-        </button>
-      </div>
-
-      <div class="timer-box">
-     <div class="timer-header-linha">
-  <div class="timer-header-textos">
-    <span class="timer-label">
-      {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
-      <ng-container *ngIf="modoTemporizador === 'pomodoro'">
-        – <span class="timer-fase-inline">{{ labelFasePomodoro }}</span>
-      </ng-container>
-    </span>
-  </div>
-</div>
-
-
-        <!-- VALOR DO TIMER (formatação vem do TS) -->
-        <span class="timer-valor">{{ tempoFormatado }}</span>
-
-        <div class="timer-botoes">
-          <button type="button" class="btn primario" (click)="toggleTimer()">
-            {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
-          </button>
-          <button type="button" class="btn secundario" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
-                              || (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
-            Zerar
-          </button>
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- CORPO DA SALA -->
@@ -115,43 +74,76 @@
         </ng-template>
 
         <div class="bloco bloco-anotacoes">
-          <div *ngIf="topicoSelecionado; else selecioneTopico">
-            <h2 class="titulo-section">
-              Estudando:
-              <span>{{ topicoSelecionado.descricao }}</span>
-            </h2>
+          <div class="timer-botoes">
+            <div *ngIf="topicoSelecionado; else selecioneTopico">
+              <h2 class="titulo-section">
+                Estudando:
+                <span>{{ topicoSelecionado.descricao }}</span>
+              </h2>
+            </div>
+            <div class="botoes-do-timer">
+              <button type="button" class="btn primario" (click)="toggleTimer()">
+                {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
+              </button>
+              <button type="button" class="btn secundario" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
+                              || (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
+                Zerar
+              </button>
+            </div>
           </div>
 
           <!-- wrapper que vai crescer e empurrar o editor pra ocupar tudo -->
           <div class="editor-wrapper">
-            <p-editor
-              id="anotacoes"
-              [(ngModel)]="anotacoes"
-              name="anotacoes">
+            <p-editor id="anotacoes" [(ngModel)]="anotacoes" name="anotacoes">
             </p-editor>
+          </div>
+          <div class="timer-header-linha">
+            <!-- MODOS DO TIMER: LIVRE x POMODORO -->
+      <div class="timer-modos">
+        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
+          (click)="setModoTemporizador('livre')">
+          ⏱ Livre
+        </button>
+
+        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
+          (click)="setModoTemporizador('pomodoro')">
+          🍅 Pomodoro
+        </button>
+      </div>
+
+            <div class="timer-header-textos">
+              <span class="timer-label">
+                {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
+                <ng-container *ngIf="modoTemporizador === 'pomodoro'">
+                  – <span class="timer-fase-inline">{{ labelFasePomodoro }} </span>
+                </ng-container>{{ tempoFormatado }}
+              </span>
+              <span class="timer-valor"></span>
+            </div>
           </div>
         </div>
 
         <!-- 🔹 AÇÕES DO ESTUDO -->
         <div class="acoes-estudo">
-          <button
-            type="button"
-            class="btn primario"
-            [disabled]="!topicoSelecionado"
-            (click)="salvarEstudo()">
+          <button type="button" class="btn primario" [disabled]="!topicoSelecionado" (click)="salvarEstudo()">
             Salvar estudo
           </button>
-          <button
-            type="button"
-            class="btn primario"
-            [disabled]="!topicoSelecionado"
-            (click)="salvarEstudo()">
+          <button type="button" class="btn primario" [disabled]="!topicoSelecionado" (click)="salvarEstudo()">
             Criar Flashcards
           </button>
 
           <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">
             {{ mensagemEstudoSalvo }}
           </span>
+          <div>
+
+
+
+            <!-- VALOR DO TIMER (formatação vem do TS) -->
+
+
+
+          </div>
         </div>
 
       </section>

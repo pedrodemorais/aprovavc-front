@@ -755,9 +755,18 @@
 /* BOTÕES EMBAIXO DO TIMER */
 .timer-botoes {
   display: flex;
-  gap: 8px;
+  gap: 18px;
+  justify-content: space-between;
   margin-top: 2px;
 }
+
+.botoes-do-timer {
+  display: flex;       /* Organiza os itens em linha */
+  gap: 10px;           /* Espaçamento entre os itens */
+  width: 150px;
+ 
+}
+
 
 .timer-botoes .btn {
   flex: 1;
