@@ -570,3 +570,220 @@
   height: 100% !important;
   min-height: 1500px; /* importante pro flex + scroll funcionar */
 }
+
+.cabecalho-fixo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* título principal */
+.cabecalho-fixo .page-title {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* mensagem de erro logo abaixo do título */
+.cabecalho-fixo .mensagem-erro {
+  margin: 0 0 4px;
+}
+
+/* ===== STATUS DO MODO (CHIPS) ===== */
+
+.modo-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* chip base */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+/* chip de MODO MATÉRIA */
+.chip-materia {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+/* chip de TÓPICO raiz */
+.chip-topico {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #bbf7d0;
+}
+
+/* chip de SUBTÓPICO */
+.chip-subtopico {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fed7aa;
+}
+
+.chip-icon {
+  font-size: 0.9rem;
+}
+
+/* texto auxiliar ao lado dos chips */
+.chip-hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* ===== ÁREA DO FORM / INPUT DO TOPO ===== */
+
+.cabecalho-fixo form,
+.cabecalho-fixo .topo-topico {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* alinha label + campo melhor visualmente */
+.cabecalho-fixo .form-group {
+  margin: 0;
+}
+
+.cabecalho-fixo .titulo-topicos {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* input grande e confortável no topo */
+.cabecalho-fixo .input-text {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.cabecalho-fixo .input-text:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+/* ===== BOTÕES DO TOPO (MATÉRIA) ===== */
+
+.acoes-form {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* botão base – se já tiver .btn no projeto, isso só refina no contexto do topo */
+.cabecalho-fixo .btn {
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.1s, transform 0.05s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cabecalho-fixo .btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* primário = CTA principal (Salvar) */
+.cabecalho-fixo .btn.primario {
+  background: #0ea5e9;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.45);
+}
+
+.cabecalho-fixo .btn.primario:disabled {
+  opacity: 0.7;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* secundário = ação auxiliar (Nova matéria) */
+.cabecalho-fixo .btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.cabecalho-fixo .btn.secundario:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* ===== TOPO DO MODO TÓPICO (INPUT + BOTÃO) ===== */
+
+.topo-topico .cabecalho-topicos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cabecalho-topicos-textos .titulo-colorido {
+  color: #0ea5e9;
+  font-weight: 600;
+}
+
+/* linha do input + botão “Salvar tópico” */
+.novo-topico {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.novo-topico .input-text {
+  flex: 1;
+}
+
+/* botão “Salvar tópico” mais compacto e alinhado */
+.btn-novo-topico {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* em telas pequenas, quebra bonito */
+@media (max-width: 600px) {
+  .modo-status {
+    align-items: flex-start;
+  }
+
+  .acoes-form {
+    justify-content: flex-start;
+  }
+
+  .novo-topico {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-novo-topico {
+    width: 100%;
+    justify-content: center;
+  }
+}
