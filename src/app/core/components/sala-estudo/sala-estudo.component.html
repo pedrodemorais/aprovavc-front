@@ -16,17 +16,13 @@
 
       <!-- MODOS DO TIMER: LIVRE x POMODORO -->
       <div class="timer-modos">
-        <button type="button"
-                class="btn-modo-timer"
-                [class.ativo]="modoTemporizador === 'livre'"
-                (click)="setModoTemporizador('livre')">
+        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
+          (click)="setModoTemporizador('livre')">
           ⏱ Livre
         </button>
 
-        <button type="button"
-                class="btn-modo-timer"
-                [class.ativo]="modoTemporizador === 'pomodoro'"
-                (click)="setModoTemporizador('pomodoro')">
+        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
+          (click)="setModoTemporizador('pomodoro')">
           🍅 Pomodoro
         </button>
       </div>
@@ -48,15 +44,10 @@
         <span class="timer-valor">{{ tempoFormatado }}</span>
 
         <div class="timer-botoes">
-          <button type="button"
-                  class="btn primario"
-                  (click)="toggleTimer()">
+          <button type="button" class="btn primario" (click)="toggleTimer()">
             {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
           </button>
-          <button type="button"
-                  class="btn secundario"
-                  (click)="zerarTimer()"
-                  [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
+          <button type="button" class="btn secundario" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
                               || (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
             Zerar
           </button>
@@ -79,13 +70,10 @@
 
       <!-- LISTA HIERÁRQUICA -->
       <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
-        <li *ngFor="let t of topicos"
-            class="item-topico"
-            (click)="selecionarTopico(t)"
-            [class.selecionado]="topicoSelecionado?.id === t.id">
+        <li *ngFor="let t of topicos" class="item-topico" (click)="selecionarTopico(t)"
+          [class.selecionado]="topicoSelecionado?.id === t.id">
 
-          <div class="linha-topico"
-               [style.paddingLeft.px]="(t.nivel || 0) * 20">
+          <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
             <span class="marcador-nivel" [ngClass]="'nivel-' + (t.nivel || 0)"></span>
             <span class="descricao-topico">
               {{ t.descricao }}
@@ -108,17 +96,11 @@
 
       <!-- Abas do modo -->
       <div class="abas-modo">
-        <button type="button"
-                class="aba"
-                [class.ativa]="modo === 'estudar'"
-                (click)="mudarModo('estudar')">
+        <button type="button" class="aba" [class.ativa]="modo === 'estudar'" (click)="mudarModo('estudar')">
           Estudar
         </button>
 
-        <button type="button"
-                class="aba"
-                [class.ativa]="modo === 'revisar'"
-                (click)="mudarModo('revisar')">
+        <button type="button" class="aba" [class.ativa]="modo === 'revisar'" (click)="mudarModo('revisar')">
           Revisar
         </button>
       </div>
@@ -126,43 +108,52 @@
       <!-- MODO ESTUDAR -->
       <section *ngIf="modo === 'estudar'" class="modo-conteudo">
 
-        <div *ngIf="topicoSelecionado; else selecioneTopico">
-          <h2 class="titulo-section">
-            Estudando:
-            <span>{{ topicoSelecionado.descricao }}</span>
-          </h2>
-        </div>
-
         <ng-template #selecioneTopico>
           <h2 class="titulo-section">
             Selecione um tópico ao lado para começar a estudar.
           </h2>
         </ng-template>
 
-    <div class="bloco">
-  <label for="anotacoes" class="label-area">
-    Anotações deste tópico
-  </label>
-
-  <p-editor
-    id="anotacoes"
-    [(ngModel)]="anotacoes"
-    [style]="{ height: '230px' }"
-    name="anotacoes">
-  </p-editor>
-</div>
-
-
-        <div class="bloco flashcards-bloco">
-          <div class="flashcards-header">
-            <h3>Flashcards deste tópico</h3>
-            <span class="tag-breve">em breve</span>
+        <div class="bloco bloco-anotacoes">
+          <div *ngIf="topicoSelecionado; else selecioneTopico">
+            <h2 class="titulo-section">
+              Estudando:
+              <span>{{ topicoSelecionado.descricao }}</span>
+            </h2>
           </div>
-          <p class="muted">
-            Em uma próxima etapa, você poderá criar cartões de pergunta e resposta
-            aqui, diretamente vinculados a este tópico, para revisar depois no modo Revisar.
-          </p>
+
+          <!-- wrapper que vai crescer e empurrar o editor pra ocupar tudo -->
+          <div class="editor-wrapper">
+            <p-editor
+              id="anotacoes"
+              [(ngModel)]="anotacoes"
+              name="anotacoes">
+            </p-editor>
+          </div>
         </div>
+
+        <!-- 🔹 AÇÕES DO ESTUDO -->
+        <div class="acoes-estudo">
+          <button
+            type="button"
+            class="btn primario"
+            [disabled]="!topicoSelecionado"
+            (click)="salvarEstudo()">
+            Salvar estudo
+          </button>
+          <button
+            type="button"
+            class="btn primario"
+            [disabled]="!topicoSelecionado"
+            (click)="salvarEstudo()">
+            Criar Flashcards
+          </button>
+
+          <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">
+            {{ mensagemEstudoSalvo }}
+          </span>
+        </div>
+
       </section>
 
       <!-- MODO REVISAR -->

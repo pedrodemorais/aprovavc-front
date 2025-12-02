@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MateriaService } from 'src/app/core/services/materia.service';
 import { Materia } from 'src/app/core/models/materia.model';
+import { SalaEstudoService, EstudoTopicoRequest } from '../../services/sala-estudo.service';
 
 @Component({
   selector: 'app-sala-estudo',
@@ -12,13 +13,15 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   materiaId!: number;
   materia?: Materia;
-anotacoes: string = '';
 
-  // 🔹 lista usada na tela (já com tópicos + subtópicos achatados)
+  anotacoes: string = '';
+  mensagemEstudoSalvo?: string;
+
+  // lista usada na tela (já com tópicos + subtópicos achatados)
   topicos: any[] = [];
   topicoSelecionado?: any | null;
 
-  // (se quiser no futuro guardar a árvore original)
+  // árvore original (se quiser usar depois)
   arvoreTopicos: any[] = [];
 
   carregando = false;
@@ -32,7 +35,7 @@ anotacoes: string = '';
   // modo do temporizador: livre ou pomodoro
   modoTemporizador: 'livre' | 'pomodoro' = 'livre';
 
-  // ---- modo LIVRE (igual ao que você já tinha) ----
+  // ---- modo LIVRE ----
   tempoTotalSegundos: number = 0;
 
   // ---- estado geral do timer ----
@@ -59,9 +62,14 @@ anotacoes: string = '';
 
   get duracaoFaseAtual(): number {
     switch (this.pomodoroFase) {
-      case 'foco':         return this.pomodoroDuracaoFoco;
-      case 'pausa-curta':  return this.pomodoroDuracaoPausaCurta;
-      case 'pausa-longa':  return this.pomodoroDuracaoPausaLonga;
+      case 'foco':
+        return this.pomodoroDuracaoFoco;
+      case 'pausa-curta':
+        return this.pomodoroDuracaoPausaCurta;
+      case 'pausa-longa':
+        return this.pomodoroDuracaoPausaLonga;
+      default:
+        return this.pomodoroDuracaoFoco;
     }
   }
 
@@ -88,11 +96,10 @@ anotacoes: string = '';
     return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
   }
 
-
-
   constructor(
     private route: ActivatedRoute,
-    private materiaService: MateriaService
+    private materiaService: MateriaService,
+    private salaEstudoService: SalaEstudoService
   ) {}
 
   // ================================================================
@@ -155,7 +162,6 @@ anotacoes: string = '';
         ativo: dto.ativo ?? true,
         nivel,
         materiaId: dto.materiaId,
-        // guarda o dto original se precisar no futuro
         _raw: dto
       };
 
@@ -176,10 +182,7 @@ anotacoes: string = '';
         const listaSegura = lista || [];
         console.log('[SALA-ESTUDO] DTO bruto de tópicos (árvore):', listaSegura);
 
-        // guarda árvore original (caso use depois na UI)
         this.arvoreTopicos = listaSegura;
-
-        // 🔹 achatamos TUDO: tópicos + subtópicos numa lista só
         this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
         console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
@@ -201,7 +204,15 @@ anotacoes: string = '';
 
   selecionarTopico(t: any): void {
     this.topicoSelecionado = t;
-    console.log('[SALA-ESTUDO] Tópico selecionado:', t);
+
+    this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
+      next: (resp) => {
+        this.anotacoes = resp.anotacoes || '';
+      },
+      error: () => {
+        this.anotacoes = '';
+      }
+    });
   }
 
   // ================================================================
@@ -212,16 +223,11 @@ anotacoes: string = '';
     return v.toString().padStart(2, '0');
   }
 
-  /**
-   * Troca entre modo livre e pomodoro.
-   * Usado pelos botões "⏱ Livre" e "🍅 Pomodoro" no cabeçalho.
-   */
   setModoTemporizador(modo: 'livre' | 'pomodoro'): void {
     if (this.modoTemporizador === modo) {
       return;
     }
 
-    // para o timer atual e silencia qualquer alarme tocando
     this.pararTimerInterno();
     this.silenciarAlarme();
     this.timerAtivo = false;
@@ -229,33 +235,25 @@ anotacoes: string = '';
     this.modoTemporizador = modo;
 
     if (modo === 'livre') {
-      // volta para o contador livre; mantém o valor acumulado (se quiser zerar, o aluno usa o botão Zerar)
       if (!this.tempoTotalSegundos) {
         this.tempoTotalSegundos = 0;
       }
     } else {
-      // reset do pomodoro para fase de foco
       this.pomodoroFase = 'foco';
       this.pomodoroCiclosConcluidos = 0;
       this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
     }
   }
 
-  /**
-   * Botão principal: Iniciar / Pausar.
-   */
   toggleTimer(): void {
-    // sempre que o aluno mexer no timer, garantimos que o alarme pare
     this.silenciarAlarme();
 
     if (this.timerAtivo) {
-      // pausa
       this.timerAtivo = false;
       this.pararTimerInterno();
       return;
     }
 
-    // iniciar
     this.timerAtivo = true;
 
     if (this.modoTemporizador === 'livre') {
@@ -265,9 +263,6 @@ anotacoes: string = '';
     }
   }
 
-  /**
-   * Botão "Zerar".
-   */
   zerarTimer(): void {
     this.pararTimerInterno();
     this.silenciarAlarme();
@@ -282,14 +277,11 @@ anotacoes: string = '';
     }
   }
 
-  // ---------- implementação dos modos ----------
-
   private iniciarTimerLivre(): void {
     this.pararTimerInterno();
 
     this.timerRef = setInterval(() => {
       this.tempoTotalSegundos++;
-      // tempoFormatado é recalculado via getter
     }, 1000);
   }
 
@@ -302,38 +294,29 @@ anotacoes: string = '';
         return;
       }
 
-      // terminou a fase atual → troca de fase (e para o timer)
       this.trocarFasePomodoro();
     }, 1000);
   }
 
   private trocarFasePomodoro(): void {
-    // terminou a fase: para o timer e toca o alarme
     this.pararTimerInterno();
     this.timerAtivo = false;
     this.tocarAlarme();
 
-    // prepara a PRÓXIMA fase, mas NÃO inicia automaticamente.
     if (this.pomodoroFase === 'foco') {
       this.pomodoroCiclosConcluidos++;
 
       if (this.pomodoroCiclosConcluidos % this.pomodoroCiclosParaLonga === 0) {
-        // pausa longa
         this.pomodoroFase = 'pausa-longa';
         this.pomodoroSegundosRestantes = this.pomodoroDuracaoPausaLonga;
       } else {
-        // pausa curta
         this.pomodoroFase = 'pausa-curta';
         this.pomodoroSegundosRestantes = this.pomodoroDuracaoPausaCurta;
       }
     } else {
-      // volta para foco
       this.pomodoroFase = 'foco';
       this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
     }
-
-    // A partir daqui, o aluno decide quando clicar em "Iniciar" de novo
-    // para começar a contagem da nova fase.
   }
 
   private pararTimerInterno(): void {
@@ -343,8 +326,6 @@ anotacoes: string = '';
     }
   }
 
-  // ------------ DESPERTADOR (ALARM CLOCK) ------------
-
   private tocarAlarme(): void {
     try {
       if (!this.audioAlarme) {
@@ -352,7 +333,7 @@ anotacoes: string = '';
       }
 
       this.audioAlarme.currentTime = 0;
-      this.audioAlarme.loop = true; // toca em loop até silenciar
+      this.audioAlarme.loop = true;
 
       this.audioAlarme.play()
         .then(() => {
@@ -381,4 +362,51 @@ anotacoes: string = '';
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
   }
+
+  // ================================================================
+  // SALVAR ESTUDO
+  // ================================================================
+
+salvarEstudo(): void {
+  if (!this.topicoSelecionado) {
+    this.erro = 'Selecione um tópico antes de salvar o estudo.';
+    return;
+  }
+
+  // aqui tanto faz usar "livre"/"pomodoro" ou "LIVRE"/"POMODORO",
+  // o back recebe String. Se depois você padronizar no service, beleza.
+  const modoBack = this.modoTemporizador; // 'livre' ou 'pomodoro'
+
+  // quanto tempo esse estudo levou (em segundos)
+  const tempoEstudo =
+    this.modoTemporizador === 'livre'
+      ? this.tempoTotalSegundos
+      : (this.duracaoFaseAtual - this.pomodoroSegundosRestantes);
+
+  const payload: EstudoTopicoRequest = {
+    materiaId: this.materiaId,
+    topicoId: this.topicoSelecionado.id,
+    modoTemporizador: modoBack,
+    tempoLivreSegundos: tempoEstudo,
+    anotacoes: this.anotacoes,
+    pomodoroFase: this.modoTemporizador === 'pomodoro' ? this.pomodoroFase : undefined,
+    pomodoroCiclosConcluidos: this.modoTemporizador === 'pomodoro'
+      ? this.pomodoroCiclosConcluidos
+      : undefined
+  };
+
+  this.salaEstudoService.salvarEstudo(payload).subscribe({
+    next: (resp) => {
+      console.log('[SALA-ESTUDO] Estudo salvo:', resp);
+      this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
+      setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
+    },
+    error: (err) => {
+      console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
+      this.erro = 'Erro ao salvar o estudo. Tente novamente.';
+    }
+  });
+}
+
+
 }

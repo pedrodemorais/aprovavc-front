@@ -1,13 +1,17 @@
 /* CONTAINER GERAL */
 .sala-container {
-  max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   background: #f9fafb;
+
+  /* 👇 esses dois são o segredo */
+  min-height: 100vh;
+  box-sizing: border-box;
 }
+
 
 /* Cards seguindo o estilo do cadastro */
 .card {
@@ -167,11 +171,14 @@
 
 /* ---------------- CORPO ---------------- */
 
+
+
 .sala-body {
-  display: grid;
-  grid-template-columns: 280px 1fr;
+  flex: 1;
+  display: flex;
   gap: 16px;
 }
+
 
 /* Coluna esquerda */
 .coluna-esquerda {
@@ -278,6 +285,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  height: 80%;
+  
 }
 
 .titulo-section {
@@ -297,6 +306,11 @@
   border-radius: 10px;
   padding: 10px 12px;
   border: 1px solid #e5e7eb;
+
+  /* 👇 faz o bloco crescer pra ocupar tudo que sobrar */
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .label-area {
@@ -408,7 +422,159 @@
     flex-wrap: wrap;
   }
 }
+
 /* Ajuste leve no editor para combinar com os cards */
+:host ::ng-deep .p-editor-container {
+  border-radius: 10px;
+   height: 80%;
+}
+
+:host ::ng-deep .p-editor-toolbar {
+  border-radius: 10px 10px 0 0;
+}
+
+:host ::ng-deep .p-editor-content {
+  border-radius: 0 0 10px 10px;
+}
+
+.acoes-estudo {
+  margin: 8px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.salvo-msg {
+  font-size: 0.8rem;
+  color: #16a34a;
+}
+/* CONTAINER GERAL */
+.sala-container {
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #f9fafb;
+
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Cards */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+/* ---------------- CORPO ---------------- */
+
+.sala-body {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  min-height: 0; /* importante p/ scroll interno */
+}
+
+/* Coluna direita */
+.coluna-direita {
+  padding-left: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Conteúdo do modo */
+
+
+/* Blocos de conteúdo */
+.bloco {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* bloco específico das anotações vira flex-col */
+.bloco-anotacoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+/* wrapper do editor ocupa o resto do espaço do bloco */
+
+
+/* Ajuste leve no editor para combinar com os cards */
+:host ::ng-deep .editor-wrapper .p-editor-container {
+  flex: 1;
+  display: flex;
+ 
+
+}
+
+/* conteúdo interno do editor ocupa tudo */
+:host ::ng-deep .editor-wrapper .p-editor-content {
+  flex: 1;
+ 
+}
+
+/* já existiam, mantidos */
+:host ::ng-deep .p-editor-container {
+  border-radius: 10px;
+
+}
+
+:host ::ng-deep .p-editor-toolbar {
+  border-radius: 10px 10px 0 0;
+}
+
+:host ::ng-deep .p-editor-content {
+  border-radius: 0 0 10px 10px;
+       height: 50%;
+
+}
+/* bloco específico das anotações vira flex-col */
+.bloco-anotacoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+/* wrapper do editor ocupa o resto do espaço do bloco */
+.editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  
+  
+}
+
+/* editor mais alto */
+:host ::ng-deep .editor-wrapper .p-editor-container {
+  flex: 1;
+ 
+  flex-direction: column;
+  height: 88%;   /* 👈 aumenta aqui (altura total do editor) */
+ 
+}
+
+/* área de texto mais alta */
+:host ::ng-deep .editor-wrapper .p-editor-content {
+  flex: 1;
+  min-height: 100%;   /* 👈 altura da área onde você digita */
+}
+
+/* bordas arredondadas mantidas */
 :host ::ng-deep .p-editor-container {
   border-radius: 10px;
 }
@@ -419,4 +585,36 @@
 
 :host ::ng-deep .p-editor-content {
   border-radius: 0 0 10px 10px;
+}
+/* bloco de anotações em coluna, ocupando toda a largura */
+.bloco-anotacoes {
+  
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  width: 100%;
+}
+
+/* wrapper do editor ocupa toda a largura do bloco */
+.editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  
+  width: 100%;
+}
+
+/* editor ocupa toda a largura disponível dentro do wrapper */
+:host ::ng-deep .editor-wrapper .p-editor-container {
+  flex: 1;
+  
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* área onde digita também preenche a largura */
+:host ::ng-deep .editor-wrapper .p-editor-content {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
 }

@@ -4,19 +4,47 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
+export interface EstudoTopicoRequest {
+  materiaId: number;
+  topicoId: number;
 
-@Injectable({
-  providedIn: 'root'
-})
+  // mesmo nome e tipo lógico do back
+  modoTemporizador: string;        // "livre" ou "pomodoro" (ou "LIVRE"/"POMODORO" se vc quiser padronizar)
+
+  tempoLivreSegundos: number;      // corresponde ao tempo usado no estudo
+
+  pomodoroFase?: string;           // "foco", "pausa-curta", "pausa-longa"
+  pomodoroCiclosConcluidos?: number;
+
+  anotacoes?: string;
+}
+
+export interface EstudoTopicoResponse {
+  id: number;
+  materiaId: number;
+  topicoId: number;
+  modoTemporizador: string;
+  tempoLivreSegundos: number;
+  // se sua entidade/DTO de resposta tiver outras coisas, você adiciona depois
+}
+
+export interface AnotacaoTopicoDTO {
+  topicoId: number;
+  anotacoes: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class SalaEstudoService {
 
-  
-  private apiUrl = `${environment.apiUrl}/materias`;
+  private apiUrl = `${environment.apiUrl}/sala-estudo`;
 
   constructor(private http: HttpClient) {}
 
-  // Reaproveita o endpoint que já funciona na tela de cadastro:
-  listarTopicosPorMateria(materiaId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/${materiaId}/topicos`);
+  salvarEstudo(req: EstudoTopicoRequest): Observable<EstudoTopicoResponse> {
+    return this.http.post<EstudoTopicoResponse>(`${this.apiUrl}/estudos`, req);
+  }
+
+  buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {
+    return this.http.get<AnotacaoTopicoDTO>(`${this.apiUrl}/topicos/${topicoId}/anotacoes`);
   }
 }
