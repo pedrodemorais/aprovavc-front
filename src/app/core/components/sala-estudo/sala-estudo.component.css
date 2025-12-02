@@ -618,3 +618,183 @@
   width: 100%;
   box-sizing: border-box;
 }
+/* =========================
+   HEADER DA SALA (TOPO)
+   ========================= */
+
+.sala-header {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+}
+
+/* LADO ESQUERDO: TÍTULO + DESCRIÇÃO */
+.sala-header-esquerda {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sala-subtitulo {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  margin: 0;
+}
+
+.sala-titulo {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sala-descricao {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* LADO DIREITO: CARD DO TIMER */
+.sala-header-direita {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 260px;
+  max-width: 320px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: radial-gradient(circle at top left, #eff6ff 0, #f9fafb 45%, #ffffff 100%);
+  box-shadow: 0 1px 4px rgba(148, 163, 184, 0.25);
+}
+
+/* BARRA DE MODOS: LIVRE x POMODORO */
+.timer-modos {
+  display: inline-flex;
+  align-self: flex-end;
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.btn-modo-timer {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  background: transparent;
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s, color 0.15s, box-shadow 0.1s, transform 0.05s;
+}
+
+.btn-modo-timer:hover {
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.btn-modo-timer.ativo {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
+}
+
+/* CAIXA DO TIMER EM SI */
+.timer-box {
+  margin-top: 4px;
+  border-radius: 10px;
+  border: 1px dashed #cbd5f5;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f9fafb;
+}
+
+.timer-header-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timer-header-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timer-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #6b7280;
+}
+
+.timer-fase {
+  font-size: 0.8rem;
+  color: #0f766e;
+  font-weight: 500;
+}
+
+/* VALOR GRANDE DO TIMER */
+.timer-valor {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* BOTÕES EMBAIXO DO TIMER */
+.timer-botoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.timer-botoes .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* deixa o primário um pouco mais chamativo aqui */
+.sala-header-direita .btn.primario {
+  background: #0ea5e9;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.5);
+}
+
+.sala-header-direita .btn.secundario {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* ---------------- RESPONSIVO HEADER ---------------- */
+
+@media (max-width: 900px) {
+  .sala-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sala-header-direita {
+    align-self: stretch;
+    max-width: 100%;
+  }
+
+  .timer-modos {
+    align-self: flex-start;
+  }
+}
+.timer-fase-inline {
+  font-size: 0.8rem;
+  color: #0f766e;
+  font-weight: 500;
+}

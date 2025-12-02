@@ -28,17 +28,17 @@
       </div>
 
       <div class="timer-box">
-        <div class="timer-header-linha">
-          <div class="timer-header-textos">
-            <span class="timer-label">
-              {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
-            </span>
+     <div class="timer-header-linha">
+  <div class="timer-header-textos">
+    <span class="timer-label">
+      {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
+      <ng-container *ngIf="modoTemporizador === 'pomodoro'">
+        – <span class="timer-fase-inline">{{ labelFasePomodoro }}</span>
+      </ng-container>
+    </span>
+  </div>
+</div>
 
-            <span *ngIf="modoTemporizador === 'pomodoro'" class="timer-fase">
-              {{ labelFasePomodoro }}
-            </span>
-          </div>
-        </div>
 
         <!-- VALOR DO TIMER (formatação vem do TS) -->
         <span class="timer-valor">{{ tempoFormatado }}</span>
