@@ -154,25 +154,32 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
    * Achata a árvore de tópicos vinda do backend (com subtopicos)
    * em uma lista linear, preservando o nível para usar na tela.
    */
-  private achatarArvoreTopicos(lista: any[], nivel: number = 0, acumulador: any[] = []): any[] {
-    for (const dto of lista) {
-      const node = {
-        id: dto.id,
-        descricao: dto.descricao,
-        ativo: dto.ativo ?? true,
-        nivel,
-        materiaId: dto.materiaId,
-        _raw: dto
-      };
+ private achatarArvoreTopicos(lista: any[], nivel: number = 0, acumulador: any[] = []): any[] {
+  for (const dto of lista) {
+    const temFilhos = !!(dto.subtopicos && Array.isArray(dto.subtopicos) && dto.subtopicos.length);
 
-      acumulador.push(node);
+    const node = {
+      id: dto.id,
+      descricao: dto.descricao,
+      ativo: dto.ativo ?? true,
+      nivel,
+      materiaId: dto.materiaId,
+      hasFilhos: temFilhos,   // 👈 flag pra saber se é pai
+      _raw: dto
+    };
 
-      if (dto.subtopicos && Array.isArray(dto.subtopicos) && dto.subtopicos.length) {
-        this.achatarArvoreTopicos(dto.subtopicos, nivel + 1, acumulador);
-      }
+    acumulador.push(node);
+
+    if (temFilhos) {
+      this.achatarArvoreTopicos(dto.subtopicos, nivel + 1, acumulador);
     }
-    return acumulador;
   }
+  return acumulador;
+}
+get topicoPermiteEstudo(): boolean {
+  return !!(this.topicoSelecionado && !this.topicoSelecionado.hasFilhos);
+}
+
 
   private carregarTopicos(): void {
     console.log('[SALA-ESTUDO] Carregando tópicos da matériaId =', this.materiaId);
@@ -202,18 +209,25 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   // INTERAÇÃO COM TÓPICOS
   // ================================================================
 
-  selecionarTopico(t: any): void {
-    this.topicoSelecionado = t;
+selecionarTopico(t: any): void {
+  this.topicoSelecionado = t;
 
-    this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
-      next: (resp) => {
-        this.anotacoes = resp.anotacoes || '';
-      },
-      error: () => {
-        this.anotacoes = '';
-      }
-    });
+  // se for tópico com subtópicos, não carrega anotações (não pode ter estudo)
+  if (!this.topicoPermiteEstudo) {
+    this.anotacoes = '';
+    return;
   }
+
+  this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
+    next: (resp) => {
+      this.anotacoes = resp.anotacoes || '';
+    },
+    error: () => {
+      this.anotacoes = '';
+    }
+  });
+}
+
 
   // ================================================================
   // CONTROLE DO TIMER / POMODORO
@@ -263,19 +277,41 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     }
   }
 
-  zerarTimer(): void {
-    this.pararTimerInterno();
-    this.silenciarAlarme();
-    this.timerAtivo = false;
-
-    if (this.modoTemporizador === 'livre') {
-      this.tempoTotalSegundos = 0;
-    } else {
-      this.pomodoroFase = 'foco';
-      this.pomodoroCiclosConcluidos = 0;
-      this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
+zerarTimer(): void {
+  // se não tem nada pra zerar, nem pergunta
+  if (this.modoTemporizador === 'livre') {
+    if (!this.tempoTotalSegundos) {
+      return;
+    }
+  } else {
+    // pomodoro: se está no início da fase, não faz sentido zerar
+    if (this.pomodoroSegundosRestantes === this.duracaoFaseAtual) {
+      return;
     }
   }
+
+  const confirmou = window.confirm(
+    'Se você zerar o cronômetro agora, o tempo estudado até este momento NÃO será contabilizado para este tópico/matéria. Deseja realmente zerar?'
+  );
+
+  if (!confirmou) {
+    return;
+  }
+
+  // segue o fluxo normal de zerar
+  this.pararTimerInterno();
+  this.silenciarAlarme();
+  this.timerAtivo = false;
+
+  if (this.modoTemporizador === 'livre') {
+    this.tempoTotalSegundos = 0;
+  } else {
+    this.pomodoroFase = 'foco';
+    this.pomodoroCiclosConcluidos = 0;
+    this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
+  }
+}
+
 
   private iniciarTimerLivre(): void {
     this.pararTimerInterno();
