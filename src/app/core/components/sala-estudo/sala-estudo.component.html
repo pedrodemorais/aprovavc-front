@@ -186,13 +186,13 @@
             Salvar estudo
           </button>
 
-          <button
-            type="button"
-            class="btn primario"
-            [disabled]="!topicoPermiteEstudo"
-            (click)="abrirModalFlashcard()">
-            Criar Flashcards
-          </button>
+        <button type="button"
+        class="btn secundario"
+        (click)="abrirModalFlashcard()"
+        [disabled]="!topicoPermiteEstudo">
+  + Criar flashcard
+</button>
+
 
           <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">
             {{ mensagemEstudoSalvo }}
@@ -202,23 +202,126 @@
       </section>
 
       <!-- MODO REVISAR -->
-      <section *ngIf="modo === 'revisar'" class="modo-conteudo">
-        <h2 class="titulo-section">
-          Revisão desta matéria
-        </h2>
-        <p class="muted">
-          Aqui você verá revisões agendadas, tópicos atrasados e poderá revisar
-          as anotações e flashcards construídos no modo Estudar.
+   <!-- MODO REVISAR -->
+<section *ngIf="modo === 'revisar'" class="modo-conteudo">
+
+  <div class="cabecalho-revisao">
+    <div>
+      <h2 class="titulo-section">
+        Revisão desta matéria
+      </h2>
+      <p class="muted">
+        Revise o que você construiu no modo Estudar: anotações/resumos e flashcards
+        do tópico selecionado.
+      </p>
+      <p class="muted pequeno">
+        Matéria: <strong>{{ materia?.nome || '-' }}</strong> •
+        Tópico: <strong>{{ topicoSelecionado?.descricao || '-' }}</strong>
+      </p>
+    </div>
+
+    <!-- Alternador de tipo de revisão -->
+    <div class="toggle-revisao">
+      <button
+        type="button"
+        class="toggle-btn"
+        [class.ativo]="modoRevisao === 'anotacoes'"
+        (click)="modoRevisao = 'anotacoes'">
+        📝 Anotações / Resumo
+      </button>
+
+      <button
+        type="button"
+        class="toggle-btn"
+        [class.ativo]="modoRevisao === 'flashcards'"
+        (click)="modoRevisao = 'flashcards'">
+        🃏 Flashcards
+      </button>
+    </div>
+  </div>
+
+  <!-- REVISÃO POR ANOTAÇÕES -->
+  <div *ngIf="modoRevisao === 'anotacoes'" class="bloco bloco-revisao-anotacoes">
+
+    <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
+      <h3 class="subtitulo-section">Anotações deste tópico</h3>
+      <p class="muted pequeno">
+        Abaixo estão suas anotações exatamente como foram salvas no modo Estudar.
+      </p>
+
+      <!-- Renderiza o HTML vindo do editor (Quill / rich text) -->
+    <div class="anotacoes-renderizadas"
+     [innerHTML]="anotacoesHtmlSeguras">
+</div>
+
+    </ng-container>
+
+    <ng-template #semAnotacoesTpl>
+      <div class="painel-revisao-placeholder">
+        <p>
+          Não há anotações salvas para este tópico ainda.<br>
+          Use o modo <strong>Estudar</strong> para registrar um resumo ou pontos importantes.
+        </p>
+      </div>
+    </ng-template>
+
+  </div>
+
+  <!-- REVISÃO POR FLASHCARDS -->
+  <div *ngIf="modoRevisao === 'flashcards'" class="bloco bloco-revisao-flashcards">
+
+    <h3 class="subtitulo-section">Revisão com flashcards</h3>
+    <p class="muted pequeno">
+      Treine lembrança ativa: tente responder antes de virar o cartão.
+    </p>
+
+    <div *ngIf="!flashcards || !flashcards.length" class="painel-revisao-placeholder">
+      <p>
+        Nenhum flashcard cadastrado para este tópico ainda.<br>
+        No modo <strong>Estudar</strong>, use o botão “Criar Flashcard”
+        para transformar partes importantes em cartões de revisão.
+      </p>
+    </div>
+
+    <div *ngIf="flashcardAtual" class="flashcard-review-container">
+
+      <!-- Cartão estilo Anki -->
+      <div class="flashcard-card-review" (click)="virarFlashcard()">
+        <p class="flashcard-label">
+          {{ mostrarVersoAtual ? 'Verso (resposta)' : 'Frente (pergunta)' }}
         </p>
 
-        <div class="bloco painel-revisao-placeholder">
-          <p>
-            • Em breve: lista de revisões do dia / atrasadas / futuras.<br>
-            • Atalhos para voltar diretamente para o tópico a ser revisado.<br>
-            • Métricas do progresso nessa matéria.
-          </p>
+        <div class="flashcard-conteudo-review">
+          {{ mostrarVersoAtual ? flashcardAtual.verso : flashcardAtual.frente }}
         </div>
-      </section>
+      </div>
+
+      <div class="flashcard-acoes-review">
+        <button type="button" class="btn secundario" (click)="anteriorFlashcard()">
+          ◀ Anterior
+        </button>
+
+        <button type="button" class="btn primario" (click)="virarFlashcard()">
+          {{ mostrarVersoAtual ? 'Voltar para a frente' : 'Mostrar resposta' }}
+        </button>
+
+        <button type="button" class="btn secundario" (click)="proximoFlashcard()">
+          Próximo ▶
+        </button>
+      </div>
+
+      <!-- Aqui depois podemos ligar com revisão espaçada (fácil / médio / difícil) -->
+      <div class="flashcard-feedback-review">
+        <span class="muted pequeno">
+          Em breve: marcar se lembrou “fácil / médio / difícil” para alimentar a revisão espaçada.
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
 
     </main>
   </section>
@@ -322,6 +425,9 @@
           Dica: use tags para encontrar depois todos os flashcards relacionados a um tema.
         </small>
       </div>
+<div *ngIf="mensagemFlashcardSucesso" class="flashcard-mensagem-sucesso">
+  {{ mensagemFlashcardSucesso }}
+</div>
 
       <!-- Rodapé -->
       <footer class="flashcard-footer">

@@ -1,8 +1,11 @@
+import { FlashcardDTO } from 'src/app/core/models/FlashcardDTO';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MateriaService } from 'src/app/core/services/materia.service';
 import { Materia } from 'src/app/core/models/materia.model';
 import { SalaEstudoService, EstudoTopicoRequest } from '../../services/sala-estudo.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+
 
 @Component({
   selector: 'app-sala-estudo',
@@ -13,6 +16,8 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   materiaId!: number;
   materia?: Materia;
+mensagemFlashcardSucesso?: string;
+anotacoesHtmlSeguras: SafeHtml | null = null;
 
   anotacoes: string = '';
   mensagemEstudoSalvo?: string;
@@ -27,6 +32,8 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   // modo da sala: estudar ou revisar
   modo: 'estudar' | 'revisar' = 'estudar';
+  // 👇 adiciona isso:
+modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
 
   // ======================= TIMER / POMODORO =======================
 
@@ -50,6 +57,10 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   pomodoroFase: 'foco' | 'pausa-curta' | 'pausa-longa' = 'foco';
   pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos: number = 0;
+
+
+
+
 
   private audioAlarme?: HTMLAudioElement;
   alarmeAtivo: boolean = false;
@@ -89,7 +100,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
   }
 
-  // =============== FLASHCARD (ESTADO DO MODAL) ===============
+    // =============== FLASHCARD (ESTADO) ===============
   mostrarModalFlashcard: boolean = false;
 
   flashcardFrente: string = '';
@@ -98,10 +109,19 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   flashcardDificuldade: string = 'MEDIA';
   flashcardTags: string = '';
 
+  // lista de flashcards para revisão do tópico atual
+  flashcards: FlashcardDTO[] = [];
+  flashcardIndexAtual: number = 0;
+  mostrarVersoAtual: boolean = false;
+
+
+
+
   constructor(
     private route: ActivatedRoute,
     private materiaService: MateriaService,
-    private salaEstudoService: SalaEstudoService
+    private salaEstudoService: SalaEstudoService,
+    private sanitizer: DomSanitizer
   ) {}
 
   // ================================================================
@@ -262,19 +282,51 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
     this.topicoSelecionado = t;
 
+        // ao selecionar tópico, carrega flashcards
+    if (this.topicoPermiteEstudo) {
+      this.carregarFlashcards();
+    } else {
+      this.flashcards = [];
+      this.flashcardIndexAtual = 0;
+      this.mostrarVersoAtual = false;
+    }
+
+
     if (!this.topicoPermiteEstudo) {
       this.anotacoes = '';
       return;
     }
 
-    this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
-      next: (resp) => {
-        this.anotacoes = resp.anotacoes || '';
-      },
-      error: () => {
-        this.anotacoes = '';
-      }
-    });
+this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
+  next: (resp) => {
+    this.anotacoes = resp.anotacoes || '';
+    this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+  },
+  error: () => {
+    this.anotacoes = '';
+    this.anotacoesHtmlSeguras = null;
+  }
+});
+
+  }
+  private carregarFlashcards(): void {
+    if (!this.topicoSelecionado) {
+      this.flashcards = [];
+      return;
+    }
+
+    this.salaEstudoService.listarFlashcardsPorTopico(this.topicoSelecionado.id)
+      .subscribe({
+        next: (lista) => {
+          this.flashcards = lista || [];
+          this.flashcardIndexAtual = 0;
+          this.mostrarVersoAtual = false;
+        },
+        error: (err) => {
+          console.error('[SALA-ESTUDO] Erro ao carregar flashcards:', err);
+          this.flashcards = [];
+        }
+      });
   }
 
   // ================================================================
@@ -517,23 +569,111 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   fecharModalFlashcard(): void {
     this.mostrarModalFlashcard = false;
   }
+salvarFlashcard(): void {
+  if (!this.topicoSelecionado) {
+    alert('Selecione um tópico antes de criar o flashcard.');
+    return;
+  }
 
-  salvarFlashcard(): void {
-    if (!this.topicoSelecionado) {
-      alert('Selecione um tópico antes de criar o flashcard.');
+  if (!this.flashcardFrente || !this.flashcardVerso) {
+    alert('Preencha frente e verso do flashcard.');
+    return;
+  }
+
+  const payload: FlashcardDTO = {
+    materiaId: this.materiaId,
+    topicoId: this.topicoSelecionado.id,
+    frente: this.flashcardFrente,
+    verso: this.flashcardVerso,
+    tipo: this.flashcardTipo as any,
+    dificuldade: this.flashcardDificuldade as any,
+    tags: this.flashcardTags
+  };
+
+  console.log('[FLASHCARD] Enviando payload:', payload);
+
+  this.salaEstudoService.criarFlashcard(payload).subscribe({
+    next: (resp) => {
+      console.log('[FLASHCARD] Criado com sucesso:', resp);
+
+      // confirmação visual
+      this.mensagemFlashcardSucesso = 'Flashcard salvo com sucesso.';
+
+      // limpa frente e verso pra já digitar o próximo,
+      // mantém tags e tipo/dificuldade
+      this.flashcardFrente = '';
+      this.flashcardVerso = '';
+
+      // recarrega a lista de flashcards do tópico
+      if (this.topicoSelecionado) {
+        this.carregarFlashcards();
+      }
+
+      // some com a mensagem depois de alguns segundos (opcional)
+      setTimeout(() => {
+        this.mensagemFlashcardSucesso = undefined;
+      }, 3000);
+    },
+    error: (err) => {
+      console.error('[FLASHCARD] Erro ao salvar:', err);
+      alert('Erro ao salvar flashcard. Tente novamente.');
+    }
+  });
+}
+
+
+  get existeFlashcardAtual(): boolean {
+    return this.flashcards && this.flashcards.length > 0 && this.flashcardIndexAtual >= 0
+      && this.flashcardIndexAtual < this.flashcards.length;
+  }
+
+  get flashcardAtual(): FlashcardDTO | null {
+    if (!this.existeFlashcardAtual) {
+      return null;
+    }
+    return this.flashcards[this.flashcardIndexAtual];
+  }
+
+  virarFlashcard(): void {
+    this.mostrarVersoAtual = !this.mostrarVersoAtual;
+  }
+
+  proximoFlashcard(): void {
+    if (!this.flashcards.length) {
+      return;
+    }
+    this.flashcardIndexAtual = (this.flashcardIndexAtual + 1) % this.flashcards.length;
+    this.mostrarVersoAtual = false;
+  }
+
+  anteriorFlashcard(): void {
+    if (!this.flashcards.length) {
+      return;
+    }
+    this.flashcardIndexAtual =
+      (this.flashcardIndexAtual - 1 + this.flashcards.length) % this.flashcards.length;
+    this.mostrarVersoAtual = false;
+  }
+
+  removerFlashcardAtual(): void {
+    if (!this.flashcardAtual || !this.flashcardAtual.id) {
       return;
     }
 
-    console.log('[FLASHCARD] Salvar:', {
-      materiaId: this.materiaId,
-      topicoId: this.topicoSelecionado.id,
-      frente: this.flashcardFrente,
-      verso: this.flashcardVerso,
-      tipo: this.flashcardTipo,
-      dificuldade: this.flashcardDificuldade,
-      tags: this.flashcardTags
-    });
+    const confirmou = window.confirm('Deseja realmente excluir este flashcard?');
+    if (!confirmou) {
+      return;
+    }
 
-    this.fecharModalFlashcard();
+    this.salaEstudoService.excluirFlashcard(this.flashcardAtual.id).subscribe({
+      next: () => {
+        this.carregarFlashcards();
+      },
+      error: (err) => {
+        console.error('[FLASHCARD] Erro ao excluir:', err);
+        alert('Erro ao excluir flashcard.');
+      }
+    });
   }
+
 }

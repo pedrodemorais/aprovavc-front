@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { FlashcardDTO } from '../models/FlashcardDTO';
 
 export interface EstudoTopicoRequest {
   materiaId: number;
@@ -46,5 +47,17 @@ export class SalaEstudoService {
 
   buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {
     return this.http.get<AnotacaoTopicoDTO>(`${this.apiUrl}/topicos/${topicoId}/anotacoes`);
+  }
+
+  criarFlashcard(dto: FlashcardDTO): Observable<FlashcardDTO> {
+    return this.http.post<FlashcardDTO>(`${this.apiUrl}/flashcards`, dto);
+  }
+
+  listarFlashcardsPorTopico(topicoId: number): Observable<FlashcardDTO[]> {
+    return this.http.get<FlashcardDTO[]>(`${this.apiUrl}/flashcards/topico/${topicoId}`);
+  }
+
+  excluirFlashcard(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/flashcards/${id}`);
   }
 }

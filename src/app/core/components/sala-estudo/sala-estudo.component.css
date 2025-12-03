@@ -1006,6 +1006,109 @@
   justify-content: flex-end;
   gap: 8px;
 }
+.flashcard-mensagem-sucesso {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #0f766e;      /* verdezinho suave */
+}
+.cabecalho-revisao {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle-revisao {
+  display: inline-flex;
+  background: #0f172a;
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  white-space: nowrap;
+}
+
+.toggle-btn.ativo {
+  background: #1d4ed8;
+  color: #f9fafb;
+}
+
+.bloco-revisao-anotacoes,
+.bloco-revisao-flashcards {
+  margin-top: 0.75rem;
+}
+
+.anotacoes-renderizadas {
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.flashcard-review-container {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.flashcard-card-review {
+  width: 100%;
+  max-width: 480px;
+  min-height: 160px;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #1e293b;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flashcard-card-review:hover {
+  border-color: #3b82f6;
+}
+
+.flashcard-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.flashcard-conteudo-review {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #e5e7eb;
+}
+
+.flashcard-acoes-review {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.flashcard-feedback-review {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
 
 /* responsivo */
 @media (max-width: 640px) {
