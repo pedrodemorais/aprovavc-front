@@ -26,28 +26,22 @@
       </div>
 
       <!-- LISTA HIERÁRQUICA -->
-   <!-- LISTA HIERÁRQUICA -->
-<!-- LISTA HIERÁRQUICA -->
-<ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
-  <li
-    *ngFor="let t of topicos"
-    class="item-topico"
-    [class.topico-pai]="t.hasFilhos"
-    [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
-    (click)="!t.hasFilhos && selecionarTopico(t)">
+      <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
+        <li
+          *ngFor="let t of topicos"
+          class="item-topico"
+          [class.topico-pai]="t.hasFilhos"
+          [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
+          (click)="!t.hasFilhos && selecionarTopico(t)">
 
-    <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
-      <span class="marcador-nivel" [ngClass]="'nivel-' + (t.nivel || 0)"></span>
-
-      <!-- TODO mundo em negrito, pai ou folha -->
-      <span class="descricao-topico">
-        {{ t.descricao }}
-      </span>
-    </div>
-  </li>
-</ul>
-
-
+          <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
+            <span class="marcador-nivel" [ngClass]="'nivel-' + (t.nivel || 0)"></span>
+            <span class="descricao-topico">
+              {{ t.descricao }}
+            </span>
+          </div>
+        </li>
+      </ul>
 
       <ng-template #semTopicos>
         <p class="muted">
@@ -196,7 +190,7 @@
             type="button"
             class="btn primario"
             [disabled]="!topicoPermiteEstudo"
-            (click)="salvarEstudo()">
+            (click)="abrirModalFlashcard()">
             Criar Flashcards
           </button>
 
@@ -228,6 +222,128 @@
 
     </main>
   </section>
+
+  <!-- =============== MODAL DE FLASHCARD =============== -->
+  <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard">
+    <div class="flashcard-modal">
+
+      <header class="flashcard-header">
+        <div>
+          <h2 class="flashcard-titulo">Criar Flashcard</h2>
+          <p class="flashcard-subtitulo">
+            Transforme o que você acabou de estudar em perguntas rápidas para revisar depois.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="flashcard-fechar"
+          (click)="fecharModalFlashcard()">
+          ✕
+        </button>
+      </header>
+
+      <!-- Bloco com contexto (Matéria / Tópico) -->
+      <div class="flashcard-contexto">
+        <div class="flashcard-contexto-linha">
+          <span class="contexto-label">Matéria:</span>
+          <span class="contexto-valor">{{ materia?.nome || '-' }}</span>
+        </div>
+        <div class="flashcard-contexto-linha">
+          <span class="contexto-label">Tópico:</span>
+          <span class="contexto-valor">
+            {{ topicoSelecionado?.descricao || '-' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Frente / Verso -->
+      <div class="flashcard-campos">
+        <label class="flashcard-label">
+          Frente (pergunta)
+          <textarea
+            rows="3"
+            class="flashcard-textarea"
+            [(ngModel)]="flashcardFrente"
+            name="flashcardFrente"
+            placeholder="Digite a pergunta..."></textarea>
+        </label>
+
+        <label class="flashcard-label">
+          Verso (resposta)
+          <textarea
+            rows="3"
+            class="flashcard-textarea"
+            [(ngModel)]="flashcardVerso"
+            name="flashcardVerso"
+            placeholder="Digite a resposta..."></textarea>
+        </label>
+      </div>
+
+      <!-- Tipo / Dificuldade -->
+      <div class="flashcard-linha-dupla">
+        <label class="flashcard-label">
+          Tipo
+          <select
+            class="flashcard-select"
+            [(ngModel)]="flashcardTipo"
+            name="flashcardTipo">
+            <option value="PERGUNTA_RESPOSTA">Pergunta e resposta</option>
+            <option value="VERDADEIRO_FALSO">Verdadeiro ou falso</option>
+            <option value="CLOZE">Cloze (preencher lacuna)</option>
+          </select>
+        </label>
+
+        <label class="flashcard-label">
+          Dificuldade
+          <select
+            class="flashcard-select"
+            [(ngModel)]="flashcardDificuldade"
+            name="flashcardDificuldade">
+            <option value="FACIL">Fácil</option>
+            <option value="MEDIA">Média</option>
+            <option value="DIFICIL">Difícil</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Tags -->
+      <div class="flashcard-tags-wrapper">
+        <label class="flashcard-label">
+          Tags (opcional)
+          <input
+            type="text"
+            class="flashcard-input"
+            [(ngModel)]="flashcardTags"
+            name="flashcardTags"
+            placeholder="Ex.: português, morfologia, substantivo" />
+        </label>
+        <small class="flashcard-dica">
+          Dica: use tags para encontrar depois todos os flashcards relacionados a um tema.
+        </small>
+      </div>
+
+      <!-- Rodapé -->
+      <footer class="flashcard-footer">
+        <button
+          type="button"
+          class="btn secundario"
+          (click)="fecharModalFlashcard()">
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn primario"
+          (click)="salvarFlashcard()"
+          [disabled]="!flashcardFrente.trim() || !flashcardVerso.trim()">
+          💾 Salvar Flashcard
+        </button>
+      </footer>
+
+    </div>
+  </div>
+  <!-- =============== FIM MODAL =============== -->
 
 </div>
 

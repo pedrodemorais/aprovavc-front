@@ -17,13 +17,10 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   anotacoes: string = '';
   mensagemEstudoSalvo?: string;
 
-  // lista usada na tela (já com tópicos + subtópicos achatados)
   topicos: any[] = [];
   topicoSelecionado?: any | null;
 
-  // árvore original (se quiser usar depois)
   arvoreTopicos: any[] = [];
-  
 
   carregando = false;
   erro?: string;
@@ -33,31 +30,27 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   // ======================= TIMER / POMODORO =======================
 
-  // modo do temporizador: livre ou pomodoro
   modoTemporizador: 'livre' | 'pomodoro' = 'livre';
 
-  // ---- modo LIVRE ----
+  // total decorrido no cronômetro (modo livre)
   tempoTotalSegundos: number = 0;
 
-  // ---- estado geral do timer ----
+  // *** NOVO: quanto tempo já foi efetivamente salvo no backend
+  // para o tópico atual (em segundos)
+  private segundosEstudoJaSalvosTopicoAtual: number = 0;
+
   timerAtivo: boolean = false;
   private timerRef: any;
 
-  // ---- POMODORO ----
-  // tempos (ajustáveis depois)
-  // pomodoroDuracaoFoco: number = 25 * 60;        // 25 min
-  pomodoroDuracaoFoco: number = 30;        // para testes
-  // pomodoroDuracaoPausaCurta: number = 5 * 60;   // 5 min
-  pomodoroDuracaoPausaCurta: number = 5;   // para testes
-  pomodoroDuracaoPausaLonga: number = 15;  // para testes
-  // pomodoroDuracaoPausaLonga: number = 15 * 60;  // 15 min
+  pomodoroDuracaoFoco: number = 30;        // testes
+  pomodoroDuracaoPausaCurta: number = 5;   // testes
+  pomodoroDuracaoPausaLonga: number = 15;  // testes
   pomodoroCiclosParaLonga: number = 4;
 
   pomodoroFase: 'foco' | 'pausa-curta' | 'pausa-longa' = 'foco';
   pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos: number = 0;
 
-  // 🔔 controle do alarme
   private audioAlarme?: HTMLAudioElement;
   alarmeAtivo: boolean = false;
 
@@ -80,7 +73,6 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     return 'Pausa longa';
   }
 
-  // texto mostrado na tela (usa livre OU pomodoro dependendo do modo)
   get tempoFormatado(): string {
     let totalSegundos = 0;
 
@@ -96,6 +88,15 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
     return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
   }
+
+  // =============== FLASHCARD (ESTADO DO MODAL) ===============
+  mostrarModalFlashcard: boolean = false;
+
+  flashcardFrente: string = '';
+  flashcardVerso: string = '';
+  flashcardTipo: string = 'PERGUNTA_RESPOSTA';
+  flashcardDificuldade: string = 'MEDIA';
+  flashcardTags: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -151,36 +152,32 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Achata a árvore de tópicos vinda do backend (com subtopicos)
-   * em uma lista linear, preservando o nível para usar na tela.
-   */
- private achatarArvoreTopicos(lista: any[], nivel: number = 0, acumulador: any[] = []): any[] {
-  for (const dto of lista) {
-    const temFilhos = !!(dto.subtopicos && Array.isArray(dto.subtopicos) && dto.subtopicos.length);
+  private achatarArvoreTopicos(lista: any[], nivel: number = 0, acumulador: any[] = []): any[] {
+    for (const dto of lista) {
+      const temFilhos = !!(dto.subtopicos && Array.isArray(dto.subtopicos) && dto.subtopicos.length);
 
-    const node = {
-      id: dto.id,
-      descricao: dto.descricao,
-      ativo: dto.ativo ?? true,
-      nivel,
-      materiaId: dto.materiaId,
-      hasFilhos: temFilhos,   // 👈 flag pra saber se é pai
-      _raw: dto
-    };
+      const node = {
+        id: dto.id,
+        descricao: dto.descricao,
+        ativo: dto.ativo ?? true,
+        nivel,
+        materiaId: dto.materiaId,
+        hasFilhos: temFilhos,
+        _raw: dto
+      };
 
-    acumulador.push(node);
+      acumulador.push(node);
 
-    if (temFilhos) {
-      this.achatarArvoreTopicos(dto.subtopicos, nivel + 1, acumulador);
+      if (temFilhos) {
+        this.achatarArvoreTopicos(dto.subtopicos, nivel + 1, acumulador);
+      }
     }
+    return acumulador;
   }
-  return acumulador;
-}
-get topicoPermiteEstudo(): boolean {
-  return !!(this.topicoSelecionado && !this.topicoSelecionado.hasFilhos);
-}
 
+  get topicoPermiteEstudo(): boolean {
+    return !!(this.topicoSelecionado && !this.topicoSelecionado.hasFilhos);
+  }
 
   private carregarTopicos(): void {
     console.log('[SALA-ESTUDO] Carregando tópicos da matériaId =', this.materiaId);
@@ -210,87 +207,75 @@ get topicoPermiteEstudo(): boolean {
   // INTERAÇÃO COM TÓPICOS
   // ================================================================
 
-selecionarTopico(t: any): void {
-  const trocandoDeTopico =
-    this.topicoSelecionado && this.topicoSelecionado.id !== t.id;
-
-  if (trocandoDeTopico) {
-    // tempo estudado no tópico atual
-    const tempoAtual = this.calcularTempoEstudoAtual();
-
-    // Só considera que há algo a salvar se:
-    // - o tópico atual permite estudo (não é pai)
-    // - e há tempo contado > 0
-    const temAlgoParaSalvar =
-      tempoAtual > 0 &&
-      this.topicoPermiteEstudo;
-
-    if (temAlgoParaSalvar) {
-      const desejaSalvar = window.confirm(
-        'Você já possui tempo de estudo neste tópico. Deseja salvar antes de mudar para outro tópico?'
-      );
-
-      if (desejaSalvar) {
-        this.salvarEstudo();
-      }
+  /**
+   * Tempo TOTAL que o cronômetro já contou nesta sessão (em segundos).
+   * - Livre: tempoTotalSegundos
+   * - Pomodoro: duração da fase - segundosRestantes
+   */
+  private calcularTempoEstudoAtual(): number {
+    if (this.modoTemporizador === 'livre') {
+      return this.tempoTotalSegundos;
     }
-
-    // Sempre zera/para timer ao trocar de tópico
-    this.resetarTimerAoTrocarTopico();
-  }
-
-  // agora sim troca o tópico selecionado
-  this.topicoSelecionado = t;
-
-  // se for tópico com subtópicos, não carrega anotações (não pode ter estudo)
-  if (!this.topicoPermiteEstudo) {
-    this.anotacoes = '';
-    return;
-  }
-
-  this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
-    next: (resp) => {
-      this.anotacoes = resp.anotacoes || '';
-    },
-    error: () => {
-      this.anotacoes = '';
-    }
-  });
-}
-
-
-
-/**
- * Zera o cronômetro ao trocar de tópico, sem confirmação
- * e sem salvar tempo acumulado.
- */
-private resetarTimerAoTrocarTopico(): void {
-  // para qualquer timer rodando
-  this.pararTimerInterno();
-  this.silenciarAlarme();
-  this.timerAtivo = false;
-
-  if (this.modoTemporizador === 'livre') {
-    // modo livre: zera a contagem total
-    this.tempoTotalSegundos = 0;
-  } else {
-    // pomodoro: volta para foco inicial
-    this.pomodoroFase = 'foco';
-    this.pomodoroCiclosConcluidos = 0;
-    this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
-  }
-}
-
-
-private calcularTempoEstudoAtual(): number {
-  if (this.modoTemporizador === 'livre') {
-    return this.tempoTotalSegundos;
-  } else {
-    // tempo já gasto na fase atual do pomodoro
     return this.duracaoFaseAtual - this.pomodoroSegundosRestantes;
   }
-}
 
+  private resetarTimerAoTrocarTopico(): void {
+    this.pararTimerInterno();
+    this.silenciarAlarme();
+    this.timerAtivo = false;
+
+    // ao trocar de tópico, zera o acumulado já salvo para o novo tópico
+    this.segundosEstudoJaSalvosTopicoAtual = 0;
+
+    if (this.modoTemporizador === 'livre') {
+      this.tempoTotalSegundos = 0;
+    } else {
+      this.pomodoroFase = 'foco';
+      this.pomodoroCiclosConcluidos = 0;
+      this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
+    }
+  }
+
+  selecionarTopico(t: any): void {
+    const trocandoDeTopico =
+      this.topicoSelecionado && this.topicoSelecionado.id !== t.id;
+
+    if (trocandoDeTopico) {
+      const tempoAtual = this.calcularTempoEstudoAtual();
+
+      const temAlgoParaSalvar =
+        tempoAtual > 0 &&
+        this.topicoPermiteEstudo;
+
+      if (temAlgoParaSalvar) {
+        const desejaSalvar = window.confirm(
+          'Você já possui tempo de estudo neste tópico. Deseja salvar antes de mudar para outro tópico?'
+        );
+
+        if (desejaSalvar) {
+          this.salvarEstudo();
+        }
+      }
+
+      this.resetarTimerAoTrocarTopico();
+    }
+
+    this.topicoSelecionado = t;
+
+    if (!this.topicoPermiteEstudo) {
+      this.anotacoes = '';
+      return;
+    }
+
+    this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
+      next: (resp) => {
+        this.anotacoes = resp.anotacoes || '';
+      },
+      error: () => {
+        this.anotacoes = '';
+      }
+    });
+  }
 
   // ================================================================
   // CONTROLE DO TIMER / POMODORO
@@ -309,12 +294,13 @@ private calcularTempoEstudoAtual(): number {
     this.silenciarAlarme();
     this.timerAtivo = false;
 
+    // quando muda de modo, reinicia o acumulado do tópico no contexto do timer
+    this.segundosEstudoJaSalvosTopicoAtual = 0;
+
     this.modoTemporizador = modo;
 
     if (modo === 'livre') {
-      if (!this.tempoTotalSegundos) {
-        this.tempoTotalSegundos = 0;
-      }
+      this.tempoTotalSegundos = 0;
     } else {
       this.pomodoroFase = 'foco';
       this.pomodoroCiclosConcluidos = 0;
@@ -339,78 +325,41 @@ private calcularTempoEstudoAtual(): number {
       this.iniciarPomodoro();
     }
   }
-  salvarEstudo(): void {
-  if (!this.topicoSelecionado || !this.topicoPermiteEstudo) {
-    this.erro = 'Selecione um tópico válido antes de salvar o estudo.';
-    return;
-  }
 
-  const modoBack = this.modoTemporizador; // 'livre' ou 'pomodoro'
-
-  // 👇 agora usa o helper
-  const tempoEstudo = this.calcularTempoEstudoAtual();
-
-  const payload: EstudoTopicoRequest = {
-    materiaId: this.materiaId,
-    topicoId: this.topicoSelecionado.id,
-    modoTemporizador: modoBack,
-    tempoLivreSegundos: tempoEstudo,
-    anotacoes: this.anotacoes,
-    pomodoroFase: this.modoTemporizador === 'pomodoro' ? this.pomodoroFase : undefined,
-    pomodoroCiclosConcluidos: this.modoTemporizador === 'pomodoro'
-      ? this.pomodoroCiclosConcluidos
-      : undefined
-  };
-
-  this.salaEstudoService.salvarEstudo(payload).subscribe({
-    next: (resp) => {
-      console.log('[SALA-ESTUDO] Estudo salvo:', resp);
-      this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
-      setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
-    },
-    error: (err) => {
-      console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
-      this.erro = 'Erro ao salvar o estudo. Tente novamente.';
+  zerarTimer(): void {
+    if (this.modoTemporizador === 'livre') {
+      if (!this.tempoTotalSegundos) {
+        return;
+      }
+    } else {
+      if (this.pomodoroSegundosRestantes === this.duracaoFaseAtual) {
+        return;
+      }
     }
-  });
-}
 
+    const confirmou = window.confirm(
+      'Se você zerar o cronômetro agora, o tempo estudado até este momento NÃO será contabilizado para este tópico/matéria. Deseja realmente zerar?'
+    );
 
-zerarTimer(): void {
-  // se não tem nada pra zerar, nem pergunta
-  if (this.modoTemporizador === 'livre') {
-    if (!this.tempoTotalSegundos) {
+    if (!confirmou) {
       return;
     }
-  } else {
-    // pomodoro: se está no início da fase, não faz sentido zerar
-    if (this.pomodoroSegundosRestantes === this.duracaoFaseAtual) {
-      return;
+
+    this.pararTimerInterno();
+    this.silenciarAlarme();
+    this.timerAtivo = false;
+
+    // aqui NÃO mexemos em segundosEstudoJaSalvosTopicoAtual,
+    // porque o que já foi salvo no backend continua valendo
+
+    if (this.modoTemporizador === 'livre') {
+      this.tempoTotalSegundos = 0;
+    } else {
+      this.pomodoroFase = 'foco';
+      this.pomodoroCiclosConcluidos = 0;
+      this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
     }
   }
-
-  const confirmou = window.confirm(
-    'Se você zerar o cronômetro agora, o tempo estudado até este momento NÃO será contabilizado para este tópico/matéria. Deseja realmente zerar?'
-  );
-
-  if (!confirmou) {
-    return;
-  }
-
-  // segue o fluxo normal de zerar
-  this.pararTimerInterno();
-  this.silenciarAlarme();
-  this.timerAtivo = false;
-
-  if (this.modoTemporizador === 'livre') {
-    this.tempoTotalSegundos = 0;
-  } else {
-    this.pomodoroFase = 'foco';
-    this.pomodoroCiclosConcluidos = 0;
-    this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
-  }
-}
-
 
   private iniciarTimerLivre(): void {
     this.pararTimerInterno();
@@ -502,7 +451,89 @@ zerarTimer(): void {
   // SALVAR ESTUDO
   // ================================================================
 
+  salvarEstudo(): void {
+    if (!this.topicoSelecionado) {
+      this.erro = 'Selecione um tópico antes de salvar o estudo.';
+      return;
+    }
 
+    const modoBack = this.modoTemporizador;
 
+    // tempo TOTAL decorrido no cronômetro para este tópico/ sessão
+    const tempoAtualTotal = this.calcularTempoEstudoAtual();
 
+    // *** NOVO: apenas o DELTA desde o último salvamento ***
+    let tempoParaSalvar = tempoAtualTotal - this.segundosEstudoJaSalvosTopicoAtual;
+    if (tempoParaSalvar < 0) {
+      tempoParaSalvar = 0;
+    }
+
+    const payload: EstudoTopicoRequest = {
+      materiaId: this.materiaId,
+      topicoId: this.topicoSelecionado.id,
+      modoTemporizador: modoBack,
+      tempoLivreSegundos: tempoParaSalvar,
+      anotacoes: this.anotacoes,
+      pomodoroFase: this.modoTemporizador === 'pomodoro' ? this.pomodoroFase : undefined,
+      pomodoroCiclosConcluidos: this.modoTemporizador === 'pomodoro'
+        ? this.pomodoroCiclosConcluidos
+        : undefined
+    };
+
+    this.salaEstudoService.salvarEstudo(payload).subscribe({
+      next: (resp) => {
+        console.log('[SALA-ESTUDO] Estudo salvo:', resp);
+
+        // após salvar com sucesso, acumula o que foi enviado
+        this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
+
+        this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
+        setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
+      },
+      error: (err) => {
+        console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
+        this.erro = 'Erro ao salvar o estudo. Tente novamente.';
+      }
+    });
+  }
+
+  // ================================================================
+  // FLASHCARD – MODAL
+  // ================================================================
+
+  abrirModalFlashcard(): void {
+    if (!this.topicoPermiteEstudo) {
+      return;
+    }
+
+    this.mostrarModalFlashcard = true;
+
+    if (!this.flashcardTags && this.materia && this.topicoSelecionado) {
+      this.flashcardTags =
+        `${this.materia.nome.toLowerCase()}, ${this.topicoSelecionado.descricao.toLowerCase()}`;
+    }
+  }
+
+  fecharModalFlashcard(): void {
+    this.mostrarModalFlashcard = false;
+  }
+
+  salvarFlashcard(): void {
+    if (!this.topicoSelecionado) {
+      alert('Selecione um tópico antes de criar o flashcard.');
+      return;
+    }
+
+    console.log('[FLASHCARD] Salvar:', {
+      materiaId: this.materiaId,
+      topicoId: this.topicoSelecionado.id,
+      frente: this.flashcardFrente,
+      verso: this.flashcardVerso,
+      tipo: this.flashcardTipo,
+      dificuldade: this.flashcardDificuldade,
+      tags: this.flashcardTags
+    });
+
+    this.fecharModalFlashcard();
+  }
 }
