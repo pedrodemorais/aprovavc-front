@@ -830,3 +830,18 @@
   font-weight: 600;
   margin-bottom: 2px;
 }
+/* tópico pai: vira só um cabeçalho/agrupador */
+.item-topico.topico-pai {
+  cursor: default;
+  background: transparent;
+  box-shadow: none;
+}
+
+.item-topico.topico-pai:hover {
+  background: transparent;
+}
+
+/* texto do tópico pai em negrito */
+.descricao-topico.topico-pai-texto {
+  font-weight: 600;
+}

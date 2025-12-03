@@ -26,21 +26,28 @@
       </div>
 
       <!-- LISTA HIERÁRQUICA -->
-      <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
-        <li
-          *ngFor="let t of topicos"
-          class="item-topico"
-          (click)="selecionarTopico(t)"
-          [class.selecionado]="topicoSelecionado?.id === t.id">
+   <!-- LISTA HIERÁRQUICA -->
+<!-- LISTA HIERÁRQUICA -->
+<ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
+  <li
+    *ngFor="let t of topicos"
+    class="item-topico"
+    [class.topico-pai]="t.hasFilhos"
+    [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
+    (click)="!t.hasFilhos && selecionarTopico(t)">
 
-          <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
-            <span class="marcador-nivel" [ngClass]="'nivel-' + (t.nivel || 0)"></span>
-            <span class="descricao-topico">
-              {{ t.descricao }}
-            </span>
-          </div>
-        </li>
-      </ul>
+    <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
+      <span class="marcador-nivel" [ngClass]="'nivel-' + (t.nivel || 0)"></span>
+
+      <!-- TODO mundo em negrito, pai ou folha -->
+      <span class="descricao-topico">
+        {{ t.descricao }}
+      </span>
+    </div>
+  </li>
+</ul>
+
+
 
       <ng-template #semTopicos>
         <p class="muted">

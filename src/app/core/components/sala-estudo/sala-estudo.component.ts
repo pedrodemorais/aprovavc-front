@@ -23,6 +23,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   // árvore original (se quiser usar depois)
   arvoreTopicos: any[] = [];
+  
 
   carregando = false;
   erro?: string;
@@ -210,6 +211,35 @@ get topicoPermiteEstudo(): boolean {
   // ================================================================
 
 selecionarTopico(t: any): void {
+  const trocandoDeTopico =
+    this.topicoSelecionado && this.topicoSelecionado.id !== t.id;
+
+  if (trocandoDeTopico) {
+    // tempo estudado no tópico atual
+    const tempoAtual = this.calcularTempoEstudoAtual();
+
+    // Só considera que há algo a salvar se:
+    // - o tópico atual permite estudo (não é pai)
+    // - e há tempo contado > 0
+    const temAlgoParaSalvar =
+      tempoAtual > 0 &&
+      this.topicoPermiteEstudo;
+
+    if (temAlgoParaSalvar) {
+      const desejaSalvar = window.confirm(
+        'Você já possui tempo de estudo neste tópico. Deseja salvar antes de mudar para outro tópico?'
+      );
+
+      if (desejaSalvar) {
+        this.salvarEstudo();
+      }
+    }
+
+    // Sempre zera/para timer ao trocar de tópico
+    this.resetarTimerAoTrocarTopico();
+  }
+
+  // agora sim troca o tópico selecionado
   this.topicoSelecionado = t;
 
   // se for tópico com subtópicos, não carrega anotações (não pode ter estudo)
@@ -226,6 +256,39 @@ selecionarTopico(t: any): void {
       this.anotacoes = '';
     }
   });
+}
+
+
+
+/**
+ * Zera o cronômetro ao trocar de tópico, sem confirmação
+ * e sem salvar tempo acumulado.
+ */
+private resetarTimerAoTrocarTopico(): void {
+  // para qualquer timer rodando
+  this.pararTimerInterno();
+  this.silenciarAlarme();
+  this.timerAtivo = false;
+
+  if (this.modoTemporizador === 'livre') {
+    // modo livre: zera a contagem total
+    this.tempoTotalSegundos = 0;
+  } else {
+    // pomodoro: volta para foco inicial
+    this.pomodoroFase = 'foco';
+    this.pomodoroCiclosConcluidos = 0;
+    this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
+  }
+}
+
+
+private calcularTempoEstudoAtual(): number {
+  if (this.modoTemporizador === 'livre') {
+    return this.tempoTotalSegundos;
+  } else {
+    // tempo já gasto na fase atual do pomodoro
+    return this.duracaoFaseAtual - this.pomodoroSegundosRestantes;
+  }
 }
 
 
@@ -276,6 +339,42 @@ selecionarTopico(t: any): void {
       this.iniciarPomodoro();
     }
   }
+  salvarEstudo(): void {
+  if (!this.topicoSelecionado || !this.topicoPermiteEstudo) {
+    this.erro = 'Selecione um tópico válido antes de salvar o estudo.';
+    return;
+  }
+
+  const modoBack = this.modoTemporizador; // 'livre' ou 'pomodoro'
+
+  // 👇 agora usa o helper
+  const tempoEstudo = this.calcularTempoEstudoAtual();
+
+  const payload: EstudoTopicoRequest = {
+    materiaId: this.materiaId,
+    topicoId: this.topicoSelecionado.id,
+    modoTemporizador: modoBack,
+    tempoLivreSegundos: tempoEstudo,
+    anotacoes: this.anotacoes,
+    pomodoroFase: this.modoTemporizador === 'pomodoro' ? this.pomodoroFase : undefined,
+    pomodoroCiclosConcluidos: this.modoTemporizador === 'pomodoro'
+      ? this.pomodoroCiclosConcluidos
+      : undefined
+  };
+
+  this.salaEstudoService.salvarEstudo(payload).subscribe({
+    next: (resp) => {
+      console.log('[SALA-ESTUDO] Estudo salvo:', resp);
+      this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
+      setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
+    },
+    error: (err) => {
+      console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
+      this.erro = 'Erro ao salvar o estudo. Tente novamente.';
+    }
+  });
+}
+
 
 zerarTimer(): void {
   // se não tem nada pra zerar, nem pergunta
@@ -403,46 +502,7 @@ zerarTimer(): void {
   // SALVAR ESTUDO
   // ================================================================
 
-salvarEstudo(): void {
-  if (!this.topicoSelecionado) {
-    this.erro = 'Selecione um tópico antes de salvar o estudo.';
-    return;
-  }
 
-  // aqui tanto faz usar "livre"/"pomodoro" ou "LIVRE"/"POMODORO",
-  // o back recebe String. Se depois você padronizar no service, beleza.
-  const modoBack = this.modoTemporizador; // 'livre' ou 'pomodoro'
-
-  // quanto tempo esse estudo levou (em segundos)
-  const tempoEstudo =
-    this.modoTemporizador === 'livre'
-      ? this.tempoTotalSegundos
-      : (this.duracaoFaseAtual - this.pomodoroSegundosRestantes);
-
-  const payload: EstudoTopicoRequest = {
-    materiaId: this.materiaId,
-    topicoId: this.topicoSelecionado.id,
-    modoTemporizador: modoBack,
-    tempoLivreSegundos: tempoEstudo,
-    anotacoes: this.anotacoes,
-    pomodoroFase: this.modoTemporizador === 'pomodoro' ? this.pomodoroFase : undefined,
-    pomodoroCiclosConcluidos: this.modoTemporizador === 'pomodoro'
-      ? this.pomodoroCiclosConcluidos
-      : undefined
-  };
-
-  this.salaEstudoService.salvarEstudo(payload).subscribe({
-    next: (resp) => {
-      console.log('[SALA-ESTUDO] Estudo salvo:', resp);
-      this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
-      setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
-    },
-    error: (err) => {
-      console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
-      this.erro = 'Erro ao salvar o estudo. Tente novamente.';
-    }
-  });
-}
 
 
 }
