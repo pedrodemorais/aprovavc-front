@@ -1023,9 +1023,10 @@
 
 .toggle-revisao {
   display: inline-flex;
-  background: #0f172a;
+  background: #c1d6e7c6;
   border-radius: 999px;
   padding: 0.2rem;
+  
 }
 
 .toggle-btn {
@@ -1035,13 +1036,13 @@
   border-radius: 999px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: #e5e7eb;
+  color: #000000;
   white-space: nowrap;
 }
 
 .toggle-btn.ativo {
   background: #1d4ed8;
-  color: #f9fafb;
+  color: #ffffff;
 }
 
 .bloco-revisao-anotacoes,
@@ -1107,6 +1108,48 @@
 .flashcard-feedback-review {
   font-size: 0.75rem;
   color: #9ca3af;
+}
+/* quando o modo foco da revisão estiver ativo */
+.sala-container.revisao-foco {
+  /* opcional: mudar o fundo um pouco mais escuro */
+  background-color: #ffffff;
+}
+
+/* esconder cabeçalho e coluna esquerda na revisão foco */
+.sala-container.revisao-foco .sala-header,
+.sala-container.revisao-foco .coluna-esquerda,
+.sala-container.revisao-foco .sidebar,
+.sala-container.revisao-foco .painel-lateral {
+  display: none !important;
+}
+
+/* fazer a área de conteúdo ocupar a largura disponível */
+.sala-container.revisao-foco .modo-conteudo {
+  max-width: 920px;
+  margin: 0 auto;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  min-height: calc(100vh - 2rem);
+}
+
+/* se seu layout tem um wrapper tipo .layout ou .layout-sala */
+.sala-container.revisao-foco .layout,
+.sala-container.revisao-foco .layout-sala {
+  display: block;
+}
+
+/* botão fantasma do modo foco */
+.btn.fantasma {
+  background: transparent;
+  border: 1px dashed #4b5563;
+  color: #9ca3af;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.btn.fantasma:hover {
+  border-style: solid;
+  color: #e5e7eb;
 }
 
 

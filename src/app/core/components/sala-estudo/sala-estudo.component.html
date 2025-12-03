@@ -1,4 +1,8 @@
-<div class="sala-container" *ngIf="!carregando; else loadingTpl">
+<div
+  class="sala-container"
+  *ngIf="!carregando; else loadingTpl"
+  [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }">
+
 
   <!-- CABEÇALHO DA SALA -->
   <section class="card sala-header">
@@ -207,19 +211,29 @@
 
   <div class="cabecalho-revisao">
     <div>
-      <h2 class="titulo-section">
-        Revisão desta matéria
-      </h2>
-      <p class="muted">
-        Revise o que você construiu no modo Estudar: anotações/resumos e flashcards
-        do tópico selecionado.
-      </p>
+    
+     
       <p class="muted pequeno">
         Matéria: <strong>{{ materia?.nome || '-' }}</strong> •
         Tópico: <strong>{{ topicoSelecionado?.descricao || '-' }}</strong>
       </p>
-    </div>
+      <button
+        type="button"
+        class="btn fantasma"
+        *ngIf="!modoRevisaoFocoAtivo"
+        (click)="ativarModoFocoRevisao()">
+        🧘‍♂️ Ativar modo foco
+      </button>
 
+      <button
+        type="button"
+        class="btn secundario"
+        *ngIf="modoRevisaoFocoAtivo"
+        (click)="sairModoFocoRevisao()">
+        ← Sair do modo foco
+      </button>
+    </div>
+   
     <!-- Alternador de tipo de revisão -->
     <div class="toggle-revisao">
       <button
@@ -237,7 +251,9 @@
         (click)="modoRevisao = 'flashcards'">
         🃏 Flashcards
       </button>
+      
     </div>
+  
   </div>
 
   <!-- REVISÃO POR ANOTAÇÕES -->
@@ -245,9 +261,7 @@
 
     <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
       <h3 class="subtitulo-section">Anotações deste tópico</h3>
-      <p class="muted pequeno">
-        Abaixo estão suas anotações exatamente como foram salvas no modo Estudar.
-      </p>
+    
 
       <!-- Renderiza o HTML vindo do editor (Quill / rich text) -->
     <div class="anotacoes-renderizadas"

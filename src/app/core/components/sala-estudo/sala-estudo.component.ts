@@ -58,7 +58,16 @@ modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
   pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos: number = 0;
 
+// 👇 adiciona isso:
+modoRevisaoFocoAtivo: boolean = false;
 
+ativarModoFocoRevisao(): void {
+  this.modoRevisaoFocoAtivo = true;
+}
+
+sairModoFocoRevisao(): void {
+  this.modoRevisaoFocoAtivo = false;
+}
 
 
 
