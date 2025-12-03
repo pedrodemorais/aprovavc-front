@@ -17,6 +17,7 @@ import { NgChartsModule } from 'ng2-charts';
 import { ContentComponent } from './site/pages/content/content.component';
 import { ConfirmationService } from 'primeng/api';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { DashboardRevisaoComponent } from './pages/dashboard-revisao/dashboard-revisao/dashboard-revisao.component';
 
 
 
@@ -30,6 +31,7 @@ registerLocaleData(localePt, 'pt-BR');
     PaymentComponent,
     RecuperarSenhaComponent,
     ContentComponent,
+    DashboardRevisaoComponent,
     
    
   ],

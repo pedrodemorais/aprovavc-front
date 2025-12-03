@@ -20,6 +20,7 @@ import { InicioComponent } from './site/pages/inicio/inicio.component';
 import { EmpresaCadastroComponent } from './site/pages/empresa-cadastro/empresa-cadastro.component';
 import { MateriaCadastroComponent } from './core/components/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './core/components/sala-estudo/sala-estudo.component';
+import { DashboardRevisaoComponent } from './pages/dashboard-revisao/dashboard-revisao/dashboard-revisao.component';
 
 
 
@@ -39,7 +40,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
       {
-        path: 'content', component: ContentComponent,
+        path: 'content', component: DashboardRevisaoComponent,
         children: [{ path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
 
 

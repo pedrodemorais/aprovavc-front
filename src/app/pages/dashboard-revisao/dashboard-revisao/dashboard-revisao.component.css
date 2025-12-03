@@ -1,0 +1,112 @@
+/* Container principal do card do dashboard */
+.dashboard-revisao {
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Título */
+.dashboard-revisao h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+/* Texto mais clarinho (você já usa algo assim em outras telas) */
+.muted {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Mensagem de erro (pode reaproveitar o padrão) */
+.mensagem-erro {
+  margin-top: 0.5rem;
+}
+
+/* Lista de revisões */
+.lista-revisoes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Cada item da revisão */
+.item-revisao {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background-color: var(--card-bg, #ffffff);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* Coluna esquerda (infos) */
+.info-esquerda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0; /* para evitar quebrar em telas menores */
+}
+
+.linha-materia {
+  font-size: 0.95rem;
+}
+
+.linha-topico {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.linha-data {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+/* Coluna direita (botão) */
+.acoes-direita {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Pills de tipo (Anotação / Flashcard) */
+.pill-tipo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+}
+
+/* cores das pills (ajuste se tiver variáveis de cor globais) */
+.pill-anotacao {
+  background-color: rgba(0, 123, 255, 0.12);
+  color: #0056b3;
+}
+
+.pill-flashcard {
+  background-color: rgba(40, 167, 69, 0.12);
+  color: #1e7e34;
+}
+
+/* Responsivo: em telas menores, empilha o botão embaixo */
+@media (max-width: 768px) {
+  .item-revisao {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .acoes-direita {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

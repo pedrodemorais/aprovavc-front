@@ -3,9 +3,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MateriaService } from 'src/app/core/services/materia.service';
 import { Materia } from 'src/app/core/models/materia.model';
-import { SalaEstudoService, EstudoTopicoRequest } from '../../services/sala-estudo.service';
+import {
+  SalaEstudoService,
+  EstudoTopicoRequest,
+  FlashcardRevisaoRespostaRequest,
+  TopicoRevisaoRespostaRequest
+} from '../../services/sala-estudo.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-
 
 @Component({
   selector: 'app-sala-estudo',
@@ -16,8 +20,9 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   materiaId!: number;
   materia?: Materia;
-mensagemFlashcardSucesso?: string;
-anotacoesHtmlSeguras: SafeHtml | null = null;
+
+  mensagemFlashcardSucesso?: string;
+  anotacoesHtmlSeguras: SafeHtml | null = null;
 
   anotacoes: string = '';
   mensagemEstudoSalvo?: string;
@@ -32,8 +37,9 @@ anotacoesHtmlSeguras: SafeHtml | null = null;
 
   // modo da sala: estudar ou revisar
   modo: 'estudar' | 'revisar' = 'estudar';
-  // 👇 adiciona isso:
-modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
+
+  // modo de revisão (anotações x flashcards)
+  modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
 
   // ======================= TIMER / POMODORO =======================
 
@@ -42,8 +48,7 @@ modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
   // total decorrido no cronômetro (modo livre)
   tempoTotalSegundos: number = 0;
 
-  // *** NOVO: quanto tempo já foi efetivamente salvo no backend
-  // para o tópico atual (em segundos)
+  // quanto tempo já foi efetivamente salvo no backend para o tópico atual (em segundos)
   private segundosEstudoJaSalvosTopicoAtual: number = 0;
 
   timerAtivo: boolean = false;
@@ -58,58 +63,21 @@ modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
   pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos: number = 0;
 
-// 👇 adiciona isso:
-modoRevisaoFocoAtivo: boolean = false;
+  // modo foco na revisão (tela cheia)
+  modoRevisaoFocoAtivo: boolean = false;
 
-ativarModoFocoRevisao(): void {
-  this.modoRevisaoFocoAtivo = true;
-}
+  ativarModoFocoRevisao(): void {
+    this.modoRevisaoFocoAtivo = true;
+  }
 
-sairModoFocoRevisao(): void {
-  this.modoRevisaoFocoAtivo = false;
-}
-
-
+  sairModoFocoRevisao(): void {
+    this.modoRevisaoFocoAtivo = false;
+  }
 
   private audioAlarme?: HTMLAudioElement;
   alarmeAtivo: boolean = false;
 
-  get duracaoFaseAtual(): number {
-    switch (this.pomodoroFase) {
-      case 'foco':
-        return this.pomodoroDuracaoFoco;
-      case 'pausa-curta':
-        return this.pomodoroDuracaoPausaCurta;
-      case 'pausa-longa':
-        return this.pomodoroDuracaoPausaLonga;
-      default:
-        return this.pomodoroDuracaoFoco;
-    }
-  }
-
-  get labelFasePomodoro(): string {
-    if (this.pomodoroFase === 'foco') return 'Foco';
-    if (this.pomodoroFase === 'pausa-curta') return 'Pausa curta';
-    return 'Pausa longa';
-  }
-
-  get tempoFormatado(): string {
-    let totalSegundos = 0;
-
-    if (this.modoTemporizador === 'livre') {
-      totalSegundos = this.tempoTotalSegundos;
-    } else {
-      totalSegundos = this.pomodoroSegundosRestantes;
-    }
-
-    const h = Math.floor(totalSegundos / 3600);
-    const m = Math.floor((totalSegundos % 3600) / 60);
-    const s = totalSegundos % 60;
-
-    return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
-  }
-
-    // =============== FLASHCARD (ESTADO) ===============
+  // =============== FLASHCARD (ESTADO) ===============
   mostrarModalFlashcard: boolean = false;
 
   flashcardFrente: string = '';
@@ -118,13 +86,14 @@ sairModoFocoRevisao(): void {
   flashcardDificuldade: string = 'MEDIA';
   flashcardTags: string = '';
 
-  // lista de flashcards para revisão do tópico atual
+  // lista de flashcards (usada tanto em estudar quanto revisar)
   flashcards: FlashcardDTO[] = [];
   flashcardIndexAtual: number = 0;
   mostrarVersoAtual: boolean = false;
 
-
-
+  // ESTADO DA REVISÃO (carregando flashcards de revisão)
+  carregandoFlashcardsRevisao: boolean = false;
+  erroFlashcardsRevisao?: string;
 
   constructor(
     private route: ActivatedRoute,
@@ -208,29 +177,71 @@ sairModoFocoRevisao(): void {
     return !!(this.topicoSelecionado && !this.topicoSelecionado.hasFilhos);
   }
 
-  private carregarTopicos(): void {
-    console.log('[SALA-ESTUDO] Carregando tópicos da matériaId =', this.materiaId);
+private carregarTopicos(): void {
+  console.log('[SALA-ESTUDO] Carregando tópicos da matériaId =', this.materiaId);
 
-    this.materiaService.listarTopicos(this.materiaId).subscribe({
-      next: (lista) => {
-        const listaSegura = lista || [];
-        console.log('[SALA-ESTUDO] DTO bruto de tópicos (árvore):', listaSegura);
+  this.materiaService.listarTopicos(this.materiaId).subscribe({
+    next: (lista) => {
+      const listaSegura = lista || [];
+      console.log('[SALA-ESTUDO] DTO bruto de tópicos (árvore):', listaSegura);
 
-        this.arvoreTopicos = listaSegura;
-        this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
+      this.arvoreTopicos = listaSegura;
+      this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
-        console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
+      console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
 
-        if (this.topicos.length && !this.topicoSelecionado) {
-          this.topicoSelecionado = this.topicos[0];
+      // 👉 ao abrir a sala (ou dar F5), se ainda não tiver tópico selecionado,
+      // escolhe o PRIMEIRO tópico "estudável":
+      // - não tem filhos (leaf)
+      // - está ativo (se você quiser considerar isso)
+      if (!this.topicoSelecionado && this.topicos.length) {
+
+        // primeiro leaf ativo
+        let primeiroEstudavel = this.topicos.find(t => !t.hasFilhos && t.ativo !== false);
+
+        // se por acaso não tiver leaf, cai no primeiro mesmo
+        if (!primeiroEstudavel) {
+          primeiroEstudavel = this.topicos[0];
         }
+
+        if (primeiroEstudavel) {
+          this.selecionarTopico(primeiroEstudavel);
+        }
+      }
+    },
+    error: (err) => {
+      console.error('[SALA-ESTUDO] Erro ao carregar tópicos:', err);
+      this.erro = 'Erro ao carregar tópicos da matéria.';
+    }
+  });
+}
+
+ativarRevisaoAnotacoes(): void {
+  this.modoRevisao = 'anotacoes';
+
+  if (this.topicoSelecionado && this.topicoPermiteEstudo) {
+    // se quiser, pode forçar recarregar anotações aqui também
+    this.salaEstudoService.buscarAnotacoes(this.topicoSelecionado.id).subscribe({
+      next: (resp) => {
+        this.anotacoes = resp.anotacoes || '';
+        this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
       },
-      error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao carregar tópicos:', err);
-        this.erro = 'Erro ao carregar tópicos da matéria.';
+      error: () => {
+        this.anotacoes = '';
+        this.anotacoesHtmlSeguras = null;
       }
     });
   }
+}
+ativarRevisaoFlashcards(): void {
+  this.modoRevisao = 'flashcards';
+
+  // se já tiver um tópico selecionado, garante que os flashcards dele sejam carregados
+  if (this.topicoSelecionado && this.topicoPermiteEstudo) {
+    this.carregarFlashcards();
+  }
+}
+
 
   // ================================================================
   // INTERAÇÃO COM TÓPICOS
@@ -291,7 +302,7 @@ sairModoFocoRevisao(): void {
 
     this.topicoSelecionado = t;
 
-        // ao selecionar tópico, carrega flashcards
+    // ao selecionar tópico, carrega flashcards (modo estudar)
     if (this.topicoPermiteEstudo) {
       this.carregarFlashcards();
     } else {
@@ -300,24 +311,28 @@ sairModoFocoRevisao(): void {
       this.mostrarVersoAtual = false;
     }
 
-
     if (!this.topicoPermiteEstudo) {
       this.anotacoes = '';
       return;
     }
 
-this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
-  next: (resp) => {
-    this.anotacoes = resp.anotacoes || '';
-    this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
-  },
-  error: () => {
-    this.anotacoes = '';
-    this.anotacoesHtmlSeguras = null;
-  }
-});
+    this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
+      next: (resp) => {
+        this.anotacoes = resp.anotacoes || '';
+        this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+      },
+      error: () => {
+        this.anotacoes = '';
+        this.anotacoesHtmlSeguras = null;
+      }
+    });
 
+    // se já estiver no modo revisar, ao trocar de tópico recarrega os flashcards para revisão
+    if (this.modo === 'revisar' && this.topicoPermiteEstudo) {
+      this.carregarFlashcardsParaRevisao();
+    }
   }
+
   private carregarFlashcards(): void {
     if (!this.topicoSelecionado) {
       this.flashcards = [];
@@ -341,6 +356,41 @@ this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
   // ================================================================
   // CONTROLE DO TIMER / POMODORO
   // ================================================================
+
+  get duracaoFaseAtual(): number {
+    switch (this.pomodoroFase) {
+      case 'foco':
+        return this.pomodoroDuracaoFoco;
+      case 'pausa-curta':
+        return this.pomodoroDuracaoPausaCurta;
+      case 'pausa-longa':
+        return this.pomodoroDuracaoPausaLonga;
+      default:
+        return this.pomodoroDuracaoFoco;
+    }
+  }
+
+  get labelFasePomodoro(): string {
+    if (this.pomodoroFase === 'foco') return 'Foco';
+    if (this.pomodoroFase === 'pausa-curta') return 'Pausa curta';
+    return 'Pausa longa';
+  }
+
+  get tempoFormatado(): string {
+    let totalSegundos = 0;
+
+    if (this.modoTemporizador === 'livre') {
+      totalSegundos = this.tempoTotalSegundos;
+    } else {
+      totalSegundos = this.pomodoroSegundosRestantes;
+    }
+
+    const h = Math.floor(totalSegundos / 3600);
+    const m = Math.floor((totalSegundos % 3600) / 60);
+    const s = totalSegundos % 60;
+
+    return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
+  }
 
   private pad(v: number): string {
     return v.toString().padStart(2, '0');
@@ -410,8 +460,7 @@ this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
     this.silenciarAlarme();
     this.timerAtivo = false;
 
-    // aqui NÃO mexemos em segundosEstudoJaSalvosTopicoAtual,
-    // porque o que já foi salvo no backend continua valendo
+    // o que já foi salvo no backend continua valendo
 
     if (this.modoTemporizador === 'livre') {
       this.tempoTotalSegundos = 0;
@@ -506,6 +555,11 @@ this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
 
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
+
+    // quando entrar no modo revisar, se tiver tópico válido, carrega flashcards de revisão
+    if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
+      this.carregarFlashcardsParaRevisao();
+    }
   }
 
   // ================================================================
@@ -520,10 +574,10 @@ this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
 
     const modoBack = this.modoTemporizador;
 
-    // tempo TOTAL decorrido no cronômetro para este tópico/ sessão
+    // tempo TOTAL decorrido no cronômetro para este tópico / sessão
     const tempoAtualTotal = this.calcularTempoEstudoAtual();
 
-    // *** NOVO: apenas o DELTA desde o último salvamento ***
+    // apenas o DELTA desde o último salvamento
     let tempoParaSalvar = tempoAtualTotal - this.segundosEstudoJaSalvosTopicoAtual;
     if (tempoParaSalvar < 0) {
       tempoParaSalvar = 0;
@@ -559,7 +613,7 @@ this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
   }
 
   // ================================================================
-  // FLASHCARD – MODAL
+  // FLASHCARD – MODAL (CRIAR)
   // ================================================================
 
   abrirModalFlashcard(): void {
@@ -578,62 +632,65 @@ this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
   fecharModalFlashcard(): void {
     this.mostrarModalFlashcard = false;
   }
-salvarFlashcard(): void {
-  if (!this.topicoSelecionado) {
-    alert('Selecione um tópico antes de criar o flashcard.');
-    return;
-  }
 
-  if (!this.flashcardFrente || !this.flashcardVerso) {
-    alert('Preencha frente e verso do flashcard.');
-    return;
-  }
-
-  const payload: FlashcardDTO = {
-    materiaId: this.materiaId,
-    topicoId: this.topicoSelecionado.id,
-    frente: this.flashcardFrente,
-    verso: this.flashcardVerso,
-    tipo: this.flashcardTipo as any,
-    dificuldade: this.flashcardDificuldade as any,
-    tags: this.flashcardTags
-  };
-
-  console.log('[FLASHCARD] Enviando payload:', payload);
-
-  this.salaEstudoService.criarFlashcard(payload).subscribe({
-    next: (resp) => {
-      console.log('[FLASHCARD] Criado com sucesso:', resp);
-
-      // confirmação visual
-      this.mensagemFlashcardSucesso = 'Flashcard salvo com sucesso.';
-
-      // limpa frente e verso pra já digitar o próximo,
-      // mantém tags e tipo/dificuldade
-      this.flashcardFrente = '';
-      this.flashcardVerso = '';
-
-      // recarrega a lista de flashcards do tópico
-      if (this.topicoSelecionado) {
-        this.carregarFlashcards();
-      }
-
-      // some com a mensagem depois de alguns segundos (opcional)
-      setTimeout(() => {
-        this.mensagemFlashcardSucesso = undefined;
-      }, 3000);
-    },
-    error: (err) => {
-      console.error('[FLASHCARD] Erro ao salvar:', err);
-      alert('Erro ao salvar flashcard. Tente novamente.');
+  salvarFlashcard(): void {
+    if (!this.topicoSelecionado) {
+      alert('Selecione um tópico antes de criar o flashcard.');
+      return;
     }
-  });
-}
 
+    if (!this.flashcardFrente || !this.flashcardVerso) {
+      alert('Preencha frente e verso do flashcard.');
+      return;
+    }
+
+    const payload: FlashcardDTO = {
+      materiaId: this.materiaId,
+      topicoId: this.topicoSelecionado.id,
+      frente: this.flashcardFrente,
+      verso: this.flashcardVerso,
+      tipo: this.flashcardTipo as any,
+      dificuldade: this.flashcardDificuldade as any,
+      tags: this.flashcardTags
+    };
+
+    console.log('[FLASHCARD] Enviando payload:', payload);
+
+    this.salaEstudoService.criarFlashcard(payload).subscribe({
+      next: (resp) => {
+        console.log('[FLASHCARD] Criado com sucesso:', resp);
+
+        // confirmação visual
+        this.mensagemFlashcardSucesso = 'Flashcard salvo com sucesso.';
+
+        // limpa frente e verso pra já digitar o próximo, mantém tags e tipo/dificuldade
+        this.flashcardFrente = '';
+        this.flashcardVerso = '';
+
+        // recarrega a lista de flashcards do tópico
+        if (this.topicoSelecionado) {
+          this.carregarFlashcards();
+        }
+
+        setTimeout(() => {
+          this.mensagemFlashcardSucesso = undefined;
+        }, 3000);
+      },
+      error: (err) => {
+        console.error('[FLASHCARD] Erro ao salvar:', err);
+        alert('Erro ao salvar flashcard. Tente novamente.');
+      }
+    });
+  }
+
+  // ================================================================
+  // FLASHCARDS – NAVEGAÇÃO E EXCLUSÃO
+  // ================================================================
 
   get existeFlashcardAtual(): boolean {
-    return this.flashcards && this.flashcards.length > 0 && this.flashcardIndexAtual >= 0
-      && this.flashcardIndexAtual < this.flashcards.length;
+    return this.flashcards && this.flashcards.length > 0 &&
+      this.flashcardIndexAtual >= 0 &&
+      this.flashcardIndexAtual < this.flashcards.length;
   }
 
   get flashcardAtual(): FlashcardDTO | null {
@@ -681,6 +738,92 @@ salvarFlashcard(): void {
       error: (err) => {
         console.error('[FLASHCARD] Erro ao excluir:', err);
         alert('Erro ao excluir flashcard.');
+      }
+    });
+  }
+
+  // ================================================================
+  // REVISÃO ESPAÇADA (FLASHCARDS + ANOTAÇÕES)
+  // ================================================================
+
+  /**
+   * Carrega apenas os flashcards vencidos / para hoje para o tópico atual.
+   */
+  private carregarFlashcardsParaRevisao(): void {
+    if (!this.topicoSelecionado) {
+      this.flashcards = [];
+      return;
+    }
+
+    this.carregandoFlashcardsRevisao = true;
+    this.erroFlashcardsRevisao = undefined;
+
+    this.salaEstudoService.listarFlashcardsParaRevisao(this.topicoSelecionado.id)
+      .subscribe({
+        next: (lista) => {
+          this.flashcards = lista || [];
+          this.flashcardIndexAtual = 0;
+          this.mostrarVersoAtual = false;
+          this.carregandoFlashcardsRevisao = false;
+        },
+        error: (err) => {
+          console.error('[REVISÃO] Erro ao carregar flashcards de revisão:', err);
+          this.erroFlashcardsRevisao = 'Erro ao carregar flashcards para revisão.';
+          this.carregandoFlashcardsRevisao = false;
+          this.flashcards = [];
+        }
+      });
+  }
+
+  /**
+   * Marca o flashcard atual como ERREI / DIFICIL / BOM / FACIL
+   * e deixa o back recalcular a próxima revisão.
+   */
+  avaliarFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+    const atual = this.flashcardAtual;
+    if (!atual || !atual.id) {
+      return;
+    }
+
+    const req: FlashcardRevisaoRespostaRequest = {
+      flashcardId: atual.id,
+      avaliacao
+    };
+
+    this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
+      next: () => {
+        // simplesmente vai para o próximo cartão
+        this.proximoFlashcard();
+      },
+      error: (err) => {
+        console.error('[REVISÃO] Erro ao registrar resposta do flashcard:', err);
+        alert('Erro ao registrar resposta da revisão. Tente novamente.');
+      }
+    });
+  }
+
+  /**
+   * Marca a revisão das anotações (nível tópico) como ERREI / DIFICIL / BOM / FACIL.
+   * O servidor cuida da lógica das "caixinhas" do tópico.
+   */
+  avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+    if (!this.topicoSelecionado) {
+      return;
+    }
+
+    const req: TopicoRevisaoRespostaRequest = {
+      topicoId: this.topicoSelecionado.id,
+      avaliacao
+    };
+
+    this.salaEstudoService.responderRevisaoTopico(req).subscribe({
+      next: () => {
+        // aqui dá pra exibir um toque visual leve (toast / mensagem), se quiser depois
+        console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
+      },
+      error: (err) => {
+        console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
+        alert('Erro ao registrar revisão das anotações. Tente novamente.');
       }
     });
   }

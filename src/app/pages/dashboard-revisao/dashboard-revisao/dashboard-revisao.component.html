@@ -1,0 +1,42 @@
+<section class="card dashboard-revisao">
+
+  <h1>Revisões pendentes</h1>
+
+  <p class="muted" *ngIf="!carregando && !revisoes.length && !erro">
+    Nenhuma revisão pendente por enquanto. 🎉
+  </p>
+
+  <div *ngIf="carregando">Carregando...</div>
+
+  <div *ngIf="erro" class="mensagem-erro">
+    {{ erro }}
+  </div>
+
+  <ul class="lista-revisoes" *ngIf="revisoes.length">
+    <li *ngFor="let r of revisoes" class="item-revisao">
+      <div class="info-esquerda">
+        <span class="pill-tipo" [ngClass]="r.tipo === 'ANOTACAO' ? 'pill-anotacao' : 'pill-flashcard'">
+          {{ r.tipo === 'ANOTACAO' ? 'Anotações' : 'Flashcards' }}
+        </span>
+
+        <div class="linha-materia">
+          <strong>{{ r.materiaNome }}</strong>
+        </div>
+        <div class="linha-topico">
+          Tópico: {{ r.topicoDescricao }}
+        </div>
+
+        <div class="linha-data">
+          Próxima revisão: {{ r.dataProximaRevisao | date:'shortDate' }}
+          <span *ngIf="r.qtdPendentes"> • {{ r.qtdPendentes }} itens</span>
+        </div>
+      </div>
+
+      <div class="acoes-direita">
+        <button type="button" class="btn primario" (click)="irParaSala(r)">
+          Ir para sala de estudo
+        </button>
+      </div>
+    </li>
+  </ul>
+</section>

@@ -1125,7 +1125,7 @@
 
 /* fazer a área de conteúdo ocupar a largura disponível */
 .sala-container.revisao-foco .modo-conteudo {
-  max-width: 920px;
+ 
   margin: 0 auto;
   padding-top: 2rem;
   padding-bottom: 2rem;
@@ -1151,7 +1151,150 @@
   border-style: solid;
   color: #e5e7eb;
 }
+/* Já tinha isso antes, mantém ou ajusta */
+.sala-container.revisao-foco {
+  background-color: #ffffff; /* se quiser um fundo levemente diferente */
+}
 
+/* Em modo foco: a área interna vira um flex ocupando a tela */
+.sala-container.revisao-foco .modo-conteudo {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 2rem); /* ajusta se tiver header fixo fora da sala */
+  margin: 0;
+  padding: 1rem 1.5rem;
+}
+
+/* Cabeçalho da revisão ocupa só o topo */
+.sala-container.revisao-foco .cabecalho-revisao {
+  flex: 0 0 auto;
+  margin-bottom: 0.75rem;
+}
+
+/* BLOCOS de revisão ocupam o restante da tela */
+.sala-container.revisao-foco .bloco-revisao-anotacoes,
+.sala-container.revisao-foco .bloco-revisao-flashcards {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* importante pro overflow funcionar direito */
+}
+
+/* Container geral dos flashcards (pode manter o seu se já tiver) */
+.flashcard-review-container {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Cartão base */
+.flashcard-card-review {
+  width: 100%;
+  max-width: 520px;
+  min-height: 170px;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  background: #020617;          /* mesmo fundo da tela */
+  border: 1px solid #1f2937;    /* borda padrão */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease-out,
+    box-shadow 0.15s ease-out,
+    background-color 0.15s ease-out,
+    transform 0.08s ease-out;
+}
+
+.flashcard-card-review:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Diferença visual entre frente e verso (bem sutil) */
+.flashcard-card-review.frente {
+  border-color: #334155;                  /* azul acinzentado */
+  background-color: #020617;
+}
+
+.flashcard-card-review.verso {
+  border-color: #16a34a;                  /* leve tom de verde */
+  background-color: #020617;
+}
+
+/* Cabeçalho */
+.flashcard-card-header-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.face-pill {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+  color: #e5e7eb;
+}
+
+.flashcard-card-review.verso .face-pill {
+  border-color: #16a34a;
+  color: #bbf7d0;
+}
+
+.meta-contagem {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+/* Corpo */
+.flashcard-card-corpo {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+}
+
+.flashcard-conteudo-review {
+  width: 100%;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #e5e7eb;
+  white-space: pre-wrap;
+}
+
+/* Rodapé */
+.flashcard-card-footer-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.meta-dificuldade {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+}
+
+.meta-tags {
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta-hint {
+  margin-left: auto;
+  font-style: italic;
+}
 
 /* responsivo */
 @media (max-width: 640px) {
