@@ -1,42 +1,122 @@
-<section class="card dashboard-revisao">
+<div class="container">
 
-  <h1>Revisões pendentes</h1>
+<section class="dashboard-revisao-page">
 
-  <p class="muted" *ngIf="!carregando && !revisoes.length && !erro">
-    Nenhuma revisão pendente por enquanto. 🎉
-  </p>
+  <!-- CABEÇALHO / RESUMO -->
+  <div class="rev-header">
+    <div class="rev-header-main">
+      <h1 class="rev-title">Controle de revisões</h1>
+      <p class="rev-subtitle">
+        Acompanhe o que está vencido, o que é para hoje e o que já está agendado.
+      </p>
+    </div>
 
-  <div *ngIf="carregando">Carregando...</div>
+    <div class="rev-summary-grid" *ngIf="revisoes.length">
+      <div class="rev-summary-card vencidas">
+        <span class="rev-summary-label">Vencidas</span>
+        <span class="rev-summary-value">{{ totalVencidas }}</span>
+      </div>
 
-  <div *ngIf="erro" class="mensagem-erro">
+      <div class="rev-summary-card hoje">
+        <span class="rev-summary-label">Para hoje</span>
+        <span class="rev-summary-value">{{ totalHoje }}</span>
+      </div>
+
+      <div class="rev-summary-card futuras">
+        <span class="rev-summary-label">Futuras</span>
+        <span class="rev-summary-value">{{ totalFuturas }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTADOS GERAIS -->
+  <div class="rev-state" *ngIf="carregando">
+    Carregando revisões...
+  </div>
+
+  <div class="rev-state erro" *ngIf="erro">
     {{ erro }}
   </div>
 
-  <ul class="lista-revisoes" *ngIf="revisoes.length">
-    <li *ngFor="let r of revisoes" class="item-revisao">
-      <div class="info-esquerda">
-        <span class="pill-tipo" [ngClass]="r.tipo === 'ANOTACAO' ? 'pill-anotacao' : 'pill-flashcard'">
+  <div class="rev-state ok" *ngIf="!carregando && !revisoes.length && !erro">
+    Nenhuma revisão pendente por enquanto. 🎉
+  </div>
+
+  <!-- LISTA PRINCIPAL -->
+  <div class="rev-card" *ngIf="revisoes.length">
+
+    <!-- cabeçalho tipo "tabela" -->
+    <div class="rev-list-header">
+      <span class="col-status">Status</span>
+      <span class="col-materia">Matéria / tópico</span>
+      <span class="col-tipo">Tipo</span>
+      <span class="col-data">Próxima revisão</span>
+      <span class="col-acoes"></span>
+    </div>
+
+    <!-- linhas -->
+    <div
+      class="rev-list-row"
+      *ngFor="let r of revisoes"
+    >
+      <!-- STATUS -->
+      <div class="col-status">
+        <span
+          class="pill-status"
+          [ngClass]="{
+            'status-vencida': r.status === 'VENCIDA',
+            'status-hoje':   r.status === 'EM_DIA',
+            'status-futura': r.status === 'FUTURA'
+          }"
+        >
+          {{
+            r.status === 'VENCIDA'
+              ? 'Vencida'
+              : r.status === 'EM_DIA'
+                ? 'Hoje'
+                : 'Futura'
+          }}
+        </span>
+      </div>
+
+      <!-- MATÉRIA / TÓPICO -->
+      <div class="col-materia">
+        <div class="materia-nome">{{ r.materiaNome }}</div>
+        <div class="topico-descricao">Tópico: {{ r.topicoDescricao }}</div>
+      </div>
+
+      <!-- TIPO -->
+      <div class="col-tipo">
+        <span
+          class="pill-tipo"
+          [ngClass]="r.tipo === 'ANOTACAO' ? 'pill-anotacao' : 'pill-flashcard'"
+        >
           {{ r.tipo === 'ANOTACAO' ? 'Anotações' : 'Flashcards' }}
         </span>
+      </div>
 
-        <div class="linha-materia">
-          <strong>{{ r.materiaNome }}</strong>
+      <!-- DATA / QUANTIDADE -->
+      <div class="col-data">
+        <div class="data-principal">
+          {{ r.dataProximaRevisao | date: 'shortDate' }}
         </div>
-        <div class="linha-topico">
-          Tópico: {{ r.topicoDescricao }}
-        </div>
-
-        <div class="linha-data">
-          Próxima revisão: {{ r.dataProximaRevisao | date:'shortDate' }}
-          <span *ngIf="r.qtdPendentes"> • {{ r.qtdPendentes }} itens</span>
+        <div class="data-secundaria" *ngIf="r.qtdPendentes">
+          {{ r.qtdPendentes }} itens pendentes
         </div>
       </div>
 
-      <div class="acoes-direita">
-        <button type="button" class="btn primario" (click)="irParaSala(r)">
+      <!-- AÇÕES -->
+      <div class="col-acoes">
+        <button
+          type="button"
+          class="btn-ghost"
+          (click)="irParaSala(r)"
+        >
           Ir para sala de estudo
         </button>
       </div>
-    </li>
-  </ul>
+    </div>
+
+  </div>
 </section>
+</div>

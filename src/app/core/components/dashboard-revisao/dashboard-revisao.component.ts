@@ -1,8 +1,7 @@
-// src/app/pages/dashboard-revisao/dashboard-revisao.component.ts
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { SalaEstudoService } from 'src/app/core/services/sala-estudo.service';
 import { RevisaoDashboardItem } from 'src/app/core/models/RevisaoDashboardItem';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard-revisao',
@@ -15,6 +14,11 @@ export class DashboardRevisaoComponent implements OnInit {
   erro?: string;
 
   revisoes: RevisaoDashboardItem[] = [];
+
+  // totais para o resumo superior
+  totalVencidas = 0;
+  totalHoje = 0;
+  totalFuturas = 0;
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -33,18 +37,29 @@ export class DashboardRevisaoComponent implements OnInit {
       .subscribe({
         next: (lista) => {
           this.revisoes = lista || [];
+          this.atualizarTotais();
           this.carregando = false;
         },
         error: (err) => {
           console.error('[DASH-REVISÃO] Erro ao carregar revisões:', err);
-          this.erro = 'Erro ao carregar suas revisões pendentes.';
+          this.erro = 'Erro ao carregar suas revisões.';
           this.carregando = false;
         }
       });
   }
 
-  irParaSala(item: RevisaoDashboardItem): void {
-    // ajusta a rota conforme sua config atual da sala de estudo
-    this.router.navigate(['/sala-estudo', item.materiaId]);
+  private atualizarTotais(): void {
+    this.totalVencidas = this.revisoes.filter(r => r.status === 'VENCIDA').length;
+    this.totalHoje     = this.revisoes.filter(r => r.status === 'EM_DIA').length;
+    this.totalFuturas  = this.revisoes.filter(r => r.status === 'FUTURA').length;
   }
+
+irParaSala(item: RevisaoDashboardItem): void {
+  this.router.navigate(
+    ['/area-restrita/sala-estudo', item.materiaId],
+    { queryParams: { topicoId: item.topicoId } } // se quiser já mandar o tópico
+  );
+}
+
+
 }

@@ -1,112 +1,291 @@
-/* Container principal do card do dashboard */
-.dashboard-revisao {
-  padding: 1.5rem 1.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+/* ===========================
+   CONTAINER GERAL
+   =========================== */
+
+.dashboard-revisao-page {
+  box-sizing: border-box;
+  padding: 16px 16px 24px;
+ 
+ 
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.container{
+  background: white;
 }
 
-/* Título */
-.dashboard-revisao h1 {
-  font-size: 1.4rem;
+
+/* ===========================
+   CABEÇALHO / RESUMO
+   =========================== */
+
+.rev-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.rev-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rev-title {
+  font-size: 22px;
+  font-weight: 600;
   margin: 0;
 }
 
-/* Texto mais clarinho (você já usa algo assim em outras telas) */
-.muted {
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-/* Mensagem de erro (pode reaproveitar o padrão) */
-.mensagem-erro {
-  margin-top: 0.5rem;
-}
-
-/* Lista de revisões */
-.lista-revisoes {
-  list-style: none;
-  padding: 0;
+.rev-subtitle {
   margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* cards de resumo (vencidas, hoje, futuras) */
+.rev-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rev-summary-card {
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 2px;
+  background: #f9fafb;
 }
 
-/* Cada item da revisão */
-.item-revisao {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
+.rev-summary-card.vencidas {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.rev-summary-card.hoje {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.rev-summary-card.futuras {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.rev-summary-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.rev-summary-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* ===========================
+   ESTADOS (CARREGANDO / ERRO / VAZIO)
+   =========================== */
+
+.rev-state {
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.rev-state.erro {
+  color: #dc2626;
+}
+
+.rev-state.ok {
+  color: #16a34a;
+}
+
+/* ===========================
+   CARD PRINCIPAL DA LISTA
+   =========================== */
+
+.rev-card {
+  background: #ffffff;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  background-color: var(--card-bg, #ffffff);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
-/* Coluna esquerda (infos) */
-.info-esquerda {
+/* cabeçalho tipo tabela (somente desktop) */
+.rev-list-header {
+  display: grid;
+  grid-template-columns: 0.9fr 2fr 1.1fr 1.2fr auto;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+}
+
+/* linhas da lista (desktop) */
+.rev-list-row {
+  display: grid;
+  grid-template-columns: 0.9fr 2fr 1.1fr 1.2fr auto;
+  gap: 8px;
+  padding: 10px 16px;
+  align-items: center;
+  border-top: 1px solid #f3f4f6;
+}
+
+.rev-list-row:nth-child(even) {
+  background: #f9fafb;
+}
+
+/* colunas */
+.col-status,
+.col-materia,
+.col-tipo,
+.col-data,
+.col-acoes {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0; /* para evitar quebrar em telas menores */
+  gap: 4px;
 }
 
-.linha-materia {
-  font-size: 0.95rem;
-}
+/* ===========================
+   PILLS / LABELS
+   =========================== */
 
-.linha-topico {
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.linha-data {
-  font-size: 0.85rem;
-  opacity: 0.85;
-}
-
-/* Coluna direita (botão) */
-.acoes-direita {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-/* Pills de tipo (Anotação / Flashcard) */
-.pill-tipo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.15rem 0.6rem;
+.pill-status {
+  align-self: flex-start;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-bottom: 0.35rem;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-/* cores das pills (ajuste se tiver variáveis de cor globais) */
+.status-vencida {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-hoje {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-futura {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.pill-tipo {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .pill-anotacao {
-  background-color: rgba(0, 123, 255, 0.12);
-  color: #0056b3;
+  background: #fef3c7;
+  color: #b45309;
 }
 
 .pill-flashcard {
-  background-color: rgba(40, 167, 69, 0.12);
-  color: #1e7e34;
+  background: #dcfce7;
+  color: #166534;
 }
 
-/* Responsivo: em telas menores, empilha o botão embaixo */
-@media (max-width: 768px) {
-  .item-revisao {
+/* ===========================
+   CONTEÚDO DAS COLUNAS
+   =========================== */
+
+.materia-nome {
+  font-weight: 600;
+  color: #111827;
+  font-size: 14px;
+}
+
+.topico-descricao {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.data-principal {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.data-secundaria {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* botão "Ir para sala de estudo" */
+.btn-ghost {
+  align-self: flex-end;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-ghost:hover {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+/* ===========================
+   RESPONSIVO
+   =========================== */
+
+/* telas até 900px → esconde header da "tabela" e transforma cada linha em card empilhado */
+@media (max-width: 900px) {
+  .dashboard-revisao-page {
+    padding: 12px;
+  }
+
+  .rev-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rev-list-header {
+    display: none;
+  }
+
+  .rev-list-row {
+    display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
+  .col-acoes {
+    width: 100%;
     align-items: flex-start;
   }
 
-  .acoes-direita {
-    width: 100%;
-    justify-content: flex-start;
+  .btn-ghost {
+    align-self: stretch;
+    text-align: center;
+  }
+}
+
+/* telas bem pequenas (celular estreito) → resumo em 1 coluna e mais respiro */
+@media (max-width: 600px) {
+  .rev-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rev-card {
+    box-shadow: none;
+    border-radius: 8px;
   }
 }

@@ -1,9 +1,10 @@
 export interface RevisaoDashboardItem {
-  tipo: 'ANOTACAO' | 'FLASHCARD';
+  tipo: 'ANOTACAO' | 'FLASHCARD' | 'TOPICO';
   materiaId: number;
-  materiaNome: string;
   topicoId: number;
+  materiaNome: string;
   topicoDescricao: string;
-  dataProximaRevisao: string; // ISO vinda do back
-  qtdPendentes?: number;      // se o back mandar contagem
+  dataProximaRevisao: string; // vem como ISO string do back
+  qtdPendentes?: number;
+  status: 'VENCIDA' | 'EM_DIA' | 'FUTURA';
 }
