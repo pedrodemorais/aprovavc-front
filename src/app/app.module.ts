@@ -17,7 +17,7 @@ import { NgChartsModule } from 'ng2-charts';
 import { ContentComponent } from './site/pages/content/content.component';
 import { ConfirmationService } from 'primeng/api';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { DashboardRevisaoComponent } from './pages/dashboard-revisao/dashboard-revisao/dashboard-revisao.component';
+import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/dashboard-revisao.component';
 
 
 
