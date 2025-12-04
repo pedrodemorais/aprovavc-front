@@ -256,11 +256,19 @@
 
 /* Abas de modo */
 .abas-modo {
-  display: inline-flex;
-  background: #f3f4f6;
+  display:flex; 
+ 
   border-radius: 999px;
   padding: 3px;
   align-self: flex-start;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.botoes{
+  display: flex;
+  align-items: center;
 }
 
 .aba {
@@ -277,7 +285,7 @@
 .aba.ativa {
   background: #ffffff;
   color: #0f172a;
-  box-shadow: 0 1px 4px rgba(148, 163, 184, 0.5);
+  box-shadow: 0 1px 4px rgb(26, 29, 34);
 }
 
 /* Conteúdo do modo */
@@ -1303,12 +1311,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  
 }
 
 .som-icones-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  
 }
 
 .som-icones-label {
@@ -1347,11 +1357,19 @@
   backdrop-filter: blur(4px);
   transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, opacity 0.15s ease;
   opacity: 0.8;
+    
 }
+.icones-sons {
+  display: flex;          /* coloca os ícones em linha */
+  gap: 0.75rem;           /* espaço horizontal entre eles */
+  align-items: center;    /* alinha verticalmente no centro (opcional) */
+}
+
 
 .som-icone:hover {
   transform: translateY(-1px);
   opacity: 1;
+  box-shadow: 0 1px 4px rgba(52, 57, 65, 0.766);
 }
 
 .som-icone-emoji {
@@ -1360,13 +1378,18 @@
 
 .som-icone-nome {
   white-space: nowrap;
+  
 }
 
 /* estado ativo (som tocando) */
 .som-icone.ativo {
+   background: #ffffff;
   opacity: 1;
-  box-shadow: 0 0 0 2px rgba(0, 150, 255, 0.4);
+  box-shadow: 0 1px 4px rgb(26, 29, 34);
 }
+
+
+
 .som-icone-img {
   width: 30px;
   height: 30px;

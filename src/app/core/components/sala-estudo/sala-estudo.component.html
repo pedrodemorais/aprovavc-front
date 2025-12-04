@@ -1,6 +1,4 @@
-<div
-  class="sala-container"
-  *ngIf="!carregando; else loadingTpl"
+<div class="sala-container" *ngIf="!carregando; else loadingTpl"
   [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }">
 
   <!-- CABEÇALHO DA SALA -->
@@ -15,46 +13,17 @@
       </div>
     </div>
     <div>
-      <!-- CARD: Sons de foco / ruído branco -->
-<!-- CARD: Sons de foco com ícones -->
-<section class="card card-som-icones">
-  <div class="som-icones-header">
-    <div>
-      <div class="som-icones-label">Ambiente sonoro</div>
-    </div>
-  </div>
 
-  <div class="som-icones-lista">
-    <button
-      type="button"
-      class="som-icone"
-      *ngFor="let som of sonsFoco"
-      [class.ativo]="somAtivoId === som.id"
-      (click)="onClickSomIcone(som.id)"
-      [title]="som.nome"
-    >
-      <img
-        class="som-icone-img"
-        [src]="som.icone"
-        [alt]="som.nome"
-      />
-      <span class="som-icone-nome">{{ som.nome }}</span>
-    </button>
-  </div>
 
-  <!-- 🔉 CONTROLE DE VOLUME -->
-  <div class="som-icones-volume">
-    <span class="som-icones-volume-label">Volume</span>
-    <input
-      type="range"
-      min="0"
-      max="1"
-      step="0.05"
-      [value]="volumeSomFoco"
-      (input)="onVolumeSomFocoChange($event)"
-    />
-  </div>
-</section>
+
+
+        <!-- 🔉 CONTROLE DE VOLUME -->
+        <div class="som-icones-volume">
+          <span class="som-icones-volume-label">Volume</span>
+          <input type="range" min="0" max="1" step="0.05" [value]="volumeSomFoco"
+            (input)="onVolumeSomFocoChange($event)" />
+        </div>
+     
 
 
     </div>
@@ -76,10 +45,7 @@
 
       <!-- LISTA HIERÁRQUICA -->
       <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
-        <li
-          *ngFor="let t of topicos"
-          class="item-topico"
-          [class.topico-pai]="t.hasFilhos"
+        <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
           [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
           (click)="!t.hasFilhos && selecionarTopico(t)">
 
@@ -106,21 +72,24 @@
 
       <!-- Abas do modo -->
       <div class="abas-modo">
-        <button
-          type="button"
-          class="aba"
-          [class.ativa]="modo === 'estudar'"
-          (click)="mudarModo('estudar')">
-          Estudar
-        </button>
+        <div class="botoes">
+          <button type="button" class="aba" [class.ativa]="modo === 'estudar'" (click)="mudarModo('estudar')">
+            Estudar
+          </button>
 
-        <button
-          type="button"
-          class="aba"
-          [class.ativa]="modo === 'revisar'"
-          (click)="mudarModo('revisar')">
-          Revisar
-        </button>
+          <button type="button" class="aba" [class.ativa]="modo === 'revisar'" (click)="mudarModo('revisar')">
+            Revisar
+          </button>
+
+         
+        </div>
+        <div class="icones-sons">
+          <button type="button" class="som-icone" *ngFor="let som of sonsFoco" [class.ativo]="somAtivoId === som.id"
+            (click)="onClickSomIcone(som.id)" [title]="som.nome">
+            <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
+            <span class="som-icone-nome">{{ som.nome }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- ===================== MODO ESTUDAR ===================== -->
@@ -143,18 +112,12 @@
             </div>
 
             <div class="timer-modos">
-              <button
-                type="button"
-                class="btn-modo-timer"
-                [class.ativo]="modoTemporizador === 'livre'"
+              <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
                 (click)="setModoTemporizador('livre')">
                 ⏱ Livre
               </button>
 
-              <button
-                type="button"
-                class="btn-modo-timer"
-                [class.ativo]="modoTemporizador === 'pomodoro'"
+              <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
                 (click)="setModoTemporizador('pomodoro')">
                 🍅 Pomodoro
               </button>
@@ -162,9 +125,7 @@
           </div>
 
           <!-- AVISO QUANDO NÃO PODE EDITAR -->
-          <div
-            class="editor-aviso"
-            *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
+          <div class="editor-aviso" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
             <span class="editor-aviso-icon">🔒</span>
             <div class="editor-aviso-texto">
               <strong>Editor bloqueado</strong>
@@ -185,29 +146,19 @@
 
           <!-- Editor -->
           <div class="editor-wrapper">
-            <p-editor
-              id="anotacoes"
-              [(ngModel)]="anotacoes"
-              name="anotacoes"
+            <p-editor id="anotacoes" [(ngModel)]="anotacoes" name="anotacoes"
               [readonly]="!topicoPermiteEstudo || !timerAtivo">
             </p-editor>
           </div>
 
           <div class="timer-header-linha">
             <div class="botoes-do-timer">
-              <button
-                type="button"
-                class="btn primario"
-                (click)="toggleTimer()"
+              <button type="button" class="btn primario" (click)="toggleTimer()"
                 [disabled]="!topicoSelecionado || !topicoPermiteEstudo">
                 {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
               </button>
 
-              <button
-                type="button"
-                class="btn secundario"
-                (click)="zerarTimer()"
-                [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
+              <button type="button" class="btn secundario" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
                   || (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
                 Zerar
               </button>
@@ -227,18 +178,11 @@
 
         <!-- AÇÕES DO ESTUDO -->
         <div class="acoes-estudo">
-          <button
-            type="button"
-            class="btn primario"
-            [disabled]="!topicoPermiteEstudo"
-            (click)="salvarEstudo()">
+          <button type="button" class="btn primario" [disabled]="!topicoPermiteEstudo" (click)="salvarEstudo()">
             Salvar estudo
           </button>
 
-          <button
-            type="button"
-            class="btn secundario"
-            (click)="abrirModalFlashcard()"
+          <button type="button" class="btn secundario" (click)="abrirModalFlashcard()"
             [disabled]="!topicoPermiteEstudo">
             + Criar flashcard
           </button>
@@ -255,19 +199,11 @@
 
         <div class="cabecalho-revisao">
           <div>
-            <button
-              type="button"
-              class="btn fantasma"
-              *ngIf="!modoRevisaoFocoAtivo"
-              (click)="ativarModoFocoRevisao()">
+            <button type="button" class="btn fantasma" *ngIf="!modoRevisaoFocoAtivo" (click)="ativarModoFocoRevisao()">
               🧘‍♂️ Ativar modo foco
             </button>
 
-            <button
-              type="button"
-              class="btn secundario"
-              *ngIf="modoRevisaoFocoAtivo"
-              (click)="sairModoFocoRevisao()">
+            <button type="button" class="btn secundario" *ngIf="modoRevisaoFocoAtivo" (click)="sairModoFocoRevisao()">
               ← Sair do modo foco
             </button>
 
@@ -279,21 +215,15 @@
 
           <!-- Alternador de tipo de revisão -->
           <div class="toggle-revisao">
-            <button
-              type="button"
-              class="toggle-btn"
-              [class.ativo]="modoRevisao === 'anotacoes'"
+            <button type="button" class="toggle-btn" [class.ativo]="modoRevisao === 'anotacoes'"
               (click)="modoRevisao = 'anotacoes'">
               📝 Anotações / Resumo
             </button>
 
-        <button
-  type="button"
-  class="toggle-btn"
-  [class.ativo]="modoRevisao === 'flashcards'"
-  (click)="ativarRevisaoFlashcards()">
-  🃏 Flashcards
-</button>
+            <button type="button" class="toggle-btn" [class.ativo]="modoRevisao === 'flashcards'"
+              (click)="ativarRevisaoFlashcards()">
+              🃏 Flashcards
+            </button>
 
           </div>
         </div>
@@ -305,9 +235,7 @@
             <h3 class="subtitulo-section">Anotações deste tópico</h3>
 
             <!-- Renderiza o HTML vindo do editor -->
-            <div
-              class="anotacoes-renderizadas"
-              [innerHTML]="anotacoesHtmlSeguras">
+            <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras">
             </div>
 
             <!-- AVALIAÇÃO DA REVISÃO DAS ANOTAÇÕES -->
@@ -316,28 +244,16 @@
                 Como foi revisar essas anotações?
               </p>
               <div class="botoes-avaliacao">
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarRevisaoAnotacao('ERREI')">
+                <button type="button" class="btn secundario" (click)="avaliarRevisaoAnotacao('ERREI')">
                   Errei / Não lembrei
                 </button>
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarRevisaoAnotacao('DIFICIL')">
+                <button type="button" class="btn secundario" (click)="avaliarRevisaoAnotacao('DIFICIL')">
                   Lembrei com dificuldade
                 </button>
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarRevisaoAnotacao('BOM')">
+                <button type="button" class="btn secundario" (click)="avaliarRevisaoAnotacao('BOM')">
                   Lembrei bem
                 </button>
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarRevisaoAnotacao('FACIL')">
+                <button type="button" class="btn secundario" (click)="avaliarRevisaoAnotacao('FACIL')">
                   Muito fácil
                 </button>
               </div>
@@ -369,15 +285,12 @@
             <p>Carregando flashcards para revisão...</p>
           </div>
 
-          <div
-            *ngIf="!carregandoFlashcardsRevisao && erroFlashcardsRevisao"
-            class="painel-revisao-placeholder">
+          <div *ngIf="!carregandoFlashcardsRevisao && erroFlashcardsRevisao" class="painel-revisao-placeholder">
             <p>{{ erroFlashcardsRevisao }}</p>
           </div>
 
           <!-- NENHUM FLASHCARD -->
-          <div
-            *ngIf="!carregandoFlashcardsRevisao && (!flashcards || !flashcards.length)"
+          <div *ngIf="!carregandoFlashcardsRevisao && (!flashcards || !flashcards.length)"
             class="painel-revisao-placeholder">
             <p>
               Nenhum flashcard cadastrado para este tópico ainda.<br>
@@ -387,14 +300,10 @@
           </div>
 
           <!-- FLASHCARD ATUAL -->
-          <div
-            *ngIf="!carregandoFlashcardsRevisao && flashcardAtual"
-            class="flashcard-review-container">
+          <div *ngIf="!carregandoFlashcardsRevisao && flashcardAtual" class="flashcard-review-container">
 
             <!-- Cartão estilo Anki -->
-            <div
-              class="flashcard-card-review"
-              [ngClass]="{ 'frente': !mostrarVersoAtual, 'verso': mostrarVersoAtual }"
+            <div class="flashcard-card-review" [ngClass]="{ 'frente': !mostrarVersoAtual, 'verso': mostrarVersoAtual }"
               (click)="virarFlashcard()">
 
               <div class="flashcard-card-header-linha">
@@ -448,28 +357,16 @@
                 Como foi lembrar a resposta deste flashcard?
               </p>
               <div class="botoes-avaliacao">
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarFlashcard('ERREI')">
+                <button type="button" class="btn secundario" (click)="avaliarFlashcard('ERREI')">
                   Errei / Não lembrei
                 </button>
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarFlashcard('DIFICIL')">
+                <button type="button" class="btn secundario" (click)="avaliarFlashcard('DIFICIL')">
                   Lembrei com dificuldade
                 </button>
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarFlashcard('BOM')">
+                <button type="button" class="btn secundario" (click)="avaliarFlashcard('BOM')">
                   Lembrei bem
                 </button>
-                <button
-                  type="button"
-                  class="btn secundario"
-                  (click)="avaliarFlashcard('FACIL')">
+                <button type="button" class="btn secundario" (click)="avaliarFlashcard('FACIL')">
                   Muito fácil
                 </button>
               </div>
@@ -495,10 +392,7 @@
           </p>
         </div>
 
-        <button
-          type="button"
-          class="flashcard-fechar"
-          (click)="fecharModalFlashcard()">
+        <button type="button" class="flashcard-fechar" (click)="fecharModalFlashcard()">
           ✕
         </button>
       </header>
@@ -521,21 +415,13 @@
       <div class="flashcard-campos">
         <label class="flashcard-label">
           Frente (pergunta)
-          <textarea
-            rows="3"
-            class="flashcard-textarea"
-            [(ngModel)]="flashcardFrente"
-            name="flashcardFrente"
+          <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardFrente" name="flashcardFrente"
             placeholder="Digite a pergunta..."></textarea>
         </label>
 
         <label class="flashcard-label">
           Verso (resposta)
-          <textarea
-            rows="3"
-            class="flashcard-textarea"
-            [(ngModel)]="flashcardVerso"
-            name="flashcardVerso"
+          <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardVerso" name="flashcardVerso"
             placeholder="Digite a resposta..."></textarea>
         </label>
       </div>
@@ -544,10 +430,7 @@
       <div class="flashcard-linha-dupla">
         <label class="flashcard-label">
           Tipo
-          <select
-            class="flashcard-select"
-            [(ngModel)]="flashcardTipo"
-            name="flashcardTipo">
+          <select class="flashcard-select" [(ngModel)]="flashcardTipo" name="flashcardTipo">
             <option value="PERGUNTA_RESPOSTA">Pergunta e resposta</option>
             <option value="VERDADEIRO_FALSO">Verdadeiro ou falso</option>
             <option value="CLOZE">Cloze (preencher lacuna)</option>
@@ -556,10 +439,7 @@
 
         <label class="flashcard-label">
           Dificuldade
-          <select
-            class="flashcard-select"
-            [(ngModel)]="flashcardDificuldade"
-            name="flashcardDificuldade">
+          <select class="flashcard-select" [(ngModel)]="flashcardDificuldade" name="flashcardDificuldade">
             <option value="FACIL">Fácil</option>
             <option value="MEDIA">Média</option>
             <option value="DIFICIL">Difícil</option>
@@ -571,11 +451,7 @@
       <div class="flashcard-tags-wrapper">
         <label class="flashcard-label">
           Tags (opcional)
-          <input
-            type="text"
-            class="flashcard-input"
-            [(ngModel)]="flashcardTags"
-            name="flashcardTags"
+          <input type="text" class="flashcard-input" [(ngModel)]="flashcardTags" name="flashcardTags"
             placeholder="Ex.: português, morfologia, substantivo" />
         </label>
         <small class="flashcard-dica">
@@ -589,17 +465,11 @@
 
       <!-- Rodapé -->
       <footer class="flashcard-footer">
-        <button
-          type="button"
-          class="btn secundario"
-          (click)="fecharModalFlashcard()">
+        <button type="button" class="btn secundario" (click)="fecharModalFlashcard()">
           Cancelar
         </button>
 
-        <button
-          type="button"
-          class="btn primario"
-          (click)="salvarFlashcard()"
+        <button type="button" class="btn primario" (click)="salvarFlashcard()"
           [disabled]="!flashcardFrente.trim() || !flashcardVerso.trim()">
           💾 Salvar Flashcard
         </button>
