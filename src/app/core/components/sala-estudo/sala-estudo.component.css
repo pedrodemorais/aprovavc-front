@@ -1295,6 +1295,102 @@
   margin-left: auto;
   font-style: italic;
 }
+/* --- BLOCO: SONS DE FOCO POR ÍCONE --- */
+
+.card-som-icones {
+  margin-top: 1.5rem;
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.som-icones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.som-icones-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.som-icones-titulo {
+  font-size: 1.1rem;
+  margin: 0.1rem 0;
+}
+
+.som-icones-descricao {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 0.1rem 0 0;
+}
+
+.som-icones-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.som-icone {
+  border: none;
+  border-radius: 10px;
+ 
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(4px);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, opacity 0.15s ease;
+  opacity: 0.8;
+}
+
+.som-icone:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+.som-icone-emoji {
+  font-size: 1.1rem;
+}
+
+.som-icone-nome {
+  white-space: nowrap;
+}
+
+/* estado ativo (som tocando) */
+.som-icone.ativo {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(0, 150, 255, 0.4);
+}
+.som-icone-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px; /* se quiser redondinho */
+  object-fit: cover;
+}
+
+.som-icones-volume {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.som-icones-volume-label {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.som-icones-volume input[type="range"] {
+  flex: 1;
+  cursor: pointer;
+}
 
 /* responsivo */
 @media (max-width: 640px) {

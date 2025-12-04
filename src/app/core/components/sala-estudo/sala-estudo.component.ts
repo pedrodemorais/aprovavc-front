@@ -125,6 +125,11 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pararTimerInterno();
+      if (this.audioFoco) {
+    this.audioFoco.pause();
+    this.audioFoco.src = '';
+    this.audioFoco = null;
+  }
   }
 
   // ================================================================
@@ -827,5 +832,125 @@ ativarRevisaoFlashcards(): void {
       }
     });
   }
+
+// --- INÍCIO BLOCO: SONS DE FOCO POR ÍCONE ---
+
+sonsFoco = [
+  {
+    id: 'white',
+    nome: '',
+    arquivo: 'assets/sons/mixkit-water-flowing-in-the-river.wav',
+    icone: 'assets/img/icon/aceno.png'
+  },
+  {
+    id: 'brown',
+    nome: '',
+    arquivo: 'assets/sons/10-minute-rain-and-thunder.mp3',
+    icone: 'assets/img/icon/chuva.png'
+  },
+  {
+    id: 'pink',
+    nome: '',
+    arquivo: 'assets/sons/mixkit-sea-waves-ambience.wav',
+    icone: 'assets/img/icon/onda.png'
+  },
+  {
+    id: 'fan',
+    nome: '',
+    arquivo: 'assets/sons/mixkit-river-in-the-forest-with-birds.wav',
+    icone: 'assets/img/icon/floresta.png'
+  },
+  {
+    id: 'rain',
+    nome: '',
+    arquivo: 'assets/sons/relaxing-layered-brown-noise-304725.mp3',
+    icone: 'assets/img/icon/barulho.png'
+  }
+];
+
+private audioFoco: HTMLAudioElement | null = null;
+somAtivoId: string | null = null;   // qual ícone/som está ativo
+volumeSomFoco: number = 0.5;        // se quiser depois pode expor um slider
+
+private inicializarAudioFoco(): void {
+  if (!this.audioFoco) {
+    this.audioFoco = new Audio();
+    this.audioFoco.loop = true;
+    this.audioFoco.volume = this.volumeSomFoco;
+  }
+}
+
+private tocarSom(somId: string): void {
+  this.inicializarAudioFoco();
+  if (!this.audioFoco) {
+    return;
+  }
+
+  const som = this.sonsFoco.find(s => s.id === somId);
+  if (!som) {
+    return;
+  }
+
+  // se já está tocando esse mesmo som, parar
+  if (this.somAtivoId === somId) {
+    this.audioFoco.pause();
+    this.somAtivoId = null;
+    return;
+  }
+
+  // troca a fonte, garante loop e reseta o tempo
+  this.audioFoco.src = som.arquivo;
+  this.audioFoco.currentTime = 0;
+  this.audioFoco.loop = true; // 👈 reforça o loop sempre que troca o som
+
+  // fallback manual pro caso de algum navegador ignorar o loop
+  this.audioFoco.onended = () => {
+    if (this.somAtivoId === somId && this.audioFoco) {
+      this.audioFoco.currentTime = 0;
+      this.audioFoco.play().catch(err => {
+        console.error('Erro ao reiniciar áudio de foco:', err);
+      });
+    }
+  };
+
+  this.audioFoco
+    .play()
+    .then(() => {
+      this.somAtivoId = somId;
+    })
+    .catch(err => {
+      console.error('Erro ao tocar áudio de foco:', err);
+      this.somAtivoId = null;
+    });
+}
+
+
+// chamado ao clicar no ícone
+onClickSomIcone(somId: string): void {
+  this.tocarSom(somId);
+}
+
+// se quiser controlar volume depois:
+mudarVolumeSomFoco(novoVolume: number): void {
+  this.volumeSomFoco = novoVolume;
+  if (this.audioFoco) {
+    this.audioFoco.volume = this.volumeSomFoco;
+  }
+}
+
+
+
+onVolumeSomFocoChange(event: any): void {
+  const novoVolume = Number(event.target.value);
+  this.volumeSomFoco = novoVolume;
+
+  if (this.audioFoco) {
+    this.audioFoco.volume = this.volumeSomFoco;
+  }
+}
+
+
+// --- FIM BLOCO: SONS DE FOCO POR ÍCONE ---
+
 
 }

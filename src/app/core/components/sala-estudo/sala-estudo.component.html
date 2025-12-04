@@ -10,11 +10,57 @@
       <h1 class="sala-titulo">
         {{ materia?.nome || 'Matéria' }}
       </h1>
-      <p class="sala-descricao" *ngIf="materia">
+      <div class="sala-descricao" *ngIf="materia">
         Foque seus estudos, faça anotações e acompanhe o tempo dedicado a esta matéria.
-      </p>
+      </div>
+    </div>
+    <div>
+      <!-- CARD: Sons de foco / ruído branco -->
+<!-- CARD: Sons de foco com ícones -->
+<section class="card card-som-icones">
+  <div class="som-icones-header">
+    <div>
+      <div class="som-icones-label">Ambiente sonoro</div>
+    </div>
+  </div>
+
+  <div class="som-icones-lista">
+    <button
+      type="button"
+      class="som-icone"
+      *ngFor="let som of sonsFoco"
+      [class.ativo]="somAtivoId === som.id"
+      (click)="onClickSomIcone(som.id)"
+      [title]="som.nome"
+    >
+      <img
+        class="som-icone-img"
+        [src]="som.icone"
+        [alt]="som.nome"
+      />
+      <span class="som-icone-nome">{{ som.nome }}</span>
+    </button>
+  </div>
+
+  <!-- 🔉 CONTROLE DE VOLUME -->
+  <div class="som-icones-volume">
+    <span class="som-icones-volume-label">Volume</span>
+    <input
+      type="range"
+      min="0"
+      max="1"
+      step="0.05"
+      [value]="volumeSomFoco"
+      (input)="onVolumeSomFocoChange($event)"
+    />
+  </div>
+</section>
+
+
     </div>
   </section>
+
+
 
   <!-- CORPO DA SALA -->
   <section class="card sala-body">
