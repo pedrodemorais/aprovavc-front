@@ -46,6 +46,7 @@ import { EditorModule } from 'primeng/editor';
 import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
 import { MateriaCadastroComponent } from './components/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './components/sala-estudo/sala-estudo.component';
+import { EditaisComponent } from './components/editais/editais.component';
 
 
 
@@ -58,7 +59,8 @@ import { SalaEstudoComponent } from './components/sala-estudo/sala-estudo.compon
     
     EmpresaCadastroComponent,
          MateriaCadastroComponent,
-         SalaEstudoComponent, 
+         SalaEstudoComponent,
+         EditaisComponent, 
        
     
   

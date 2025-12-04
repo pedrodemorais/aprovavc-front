@@ -1,0 +1,497 @@
+.page-edital {
+  background: #f3f4f6;
+  min-height: 100%;
+  padding: 24px 16px 40px;
+  box-sizing: border-box;
+}
+
+/* CABEÇALHO */
+
+.edital-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.edital-header-textos h1 {
+  font-size: 1.6rem;
+  margin: 0;
+  color: #111827;
+}
+
+.edital-header-textos .sub {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.btn-novo-edital {
+  white-space: nowrap;
+}
+
+/* GRID PRINCIPAL */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  padding: 16px 18px 18px;
+  box-sizing: border-box;
+}
+
+/* MENSAGENS */
+
+.mensagens {
+  margin-bottom: 8px;
+}
+
+.msg-erro,
+.msg-sucesso {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.msg-erro {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.msg-sucesso {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* LISTA DE EDITAIS */
+
+.lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.titulo-bloco {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.loading {
+  padding: 12px 0;
+}
+
+.muted {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.muted.pequeno {
+  font-size: 0.8rem;
+}
+
+.msg-erro.pequeno {
+  font-size: 0.8rem;
+}
+
+/* CARDS DE EDITAL */
+
+.lista-editais {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.edital-card {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: linear-gradient(to bottom, #ffffff, #f9fafb);
+  overflow: hidden;
+}
+
+/* CABEÇALHO DO CARD DE EDITAL */
+
+.edital-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.edital-card-header:hover {
+  background: #f3f4ff;
+  border-color: #e0e7ff;
+}
+
+.edital-card-header.aberto {
+  background: #eef2ff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.edital-header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.edital-nome {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.edital-desc {
+  margin: 2px 0 4px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.edital-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.meta-label {
+  color: #6b7280;
+}
+
+.meta-valor {
+  font-weight: 500;
+}
+
+.edital-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Botoes icone */
+
+.btn-icone {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+  border-radius: 999px;
+  transition: background 0.1s ease;
+}
+
+.btn-icone:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.btn-icone-danger:hover {
+  background: rgba(248, 113, 113, 0.15);
+}
+
+/* Chevron */
+
+.chevron {
+  font-size: 0.9rem;
+  color: #6b7280;
+  transition: transform 0.15s ease;
+}
+
+.chevron.aberto {
+  transform: rotate(180deg);
+}
+
+.chevron-menor {
+  font-size: 0.75rem;
+}
+
+/* CORPO DO CARD (MATÉRIAS + TÓPICOS) */
+
+.edital-card-body {
+  padding: 8px 12px 12px;
+}
+
+.lista-materias {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+}
+
+.materia-linha + .materia-linha {
+  margin-top: 6px;
+}
+
+.materia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #f9fafb;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+
+.materia-header:hover {
+  background: #f3f4ff;
+  border-color: #e0e7ff;
+}
+
+.materia-titulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.materia-indice {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.materia-nome {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.materia-acoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-topico {
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+/* ÁRVORE DE TÓPICOS */
+
+.materia-topicos {
+  margin-top: 4px;
+  padding-left: 12px;
+  border-left: 2px solid #e5e7eb;
+}
+
+.lista-topicos {
+  list-style: none;
+  padding-left: 0;
+  margin: 4px 0 0;
+}
+
+.lista-topicos > li {
+  margin: 2px 0;
+}
+
+.topico-linha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.topico-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #c4b5fd;
+  flex-shrink: 0;
+}
+
+.topico-descricao {
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+/* indentação por nível */
+
+.topico-nivel-1 {
+  padding-left: 0;
+}
+
+.topico-nivel-2 {
+  padding-left: 12px;
+}
+
+.topico-nivel-3 {
+  padding-left: 24px;
+}
+
+.topico-nivel-4 {
+  padding-left: 36px;
+}
+
+/* FORMULÁRIO */
+
+.titulo-form {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.obrigatorio {
+  color: #dc2626;
+}
+
+.input-text,
+.select-materias,
+textarea.input-text {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 7px 9px;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.input-text:focus,
+.select-materias:focus,
+textarea.input-text:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+}
+
+textarea.input-text {
+  resize: vertical;
+}
+
+.select-materias {
+  min-height: 150px;
+}
+
+.hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+.erro {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: #b91c1c;
+}
+
+/* BOTÕES */
+
+.btn {
+  border-radius: 999px;
+  border: none;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.btn.primario {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn.primario:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn.secundario {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.btn.texto {
+  background: transparent;
+  color: #2563eb;
+  padding: 4px 6px;
+}
+
+.btn-danger {
+  color: #b91c1c;
+}
+
+/* PILLS */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.pill-progresso {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.pill-dominio {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+/* RESPONSIVO */
+
+@media (max-width: 992px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .edital-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-novo-edital {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .edital-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .edital-header-right {
+    align-self: stretch;
+    justify-content: flex-end;
+  }
+}

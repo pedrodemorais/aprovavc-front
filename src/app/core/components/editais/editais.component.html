@@ -1,0 +1,283 @@
+<div class="page-edital">
+
+  <!-- CABEÇALHO -->
+  <div class="edital-header">
+    <div class="edital-header-textos">
+      <h1>Meus editais / provas</h1>
+      <p class="sub">
+        Agrupe suas matérias da biblioteca por concurso e acompanhe o progresso e o domínio.
+      </p>
+    </div>
+
+    <button type="button" class="btn primario btn-novo-edital" (click)="novoEdital()">
+      + Novo edital
+    </button>
+  </div>
+
+  <!-- MENSAGENS -->
+  <div class="mensagens">
+    <p *ngIf="erro" class="msg-erro">{{ erro }}</p>
+    <p *ngIf="mensagemSucesso" class="msg-sucesso">{{ mensagemSucesso }}</p>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="layout">
+
+    <!-- LISTA DE EDITAIS (COLUNA ESQUERDA) -->
+    <section class="card lista">
+
+      <div class="lista-header">
+        <span class="titulo-bloco">Editais cadastrados</span>
+      </div>
+
+      <div *ngIf="carregando" class="loading">Carregando...</div>
+
+      <p *ngIf="!carregando && !editais.length" class="muted">
+        Você ainda não cadastrou nenhum edital.
+      </p>
+
+      <div class="lista-editais" *ngIf="!carregando && editais.length">
+
+        <!-- CARD DE CADA EDITAL -->
+        <article class="edital-card" *ngFor="let e of editais">
+
+          <!-- CABEÇALHO DO EDITAL (COLAPSÁVEL) -->
+          <div
+            class="edital-card-header"
+            [class.aberto]="isEditalAberto(e.id)"
+            (click)="toggleEdital(e.id)"
+          >
+            <div class="edital-header-left">
+              <h2 class="edital-nome">{{ e.nome }}</h2>
+              <p class="edital-desc" *ngIf="e.descricao">
+                {{ e.descricao }}
+              </p>
+
+              <div class="edital-meta">
+                <span class="meta-item">
+                  <span class="meta-label">Data da prova:</span>
+                  <span class="meta-valor">{{ formatData(e.dataProva) }}</span>
+                </span>
+
+                <span class="meta-item">
+                  <span class="meta-label">Progresso:</span>
+                  <span class="pill pill-progresso">
+                    {{ formatPercent(e.percentualEstudadoGeral) }}
+                  </span>
+                </span>
+
+                <span class="meta-item">
+                  <span class="meta-label">Domínio:</span>
+                  <span class="pill pill-dominio">
+                    {{ formatPercent(e.nivelDominioGeral) }}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div class="edital-header-right">
+              <button
+                type="button"
+                class="btn-icone"
+                (click)="editar(e); $event.stopPropagation()"
+              >
+                ✏️
+              </button>
+              <button
+                type="button"
+                class="btn-icone btn-icone-danger"
+                (click)="excluir(e); $event.stopPropagation()"
+              >
+                🗑
+              </button>
+
+              <span class="chevron" [class.aberto]="isEditalAberto(e.id)">
+                ▾
+              </span>
+            </div>
+        </div>
+
+          <!-- CORPO EXPANSÍVEL: MATÉRIAS + TÓPICOS -->
+          <section class="edital-card-body" *ngIf="isEditalAberto(e.id)">
+
+            <div *ngIf="!e.materias || !e.materias.length" class="muted pequeno">
+              Nenhuma matéria vinculada a este edital.
+            </div>
+
+            <ul class="lista-materias" *ngIf="e.materias && e.materias.length">
+
+              <li *ngFor="let m of e.materias" class="materia-linha">
+
+                <!-- CABEÇALHO DA MATÉRIA (COLAPSÁVEL) -->
+                <div
+                  class="materia-header"
+                  (click)="toggleMateria(e.id, m.materiaId)"
+                >
+                  <div class="materia-titulo">
+                    <span class="materia-indice">
+                      {{ m.materiaId }}
+                    </span>
+                    <span class="materia-nome">
+                      {{ m.materiaNome }}
+                    </span>
+                  </div>
+
+                  <div class="materia-acoes">
+                    <span class="badge-topico">
+                      ver tópicos
+                    </span>
+                    <span
+                      class="chevron chevron-menor"
+                      [class.aberto]="isMateriaAberta(e.id, m.materiaId)"
+                    >
+                      ▾
+                    </span>
+                  </div>
+                </div>
+
+                <!-- ÁRVORE DE TÓPICOS (SE A MATÉRIA ESTÁ ABERTA) -->
+                <div
+                  class="materia-topicos"
+                  *ngIf="isMateriaAberta(e.id, m.materiaId)"
+                >
+
+                  <div *ngIf="carregandoTopicos[m.materiaId]" class="muted pequeno">
+                    Carregando tópicos...
+                  </div>
+
+                  <div *ngIf="erroTopicos[m.materiaId]" class="msg-erro pequeno">
+                    {{ erroTopicos[m.materiaId] }}
+                  </div>
+
+                  <ng-container *ngIf="topicosPorMateria[m.materiaId] && !carregandoTopicos[m.materiaId]">
+
+                    <!-- Template recursivo para árvore de tópicos -->
+                    <ng-template #renderTopicos let-lista let-nivel="nivel">
+                      <ul class="lista-topicos">
+                        <li
+                          *ngFor="let t of lista"
+                          [ngClass]="'topico-nivel-' + nivel"
+                        >
+                          <div class="topico-linha">
+                            <span class="topico-dot"></span>
+                            <span class="topico-descricao">
+                              {{ t.descricao }}
+                            </span>
+                          </div>
+
+                          <ng-container *ngIf="t.subtopicos && t.subtopicos.length">
+                            <ng-template
+                              [ngTemplateOutlet]="renderTopicos"
+                              [ngTemplateOutletContext]="{
+                                $implicit: t.subtopicos,
+                                nivel: nivel + 1
+                              }"
+                            >
+                            </ng-template>
+                          </ng-container>
+                        </li>
+                      </ul>
+                    </ng-template>
+
+                    <ng-template
+                      [ngTemplateOutlet]="renderTopicos"
+                      [ngTemplateOutletContext]="{
+                        $implicit: topicosPorMateria[m.materiaId],
+                        nivel: 1
+                      }"
+                    >
+                    </ng-template>
+
+                  </ng-container>
+
+                </div>
+              </li>
+            </ul>
+          </section>
+
+        </article>
+
+      </div>
+
+    </section>
+
+    <!-- FORMULÁRIO (COLUNA DIREITA) -->
+    <section class="card form">
+      <h2 class="titulo-form">{{ tituloFormulario }}</h2>
+
+      <form [formGroup]="form" (ngSubmit)="salvar()">
+
+        <div class="form-group">
+          <label for="nome">Nome do edital / prova <span class="obrigatorio">*</span></label>
+          <input
+            id="nome"
+            type="text"
+            class="input-text"
+            formControlName="nome"
+            placeholder="Ex: Polícia Federal - Agente, TJ-SP, Receita Federal..."
+          />
+          <div class="erro" *ngIf="campoInvalido('nome')">
+            Informe o nome do edital (máx. 150 caracteres).
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="descricao">Descrição</label>
+          <textarea
+            id="descricao"
+            rows="3"
+            class="input-text"
+            formControlName="descricao"
+            placeholder="Algum detalhe importante sobre este edital (opcional)...">
+          </textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="dataProva">Data da prova (se já tiver)</label>
+          <input
+            id="dataProva"
+            type="date"
+            class="input-text"
+            formControlName="dataProva"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="materiasIds">Matérias da biblioteca <span class="obrigatorio">*</span></label>
+
+          <small class="hint">
+            Selecione as matérias que fazem parte deste edital. O histórico continua na matéria,
+            o edital só agrupa.
+          </small>
+
+          <select
+            id="materiasIds"
+            formControlName="materiasIds"
+            multiple
+            size="7"
+            class="select-materias">
+
+            <option *ngFor="let m of materias" [value]="m.id">
+              {{ m.nome }}
+            </option>
+          </select>
+
+          <div class="erro" *ngIf="campoInvalido('materiasIds')">
+            Selecione pelo menos uma matéria.
+          </div>
+        </div>
+
+        <div class="acoes-form">
+          <button type="submit" class="btn primario" [disabled]="salvando">
+            {{ salvando ? 'Salvando...' : 'Salvar edital' }}
+          </button>
+          <button type="button" class="btn secundario" (click)="novoEdital()">
+            Limpar
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+  </div>
+</div>

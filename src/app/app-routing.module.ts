@@ -20,6 +20,7 @@ import { EmpresaCadastroComponent } from './site/pages/empresa-cadastro/empresa-
 import { MateriaCadastroComponent } from './core/components/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './core/components/sala-estudo/sala-estudo.component';
 import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/dashboard-revisao.component';
+import { EditaisComponent } from './core/components/editais/editais.component';
 
 
 
@@ -33,6 +34,7 @@ const routes: Routes = [
   { path: 'politica-privacidade', component: PoliticaPrivacidadeComponent },
   { path: 'termos-de-uso', component: TermosDeUsoComponent },
   { path: 'home', component: InicioComponent },
+  { path: 'Editais', component: EditaisComponent },
   { path: 'login', component: LoginSiteComponent },
   {
     path: 'area-restrita', component: AreaUsuarioComponent, canActivate: [AuthGuard],
@@ -49,6 +51,7 @@ const routes: Routes = [
 
       { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
       { path: 'cad-materias', component: MateriaCadastroComponent },
+      { path: 'editais', component: EditaisComponent },
       { path: 'meu-cadastro', component: EmpresaCadastroComponent },
        { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent },
 
