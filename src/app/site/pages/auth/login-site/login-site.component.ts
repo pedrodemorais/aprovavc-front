@@ -55,7 +55,7 @@ export class LoginSiteComponent implements OnInit  {
         this.authService.isAuthenticated().subscribe(authenticated => {
           if (authenticated) {
            
-            this.router.navigate(['/area-restrita/content']).then(() => {
+            this.router.navigate(['/area-restrita/dashboard']).then(() => {
              
             });
           } else {

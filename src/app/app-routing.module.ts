@@ -14,7 +14,6 @@ import { RecuperarSenhaComponent } from './site/pages/auth/recuperar-senha/recup
 import { RedefinirSenhaSiteComponent } from './site/pages/redefinir-senha-site/redefinir-senha-site.component';
 import { AssineComponent } from './site/pages/assine/assine.component';
 import { AtivacaoComponent } from './site/ativacao/ativacao.component';
-import { ContentComponent } from './site/pages/content/content.component';
 import { InicioComponent } from './site/pages/inicio/inicio.component';
 
 import { EmpresaCadastroComponent } from './site/pages/empresa-cadastro/empresa-cadastro.component';
@@ -40,7 +39,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
       {
-        path: 'content', component: DashboardRevisaoComponent,
+        path: 'dashboard', component: DashboardRevisaoComponent,
         children: [{ path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
 
 

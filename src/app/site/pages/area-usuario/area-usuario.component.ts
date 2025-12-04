@@ -79,7 +79,7 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
       {
         label: 'Início',
         icon: 'pi pi-home',
-        routerLink: ['/area-restrita']
+        routerLink: ['/area-restrita/dashboard']
       },
       {
         label: 'Estudos',
