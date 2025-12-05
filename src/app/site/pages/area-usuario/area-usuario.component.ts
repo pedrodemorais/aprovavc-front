@@ -74,56 +74,36 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private montarMenuTeste(): void {
-    this.items = [
-      {
-        label: 'Início',
-        icon: 'pi pi-home',
-        routerLink: ['/area-restrita/dashboard']
-      },
-      {
-        label: 'Editais',
-        icon: 'pi pi-home',
-        routerLink: ['/area-restrita/editais']
-      },
-      {
-        label: 'Estudos',
-        icon: 'pi pi-book',
-        items: [
-          {
-            label: 'Minhas Matérias',
-            icon: 'pi pi-chart-line',
-            routerLink: ['/area-restrita/cad-materias']
-          },
-          {
-            label: 'cad-materias',
-            icon: 'pi pi-bookmark',
-            routerLink: ['/area-restrita/cad-materias']
-          },
-          {
-            label: 'Sala de Estudo',
-            icon: 'pi pi-clock',
-            routerLink: ['/area-restrita/sala-estudo']
-          }
-        ]
-      },
-      {
-        label: 'Meu Cadastro',
-        icon: 'pi pi-user',
-        routerLink: ['/area-restrita/meu-cadastro']
-      },
-      {
-        label: 'Configurações',
-        icon: 'pi pi-cog',
-        command: () => this.openSettings()
-      },
-      {
-        label: 'Sair',
-        icon: 'pi pi-sign-out',
-        command: () => this.logout()
-      }
-    ];
-  }
+private montarMenuTeste(): void {
+  this.items = [
+    {
+      label: 'Início',
+      icon: 'pi pi-home',
+      routerLink: ['/area-restrita/dashboard']
+    },
+    {
+      label: 'Matérias',
+      icon: 'pi pi-book',
+      routerLink: ['/area-restrita/cad-materias']
+    },
+    {
+      label: 'Editais/Provas',
+      icon: 'pi pi-file-edit',
+      routerLink: ['/area-restrita/editais']
+    },
+    {
+      label: 'Meu Cadastro',
+      icon: 'pi pi-id-card',
+      routerLink: ['/area-restrita/meu-cadastro']
+    },
+ 
+    {
+      label: 'Sair',
+      icon: 'pi pi-sign-out',
+      command: () => this.logout()
+    }
+  ];
+}
 
   toggleMenu() {
     this.menuAberto = !this.menuAberto;

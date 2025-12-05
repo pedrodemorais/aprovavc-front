@@ -4,37 +4,32 @@
   <!-- 🔹 Topo da Dashboard -->
   <header class="topbar">
 
-    <div>
+    <div div="nome-site-area-usuario">
 
       <div class="logo">
-        <img src="assets/img/logo/aprovavc.png" alt="Logo" />
-        <h1 style="font-family: 'Roboto', sans-serif;">
-          <span style="color: #1f1e1e; font-weight: bold; margin-left: 5px;">Aprova.</span>
-          <span style="color: #057cf4; font-weight: lighter;">VC</span>
-        </h1>
-      </div>
+        <img src="assets/img/logo/aprova.png" alt="Logo" />
 
+      </div>
+      <!-- 🔹 Botão de menu hambúrguer -->
+      <button #menuToggle class="menu-toggle" (click)="toggleMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
 
     </div>
 
-    <!-- 🔹 Botão de menu hambúrguer -->
-    <button #menuToggle class="menu-toggle" (click)="toggleMenu()">
-      <i class="fas fa-bars"></i>
-    </button>
+
 
 
 
   </header>
   <div class="container">
     <div class="menu">
-  
 
-      <nav #sidebar class="sidebar"
-     [ngClass]="{ 'menu-mobile': menuAberto }"
-     role="navigation" aria-label="Menu principal"
-     (click)="$event.stopPropagation()">
-  <p-panelMenu [model]="items" [multiple]="true" styleClass="menu-flat"></p-panelMenu>
-</nav>
+
+      <nav #sidebar class="sidebar" [ngClass]="{ 'menu-mobile': menuAberto }" role="navigation"
+        aria-label="Menu principal" (click)="$event.stopPropagation()">
+        <p-panelMenu [model]="items" [multiple]="true" styleClass="menu-flat"></p-panelMenu>
+      </nav>
 
     </div>
 

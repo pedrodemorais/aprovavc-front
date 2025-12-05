@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
+import { tap } from 'rxjs/operators';
+
 
 
 export interface FlashcardRevisaoRespostaRequest {
@@ -109,11 +111,32 @@ export class SalaEstudoService {
     return this.http.post<void>(`${this.apiUrl}/topicos/revisao/responder`, req);
   }
 
-  listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
-  return this.http.get<RevisaoDashboardItem[]>(
-    `${this.apiUrl}/revisoes/dashboard`
+listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
+  const url = `${this.apiUrl}/revisoes/dashboard`;
+
+  console.log('[SalaEstudoService] Chamando GET:', url);
+
+  return this.http.get<RevisaoDashboardItem[]>(url).pipe(
+    tap((res) => {
+      console.log('========================================');
+      console.log('[SalaEstudoService] Resposta /revisoes/dashboard:');
+      console.log(res);
+      if (Array.isArray(res)) {
+        res.forEach((item, idx) => {
+          console.log(`-- Item #${idx} ----------------------`);
+          console.log(item);
+          // tenta logar campos que podem existir
+          // ajustamos depois conforme o que aparecer:
+          console.log('statusRevisao:', (item as any).statusRevisao);
+          console.log('proximaRevisao:', (item as any).proximaRevisao);
+          console.log('dataProximaRevisao:', (item as any).dataProximaRevisao);
+        });
+      }
+      console.log('========================================');
+    })
   );
 }
+
 
 
 }

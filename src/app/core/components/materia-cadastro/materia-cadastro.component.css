@@ -1,21 +1,62 @@
-/* CONTAINER GERAL DA PÁGINA */
+/* ========= CONTAINER GERAL ========= */
+
 .page-container {
   margin: 0 auto;
-  padding: 16px 8px;
-  background: #f9fafb;
-  height: 100vh;          /* ocupa a tela inteira */
+  padding: 16px 12px;
+  background: #f3f4f6;
+  min-height: 100vh;
   box-sizing: border-box;
 }
 
-.page-title {
-  margin: 0 0 12px;
-  font-size: 1.4rem;
-  font-weight: 600;
+.layout {
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-/* MENSAGEM DE ERRO GLOBAL */
+/* ========= CARD PRINCIPAL ========= */
+
+.materias-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.card-body {
+  position: relative;
+  padding: 16px 18px 18px;
+  font-size: 0.92rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  
+  height: 88dvh;
+}
+
+/* ========= CABEÇALHO FIXO ========= */
+
+.cabecalho-fixo {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f9fbff;
+  padding: 10px 14px;
+  margin: -16px -18px 10px; /* encosta nas bordas do card */
+  border-bottom: 1px solid #e5ecf5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cabecalho-linha-unica {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+/* Mensagem de erro global */
 .mensagem-erro {
-  margin-bottom: 10px;
+  margin: 0;
   padding: 8px 12px;
   border-radius: 8px;
   background: #fee2e2;
@@ -23,55 +64,93 @@
   font-size: 0.85rem;
 }
 
-/* LAYOUT */
-.layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  height: 100%;           /* ocupa a altura do page-container */
+/* Bloco de contexto (pílula + texto) à esquerda */
+.cabecalho-contexto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* CARD */
-
-
-.card-body {
-  font-size: 0.92rem;
-}
-
-.coluna-esquerda {
+.cabecalho-texto {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-/* FORM / CAMPO SUPERIOR */
-.form-group {
-  margin-bottom: 10px;
+.cabecalho-titulo {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
 }
 
-.form-group label {
-  display: block;
-  font-size: 0.85rem;
-  margin-bottom: 4px;
+.cabecalho-descricao {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
-.obrigatorio {
-  color: #dc2626;
+/* Pílula de modo (Matéria / Tópico / Subtópico) */
+.pill-modo {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.99rem;
+  font-weight: 500;
 }
+
+.pill-materia {
+  background: #e3f2ff;
+  color: #1565c0;
+}
+
+.pill-topico {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.pill-subtopico {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+/* Bloco input + botões à direita */
+.cabecalho-input-acoes {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.form-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.campo-principal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ========= CAMPOS / ERROS ========= */
 
 .input-text {
   width: 100%;
   border-radius: 8px;
   border: 1px solid #d1d5db;
-  padding: 7px 10px;
+  padding: 8px 10px;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   background-color: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .input-text:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
   background-color: #f9fafb;
 }
 
@@ -86,35 +165,40 @@
   color: #b91c1c;
 }
 
-/* BOTÕES */
-.acoes-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+.hint-campo {
+  font-size: 0.78rem;
+  color: #7a8899;
 }
 
+/* Botões do topo (Salvar / Nova / Salvar tópico) */
+.acoes-topo {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ========= BOTÕES GENÉRICOS ========= */
+
 .btn {
-  border: none;
   border-radius: 8px;
   padding: 7px 14px;
-  font-size: 0.86rem;
+  font-size: 0.85rem;
+  border: none;
   cursor: pointer;
-  transition: filter 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+  transition: background 0.15s, color 0.15s, box-shadow 0.1s, transform 0.05s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn:active {
-  transform: scale(0.98);
+  transform: translateY(1px);
 }
 
 .btn.primario {
-  background: #2563eb;
+  background: #0ea5e9;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
-}
-
-.btn.primario:hover:not(:disabled) {
-  filter: brightness(1.05);
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.45);
 }
 
 .btn.primario:disabled {
@@ -124,108 +208,59 @@
 }
 
 .btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn.secundario:hover:not(:disabled) {
   background: #e5e7eb;
-  color: #111827;
 }
 
-.btn-menor {
-  padding: 4px 10px;
-  font-size: 0.8rem;
+/* ========= TEXTOS AUXILIARES ========= */
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
-/* BOTÕES DE ÍCONE */
-.btn-icone {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 2px 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
+.vazio {
+  font-size: 0.86rem;
+  color: #6b7280;
+  margin-top: 6px;
 }
 
-.btn-icone:hover {
-  filter: brightness(0.9);
-}
-
-.btn-icone .icone-img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-}
-
-/* LINHA DIVISÓRIA */
-.card hr {
-  border: none;
- 
-  margin: 10px 0;
-}
-
-/* TOPO MODO TÓPICO */
-.topo-topico {
-  margin-bottom: 4px;
-}
-
-.cabecalho-topicos {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-  justify-content: space-between;
-}
-
-.cabecalho-topicos-textos {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.titulo-topicos {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-.titulo-colorido {
-  color: #0284c7;
-}
-
-.grupo-botoes-topo {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* INPUT + BOTÃO TÓPICO NO TOPO */
-.novo-topico {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  margin-bottom: 2px;
+.loading {
+  font-size: 0.86rem;
+  color: #4b5563;
   margin-top: 4px;
 }
 
-.novo-topico .input-text {
-  flex: 1 1 auto;
+/* ========= LISTA DE MATÉRIAS ========= */
+
+.lista-materias-wrapper {
+  margin-top: 6px;
 }
 
-.btn-novo-topico {
-  white-space: nowrap;
+.tabela-materias-container {
+ 
+  overflow-y: auto;
+  margin-top: 4px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
 }
 
-/* TABELA DE MATÉRIAS */
 .tabela-materias {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 6px;
   font-size: 0.88rem;
 }
 
 .tabela-materias th,
 .tabela-materias td {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -233,6 +268,7 @@
   text-align: left;
   font-weight: 600;
   color: #4b5563;
+  background: #f9fafb;
 }
 
 .tabela-materias tr {
@@ -244,7 +280,7 @@
 }
 
 .tabela-materias tr.selecionada {
-  background: #eff6ff;
+  background: #9bbde9;
 }
 
 .tabela-materias td.acoes {
@@ -252,7 +288,29 @@
   white-space: nowrap;
 }
 
-/* CÉLULA EXPANDIDA DE TÓPICOS */
+/* Botões de ícone na tabela */
+.btn-icone {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icone:hover {
+  filter: brightness(0.9);
+}
+
+.btn-icone .icone-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+/* ========= ÁRVORE DE TÓPICOS ========= */
+
 .celula-topicos {
   padding: 0;
   background: #f9fafb;
@@ -260,14 +318,11 @@
 
 .topicos-wrapper {
   border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
 }
 
-/* ÁRVORE DE TÓPICOS */
 .arvore-topicos {
-  max-height: 420px;
+  max-height: 380px;
   overflow: auto;
-  padding-right: 4px;
   padding: 8px 10px;
   background: #ffffff;
 }
@@ -294,7 +349,7 @@
 }
 
 .topico-linha.selecionado {
-  background: #eff6ff;
+  background: #9bbde9;
   box-shadow: 0 0 0 1px #bfdbfe;
 }
 
@@ -304,17 +359,38 @@
   gap: 6px;
 }
 
+/* Badge básica (tamanho, formato) */
 .badge-nivel {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 10px;
+  height: 10px;
   border-radius: 999px;
   font-size: 0.7rem;
-  background: #e5e7eb;
-  color: #374151;
+  background: #d1d5db; /* cinza padrão */
 }
+
+/* Nenhuma revisão cadastrada */
+.badge-sem-revisao {
+  background: #d1d5db; /* cinza */
+}
+
+/* Revisão ok / futura */
+.badge-revisao-futura {
+  background: #22c55e; /* verde */
+}
+
+/* Revisão para hoje */
+.badge-revisao-hoje {
+  background: #f97316; /* laranja */
+}
+
+/* Revisão atrasada */
+.badge-revisao-atrasada {
+  background: #ef4444; /* vermelho */
+}
+
 
 .topico-descricao {
   font-size: 0.88rem;
@@ -325,465 +401,53 @@
   gap: 4px;
 }
 
-/* SUBLISTAS (filhos) */
 .lista-topicos-filhos {
   margin-left: 0;
 }
 
-/* TEXTOS AUXILIARES */
-.vazio {
-  font-size: 0.86rem;
-  color: #6b7280;
-  margin-top: 6px;
-}
-
-.loading {
-  font-size: 0.86rem;
-  color: #4b5563;
-  margin-top: 4px;
-}
-
-/* STATUS DO MODO (MATÉRIA / TÓPICO / SUBTÓPICO) */
-.modo-status {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  border: 1px solid transparent;
-}
-
-.chip-icon {
-  font-size: 0.85rem;
-}
-
-/* MODO MATÉRIA */
-.chip-materia {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
-}
-
-/* MODO TÓPICO RAIZ */
-.chip-topico {
-  background: #ecfdf3;
-  color: #166534;
-  border-color: #bbf7d0;
-}
-
-/* MODO SUBTÓPICO */
-.chip-subtopico {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fed7aa;
-}
-
-.chip-hint {
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-.chip-hint strong {
-  font-weight: 600;
-}
-
-/* O card vai ser a área que rola */
-.page-container {
-  
-}
-
-/* Garante que o sticky fique bonito dentro do card */
-.card-body {
-  position: relative;
-}
-
-/* TÍTULO + INPUT fixos no topo da tela ao rolar */
-.cabecalho-fixo {
-  position: sticky;
-  top: 0;                 /* gruda no topo da viewport */
-  z-index: 20;
-   background: #ffffff;
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-/* Só pra dar um respiro entre título e o resto */
-.cabecalho-fixo .page-title {
-  margin-bottom: 0.5rem;
-}
-.tabela-materias-container {
-  max-height: 420px;    /* ajusta a altura que quiser */
-  overflow-y: auto;     /* barra de rolagem vertical */
-  margin-top: 6px;
-}
-
-/* mantém o visual da tabela */
-.tabela-materias {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.88rem;
-}
-
-
-/* ========================= */
-/*  RESPONSIVO PARA CELULAR  */
-/* ========================= */
+/* ========= RESPONSIVO ========= */
 
 @media (max-width: 640px) {
   .page-container {
     padding: 12px 6px;
   }
 
-  .page-title {
-    font-size: 1.2rem;
-    text-align: center;
-  }
-
-  .card {
-    padding: 10px 10px;
-    border-radius: 10px;
+  .materias-card {
+    border-radius: 12px;
   }
 
   .card-body {
-    font-size: 0.88rem;
+    padding: 12px 12px 14px;
   }
 
-  .modo-status {
-    flex-direction: column;
-    align-items: flex-start;
+  .tabela-materias-container {
+    max-height: 340px;
   }
+}
 
-  .chip {
-    font-size: 0.76rem;
-  }
-
-  .chip-hint {
-    font-size: 0.78rem;
-  }
-
-  .acoes-form {
+@media (max-width: 768px) {
+  .cabecalho-linha-unica {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .acoes-form .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .novo-topico {
-    flex-wrap: wrap;
-  }
-
-  .novo-topico .input-text {
-    flex: 1 1 100%;
-  }
-
-  .btn-novo-topico {
-    width: 100%;
-    text-align: center;
-  }
-
-  /* Tabela rolagem horizontal se ficar apertado */
-  .tabela-materias {
-    display: block;
-    width: 100%;
-    
-  }
-
-  .tabela-materias table {
-    width: 100%;
-  }
-
-  .tabela-materias th,
-  .tabela-materias td {
-    padding: 8px 6px;
-  }
-
-  .tabela-materias td.acoes {
-    text-align: right;
-  }
-
-  .celula-topicos {
-    padding: 0;
-  }
-
-  .arvore-topicos {
-    max-height: 320px;
-    padding: 6px 6px;
-  }
-
-  .topico-linha {
+  .cabecalho-contexto {
     align-items: flex-start;
   }
 
-  .topico-acoes {
-    gap: 2px;
+  .cabecalho-input-acoes {
+    width: 100%;
   }
 
-  .btn-icone .icone-img {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-@media (max-width: 400px) {
-  .page-container {
-    padding: 10px 4px;
+  .form-inline {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .card {
-    padding: 8px 8px;
-  }
-
-  .input-text {
-    padding: 6px 8px;
-    font-size: 0.85rem;
-  }
-
-  .btn {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-  }
-
-  .topico-descricao {
-    font-size: 0.82rem;
-  }
-}
-.card-body {
-  position: relative;
-  padding: 14px 16px;
-  font-size: 0.92rem;
-  display: flex;
-  flex-direction: column;
-  height: 100% !important;
-  min-height: 1500px; /* importante pro flex + scroll funcionar */
-}
-
-.cabecalho-fixo {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-/* título principal */
-.cabecalho-fixo .page-title {
-  margin: 0 0 4px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-/* mensagem de erro logo abaixo do título */
-.cabecalho-fixo .mensagem-erro {
-  margin: 0 0 4px;
-}
-
-/* ===== STATUS DO MODO (CHIPS) ===== */
-
-.modo-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-/* chip base */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-}
-
-/* chip de MODO MATÉRIA */
-.chip-materia {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
-}
-
-/* chip de TÓPICO raiz */
-.chip-topico {
-  background: #ecfdf5;
-  color: #047857;
-  border-color: #bbf7d0;
-}
-
-/* chip de SUBTÓPICO */
-.chip-subtopico {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fed7aa;
-}
-
-.chip-icon {
-  font-size: 0.9rem;
-}
-
-/* texto auxiliar ao lado dos chips */
-.chip-hint {
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-/* ===== ÁREA DO FORM / INPUT DO TOPO ===== */
-
-.cabecalho-fixo form,
-.cabecalho-fixo .topo-topico {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* alinha label + campo melhor visualmente */
-.cabecalho-fixo .form-group {
-  margin: 0;
-}
-
-.cabecalho-fixo .titulo-topicos {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 4px;
-}
-
-/* input grande e confortável no topo */
-.cabecalho-fixo .input-text {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 0.9rem;
-  box-sizing: border-box;
-}
-
-.cabecalho-fixo .input-text:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
-}
-
-/* ===== BOTÕES DO TOPO (MATÉRIA) ===== */
-
-.acoes-form {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
-/* botão base – se já tiver .btn no projeto, isso só refina no contexto do topo */
-.cabecalho-fixo .btn {
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 0.82rem;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, box-shadow 0.1s, transform 0.05s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cabecalho-fixo .btn:active {
-  transform: translateY(1px);
-  box-shadow: none;
-}
-
-/* primário = CTA principal (Salvar) */
-.cabecalho-fixo .btn.primario {
-  background: #0ea5e9;
-  color: #ffffff;
-  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.45);
-}
-
-.cabecalho-fixo .btn.primario:disabled {
-  opacity: 0.7;
-  cursor: default;
-  box-shadow: none;
-}
-
-/* secundário = ação auxiliar (Nova matéria) */
-.cabecalho-fixo .btn.secundario {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-}
-
-.cabecalho-fixo .btn.secundario:hover:not(:disabled) {
-  background: #e5e7eb;
-}
-
-/* ===== TOPO DO MODO TÓPICO (INPUT + BOTÃO) ===== */
-
-.topo-topico .cabecalho-topicos {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.cabecalho-topicos-textos .titulo-colorido {
-  color: #0ea5e9;
-  font-weight: 600;
-}
-
-/* linha do input + botão “Salvar tópico” */
-.novo-topico {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.novo-topico .input-text {
-  flex: 1;
-}
-
-/* botão “Salvar tópico” mais compacto e alinhado */
-.btn-novo-topico {
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-/* em telas pequenas, quebra bonito */
-@media (max-width: 600px) {
-  .modo-status {
-    align-items: flex-start;
-  }
-
-  .acoes-form {
+  .acoes-topo {
     justify-content: flex-start;
   }
-
-  .novo-topico {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .btn-novo-topico {
-    width: 100%;
-    justify-content: center;
-  }
+}
+.materia-nome {
+  margin-left: 0.5rem;
 }

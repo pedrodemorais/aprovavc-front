@@ -4,6 +4,22 @@ import { Materia } from 'src/app/core/models/materia.model';
 import { Topico } from 'src/app/core/models/topico.model';
 import { MateriaService } from 'src/app/core/services/materia.service';
 import { Router } from '@angular/router';
+import { SalaEstudoService } from 'src/app/core/services/sala-estudo.service';
+import { RevisaoDashboardItem } from 'src/app/core/models/RevisaoDashboardItem';
+
+type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
+
+// Tópico "turbinado" com info de revisão (pra usar no semáforo)
+type TopicoComRevisao = Topico & {
+  proximaRevisao?: string | null;
+  statusRevisao?: StatusRevisao | string;
+};
+
+interface InfoRevisaoTopico {
+  status: StatusRevisao;
+  proximaRevisao?: string | null;
+  materiaId: number;
+}
 
 @Component({
   selector: 'app-materia-cadastro',
@@ -11,6 +27,11 @@ import { Router } from '@angular/router';
   styleUrls: ['./materia-cadastro.component.css']
 })
 export class MateriaCadastroComponent implements OnInit {
+
+  private revisaoPorMateria = new Map<number, StatusRevisao>();
+
+  // 👇 AGORA TIPADO COM InfoRevisaoTopico (inclui materiaId)
+  private revisoesPorTopico = new Map<number, InfoRevisaoTopico>();
 
   materiaForm!: FormGroup;
   submeteuMateria: boolean = false;
@@ -43,11 +64,13 @@ export class MateriaCadastroComponent implements OnInit {
     private fb: FormBuilder,
     private materiaService: MateriaService,
     private router: Router,
+    private salaEstudoService: SalaEstudoService
   ) {}
 
   ngOnInit(): void {
     this.montarForm();
     this.carregarMaterias();
+    this.carregarRevisoesDashboard();
   }
 
   private montarForm(): void {
@@ -55,6 +78,117 @@ export class MateriaCadastroComponent implements OnInit {
       id: [null],
       nome: ['', [Validators.required, Validators.maxLength(100)]]
     });
+  }
+
+  private carregarRevisoesDashboard(): void {
+    this.salaEstudoService.listarRevisoesDashboard().subscribe({
+      next: (itens: RevisaoDashboardItem[]) => {
+        this.revisoesPorTopico.clear();
+
+        console.log('[DASHBOARD-REVISAO] Itens recebidos do back:', itens);
+        console.log('========================================');
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        (itens || []).forEach((item, idx) => {
+          if (!item.topicoId || !item.materiaId) {
+            return;
+          }
+
+          const proxima: string | null =
+            (item as any).proximaRevisao ||
+            (item as any).dataProximaRevisao ||
+            null;
+
+          let status: StatusRevisao = 'SEM';
+
+         if (proxima) {
+  // monta a data como LOCAL, não UTC
+  const dataRev = this.construirDataLocal(proxima);
+
+  const hojeTime = hoje.getTime();
+  const revTime  = dataRev.getTime();
+
+  const hojeFlag     = revTime === hojeTime;
+  const atrasadoFlag = revTime < hojeTime;
+
+  if (atrasadoFlag)       status = 'ATRASADA';
+  else if (hojeFlag)      status = 'HOJE';
+  else                    status = 'FUTURA';
+
+
+            console.log(`-- Item dashboard #${idx} ----------------------`);
+            console.log(item);
+            console.log('   topicoId:', item.topicoId);
+            console.log('   proximaRevisao:', proxima);
+            console.log('   hojeFlag:', hojeFlag, 'atrasadoFlag:', atrasadoFlag);
+            console.log('   => status calculado:', status);
+          }
+
+          this.revisoesPorTopico.set(item.topicoId, {
+            status,
+            proximaRevisao: proxima,
+            materiaId: item.materiaId
+          });
+        });
+
+        console.log('[DASHBOARD-REVISAO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
+        console.log('========================================');
+      },
+      error: (err) => {
+        console.error('[DASHBOARD-REVISAO] Erro ao carregar revisões:', err);
+      }
+    });
+  }
+
+  /** Status consolidado da MATÉRIA (usa o pior status entre todos os tópicos dela) */
+  private getStatusRevisaoMateria(m: Materia): StatusRevisao {
+    if (!m.id) {
+      return 'SEM';
+    }
+
+    // 1) Se a matéria estiver EXPANDIDA, usa a árvore de tópicos da tela
+    if (this.materiaExpandida && this.materiaExpandida.id === m.id && this.topicos && this.topicos.length > 0) {
+      let pior: StatusRevisao = 'SEM';
+
+      const acumulaStatus = (t: Topico) => {
+        const st = this.getStatusRevisaoTopicoComFilhos(t);
+        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) {
+          pior = st;
+        }
+        (t.filhos || []).forEach(acumulaStatus);
+      };
+
+      this.topicos.forEach(acumulaStatus);
+
+      return pior;
+    }
+
+    // 2) Matéria FECHADA: consolida olhando o mapa de revisões por TÓPICO
+    let pior: StatusRevisao = 'SEM';
+
+    this.revisoesPorTopico.forEach((info) => {
+      if (info.materiaId === m.id) {
+        const st = info.status;
+        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) {
+          pior = st;
+        }
+      }
+    });
+
+    return pior;
+  }
+
+  classeSemaforoMateria(m: Materia) {
+    const status = this.getStatusRevisaoMateria(m);
+
+    return {
+      'badge-sem-revisao': status === 'SEM',
+      'badge-revisao-futura': status === 'FUTURA',
+      'badge-revisao-hoje': status === 'HOJE',
+      'badge-revisao-atrasada': status === 'ATRASADA'
+    };
   }
 
   campoInvalido(campo: string): boolean {
@@ -141,8 +275,13 @@ export class MateriaCadastroComponent implements OnInit {
 
   // abre/fecha a linha de tópicos da matéria e entra em modo tópico
   toggleMateria(m: Materia): void {
+    // Se clicar na mesma matéria (recolher)
     if (this.materiaExpandida?.id === m.id) {
-      // recolher
+      // Se está editando/digitando um tópico, confirma antes de recolher
+      if (!this.podeMudarContextoTopico()) {
+        return;
+      }
+
       this.materiaExpandida = null;
       this.materiaSelecionada = undefined;
       this.modoTopicoGlobal = false;
@@ -154,6 +293,11 @@ export class MateriaCadastroComponent implements OnInit {
       this.submeteuMateria = false;
       this.materiaForm.markAsPristine();
       this.materiaForm.markAsUntouched();
+      return;
+    }
+
+    // Se vai mudar para outra matéria expandida, também pergunta
+    if (!this.podeMudarContextoTopico()) {
       return;
     }
 
@@ -207,6 +351,10 @@ export class MateriaCadastroComponent implements OnInit {
   }
 
   voltarParaCadastroMateria(): void {
+    if (!this.podeMudarContextoTopico()) {
+      return;
+    }
+
     this.modoTopicoGlobal = false;
     this.topicoSelecionado = null;
     this.novoTopicoDescricao = '';
@@ -325,14 +473,29 @@ export class MateriaCadastroComponent implements OnInit {
     this.carregandoTopicos = true;
     this.topicos = [];
     this.topicoSelecionado = null;
+    this.mensagemErro = undefined;
 
     this.materiaService.listarTopicos(m.id).subscribe({
       next: (lista) => {
+        console.log('==============================');
+        console.log('[TOPICOS] Resposta BRUTA do back (lista):', lista);
+        console.log('==============================');
+
         const listaSegura = lista || [];
 
-        this.topicos = listaSegura.map((dto: any) =>
-          this.converterDtoParaTopico(dto, 0)
-        );
+        this.topicos = listaSegura.map((dto: any, idx: number) => {
+          console.log(`--- DTO #${idx} recebido do back ---`);
+          console.log('DTO completo:', dto);
+          console.log('dto.proximaRevisao:', dto.proximaRevisao);
+          console.log('dto.dataProximaRevisao:', (dto as any).dataProximaRevisao);
+          console.log('-----------------------------------');
+
+          const topicoConvertido = this.converterDtoParaTopico(dto, 0);
+
+          console.log(`>>> Tópico convertido #${idx}:`, topicoConvertido);
+
+          return topicoConvertido;
+        });
 
         this.carregandoTopicos = false;
       },
@@ -345,18 +508,25 @@ export class MateriaCadastroComponent implements OnInit {
   }
 
   selecionarTopico(topico: any): void {
-    // se já está selecionado e clicar de novo, limpa
+    // Se clicar no mesmo tópico: isso é o "desclique" permitido
     if (this.topicoSelecionado === topico) {
+      // aqui o usuário conscientemente sai do contexto
       this.limparTopicoSelecionado();
       return;
     }
 
-    this.modoTopicoGlobal = true; // garante que o campo está em modo tópico
+    // Se já tem um tópico selecionado e clicar em outro, protege o contexto
+    if (this.topicoSelecionado && this.topicoSelecionado !== topico) {
+      if (!this.podeMudarContextoTopico()) {
+        return;
+      }
+    }
+
+    this.modoTopicoGlobal = true; // garante modo tópico
     this.topicoSelecionado = topico;
     this.novoTopicoDescricao = '';
     this.modoEdicaoTopico = false;
     this.topicoEmEdicao = null;
-
     this.focarNovoTopico();
   }
 
@@ -386,16 +556,14 @@ export class MateriaCadastroComponent implements OnInit {
     }
 
     this.salvando = true;
+
     this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
       next: (salvo) => {
         this.salvando = false;
 
+        // garante que o ID do topo local seja atualizado
         if (salvo && (salvo as any).id) {
           (topico as any).id = (salvo as any).id;
-        }
-
-        if (this.materiaSelecionada) {
-          this.carregarTopicos(this.materiaSelecionada);
         }
       },
       error: (err) => {
@@ -491,10 +659,170 @@ export class MateriaCadastroComponent implements OnInit {
       descricao: dto.descricao,
       ativo: dto.ativo ?? true,
       nivel,
-      filhos
+      filhos,
+      // ⚠️ Ajusta os nomes conforme vierem do back
+      proximaRevisao: dto.proximaRevisao ?? dto.dataProximaRevisao ?? null,
+      statusRevisao: dto.statusRevisao  // se existir
     };
 
     return topico;
   }
 
+  iniciarCadastroTopico(materia: Materia): void {
+    // se estiver digitando/alterando tópico de outra matéria, pergunta antes
+    if (this.materiaSelecionada && this.materiaSelecionada.id !== materia.id) {
+      if (!this.podeMudarContextoTopico()) {
+        return;
+      }
+    }
+
+    this.modoTopicoGlobal = true;
+
+    // garante que a matéria esteja expandida
+    if (!this.materiaExpandida || this.materiaExpandida.id !== materia.id) {
+      this.materiaExpandida = materia;
+      this.selecionarMateria(materia);
+    } else {
+      this.materiaSelecionada = materia;
+    }
+
+    this.topicoSelecionado = null;
+    this.modoEdicaoTopico = false;
+    this.novoTopicoDescricao = '';
+    this.focarNovoTopico();
+  }
+
+  iniciarCadastroSubtopico(topico: Topico): void {
+    // se for outro tópico e já estiver editando/digitando, protege
+    if (this.topicoSelecionado && this.topicoSelecionado !== topico) {
+      if (!this.podeMudarContextoTopico()) {
+        return;
+      }
+    }
+
+    this.modoTopicoGlobal = true;
+    this.topicoSelecionado = topico;
+    this.modoEdicaoTopico = false;
+    this.novoTopicoDescricao = '';
+    this.focarNovoTopico();
+  }
+
+  private estaEditandoOuDigitandoTopico(): boolean {
+    return this.modoTopicoGlobal && (
+      (this.novoTopicoDescricao || '').trim().length > 0 ||
+      this.modoEdicaoTopico
+    );
+  }
+
+  private podeMudarContextoTopico(): boolean {
+    if (!this.estaEditandoOuDigitandoTopico()) {
+      return true;
+    }
+
+    const sair = confirm(
+      'Você está cadastrando um tópico/subtópico. Deseja sair sem salvar?'
+    );
+
+    if (sair) {
+      // limpa o estado de edição de tópico
+      this.novoTopicoDescricao = '';
+      this.modoEdicaoTopico = false;
+      this.topicoEmEdicao = null;
+      this.topicoSelecionado = null;
+    }
+
+    return sair;
+  }
+
+  /**
+   * Calcula o status da revisão do tópico (sem considerar filhos):
+   * - SEM      -> nenhuma revisão cadastrada
+   * - FUTURA   -> próxima revisão > hoje
+   * - HOJE     -> próxima revisão == hoje
+   * - ATRASADA -> próxima revisão < hoje
+   */
+  private getStatusRevisaoTopico(topico: Topico): StatusRevisao {
+    // 1) Se vier do mapa do dashboard, prioriza
+    if (topico.id && this.revisoesPorTopico.has(topico.id)) {
+      return this.revisoesPorTopico.get(topico.id)!.status;
+    }
+
+    // 2) Se o próprio tópico tiver data de revisão, calcula
+if ((topico as any).proximaRevisao) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const proxima = String((topico as any).proximaRevisao);
+  const dataRev = this.construirDataLocal(proxima);
+
+  if (dataRev.getTime() < hoje.getTime())   return 'ATRASADA';
+  if (dataRev.getTime() === hoje.getTime()) return 'HOJE';
+  return 'FUTURA';
+}
+
+
+    // 3) Sem nada
+    return 'SEM';
+  }
+
+  /** Define a "força" de cada status para comparar pai x filhos */
+  private prioridadeStatus(status: StatusRevisao): number {
+    switch (status) {
+      case 'ATRASADA': return 3; // mais "grave"
+      case 'HOJE':     return 2;
+      case 'FUTURA':   return 1;
+      case 'SEM':
+      default:         return 0;
+    }
+  }
+
+  /** 
+ * Constrói uma data local (sem timezone) a partir de 'YYYY-MM-DD',
+ * evitando o bug de o JS interpretar como UTC e mudar o dia.
+ */
+private construirDataLocal(isoDate: string): Date {
+  const [anoStr, mesStr, diaStr] = isoDate.split('-');
+  const ano = Number(anoStr);
+  const mes = Number(mesStr);   // 1..12
+  const dia = Number(diaStr);   // 1..31
+
+  const data = new Date(ano, mes - 1, dia); // <-- data local
+  data.setHours(0, 0, 0, 0);
+  return data;
+}
+
+
+  /**
+   * Calcula o status consolidado do tópico:
+   * considera o próprio status + o de todos os filhos.
+   *
+   * Regra:
+   * - Se QUALQUER filho estiver ATRASADA -> pai ATRASADA
+   * - Senão, se tiver HOJE -> pai HOJE
+   * - Senão, se tiver FUTURA -> pai FUTURA
+   * - Senão -> SEM
+   */
+  private getStatusRevisaoTopicoComFilhos(topico: Topico): StatusRevisao {
+    let pior: StatusRevisao = this.getStatusRevisaoTopico(topico);
+
+    (topico.filhos || []).forEach((filho) => {
+      const stFilho = this.getStatusRevisaoTopicoComFilhos(filho);
+      if (this.prioridadeStatus(stFilho) > this.prioridadeStatus(pior)) {
+        pior = stFilho;
+      }
+    });
+
+    return pior;
+  }
+
+  classeSemaforoRevisao(topico: TopicoComRevisao) {
+    const status = this.getStatusRevisaoTopicoComFilhos(topico);
+
+    return {
+      'badge-sem-revisao': status === 'SEM',
+      'badge-revisao-futura': status === 'FUTURA',
+      'badge-revisao-hoje': status === 'HOJE',
+      'badge-revisao-atrasada': status === 'ATRASADA'
+    };
+  }
 }
