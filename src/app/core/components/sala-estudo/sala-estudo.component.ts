@@ -10,6 +10,7 @@ import {
   TopicoRevisaoRespostaRequest
 } from '../../services/sala-estudo.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 
 @Component({
   selector: 'app-sala-estudo',
@@ -120,8 +121,10 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
       this.carregarMateria();
       this.carregarTopicos();
+      this.carregarRevisoesDashboard(); // 👈 trás o semáforo
     });
   }
+
 
   ngOnDestroy(): void {
     this.pararTimerInterno();
@@ -784,54 +787,61 @@ ativarRevisaoFlashcards(): void {
    * Marca o flashcard atual como ERREI / DIFICIL / BOM / FACIL
    * e deixa o back recalcular a próxima revisão.
    */
-  avaliarFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
-    const atual = this.flashcardAtual;
-    if (!atual || !atual.id) {
-      return;
-    }
-
-    const req: FlashcardRevisaoRespostaRequest = {
-      flashcardId: atual.id,
-      avaliacao
-    };
-
-    this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
-      next: () => {
-        // simplesmente vai para o próximo cartão
-        this.proximoFlashcard();
-      },
-      error: (err) => {
-        console.error('[REVISÃO] Erro ao registrar resposta do flashcard:', err);
-        alert('Erro ao registrar resposta da revisão. Tente novamente.');
-      }
-    });
+ avaliarFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+  const atual = this.flashcardAtual;
+  if (!atual || !atual.id) {
+    return;
   }
+
+  const req: FlashcardRevisaoRespostaRequest = {
+    flashcardId: atual.id,
+    avaliacao
+  };
+
+  this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
+    next: () => {
+      // vai para o próximo cartão
+      this.proximoFlashcard();
+
+      // 🔄 "F5" local: recarrega tópicos e semáforo
+      this.recarregarTopicosAposRevisao();
+    },
+    error: (err) => {
+      console.error('[REVISÃO] Erro ao registrar resposta do flashcard:', err);
+      alert('Erro ao registrar resposta da revisão. Tente novamente.');
+    }
+  });
+}
+
 
   /**
    * Marca a revisão das anotações (nível tópico) como ERREI / DIFICIL / BOM / FACIL.
    * O servidor cuida da lógica das "caixinhas" do tópico.
    */
-  avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
-    if (!this.topicoSelecionado) {
-      return;
-    }
-
-    const req: TopicoRevisaoRespostaRequest = {
-      topicoId: this.topicoSelecionado.id,
-      avaliacao
-    };
-
-    this.salaEstudoService.responderRevisaoTopico(req).subscribe({
-      next: () => {
-        // aqui dá pra exibir um toque visual leve (toast / mensagem), se quiser depois
-        console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
-      },
-      error: (err) => {
-        console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
-        alert('Erro ao registrar revisão das anotações. Tente novamente.');
-      }
-    });
+avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+  if (!this.topicoSelecionado) {
+    return;
   }
+
+  const req: TopicoRevisaoRespostaRequest = {
+    topicoId: this.topicoSelecionado.id,
+    avaliacao
+  };
+
+  this.salaEstudoService.responderRevisaoTopico(req).subscribe({
+    next: () => {
+      console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
+
+      // 🔄 "F5" local: recarrega tópicos e semáforo
+      this.recarregarTopicosAposRevisao();
+    },
+    error: (err) => {
+      console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
+      alert('Erro ao registrar revisão das anotações. Tente novamente.');
+    }
+  });
+}
+
 
 // --- INÍCIO BLOCO: SONS DE FOCO POR ÍCONE ---
 
@@ -951,6 +961,208 @@ onVolumeSomFocoChange(event: any): void {
 
 
 // --- FIM BLOCO: SONS DE FOCO POR ÍCONE ---
+
+  /** Mapa: topicoId -> info de revisão (status + próxima data) */
+  private revisoesPorTopico = new Map<number, {
+    status: StatusRevisao;
+    proximaRevisao?: string | null;
+  }>();
+
+    /**
+   * Constrói uma data local (sem problema de UTC) a partir de 'YYYY-MM-DD'.
+   */
+  private construirDataLocal(isoDate: string): Date {
+    const [anoStr, mesStr, diaStr] = isoDate.split('-');
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);
+    const dia = Number(diaStr);
+
+    const data = new Date(ano, mes - 1, dia);
+    data.setHours(0, 0, 0, 0);
+    return data;
+  }
+
+  /**
+   * Carrega o dashboard geral de revisões e monta o mapa por tópico.
+   * Reutiliza a mesma lógica da tela de matérias.
+   */
+  private carregarRevisoesDashboard(): void {
+    this.salaEstudoService.listarRevisoesDashboard().subscribe({
+      next: (itens) => {
+        this.revisoesPorTopico.clear();
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        (itens || []).forEach((item: any, idx: number) => {
+          if (!item.topicoId) {
+            return;
+          }
+
+          const proxima: string | null =
+            item.proximaRevisao ||
+            item.dataProximaRevisao ||
+            null;
+
+          let status: StatusRevisao = 'SEM';
+
+          if (proxima) {
+            const dataRev = this.construirDataLocal(proxima);
+
+            const hojeTime = hoje.getTime();
+            const revTime = dataRev.getTime();
+
+            const hojeFlag = revTime === hojeTime;
+            const atrasadoFlag = revTime < hojeTime;
+
+            if (atrasadoFlag) status = 'ATRASADA';
+            else if (hojeFlag) status = 'HOJE';
+            else status = 'FUTURA';
+          }
+
+          this.revisoesPorTopico.set(item.topicoId, {
+            status,
+            proximaRevisao: proxima
+          });
+        });
+
+        console.log('[SALA-ESTUDO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
+      },
+      error: (err) => {
+        console.error('[SALA-ESTUDO] Erro ao carregar revisões dashboard:', err);
+      }
+    });
+  }
+
+    /** Define a "força" de cada status para comparar pai x filhos */
+  private prioridadeStatus(status: StatusRevisao): number {
+    switch (status) {
+      case 'ATRASADA': return 3; // mais crítico
+      case 'HOJE':     return 2;
+      case 'FUTURA':   return 1;
+      case 'SEM':
+      default:         return 0;
+    }
+  }
+
+  /** Busca um DTO de tópico na árvore original pelo id */
+  private encontrarDtoPorId(lista: any[], id: number): any | null {
+    for (const dto of lista) {
+      if (dto.id === id) {
+        return dto;
+      }
+      if (dto.subtopicos && dto.subtopicos.length) {
+        const achou = this.encontrarDtoPorId(dto.subtopicos, id);
+        if (achou) {
+          return achou;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Status "simples" de um tópico, olhando só o próprio id no mapa de revisões.
+   * (Dashboard já calculou o status com base na data).
+   */
+  private getStatusSimplesTopico(topicoId: number | undefined): StatusRevisao {
+    if (!topicoId) {
+      return 'SEM';
+    }
+    const info = this.revisoesPorTopico.get(topicoId);
+    if (!info) {
+      return 'SEM';
+    }
+    return info.status ?? 'SEM';
+  }
+
+  /**
+   * Status consolidado do tópico na ÁRVORE:
+   * considera o próprio id + todos os subtopicos.
+   */
+  private getStatusRevisaoTopicoNaArvore(dto: any): StatusRevisao {
+    let pior: StatusRevisao = this.getStatusSimplesTopico(dto.id);
+
+    const filhos = dto.subtopicos || [];
+    filhos.forEach((filho: any) => {
+      const stFilho = this.getStatusRevisaoTopicoNaArvore(filho);
+      if (this.prioridadeStatus(stFilho) > this.prioridadeStatus(pior)) {
+        pior = stFilho;
+      }
+    });
+
+    return pior;
+  }
+
+  /**
+   * Dado o nó achatado (t da lista da esquerda),
+   * devolve o status consolidado (ele + filhos), usando a árvore original.
+   */
+  private getStatusRevisaoTopicoView(t: any): StatusRevisao {
+    if (!t || !t.id) {
+      return 'SEM';
+    }
+
+    const dto = this.encontrarDtoPorId(this.arvoreTopicos, t.id);
+    if (!dto) {
+      // fallback: só o próprio
+      return this.getStatusSimplesTopico(t.id);
+    }
+
+    return this.getStatusRevisaoTopicoNaArvore(dto);
+  }
+
+  /** Classes CSS para a bolinha da Sala de Estudo */
+  classeSemaforoRevisaoSala(t: any) {
+    const status = this.getStatusRevisaoTopicoView(t);
+
+    return {
+      'badge-sem-revisao': status === 'SEM',
+      'badge-revisao-futura': status === 'FUTURA',
+      'badge-revisao-hoje': status === 'HOJE',
+      'badge-revisao-atrasada': status === 'ATRASADA'
+    };
+  }
+
+  /** Recarrega a árvore de tópicos para atualizar o semáforo
+ *  preservando o tópico selecionado.
+ */
+/** Recarrega revisões + árvore de tópicos para atualizar o semáforo,
+ *  preservando o tópico selecionado.
+ */
+private recarregarTopicosAposRevisao(): void {
+  if (!this.materiaId) {
+    return;
+  }
+
+  const idSelecionado = this.topicoSelecionado?.id;
+
+  // 1) Atualiza o mapa de revisões (é daqui que vem o semáforo)
+  this.carregarRevisoesDashboard();
+
+  // 2) Recarrega a árvore de tópicos (efeito "F5" na coluna esquerda)
+  this.materiaService.listarTopicos(this.materiaId).subscribe({
+    next: (lista) => {
+      const listaSegura = lista || [];
+      console.log('[SALA-ESTUDO] Recarregando tópicos após revisão:', listaSegura);
+
+      this.arvoreTopicos = listaSegura;
+      this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
+
+      // tenta manter o mesmo tópico selecionado
+      if (idSelecionado) {
+        const encontrado = this.topicos.find(t => t.id === idSelecionado);
+        if (encontrado) {
+          this.topicoSelecionado = encontrado;
+        }
+      }
+    },
+    error: (err) => {
+      console.error('[SALA-ESTUDO] Erro ao recarregar tópicos após revisão:', err);
+    }
+  });
+}
+
 
 
 }

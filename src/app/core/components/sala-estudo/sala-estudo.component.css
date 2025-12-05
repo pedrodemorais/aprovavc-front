@@ -1421,3 +1421,57 @@
     grid-template-columns: 1fr;
   }
 }
+/* ============================
+   SEMÁFORO DE REVISÃO – SALA
+   ============================ */
+
+/* Bolinha base */
+.badge-nivel {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Sem revisão (cinza bem neutro) */
+.badge-sem-revisao {
+  background-color: #d4d4d4;
+}
+
+/* Revisão futura (verde claro) */
+.badge-revisao-futura {
+  background-color: #bbf7d0;      /* fundo */
+
+}
+
+/* Revisão para hoje (amarelo/laranja) */
+.badge-revisao-hoje {
+  background-color: #fef3c7;
+
+}
+
+/* Revisão atrasada (vermelho) */
+.badge-revisao-atrasada {
+  background-color: #fee2e2;
+ 
+}
+.badge-sem-revisao {
+  background: #d1d5db; /* cinza */
+}
+
+/* Revisão ok / futura */
+.badge-revisao-futura {
+  background: #22c55e; /* verde */
+}
+
+/* Revisão para hoje */
+.badge-revisao-hoje {
+  background: #f97316; /* laranja */
+}
+
+/* Revisão atrasada */
+.badge-revisao-atrasada {
+  background: #ef4444; /* vermelho */
+}

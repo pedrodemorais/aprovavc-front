@@ -42,7 +42,7 @@
           (click)="!t.hasFilhos && selecionarTopico(t)">
 
           <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
-            <span class="marcador-nivel" [ngClass]="'nivel-' + (t.nivel || 0)"></span>
+            <span class="badge-nivel" [ngClass]="classeSemaforoRevisaoSala(t)"></span>
             <span class="descricao-topico">
               {{ t.descricao }}
             </span>
