@@ -220,6 +220,11 @@
           </div>
         </div>
 
+         <div class="alerta-revisao" *ngIf="mensagemRevisao">
+    <span class="alerta-revisao-icone">✔</span>
+    <span class="alerta-revisao-texto">{{ mensagemRevisao }}</span>
+  </div>
+
         <!-- REVISÃO POR ANOTAÇÕES -->
         <div *ngIf="modoRevisao === 'anotacoes'" class="bloco bloco-revisao-anotacoes">
 

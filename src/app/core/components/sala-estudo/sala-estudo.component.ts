@@ -18,7 +18,7 @@ type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
   styleUrls: ['./sala-estudo.component.css']
 })
 export class SalaEstudoComponent implements OnInit, OnDestroy {
-
+mensagemRevisao?: string;
   materiaId!: number;
   materia?: Materia;
 
@@ -285,6 +285,7 @@ ativarRevisaoFlashcards(): void {
   }
 
   selecionarTopico(t: any): void {
+      this.mensagemRevisao = undefined;
     const trocandoDeTopico =
       this.topicoSelecionado && this.topicoSelecionado.id !== t.id;
 
@@ -563,7 +564,7 @@ ativarRevisaoFlashcards(): void {
 
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
-
+this.mensagemRevisao = undefined;
     // quando entrar no modo revisar, se tiver tópico válido, carrega flashcards de revisão
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
@@ -787,7 +788,7 @@ ativarRevisaoFlashcards(): void {
    * Marca o flashcard atual como ERREI / DIFICIL / BOM / FACIL
    * e deixa o back recalcular a próxima revisão.
    */
- avaliarFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+avaliarFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
   const atual = this.flashcardAtual;
   if (!atual || !atual.id) {
     return;
@@ -800,11 +801,11 @@ ativarRevisaoFlashcards(): void {
 
   this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
     next: () => {
-      // vai para o próximo cartão
       this.proximoFlashcard();
-
-      // 🔄 "F5" local: recarrega tópicos e semáforo
       this.recarregarTopicosAposRevisao();
+
+      // 👇 feedback visual
+      this.mostrarMensagemRevisao('Revisão do flashcard registrada!');
     },
     error: (err) => {
       console.error('[REVISÃO] Erro ao registrar resposta do flashcard:', err);
@@ -831,9 +832,10 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
   this.salaEstudoService.responderRevisaoTopico(req).subscribe({
     next: () => {
       console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
-
-      // 🔄 "F5" local: recarrega tópicos e semáforo
       this.recarregarTopicosAposRevisao();
+
+      // 👇 feedback visual
+      this.mostrarMensagemRevisao('Revisão das anotações registrada!');
     },
     error: (err) => {
       console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
@@ -841,6 +843,7 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
     }
   });
 }
+
 
 
 // --- INÍCIO BLOCO: SONS DE FOCO POR ÍCONE ---
@@ -1162,7 +1165,12 @@ private recarregarTopicosAposRevisao(): void {
     }
   });
 }
-
+private mostrarMensagemRevisao(texto: string): void {
+  this.mensagemRevisao = texto;
+  setTimeout(() => {
+    this.mensagemRevisao = undefined;
+  }, 3000); // some depois de 3s
+}
 
 
 }

@@ -1475,3 +1475,26 @@
 .badge-revisao-atrasada {
   background: #ef4444; /* vermelho */
 }
+.alerta-revisao {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  background: #ecfdf3;        /* verde bem claro */
+  border: 1px solid #bbf7d0;  /* borda verdinha */
+  color: #166534;             /* texto verde escuro */
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.alerta-revisao-icone {
+  font-size: 1rem;
+}
+
+.alerta-revisao-texto {
+  line-height: 1.2;
+}
