@@ -1,18 +1,9 @@
-.page-edital {
-  background: #f3f4f6;
-  min-height: 100%;
-  padding: 24px 16px 40px;
-  box-sizing: border-box;
-}
 
-/* CABEÇALHO */
 
-.edital-header {
+
+
+.nome-data{
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
 }
 
 .edital-header-textos h1 {
@@ -46,6 +37,7 @@
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
   padding: 16px 18px 18px;
   box-sizing: border-box;
+   
 }
 
 /* MENSAGENS */
@@ -117,6 +109,7 @@
   border: 1px solid #e5e7eb;
   background: linear-gradient(to bottom, #ffffff, #f9fafb);
   overflow: hidden;
+ 
 }
 
 /* CABEÇALHO DO CARD DE EDITAL */
@@ -129,6 +122,7 @@
   padding: 10px 12px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
+   width: 100%;
 }
 
 .edital-card-header:hover {
@@ -494,4 +488,214 @@ textarea.input-text {
     align-self: stretch;
     justify-content: flex-end;
   }
+}
+.nome-data {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+/* bloco padrão dos campos */
+.nome-data .campo {
+  display: flex;
+  flex-direction: column;
+}
+
+/* nome ocupa a maior parte da linha */
+.nome-data .campo-nome {
+  flex: 1 1 auto;
+}
+
+/* data ocupa um espaço bem menor */
+.nome-data .campo-data {
+  flex: 0 0 200px; /* ajusta aqui o tamanho do campo data */
+}
+
+/* responsivo: em tela pequena, quebra em coluna */
+@media (max-width: 768px) {
+  .nome-data {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nome-data .campo-data {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* wrapper da lista (abaixo do form), continua uma coluna só */
+.edital-layout {
+  margin-top: 8px;
+}
+
+/* CARD GENÉRICO */
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  padding: 16px 18px 18px;
+  box-sizing: border-box;
+}
+
+/* MENSAGENS */
+.mensagens {
+  margin-bottom: 4px;
+}
+
+/* ===========================
+   NOME + DATA NA MESMA LINHA
+   =========================== */
+
+.nome-data {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 12px;
+}
+
+.nome-data .campo {
+  display: flex;
+  flex-direction: column;
+}
+
+.nome-data .campo-nome {
+  flex: 1 1 auto;
+}
+
+.nome-data .campo-data {
+  flex: 0 0 200px; /* largura fixa menor pra data */
+}
+
+/* responsivo: em tela pequena, quebra pra coluna */
+@media (max-width: 768px) {
+  .nome-data {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nome-data .campo-data {
+    flex: 1 1 auto;
+  }
+}
+
+/* ===========================
+   LISTA DE EDITAIS COM SCROLL
+   =========================== */
+
+/* o card da lista não cresce infinito; ganha scroll interno */
+.painel-esquerda {
+  max-height: calc(100vh - 260px); /* ajusta se precisar mais/menos altura */
+  overflow-y: auto;
+}
+
+/* só pra garantir espaçamento interno da lista */
+.lista-editais {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* mantém o restante do seu estilo de cards normalmente... */
+/* FORÇA A LISTA DE EDITAIS A TER ALTURA FIXA + SCROLL INTERNO */
+.painel-esquerda {
+  height: 50vh;        /* ou 400px, 500px... ajusta como preferir */
+  overflow-y: auto;
+}
+.painel-esquerda {
+  height: 450px;
+  overflow-y: auto;
+}
+.edital-card-header {
+  border: none;
+  background: transparent;
+  display: flex;
+}
+
+.edital-card-header:hover {
+  background: #f3f4ff;
+}
+
+.edital-card-header.aberto {
+  background: #eef2ff;
+  border-bottom: 1px solid #e5e7eb;
+}
+.edital-card-header {
+  border: none;
+  background: transparent;
+}
+
+.edital-card-header:hover {
+  background: #f3f4ff;
+}
+
+.edital-card-header.aberto {
+  background: #eef2ff;
+  border-bottom: 1px solid #e5e7eb;
+}
+.edital-header-col-esq {
+  width: 100%;
+}
+
+/* linha única: nome + descrição + chips */
+.edital-header-linha {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;         /* força ficar tudo na mesma linha em telas largas */
+}
+
+/* garante que meta fique compacta na linha */
+.edital-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0;             /* remove margem de antes, se tiver */
+}
+
+/* deixa nome sem quebrar fácil */
+.edital-nome {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+/* descrição curtinha na mesma linha */
+.edital-desc {
+  font-size: 0.85rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 30%;
+}
+
+/* chips já estão ok, mas reforço que fiquem inline */
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+/* em telas bem pequenas, deixa quebrar em mais de uma linha pra não estourar */
+@media (max-width: 768px) {
+  .edital-header-linha {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .edital-desc {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+.acoes{
+  display: flex;
+  width: 80px;
+  align-items: center;
 }

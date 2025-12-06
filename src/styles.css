@@ -114,6 +114,7 @@ header{
 /* Garantir que seções não criem overflow */
 section,  footer, main, nav, div {
   max-width: 100%;
+  margin-top: 0.1%;
 }
 
 /* Forçar palavras grandes a quebrarem e não criarem scroll horizontal */
