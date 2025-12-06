@@ -1,35 +1,22 @@
+/* ===========================
+   CONTAINER GERAL
+   =========================== */
 
-
-
-
-.nome-data{
+.page-edital {
+ 
+ border-radius: 8px;
+  padding: 12px 16px 24px;
+  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #ffffff;
+  height: 88dvh;
 }
 
-.edital-header-textos h1 {
-  font-size: 1.6rem;
-  margin: 0;
-  color: #111827;
-}
-
-.edital-header-textos .sub {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: #6b7280;
-}
-
-.btn-novo-edital {
-  white-space: nowrap;
-}
-
-/* GRID PRINCIPAL */
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
-  gap: 16px;
-  align-items: flex-start;
-}
+/* ===========================
+   CARDS GENÉRICOS
+   =========================== */
 
 .card {
   background: #ffffff;
@@ -37,17 +24,209 @@
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
   padding: 16px 18px 18px;
   box-sizing: border-box;
-   
 }
 
-/* MENSAGENS */
+/* FORM EM CIMA, LISTA EMBAIXO */
+.painel-form {
+  margin-bottom: 4px;
+}
+
+.painel-lista {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* ===========================
+   CABEÇALHO DO FORMULÁRIO
+   =========================== */
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.titulo-form {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.form-sub {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* ===========================
+   CAMPOS DO FORM
+   =========================== */
+
+.form-edital {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group {
+  margin-bottom: 6px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #111827;
+}
+
+.obrigatorio {
+  color: #dc2626;
+}
+
+/* NOME + DATA NA MESMA LINHA */
+.nome-data {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 4px;
+}
+
+.nome-data .campo {
+  display: flex;
+  flex-direction: column;
+}
+
+.nome-data .campo-nome {
+  flex: 1 1 auto;
+}
+
+.nome-data .campo-data {
+  flex: 0 0 200px;
+}
+
+/* responsivo: quebra em coluna */
+@media (max-width: 768px) {
+  .nome-data {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nome-data .campo-data {
+    flex: 1 1 auto;
+  }
+}
+
+/* INPUTS E SELECT */
+.input-text,
+.select-materias {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 7px 9px;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  background: #f9fafb;
+}
+
+.input-text:focus,
+.select-materias:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+  background: #ffffff;
+}
+
+.select-materias-wrapper {
+  margin-top: 4px;
+}
+
+.select-materias {
+  min-height: 180px;
+}
+
+/* helpers */
+.hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+.erro {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: #b91c1c;
+}
+
+/* BOTÕES DO FORM */
+.acoes-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  justify-content: flex-end; /* joga os filhos (botões) pro canto direito */
+}
+
+
+.btn {
+  border-radius: 999px;
+  border: none;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 0.12s ease, transform 0.05s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primario {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn.primario:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn.primario:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn.secundario {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.btn.secundario:hover {
+  background: #e0e7ff;
+}
+
+.btn.texto {
+  background: transparent;
+  color: #2563eb;
+  padding: 4px 6px;
+}
+
+/* ===========================
+   MENSAGENS GLOBAIS
+   =========================== */
 
 .mensagens {
-  margin-bottom: 8px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 
-.msg-erro,
-.msg-sucesso {
+.msg {
   padding: 8px 10px;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -63,7 +242,9 @@
   color: #166534;
 }
 
-/* LISTA DE EDITAIS */
+/* ===========================
+   LISTA DE EDITAIS
+   =========================== */
 
 .lista-header {
   display: flex;
@@ -78,25 +259,37 @@
   color: #111827;
 }
 
-.loading {
-  padding: 12px 0;
+.lista-legenda {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
-.muted {
+/* estados */
+.estado {
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: #6b7280;
 }
 
-.muted.pequeno {
-  font-size: 0.8rem;
+.estado-carregando {
+  padding: 10px 0;
 }
 
-.msg-erro.pequeno {
-  font-size: 0.8rem;
+.estado-vazio {
+  padding: 14px 0;
+  text-align: center;
 }
 
-/* CARDS DE EDITAL */
+.estado-vazio p {
+  margin-bottom: 6px;
+}
 
+.estado-vazio-menor {
+  font-size: 0.85rem;
+  color: #6b7280;
+  padding: 4px 0 2px;
+}
+
+/* lista em si */
 .lista-editais {
   display: flex;
   flex-direction: column;
@@ -104,16 +297,18 @@
   margin-top: 6px;
 }
 
+/* ===========================
+   CARD DE EDITAL
+   =========================== */
+
 .edital-card {
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   background: linear-gradient(to bottom, #ffffff, #f9fafb);
   overflow: hidden;
- 
 }
 
-/* CABEÇALHO DO CARD DE EDITAL */
-
+/* cabeçalho do card */
 .edital-card-header {
   display: flex;
   justify-content: space-between;
@@ -122,12 +317,10 @@
   padding: 10px 12px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
-   width: 100%;
 }
 
 .edital-card-header:hover {
   background: #f3f4ff;
-  border-color: #e0e7ff;
 }
 
 .edital-card-header.aberto {
@@ -135,32 +328,48 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-.edital-header-left {
+/* coluna esquerda do cabeçalho */
+.edital-header-col-esq {
   flex: 1;
   min-width: 0;
 }
 
+/* tudo em uma única linha (nome + desc + chips) */
+.edital-header-linha {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+}
+
+/* nome do edital */
 .edital-nome {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
   color: #111827;
+  white-space: nowrap;
 }
 
+/* descrição pequena na mesma linha */
 .edital-desc {
-  margin: 2px 0 4px;
   font-size: 0.85rem;
   color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 30%;
 }
 
+/* chips de meta (data / progresso / domínio) */
 .edital-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0;
 }
 
-.meta-item {
+.meta-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -176,14 +385,35 @@
   font-weight: 500;
 }
 
-.edital-header-right {
+/* pills */
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.pill-progresso {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.pill-dominio {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+/* coluna direita do cabeçalho (ações + chevron) */
+.acoes {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-/* Botoes icone */
-
+/* botões ícone */
 .btn-icone {
   border: none;
   background: transparent;
@@ -202,8 +432,7 @@
   background: rgba(248, 113, 113, 0.15);
 }
 
-/* Chevron */
-
+/* chevron */
 .chevron {
   font-size: 0.9rem;
   color: #6b7280;
@@ -218,7 +447,9 @@
   font-size: 0.75rem;
 }
 
-/* CORPO DO CARD (MATÉRIAS + TÓPICOS) */
+/* ===========================
+   CORPO DO CARD (MATÉRIAS)
+   =========================== */
 
 .edital-card-body {
   padding: 8px 12px 12px;
@@ -230,10 +461,11 @@
   margin: 4px 0 0;
 }
 
-.materia-linha + .materia-linha {
+.materia-item + .materia-item {
   margin-top: 6px;
 }
 
+/* cabeçalho da matéria */
 .materia-header {
   display: flex;
   justify-content: space-between;
@@ -251,7 +483,7 @@
   border-color: #e0e7ff;
 }
 
-.materia-titulo {
+.materia-info {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -268,25 +500,25 @@
   color: #111827;
 }
 
-.materia-acoes {
+.materia-meta {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.badge-topico {
-  font-size: 0.75rem;
-  color: #4b5563;
+.materia-legenda {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
-/* ÁRVORE DE TÓPICOS */
-
-.materia-topicos {
+/* wrapper dos tópicos */
+.materia-topicos-wrapper {
   margin-top: 4px;
   padding-left: 12px;
   border-left: 2px solid #e5e7eb;
 }
 
+/* árvore de tópicos */
 .lista-topicos {
   list-style: none;
   padding-left: 0;
@@ -304,7 +536,7 @@
   padding: 2px 0;
 }
 
-.topico-dot {
+.topico-bullet {
   width: 6px;
   height: 6px;
   border-radius: 999px;
@@ -318,7 +550,6 @@
 }
 
 /* indentação por nível */
-
 .topico-nivel-1 {
   padding-left: 0;
 }
@@ -335,354 +566,15 @@
   padding-left: 36px;
 }
 
-/* FORMULÁRIO */
-
-.titulo-form {
-  margin: 0 0 12px;
-  font-size: 1.1rem;
-  color: #111827;
-}
-
-.form-group {
-  margin-bottom: 12px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.obrigatorio {
-  color: #dc2626;
-}
-
-.input-text,
-.select-materias,
-textarea.input-text {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  padding: 7px 9px;
-  font-size: 0.9rem;
-  outline: none;
-  box-sizing: border-box;
-  font-family: inherit;
-}
-
-.input-text:focus,
-.select-materias:focus,
-textarea.input-text:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
-}
-
-textarea.input-text {
-  resize: vertical;
-}
-
-.select-materias {
-  min-height: 150px;
-}
-
-.hint {
-  display: block;
-  font-size: 0.75rem;
-  color: #9ca3af;
-  margin-bottom: 4px;
-}
-
-.erro {
-  margin-top: 3px;
-  font-size: 0.75rem;
-  color: #b91c1c;
-}
-
-/* BOTÕES */
-
-.btn {
-  border-radius: 999px;
-  border: none;
-  padding: 7px 14px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: inherit;
-}
-
-.btn.primario {
-  background: #2563eb;
-  color: #ffffff;
-}
-
-.btn.primario:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.btn.secundario {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-.btn.texto {
-  background: transparent;
-  color: #2563eb;
-  padding: 4px 6px;
-}
-
-.btn-danger {
-  color: #b91c1c;
-}
-
-/* PILLS */
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.pill-progresso {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.pill-dominio {
-  background: #ecfdf3;
-  color: #15803d;
-}
-
-/* RESPONSIVO */
-
-@media (max-width: 992px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
+/* ===========================
+   RESPONSIVO GERAL
+   =========================== */
 
 @media (max-width: 640px) {
-  .edital-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .card {
+    padding: 14px 12px 16px;
   }
 
-  .btn-novo-edital {
-    align-self: stretch;
-    justify-content: center;
-  }
-
-  .edital-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .edital-header-right {
-    align-self: stretch;
-    justify-content: flex-end;
-  }
-}
-.nome-data {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-}
-
-/* bloco padrão dos campos */
-.nome-data .campo {
-  display: flex;
-  flex-direction: column;
-}
-
-/* nome ocupa a maior parte da linha */
-.nome-data .campo-nome {
-  flex: 1 1 auto;
-}
-
-/* data ocupa um espaço bem menor */
-.nome-data .campo-data {
-  flex: 0 0 200px; /* ajusta aqui o tamanho do campo data */
-}
-
-/* responsivo: em tela pequena, quebra em coluna */
-@media (max-width: 768px) {
-  .nome-data {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .nome-data .campo-data {
-    flex: 1 1 auto;
-  }
-}
-
-
-/* wrapper da lista (abaixo do form), continua uma coluna só */
-.edital-layout {
-  margin-top: 8px;
-}
-
-/* CARD GENÉRICO */
-.card {
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-  padding: 16px 18px 18px;
-  box-sizing: border-box;
-}
-
-/* MENSAGENS */
-.mensagens {
-  margin-bottom: 4px;
-}
-
-/* ===========================
-   NOME + DATA NA MESMA LINHA
-   =========================== */
-
-.nome-data {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-  margin-bottom: 12px;
-}
-
-.nome-data .campo {
-  display: flex;
-  flex-direction: column;
-}
-
-.nome-data .campo-nome {
-  flex: 1 1 auto;
-}
-
-.nome-data .campo-data {
-  flex: 0 0 200px; /* largura fixa menor pra data */
-}
-
-/* responsivo: em tela pequena, quebra pra coluna */
-@media (max-width: 768px) {
-  .nome-data {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .nome-data .campo-data {
-    flex: 1 1 auto;
-  }
-}
-
-/* ===========================
-   LISTA DE EDITAIS COM SCROLL
-   =========================== */
-
-/* o card da lista não cresce infinito; ganha scroll interno */
-.painel-esquerda {
-  max-height: calc(100vh - 260px); /* ajusta se precisar mais/menos altura */
-  overflow-y: auto;
-}
-
-/* só pra garantir espaçamento interno da lista */
-.lista-editais {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-/* mantém o restante do seu estilo de cards normalmente... */
-/* FORÇA A LISTA DE EDITAIS A TER ALTURA FIXA + SCROLL INTERNO */
-.painel-esquerda {
-  height: 50vh;        /* ou 400px, 500px... ajusta como preferir */
-  overflow-y: auto;
-}
-.painel-esquerda {
-  height: 450px;
-  overflow-y: auto;
-}
-.edital-card-header {
-  border: none;
-  background: transparent;
-  display: flex;
-}
-
-.edital-card-header:hover {
-  background: #f3f4ff;
-}
-
-.edital-card-header.aberto {
-  background: #eef2ff;
-  border-bottom: 1px solid #e5e7eb;
-}
-.edital-card-header {
-  border: none;
-  background: transparent;
-}
-
-.edital-card-header:hover {
-  background: #f3f4ff;
-}
-
-.edital-card-header.aberto {
-  background: #eef2ff;
-  border-bottom: 1px solid #e5e7eb;
-}
-.edital-header-col-esq {
-  width: 100%;
-}
-
-/* linha única: nome + descrição + chips */
-.edital-header-linha {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: nowrap;         /* força ficar tudo na mesma linha em telas largas */
-}
-
-/* garante que meta fique compacta na linha */
-.edital-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0;             /* remove margem de antes, se tiver */
-}
-
-/* deixa nome sem quebrar fácil */
-.edital-nome {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  white-space: nowrap;
-}
-
-/* descrição curtinha na mesma linha */
-.edital-desc {
-  font-size: 0.85rem;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 30%;
-}
-
-/* chips já estão ok, mas reforço que fiquem inline */
-.meta-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-}
-
-/* em telas bem pequenas, deixa quebrar em mais de uma linha pra não estourar */
-@media (max-width: 768px) {
   .edital-header-linha {
     flex-wrap: wrap;
     align-items: flex-start;
@@ -692,10 +584,63 @@ textarea.input-text {
     max-width: 100%;
     white-space: normal;
   }
+
+  .painel-lista {
+    max-height: none;
+  }
+}
+/* WRAPPER DOS CHIPS DE MATÉRIA */
+.chips-materias-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  background: #f9fafb;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
 
-.acoes{
-  display: flex;
-  width: 80px;
+/* CHIP PADRÃO */
+.chip-materia {
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  background: #ffffff;
+  cursor: pointer;
+  color: #374151;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
+    box-shadow 0.12s ease, transform 0.05s ease;
+}
+
+.chip-materia:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+/* CHIP SELECIONADO */
+.chip-materia-ativa {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+}
+
+.chip-materia-ativa:hover {
+  background: #1d4ed8;
+}
+
+/* responsivo: chips ocupam a linha inteira se precisar */
+@media (max-width: 640px) {
+  .chips-materias-wrapper {
+    padding: 6px;
+  }
+
+  .chip-materia {
+    flex: 0 1 auto;
+  }
 }

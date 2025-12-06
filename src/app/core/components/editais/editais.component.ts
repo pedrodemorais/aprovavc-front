@@ -16,6 +16,7 @@ export class EditaisComponent implements OnInit {
   salvando = false;
   erro?: string;
   mensagemSucesso?: string;
+private mensagemTimeout: any; // para guardar o setTimeout
 
   editais: Edital[] = [];
   materias: Materia[] = [];
@@ -183,6 +184,7 @@ export class EditaisComponent implements OnInit {
       next: () => {
         this.salvando = false;
         this.mensagemSucesso = 'Edital salvo com sucesso.';
+        this.iniciarTimeoutMensagem();
         this.carregarEditais();
         if (!id) {
           this.novoEdital();
@@ -195,6 +197,20 @@ export class EditaisComponent implements OnInit {
       }
     });
   }
+  
+  private iniciarTimeoutMensagem(): void {
+  // se já tiver um timeout pendente, limpa pra não acumular
+  if (this.mensagemTimeout) {
+    clearTimeout(this.mensagemTimeout);
+  }
+
+  this.mensagemTimeout = setTimeout(() => {
+    this.mensagemSucesso = '';
+    this.erro = '';
+    this.mensagemTimeout = null;
+  }, 4000); // 4 segundos – ajusta se quiser mais/menos tempo
+}
+
 
   // ============= UI helpers =============
 
@@ -295,4 +311,49 @@ export class EditaisComponent implements OnInit {
       }
     });
   }
+
+  // Verifica se a matéria está selecionada no form
+// Verifica se a matéria está selecionada no form
+isMateriaSelecionada(id?: number): boolean {
+  // se não tiver id, não tem como estar selecionada
+  if (id == null) {
+    return false;
+  }
+
+  const control = this.form.get('materiasIds');
+  if (!control) {
+    return false;
+  }
+
+  const selecionadas = (control.value as number[] | null) ?? [];
+  return selecionadas.includes(id);
+}
+
+// Alterna seleção ao clicar no chip
+toggleMateriaSelecionada(id?: number): void {
+  // se não tiver id, não faz nada
+  if (id == null) {
+    return;
+  }
+
+  const control = this.form.get('materiasIds');
+  if (!control) {
+    return;
+  }
+
+  let selecionadas = (control.value as number[] | null) ?? [];
+
+  if (selecionadas.includes(id)) {
+    // remove
+    selecionadas = selecionadas.filter(x => x !== id);
+  } else {
+    // adiciona
+    selecionadas = [...selecionadas, id];
+  }
+
+  control.setValue(selecionadas);
+  control.markAsDirty();
+  control.updateValueAndValidity();
+}
+
 }
