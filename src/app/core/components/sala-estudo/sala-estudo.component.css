@@ -1,19 +1,16 @@
-/* CONTAINER GERAL */
+/* ===========================
+   CONTAINER GERAL / LAYOUT
+   =========================== */
+
 .sala-container {
-  margin: 0 auto;
-  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  background: #f9fafb;
-
-  /* 👇 esses dois são o segredo */
+  
   min-height: 100vh;
   box-sizing: border-box;
 }
 
-
-/* Cards seguindo o estilo do cadastro */
+/* Card padrão */
 .card {
   background: #ffffff;
   border-radius: 12px;
@@ -21,84 +18,103 @@
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-/* ---------------- HEADER ---------------- */
+/* ===========================
+   HEADER DA SALA
+   =========================== */
 
 .sala-header {
   display: flex;
+  align-items: stretch;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  gap: 20px;
 }
 
 .sala-header-esquerda {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .sala-subtitulo {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #64748b;
+  letter-spacing: 0.1em;
+  color: #6b7280;
   margin: 0;
 }
 
 .sala-titulo {
-  font-size: 1.5rem;
+  margin: 0;
+  font-size: 1.6rem;
   font-weight: 600;
   color: #0f172a;
-  margin: 0;
 }
 
 .sala-descricao {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
+  font-size: 0.9rem;
   color: #6b7280;
-  font-size: 0.95rem;
 }
 
-/* HEADER DIREITA + TIMER */
+/* Lado direito: timer */
 .sala-header-direita {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
+  min-width: 260px;
+  max-width: 320px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: radial-gradient(circle at top left, #eff6ff 0, #f9fafb 45%, #ffffff 100%);
+  box-shadow: 0 1px 4px rgba(148, 163, 184, 0.25);
 }
 
-/* botões Livre / Pomodoro */
+/* Modos do timer */
 .timer-modos {
-  display: flex;
-  gap: 6px;
+  display: inline-flex;
+  align-self: flex-end;
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 4px;
 }
 
 .btn-modo-timer {
+  border: none;
   border-radius: 999px;
-  border: 1px solid #d1d5db;
-  padding: 4px 12px;
-  font-size: 0.8rem;
-  background: #ffffff;
+  padding: 4px 10px;
+  font-size: 0.78rem;
   cursor: pointer;
+  background: transparent;
   color: #4b5563;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s, color 0.15s, box-shadow 0.1s, transform 0.05s;
+}
+
+.btn-modo-timer:hover {
+  background: rgba(148, 163, 184, 0.18);
 }
 
 .btn-modo-timer.ativo {
-  background: #eff6ff;
-  border-color: #2563eb;
-  color: #1d4ed8;
-  font-weight: 500;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
 }
 
-/* CAIXA DO TIMER – CLARA, CLEAN */
+/* Caixa do timer */
 .timer-box {
+  margin-top: 4px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  padding: 10px 14px;
-  min-width: 230px;
+  border: 1px dashed #cbd5f5;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: #f8fafc;
+  background: #f9fafb;
 }
 
 .timer-header-linha {
@@ -114,30 +130,46 @@
 }
 
 .timer-label {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   color: #6b7280;
 }
 
-.timer-fase {
+.timer-fase,
+.timer-fase-inline {
   font-size: 0.8rem;
   color: #0f766e;
+  font-weight: 500;
 }
 
 .timer-valor {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 1.4rem;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #0f172a;
 }
 
 .timer-botoes {
   display: flex;
-  gap: 8px;
+  gap: 18px;
+  justify-content: space-between;
+  margin-top: 2px;
 }
 
-/* BOTÕES GENÉRICOS */
+.botoes-do-timer {
+  display: flex;
+  gap: 10px;
+  width: 150px;
+}
+
+.timer-botoes .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Botões gerais */
 .btn {
   border-radius: 8px;
   padding: 6px 12px;
@@ -169,19 +201,50 @@
   color: #111827;
 }
 
-/* ---------------- CORPO ---------------- */
+.btn.fantasma {
+  background: transparent;
+  border: 1px dashed #4b5563;
+  color: #4b5563;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
 
+.btn.fantasma:hover {
+  border-style: solid;
+}
 
+/* Responsivo header */
+@media (max-width: 900px) {
+  .sala-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sala-header-direita {
+    align-self: stretch;
+    max-width: 100%;
+  }
+
+  .timer-modos {
+    align-self: flex-start;
+  }
+}
+
+/* ===========================
+   CORPO / COLUNAS
+   =========================== */
 
 .sala-body {
   flex: 1;
   display: flex;
   gap: 16px;
+  min-height: 0;
 }
 
-
-/* Coluna esquerda */
+/* Coluna esquerda (tópicos) */
 .coluna-esquerda {
+  width: 280px;
+  max-width: 320px;
   border-right: 1px solid #e5e7eb;
   padding-right: 12px;
   display: flex;
@@ -227,18 +290,21 @@
   box-shadow: 0 0 0 1px #60a5fa inset;
 }
 
-/* linha interna do tópico (usa paddingLeft via binding) */
+/* Tópico pai só como agrupador */
+.item-topico.topico-pai {
+  cursor: default;
+  background: transparent;
+  box-shadow: none;
+}
+
+.item-topico.topico-pai:hover {
+  background: transparent;
+}
+
 .linha-topico {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.marcador-nivel {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #cbd5f5;
 }
 
 .descricao-topico {
@@ -246,29 +312,37 @@
   color: #111827;
 }
 
-/* Coluna direita */
+.descricao-topico.topico-pai-texto {
+  font-weight: 600;
+}
+
+/* Coluna direita (conteúdo) */
 .coluna-direita {
   padding-left: 4px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
 }
 
-/* Abas de modo */
+/* Abas de modo + sons */
 .abas-modo {
-  display:flex; 
- 
+  display: flex;
   border-radius: 999px;
-  padding: 3px;
-  align-self: flex-start;
-  width: 100%;
-  justify-content: space-between;
+  padding: 3px 8px;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.botoes{
+.botoes {
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 .aba {
@@ -288,13 +362,76 @@
   box-shadow: 0 1px 4px rgb(26, 29, 34);
 }
 
+/* Sons de foco */
+.icones-sons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.som-icone {
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, opacity 0.15s ease;
+  opacity: 0.9;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 4px 8px;
+}
+
+.som-icone:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+  box-shadow: 0 1px 4px rgba(52, 57, 65, 0.4);
+}
+
+.som-icone.ativo {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(26, 29, 34);
+}
+
+.som-icone-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  object-fit: cover;
+}
+
+.som-icone-nome {
+  white-space: nowrap;
+}
+
 /* Conteúdo do modo */
 .modo-conteudo {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: 80%;
-  
+  height: 68dvh;
+}
+
+/* Blocos */
+.bloco {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bloco-anotacoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
 }
 
 .titulo-section {
@@ -308,513 +445,7 @@
   color: #0284c7;
 }
 
-/* Blocos de conteúdo */
-.bloco {
-  background: #f9fafb;
-  border-radius: 10px;
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-
-  /* 👇 faz o bloco crescer pra ocupar tudo que sobrar */
-  flex: 1;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.label-area {
-  display: block;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.area-texto {
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  padding: 8px 10px;
-  resize: vertical;
-  min-height: 130px;
-  font-size: 0.9rem;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-.area-texto:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
-}
-
-/* Flashcards bloco */
-.flashcards-bloco {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.flashcards-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.flashcards-header h3 {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #0f172a;
-}
-
-.tag-breve {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: #fef3c7;
-  color: #92400e;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-/* Revisão placeholder */
-.painel-revisao-placeholder p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #4b5563;
-}
-
-/* Utilitários */
-.muted {
-  color: #6b7280;
-  font-size: 0.85rem;
-}
-
-.sala-loading {
-  text-align: center;
-  padding: 40px 16px;
-  color: #6b7280;
-}
-
-/* ---------------- RESPONSIVO ---------------- */
-
-@media (max-width: 900px) {
-  .sala-body {
-    grid-template-columns: 1fr;
-  }
-
-  .coluna-esquerda {
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-    padding-right: 0;
-    padding-bottom: 12px;
-    margin-bottom: 8px;
-  }
-
-  .sala-header {
-    flex-direction: column;
-  }
-
-  .sala-header-direita {
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 600px) {
-  .timer-box {
-    width: 100%;
-  }
-
-  .timer-modos {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-}
-
-/* Ajuste leve no editor para combinar com os cards */
-:host ::ng-deep .p-editor-container {
-  border-radius: 10px;
-   height: 80%;
-}
-
-:host ::ng-deep .p-editor-toolbar {
-  border-radius: 10px 10px 0 0;
-}
-
-:host ::ng-deep .p-editor-content {
-  border-radius: 0 0 10px 10px;
-}
-
-.acoes-estudo {
-  margin: 8px 0 4px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.salvo-msg {
-  font-size: 0.8rem;
-  color: #16a34a;
-}
-/* CONTAINER GERAL */
-.sala-container {
-  margin: 0 auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  background: #f9fafb;
-
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-/* Cards */
-.card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-}
-
-/* ---------------- CORPO ---------------- */
-
-.sala-body {
-  flex: 1;
-  display: flex;
-  gap: 16px;
-  min-height: 0; /* importante p/ scroll interno */
-}
-
-/* Coluna direita */
-.coluna-direita {
-  padding-left: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Conteúdo do modo */
-
-
-/* Blocos de conteúdo */
-.bloco {
-  background: #f9fafb;
-  border-radius: 10px;
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-
-  flex: 1;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* bloco específico das anotações vira flex-col */
-.bloco-anotacoes {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-}
-
-/* wrapper do editor ocupa o resto do espaço do bloco */
-
-
-/* Ajuste leve no editor para combinar com os cards */
-:host ::ng-deep .editor-wrapper .p-editor-container {
-  flex: 1;
-  display: flex;
- 
-
-}
-
-/* conteúdo interno do editor ocupa tudo */
-:host ::ng-deep .editor-wrapper .p-editor-content {
-  flex: 1;
- 
-}
-
-/* já existiam, mantidos */
-:host ::ng-deep .p-editor-container {
-  border-radius: 10px;
-
-}
-
-:host ::ng-deep .p-editor-toolbar {
-  border-radius: 10px 10px 0 0;
-}
-
-:host ::ng-deep .p-editor-content {
-  border-radius: 0 0 10px 10px;
-       height: 50%;
-
-}
-/* bloco específico das anotações vira flex-col */
-.bloco-anotacoes {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-}
-
-/* wrapper do editor ocupa o resto do espaço do bloco */
-.editor-wrapper {
-  flex: 1;
-  min-height: 0;
-  
-  
-}
-
-/* editor mais alto */
-:host ::ng-deep .editor-wrapper .p-editor-container {
-  flex: 1;
- 
-  flex-direction: column;
-  height: 88%;   /* 👈 aumenta aqui (altura total do editor) */
- 
-}
-
-/* área de texto mais alta */
-:host ::ng-deep .editor-wrapper .p-editor-content {
-  flex: 1;
-  min-height: 100%;   /* 👈 altura da área onde você digita */
-}
-
-/* bordas arredondadas mantidas */
-:host ::ng-deep .p-editor-container {
-  border-radius: 10px;
-}
-
-:host ::ng-deep .p-editor-toolbar {
-  border-radius: 10px 10px 0 0;
-}
-
-:host ::ng-deep .p-editor-content {
-  border-radius: 0 0 10px 10px;
-}
-/* bloco de anotações em coluna, ocupando toda a largura */
-.bloco-anotacoes {
-  
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-  width: 100%;
-}
-
-/* wrapper do editor ocupa toda a largura do bloco */
-.editor-wrapper {
-  flex: 1;
-  min-height: 0;
-  
-  width: 100%;
-}
-
-/* editor ocupa toda a largura disponível dentro do wrapper */
-:host ::ng-deep .editor-wrapper .p-editor-container {
-  flex: 1;
-  
-  flex-direction: column;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* área onde digita também preenche a largura */
-:host ::ng-deep .editor-wrapper .p-editor-content {
-  flex: 1;
-  width: 100%;
-  box-sizing: border-box;
-}
-/* =========================
-   HEADER DA SALA (TOPO)
-   ========================= */
-
-.sala-header {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 16px 20px;
-}
-
-/* LADO ESQUERDO: TÍTULO + DESCRIÇÃO */
-.sala-header-esquerda {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.sala-subtitulo {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #6b7280;
-  margin: 0;
-}
-
-.sala-titulo {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.sala-descricao {
-  margin: 2px 0 0;
-  font-size: 0.9rem;
-  color: #6b7280;
-}
-
-/* LADO DIREITO: CARD DO TIMER */
-.sala-header-direita {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 260px;
-  max-width: 320px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: radial-gradient(circle at top left, #eff6ff 0, #f9fafb 45%, #ffffff 100%);
-  box-shadow: 0 1px 4px rgba(148, 163, 184, 0.25);
-}
-
-/* BARRA DE MODOS: LIVRE x POMODORO */
-.timer-modos {
-  display: inline-flex;
-  align-self: flex-end;
-  background: rgba(15, 23, 42, 0.04);
-  border-radius: 999px;
-  padding: 3px;
-  gap: 4px;
-}
-
-.btn-modo-timer {
-  border: none;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  background: transparent;
-  color: #4b5563;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: background 0.15s, color 0.15s, box-shadow 0.1s, transform 0.05s;
-}
-
-.btn-modo-timer:hover {
-  background: rgba(148, 163, 184, 0.18);
-}
-
-.btn-modo-timer.ativo {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
-}
-
-/* CAIXA DO TIMER EM SI */
-.timer-box {
-  margin-top: 4px;
-  border-radius: 10px;
-  border: 1px dashed #cbd5f5;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: #f9fafb;
-}
-
-.timer-header-linha {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.timer-header-textos {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.timer-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #6b7280;
-}
-
-.timer-fase {
-  font-size: 0.8rem;
-  color: #0f766e;
-  font-weight: 500;
-}
-
-/* VALOR GRANDE DO TIMER */
-.timer-valor {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-/* BOTÕES EMBAIXO DO TIMER */
-.timer-botoes {
-  display: flex;
-  gap: 18px;
-  justify-content: space-between;
-  margin-top: 2px;
-}
-
-.botoes-do-timer {
-  display: flex;       /* Organiza os itens em linha */
-  gap: 10px;           /* Espaçamento entre os itens */
-  width: 150px;
- 
-}
-
-
-.timer-botoes .btn {
-  flex: 1;
-  justify-content: center;
-}
-
-/* deixa o primário um pouco mais chamativo aqui */
-.sala-header-direita .btn.primario {
-  background: #0ea5e9;
-  color: #ffffff;
-  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.5);
-}
-
-.sala-header-direita .btn.secundario {
-  background: #e5e7eb;
-  color: #111827;
-}
-
-/* ---------------- RESPONSIVO HEADER ---------------- */
-
-@media (max-width: 900px) {
-  .sala-header {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .sala-header-direita {
-    align-self: stretch;
-    max-width: 100%;
-  }
-
-  .timer-modos {
-    align-self: flex-start;
-  }
-}
-.timer-fase-inline {
-  font-size: 0.8rem;
-  color: #0f766e;
-  font-weight: 500;
-}
+/* Editor bloqueado aviso */
 .editor-aviso {
   display: flex;
   align-items: flex-start;
@@ -822,8 +453,8 @@
   padding: 8px 10px;
   margin-bottom: 8px;
   border-radius: 8px;
-  background: #fef9c3;       /* amarelo clarinho */
-  border: 1px solid #fde68a; /* borda suave */
+  background: #fef9c3;
+  border: 1px solid #fde68a;
   color: #92400e;
   font-size: 0.85rem;
 }
@@ -838,22 +469,282 @@
   font-weight: 600;
   margin-bottom: 2px;
 }
-/* tópico pai: vira só um cabeçalho/agrupador */
-.item-topico.topico-pai {
-  cursor: default;
-  background: transparent;
-  box-shadow: none;
+
+/* Wrapper do editor */
+.editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
-.item-topico.topico-pai:hover {
-  background: transparent;
+/* Ajustes PrimeNG editor */
+:host ::ng-deep .editor-wrapper .p-editor-container {
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  height: 38vh;
+  box-sizing: border-box;
 }
 
-/* texto do tópico pai em negrito */
-.descricao-topico.topico-pai-texto {
-  font-weight: 600;
+:host ::ng-deep .editor-wrapper .p-editor-content {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
 }
-/* ================= MODAL DE FLASHCARD ================= */
+
+:host ::ng-deep .p-editor-container {
+  border-radius: 10px;
+}
+
+:host ::ng-deep .p-editor-toolbar {
+  border-radius: 10px 10px 0 0;
+}
+
+:host ::ng-deep .p-editor-content {
+  border-radius: 0 0 10px 10px;
+}
+
+/* Ações estudo */
+.acoes-estudo {
+  margin: 8px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.salvo-msg {
+  font-size: 0.8rem;
+  color: #16a34a;
+}
+
+/* Texto secundário */
+.muted {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+/* ===========================
+   REVISÃO (ANOTAÇÕES / FLASH)
+   =========================== */
+
+.cabecalho-revisao {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle-revisao {
+  display: inline-flex;
+  background: #c1d6e7c6;
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.toggle-btn.ativo {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.bloco-revisao-anotacoes,
+.bloco-revisao-flashcards {
+  margin-top: 0.75rem;
+}
+
+.anotacoes-renderizadas {
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.flashcard-review-container {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Cartão de revisão */
+.flashcard-card-review {
+  width: 100%;
+  max-width: 520px;
+  min-height: 170px;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  background: #020617;
+  border: 1px solid #1f2937;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease-out,
+    box-shadow 0.15s ease-out,
+    background-color 0.15s ease-out,
+    transform 0.08s ease-out;
+}
+
+.flashcard-card-review:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 25px rgba(0, 0, 0, 0.5);
+}
+
+.flashcard-card-review.frente {
+  border-color: #334155;
+}
+
+.flashcard-card-review.verso {
+  border-color: #16a34a;
+}
+
+.flashcard-card-header-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.face-pill {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+  color: #e5e7eb;
+}
+
+.flashcard-card-review.verso .face-pill {
+  border-color: #16a34a;
+  color: #bbf7d0;
+}
+
+.meta-contagem {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.flashcard-card-corpo {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+}
+
+.flashcard-conteudo-review {
+  width: 100%;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #e5e7eb;
+  white-space: pre-wrap;
+}
+
+.flashcard-card-footer-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.meta-dificuldade {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+}
+
+.meta-tags {
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta-hint {
+  margin-left: auto;
+  font-style: italic;
+}
+
+.flashcard-acoes-review {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.flashcard-feedback-review {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Alerta revisão */
+.alerta-revisao {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.alerta-revisao-icone {
+  font-size: 1rem;
+}
+
+/* Semáforo revisão */
+.badge-nivel {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.badge-sem-revisao {
+  background: #d1d5db;
+}
+
+.badge-revisao-futura {
+  background: #22c55e;
+}
+
+.badge-revisao-hoje {
+  background: #f97316;
+}
+
+.badge-revisao-atrasada {
+  background: #ef4444;
+}
+
+/* ===========================
+   MODAL FLASHCARD
+   =========================== */
 
 .flashcard-overlay {
   position: fixed;
@@ -913,7 +804,7 @@
   color: #4b5563;
 }
 
-/* bloco contexto matéria/tópico */
+/* Contexto matéria/tópico */
 .flashcard-contexto {
   background: #f9fafb;
   border-radius: 12px;
@@ -939,7 +830,7 @@
   color: #111827;
 }
 
-/* campos principais */
+/* Campos */
 .flashcard-campos {
   display: flex;
   flex-direction: column;
@@ -971,7 +862,7 @@
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
 }
 
-/* tipo / dificuldade */
+/* Tipo / dificuldade */
 .flashcard-linha-dupla {
   display: flex;
   gap: 10px;
@@ -986,7 +877,7 @@
   background: #f9fafb;
 }
 
-/* tags */
+/* Tags */
 .flashcard-tags-wrapper {
   display: flex;
   flex-direction: column;
@@ -1007,494 +898,124 @@
   color: #9ca3af;
 }
 
-/* rodapé */
+.flashcard-mensagem-sucesso {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #0f766e;
+}
+
+/* Rodapé modal */
 .flashcard-footer {
   margin-top: 8px;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
-.flashcard-mensagem-sucesso {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.85rem;
-  color: #0f766e;      /* verdezinho suave */
-}
-.cabecalho-revisao {
-  display: flex;
-  justify-content: space-between;
-  gap: 1.5rem;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
 
-.toggle-revisao {
-  display: inline-flex;
-  background: #c1d6e7c6;
-  border-radius: 999px;
-  padding: 0.2rem;
-  
-}
+/* ===========================
+   MODO FOCO REVISÃO
+   =========================== */
 
-.toggle-btn {
-  border: none;
-  background: transparent;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: #000000;
-  white-space: nowrap;
-}
-
-.toggle-btn.ativo {
-  background: #1d4ed8;
-  color: #ffffff;
-}
-
-.bloco-revisao-anotacoes,
-.bloco-revisao-flashcards {
-  margin-top: 0.75rem;
-}
-
-.anotacoes-renderizadas {
-  margin-top: 0.5rem;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  background: #ffffff;
-  border: 1px solid #ffffff;
-  max-height: 420px;
-  overflow: auto;
-}
-
-.flashcard-review-container {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.flashcard-card-review {
-  width: 100%;
-  max-width: 480px;
-  min-height: 160px;
-  border-radius: 1rem;
-  padding: 1rem 1.25rem;
-  background: #ffffff;
-  border: 1px solid #1e293b;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.flashcard-card-review:hover {
-  border-color: #3b82f6;
-}
-
-.flashcard-label {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #9ca3af;
-}
-
-.flashcard-conteudo-review {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #e5e7eb;
-}
-
-.flashcard-acoes-review {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.flashcard-feedback-review {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-/* quando o modo foco da revisão estiver ativo */
 .sala-container.revisao-foco {
-  /* opcional: mudar o fundo um pouco mais escuro */
   background-color: #ffffff;
 }
 
-/* esconder cabeçalho e coluna esquerda na revisão foco */
 .sala-container.revisao-foco .sala-header,
-.sala-container.revisao-foco .coluna-esquerda,
-.sala-container.revisao-foco .sidebar,
-.sala-container.revisao-foco .painel-lateral {
+.sala-container.revisao-foco .coluna-esquerda {
   display: none !important;
 }
 
-/* fazer a área de conteúdo ocupar a largura disponível */
-.sala-container.revisao-foco .modo-conteudo {
- 
-  margin: 0 auto;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-  min-height: calc(100vh - 2rem);
-}
-
-/* se seu layout tem um wrapper tipo .layout ou .layout-sala */
-.sala-container.revisao-foco .layout,
-.sala-container.revisao-foco .layout-sala {
-  display: block;
-}
-
-/* botão fantasma do modo foco */
-.btn.fantasma {
-  background: transparent;
-  border: 1px dashed #4b5563;
-  color: #9ca3af;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
-}
-
-.btn.fantasma:hover {
-  border-style: solid;
-  color: #e5e7eb;
-}
-/* Já tinha isso antes, mantém ou ajusta */
-.sala-container.revisao-foco {
-  background-color: #ffffff; /* se quiser um fundo levemente diferente */
-}
-
-/* Em modo foco: a área interna vira um flex ocupando a tela */
 .sala-container.revisao-foco .modo-conteudo {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 2rem); /* ajusta se tiver header fixo fora da sala */
+  height: calc(100vh - 2rem);
   margin: 0;
   padding: 1rem 1.5rem;
 }
 
-/* Cabeçalho da revisão ocupa só o topo */
-.sala-container.revisao-foco .cabecalho-revisao {
-  flex: 0 0 auto;
-  margin-bottom: 0.75rem;
+/* ===========================
+   RESPONSIVO GERAL
+   =========================== */
+
+/* <= 1024px: coluna esquerda em cima, direita embaixo */
+@media (max-width: 1024px) {
+  .sala-body {
+    flex-direction: column;
+  }
+
+  .coluna-esquerda {
+    width: 100%;
+    max-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding-right: 0;
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+  }
+
+  .coluna-direita {
+    padding-left: 0;
+  }
 }
 
-/* BLOCOS de revisão ocupam o restante da tela */
-.sala-container.revisao-foco .bloco-revisao-anotacoes,
-.sala-container.revisao-foco .bloco-revisao-flashcards {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* importante pro overflow funcionar direito */
-}
+/* <= 768px: ajuste forte para celular */
+@media (max-width: 768px) {
+  .card {
+    padding: 12px 12px;
+  }
 
-/* Container geral dos flashcards (pode manter o seu se já tiver) */
-.flashcard-review-container {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  align-items: center;
-}
+  .sala-titulo {
+    font-size: 1.3rem;
+  }
 
-/* Cartão base */
-.flashcard-card-review {
-  width: 100%;
-  max-width: 520px;
-  min-height: 170px;
-  border-radius: 1rem;
-  padding: 1rem 1.1rem;
-  background: #020617;          /* mesmo fundo da tela */
-  border: 1px solid #1f2937;    /* borda padrão */
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease-out,
-    box-shadow 0.15s ease-out,
-    background-color 0.15s ease-out,
-    transform 0.08s ease-out;
-}
+  .abas-modo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 0;
+    border-radius: 0;
+  }
 
-.flashcard-card-review:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 25px rgba(0, 0, 0, 0.5);
-}
+  .icones-sons {
+    justify-content: flex-start;
+  }
 
-/* Diferença visual entre frente e verso (bem sutil) */
-.flashcard-card-review.frente {
-  border-color: #334155;                  /* azul acinzentado */
-  background-color: #020617;
-}
+  .acoes-estudo {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.flashcard-card-review.verso {
-  border-color: #16a34a;                  /* leve tom de verde */
-  background-color: #020617;
-}
+  .acoes-estudo .btn {
+    width: 100%;
+    justify-content: center;
+  }
 
-/* Cabeçalho */
-.flashcard-card-header-linha {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-}
+  .flashcard-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
 
-.face-pill {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid #4b5563;
-  color: #e5e7eb;
-}
+  .flashcard-footer .btn {
+    width: 100%;
+  }
 
-.flashcard-card-review.verso .face-pill {
-  border-color: #16a34a;
-  color: #bbf7d0;
-}
-
-.meta-contagem {
-  font-size: 0.78rem;
-  color: #9ca3af;
-}
-
-/* Corpo */
-.flashcard-card-corpo {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-}
-
-.flashcard-conteudo-review {
-  width: 100%;
-  font-size: 0.98rem;
-  line-height: 1.6;
-  color: #e5e7eb;
-  white-space: pre-wrap;
-}
-
-/* Rodapé */
-.flashcard-card-footer-linha {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
-  align-items: center;
-  font-size: 0.78rem;
-  color: #9ca3af;
-}
-
-.meta-dificuldade {
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid #4b5563;
-}
-
-.meta-tags {
-  max-width: 40%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.meta-hint {
-  margin-left: auto;
-  font-style: italic;
-}
-/* --- BLOCO: SONS DE FOCO POR ÍCONE --- */
-
-.card-som-icones {
-  margin-top: 1.5rem;
-  padding: 1.2rem 1.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  
-}
-
-.som-icones-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  
-}
-
-.som-icones-label {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.7;
-  margin: 0;
-}
-
-.som-icones-titulo {
-  font-size: 1.1rem;
-  margin: 0.1rem 0;
-}
-
-.som-icones-descricao {
-  font-size: 0.85rem;
-  opacity: 0.8;
-  margin: 0.1rem 0 0;
-}
-
-.som-icones-lista {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.6rem;
-}
-
-.som-icone {
-  border: none;
-  border-radius: 10px;
- 
-  cursor: pointer;
-  font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(4px);
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, opacity 0.15s ease;
-  opacity: 0.8;
-    
-}
-.icones-sons {
-  display: flex;          /* coloca os ícones em linha */
-  gap: 0.75rem;           /* espaço horizontal entre eles */
-  align-items: center;    /* alinha verticalmente no centro (opcional) */
-}
-
-
-.som-icone:hover {
-  transform: translateY(-1px);
-  opacity: 1;
-  box-shadow: 0 1px 4px rgba(52, 57, 65, 0.766);
-}
-
-.som-icone-emoji {
-  font-size: 1.1rem;
-}
-
-.som-icone-nome {
-  white-space: nowrap;
-  
-}
-
-/* estado ativo (som tocando) */
-.som-icone.ativo {
-   background: #ffffff;
-  opacity: 1;
-  box-shadow: 0 1px 4px rgb(26, 29, 34);
-}
-
-
-
-.som-icone-img {
-  width: 30px;
-  height: 30px;
-  border-radius: 15px; /* se quiser redondinho */
-  object-fit: cover;
-}
-
-.som-icones-volume {
-  margin-top: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.som-icones-volume-label {
-  font-size: 0.8rem;
-  opacity: 0.8;
-  white-space: nowrap;
-}
-
-.som-icones-volume input[type="range"] {
-  flex: 1;
-  cursor: pointer;
-}
-
-/* responsivo */
-@media (max-width: 640px) {
   .flashcard-contexto {
     grid-template-columns: 1fr;
   }
 }
-/* ============================
-   SEMÁFORO DE REVISÃO – SALA
-   ============================ */
 
-/* Bolinha base */
-.badge-nivel {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  display: inline-block;
-  margin-right: 8px;
-  flex-shrink: 0;
-}
+/* <= 480px: refinamento extra celular pequeno */
+@media (max-width: 480px) {
+  .sala-header {
+    padding: 0;
+  }
 
-/* Sem revisão (cinza bem neutro) */
-.badge-sem-revisao {
-  background-color: #d4d4d4;
-}
+  .sala-header-direita {
+    padding: 8px 10px;
+  }
 
-/* Revisão futura (verde claro) */
-.badge-revisao-futura {
-  background-color: #bbf7d0;      /* fundo */
-
-}
-
-/* Revisão para hoje (amarelo/laranja) */
-.badge-revisao-hoje {
-  background-color: #fef3c7;
-
-}
-
-/* Revisão atrasada (vermelho) */
-.badge-revisao-atrasada {
-  background-color: #fee2e2;
- 
-}
-.badge-sem-revisao {
-  background: #d1d5db; /* cinza */
-}
-
-/* Revisão ok / futura */
-.badge-revisao-futura {
-  background: #22c55e; /* verde */
-}
-
-/* Revisão para hoje */
-.badge-revisao-hoje {
-  background: #f97316; /* laranja */
-}
-
-/* Revisão atrasada */
-.badge-revisao-atrasada {
-  background: #ef4444; /* vermelho */
-}
-.alerta-revisao {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-
-  background: #ecfdf3;        /* verde bem claro */
-  border: 1px solid #bbf7d0;  /* borda verdinha */
-  color: #166534;             /* texto verde escuro */
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.alerta-revisao-icone {
-  font-size: 1rem;
-}
-
-.alerta-revisao-texto {
-  line-height: 1.2;
+  .som-icone-nome {
+    display: none; /* só ícone quando tela é bem estreita */
+  }
 }
