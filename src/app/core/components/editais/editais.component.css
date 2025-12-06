@@ -3,15 +3,16 @@
    =========================== */
 
 .page-edital {
- 
- border-radius: 8px;
-  padding: 12px 16px 24px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: #ffffff;
+  background: #f3f4f6;
+  width: 100%;
   height: 88dvh;
+  box-sizing: border-box;
+}
+
+.page-edital .layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 12px 24px;
 }
 
 /* ===========================
@@ -20,19 +21,19 @@
 
 .card {
   background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   padding: 16px 18px 18px;
   box-sizing: border-box;
 }
 
 /* FORM EM CIMA, LISTA EMBAIXO */
 .painel-form {
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .painel-lista {
-  max-height: 60vh;
+  max-height: calc(100dvh - 210px);
   overflow-y: auto;
 }
 
@@ -44,7 +45,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .titulo-form {
@@ -119,9 +120,8 @@
   }
 }
 
-/* INPUTS E SELECT */
-.input-text,
-.select-materias {
+/* INPUTS */
+.input-text {
   width: 100%;
   border-radius: 10px;
   border: 1px solid #d1d5db;
@@ -131,21 +131,13 @@
   box-sizing: border-box;
   font-family: inherit;
   background: #f9fafb;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.input-text:focus,
-.select-materias:focus {
+.input-text:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
   background: #ffffff;
-}
-
-.select-materias-wrapper {
-  margin-top: 4px;
-}
-
-.select-materias {
-  min-height: 180px;
 }
 
 /* helpers */
@@ -167,9 +159,13 @@
   display: flex;
   gap: 8px;
   margin-top: 4px;
-  justify-content: flex-end; /* joga os filhos (botões) pro canto direito */
+  justify-content: flex-end;
 }
 
+/* ===========================
+   BOTÕES GENÉRICOS
+   (mesma pegada da tela de matérias)
+   =========================== */
 
 .btn {
   border-radius: 999px;
@@ -189,17 +185,19 @@
 }
 
 .btn.primario {
-  background: #2563eb;
+  background: #0ea5e9;
   color: #ffffff;
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.45);
 }
 
 .btn.primario:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #0284c7;
 }
 
 .btn.primario:disabled {
   opacity: 0.6;
   cursor: default;
+  box-shadow: none;
 }
 
 .btn.secundario {
@@ -207,7 +205,7 @@
   color: #4f46e5;
 }
 
-.btn.secundario:hover {
+.btn.secundario:hover:not(:disabled) {
   background: #e0e7ff;
 }
 
@@ -240,6 +238,58 @@
 .msg-sucesso {
   background: #dcfce7;
   color: #166534;
+}
+
+/* ===========================
+   CHIPS DE MATÉRIA
+   =========================== */
+
+.chips-materias-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  background: #f9fafb;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.chip-materia {
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  background: #ffffff;
+  cursor: pointer;
+  color: #374151;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
+    box-shadow 0.12s ease, transform 0.05s ease;
+}
+
+.chip-materia:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.chip-materia-ativa {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+}
+
+.chip-materia-ativa:hover {
+  background: #1d4ed8;
+}
+
+@media (max-width: 640px) {
+  .chips-materias-wrapper {
+    padding: 6px;
+  }
 }
 
 /* ===========================
@@ -334,7 +384,7 @@
   min-width: 0;
 }
 
-/* tudo em uma única linha (nome + desc + chips) */
+/* tudo em uma única linha */
 .edital-header-linha {
   display: flex;
   align-items: center;
@@ -342,7 +392,6 @@
   flex-wrap: nowrap;
 }
 
-/* nome do edital */
 .edital-nome {
   margin: 0;
   font-size: 1rem;
@@ -351,7 +400,6 @@
   white-space: nowrap;
 }
 
-/* descrição pequena na mesma linha */
 .edital-desc {
   font-size: 0.85rem;
   color: #6b7280;
@@ -361,7 +409,7 @@
   max-width: 30%;
 }
 
-/* chips de meta (data / progresso / domínio) */
+/* chips de meta */
 .edital-meta {
   display: flex;
   align-items: center;
@@ -385,7 +433,6 @@
   font-weight: 500;
 }
 
-/* pills */
 .meta-pill {
   display: inline-flex;
   align-items: center;
@@ -406,7 +453,7 @@
   color: #15803d;
 }
 
-/* coluna direita do cabeçalho (ações + chevron) */
+/* coluna direita do cabeçalho */
 .acoes {
   display: flex;
   align-items: center;
@@ -575,6 +622,12 @@
     padding: 14px 12px 16px;
   }
 
+  .lista-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
   .edital-header-linha {
     flex-wrap: wrap;
     align-items: flex-start;
@@ -587,60 +640,5 @@
 
   .painel-lista {
     max-height: none;
-  }
-}
-/* WRAPPER DOS CHIPS DE MATÉRIA */
-.chips-materias-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-  background: #f9fafb;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-}
-
-/* CHIP PADRÃO */
-.chip-materia {
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  padding: 4px 10px;
-  font-size: 0.85rem;
-  background: #ffffff;
-  cursor: pointer;
-  color: #374151;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
-    box-shadow 0.12s ease, transform 0.05s ease;
-}
-
-.chip-materia:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
-}
-
-/* CHIP SELECIONADO */
-.chip-materia-ativa {
-  background: #2563eb;
-  border-color: #1d4ed8;
-  color: #ffffff;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
-}
-
-.chip-materia-ativa:hover {
-  background: #1d4ed8;
-}
-
-/* responsivo: chips ocupam a linha inteira se precisar */
-@media (max-width: 640px) {
-  .chips-materias-wrapper {
-    padding: 6px;
-  }
-
-  .chip-materia {
-    flex: 0 1 auto;
   }
 }

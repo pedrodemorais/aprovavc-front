@@ -1,22 +1,22 @@
 /* ========= CONTAINER GERAL ========= */
 
 .page-container {
-
   background: #f3f4f6;
-width: 100%;
-  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .layout {
- 
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 16px 12px 24px;
 }
 
 /* ========= CARD PRINCIPAL ========= */
 
-.materias-card {
+.card.materias-card {
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
@@ -24,24 +24,16 @@ width: 100%;
   position: relative;
   padding: 16px 18px 18px;
   font-size: 0.92rem;
-   
-  height: 88dvh;
+  min-height: calc(100dvh - 140px);
+  box-sizing: border-box;
 }
 
 /* ========= CABEÇALHO FIXO ========= */
 
 .cabecalho-fixo {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #f9fbff;
-  padding: 10px 14px;
-  margin: -16px -18px 10px; /* encosta nas bordas do card */
+
   border-bottom: 1px solid #e5ecf5;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-radius: 8px;
+
 }
 
 .cabecalho-linha-unica {
@@ -51,7 +43,6 @@ width: 100%;
   justify-content: space-between;
 }
 
-/* Mensagem de erro global */
 .mensagem-erro {
   margin: 0;
   padding: 8px 12px;
@@ -64,20 +55,25 @@ width: 100%;
 /* Bloco de contexto (pílula + texto) à esquerda */
 .cabecalho-contexto {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
+  min-width: 0;
 }
 
 .cabecalho-texto {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .cabecalho-titulo {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #111827;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .cabecalho-descricao {
@@ -90,9 +86,10 @@ width: 100%;
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 0.99rem;
-  font-weight: 500;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .pill-materia {
@@ -115,6 +112,7 @@ width: 100%;
   flex: 1;
   display: flex;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 .form-inline {
@@ -157,7 +155,7 @@ width: 100%;
 }
 
 .erro {
-  margin-top: 3px;
+  margin-top: 2px;
   font-size: 0.78rem;
   color: #b91c1c;
 }
@@ -186,6 +184,7 @@ width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .btn:active {
@@ -237,22 +236,31 @@ width: 100%;
 /* ========= LISTA DE MATÉRIAS ========= */
 
 .lista-materias-wrapper {
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
+/* container com scroll vertical */
 .tabela-materias-container {
- 
-  overflow-y: auto;
   margin-top: 4px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   background: #ffffff;
+  max-height: calc(100dvh - 230px);
+  overflow-y: auto;
 }
 
+/* wrapper com scroll horizontal em tela pequena */
+.tabela-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* tabela em si */
 .tabela-materias {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.88rem;
+  min-width: 520px;
 }
 
 .tabela-materias th,
@@ -277,12 +285,23 @@ width: 100%;
 }
 
 .tabela-materias tr.selecionada {
-  background: #9bbde9;
+  background: #e0ecff;
+}
+
+.col-acoes {
+  width: 150px;
 }
 
 .tabela-materias td.acoes {
   text-align: right;
   white-space: nowrap;
+}
+
+/* nome matéria + bolinha */
+.materia-nome {
+  margin-left: 0.5rem;
+  font-weight: 500;
+  color: #111827;
 }
 
 /* Botões de ícone na tabela */
@@ -346,7 +365,7 @@ width: 100%;
 }
 
 .topico-linha.selecionado {
-  background: #9bbde9;
+  background: #e0ecff;
   box-shadow: 0 0 0 1px #bfdbfe;
 }
 
@@ -356,7 +375,7 @@ width: 100%;
   gap: 6px;
 }
 
-/* Badge básica (tamanho, formato) */
+/* Badge básica */
 .badge-nivel {
   display: inline-flex;
   align-items: center;
@@ -364,30 +383,25 @@ width: 100%;
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  font-size: 0.7rem;
-  background: #d1d5db; /* cinza padrão */
+  background: #d1d5db;
 }
 
-/* Nenhuma revisão cadastrada */
+/* estados do “semáforo” */
 .badge-sem-revisao {
-  background: #d1d5db; /* cinza */
+  background: #d1d5db;
 }
 
-/* Revisão ok / futura */
 .badge-revisao-futura {
-  background: #22c55e; /* verde */
+  background: #22c55e;
 }
 
-/* Revisão para hoje */
 .badge-revisao-hoje {
-  background: #f97316; /* laranja */
+  background: #f97316;
 }
 
-/* Revisão atrasada */
 .badge-revisao-atrasada {
-  background: #ef4444; /* vermelho */
+  background: #ef4444;
 }
-
 
 .topico-descricao {
   font-size: 0.88rem;
@@ -404,32 +418,14 @@ width: 100%;
 
 /* ========= RESPONSIVO ========= */
 
-@media (max-width: 640px) {
-  .page-container {
-    padding: 12px 6px;
+@media (max-width: 900px) {
+  .layout {
+    padding: 12px 8px 20px;
   }
 
-  .materias-card {
-    border-radius: 12px;
-  }
-
-  .card-body {
-    padding: 12px 12px 14px;
-  }
-
-  .tabela-materias-container {
-    max-height: 340px;
-  }
-}
-
-@media (max-width: 768px) {
   .cabecalho-linha-unica {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .cabecalho-contexto {
-    align-items: flex-start;
   }
 
   .cabecalho-input-acoes {
@@ -444,7 +440,32 @@ width: 100%;
   .acoes-topo {
     justify-content: flex-start;
   }
+
+  .tabela-materias-container {
+    max-height: calc(100dvh - 260px);
+  }
 }
-.materia-nome {
-  margin-left: 0.5rem;
+
+@media (max-width: 640px) {
+  .card-body {
+    padding: 12px 10px 14px;
+  }
+
+  .cabecalho-fixo {
+    margin: -12px -10px 8px;
+    padding: 8px 10px;
+  }
+
+  .page-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .tabela-materias {
+    font-size: 0.84rem;
+  }
 }
