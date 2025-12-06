@@ -4,6 +4,10 @@ html, body {
   padding: 0;
 }
 
+.nome-site-area-usuario{
+  color: black;
+}
+
 .content {
   
   height: 100dvh; /* força ocupar 100% da altura da tela */
@@ -27,7 +31,7 @@ html, body {
   left: 0;
 margin-top: 4rem;
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-  padding: 20px;
+  
   box-sizing: border-box;
   z-index: 999; /* Garante que o menu fique acima de outros elementos */
 }
@@ -77,11 +81,14 @@ margin-top: 4rem;
 .logo {
   display: flex;
   align-items: center;
+  /* você pode tirar o width fixo daqui */
 }
 
+/* controla o tamanho proporcional da logo */
 .logo img {
-  height: 60px;
- 
+  width: 180px;   /* ajuste o valor até ficar do jeito que você quer */
+  height: auto;   /* mantém a proporção automaticamente */
+  display: block;
 }
 
 .logo h1 {

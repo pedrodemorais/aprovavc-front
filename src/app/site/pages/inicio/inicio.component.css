@@ -15,10 +15,7 @@ body {
  
 }
 
-.custom-menubar{
-    padding-right: 10px;
 
-}
 
 header .cabecalho {
   display: flex;
@@ -201,13 +198,13 @@ margin-left: 10%;
 /* Hero Section */
 .hero {  
  
-  background: linear-gradient(to right,  #002333, #1f89e0, #1f89e0,#002333);
-  color: white;
+ 
+  color: rgb(0, 0, 0);
  
 }
 
 .hero-content{
-  color: white; /* Cor do texto */
+  color: rgb(0, 0, 0); /* Cor do texto */
   display: inline-flex;
 
 
@@ -328,7 +325,7 @@ form button:hover {
 }
 
 .sobre-nos strong {
-  color: #007bff;
+  color: #000000;
 }
 html {
   scroll-behavior: smooth;
@@ -527,7 +524,7 @@ color: #31363bc7;
   align-items: center; /* Garante alinhamento na horizontal */
   gap: 10px; /* Espaço entre o círculo e o texto */
   text-decoration: none;
-  color: #ffffff;
+  color: #474545;
   
   
   transition: color 0.3s;
@@ -550,8 +547,8 @@ color: #31363bc7;
 .circle {
   width: 30px;
   height: 30px;
-  border: 2px solid #ddd; /* Borda de 2px com cor cinza claro */
-  color: white;
+  border: 2px solid #111010; /* Borda de 2px com cor cinza claro */
+  color: rgb(92, 90, 90);
   font-size: 20px;
   
   display: flex;
@@ -722,8 +719,9 @@ color: #31363bc7;
 
 
 .logo-img {
-  height: 50px; /* Ajuste conforme necessário */
+  height: 22px; /* Ajuste conforme necessário */
   width: auto;
+
 }
 
 
@@ -760,7 +758,7 @@ color: #31363bc7;
 :host ::ng-deep .p-menuitem-text:hover {
   padding:0.5rem;
   background: transparent !important;
-  color:  #1273f3;
+  color:  #000000;
  
   border: none;
   border-radius: 3px;
@@ -796,25 +794,20 @@ color: #31363bc7;
   z-index: 1;
 }
 
-  :host ::ng-deep  .p-menubar {
-    padding: 0.5rem;
-    background: #ffffff;
-    color: #495057;
-    border: 0px solid #dee2e6;
-    border-radius: 3px;
-  }
 
   .menu-topo{
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    width: 100%;
+    height: 50px;
 
   }
 
   .sobre-nos .container {
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 0px 24px;
 }
 
 .conteudo-sobre {
@@ -1278,7 +1271,7 @@ align-items: center;
 
 .meio{
 margin-left: 0%;
-background: red;
+
   width: 0px;
   height: 0px;
   align-items: center;
@@ -1394,4 +1387,49 @@ background: red;
 
 #sobre-nos li {
   margin-bottom: 0.25rem;
+}
+:host ::ng-deep .p-menubar {
+  padding: 0.1rem;
+  background: #ffffff;
+  color: #ffffff;
+  border: 0;
+  border-radius: 3px;
+}
+
+/* deixa o texto menor e com menos espaço lateral */
+:host ::ng-deep .p-menubar .p-menuitem-link {
+  padding: 0.15rem 0.4rem;   /* diminui o espaço interno */
+  font-size: 0.8rem;         /* diminui o tamanho da fonte */
+}
+
+/* opcional: apertar as letras ainda mais */
+:host ::ng-deep .p-menubar .p-menuitem-text {
+  letter-spacing: -0.02em;   /* levemente “espremido” */
+}
+:host ::ng-deep .p-menubar .p-menuitem-link {
+  padding: 0.1rem 0.3rem;
+  font-size: 0.75rem;
+  font-family:serif
+}
+:host ::ng-deep .p-menubar {
+  padding: 0.1rem;
+
+  color: #ffffff;
+  border: 0;
+  border-radius: 3px;
+}
+
+/* deixa o texto menor e com menos espaço lateral */
+:host ::ng-deep .p-menubar .p-menuitem-link {
+  padding: 0.15rem 0.4rem;   /* diminui o espaço interno */
+  font-size: 0.8rem;         /* diminui o tamanho da fonte */
+}
+
+/* opcional: apertar as letras ainda mais */
+:host ::ng-deep .p-menubar .p-menuitem-text {
+  letter-spacing: -0.02em;   /* levemente “espremido” */
+}
+:host ::ng-deep .p-menubar .p-menuitem-link {
+  padding: 0.1rem 0.3rem;
+  font-size: 0.75rem;
 }
