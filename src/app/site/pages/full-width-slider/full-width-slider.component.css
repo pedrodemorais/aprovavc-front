@@ -2,7 +2,7 @@
 .full-width-image {
   position: relative;
   width: 100%;
-  height: 60vh;          /* altura da faixa do hero */
+  /*height: 60vh;          /* altura da faixa do hero */
   min-height: 380px;
   overflow: hidden;
   display: flex;
@@ -10,17 +10,17 @@
 }
 
 /* SLIDES (IMAGENS DE FUNDO) */
-.full-width-image .slide {
+/* .full-width-image .slide {
   position: absolute;
-  inset: 0;              /* top/right/bottom/left: 0 */
+  inset: 0;             
   width: 100%;
   height: 100%;
-  object-fit: cover;     /* preenche sem distorcer */
-  object-position: center; /* começa centralizado */
+  object-fit: cover;    
+  object-position: center; 
   opacity: 0;
   transition: opacity 1.5s ease-in-out;
-  transform: scale(1);    /* 0.9 = 90% do tamanho */
-}
+  transform: scale(1);    
+} */
 
 /* se você quiser mostrar mais o lado direito (texto “Organize tudo”) */
 /*.full-width-image .slide {
@@ -38,12 +38,8 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(31, 41, 55, 0.85),
-    rgba(31, 41, 55, 0.3),
-    transparent
-  );
+  background: linear-gradient(rgba(0, 0, 0, 0.048),
+    rgba(0,0,0,0.048));
   z-index: 2;
   pointer-events: none;
 }
@@ -80,14 +76,94 @@
   }
 }
 .hero-content {
+  display: flex;
+ 
+  color: #ffffff;
+  flex-direction: column;
+  /* centraliza mais pro meio do banner */
+  top: 35%;
+  left: 48%;
+  
+ 
+ 
+  
+}
+
+/* CONTAINER DO TEXTO */
+.hero-content {
   position: absolute;
-  z-index: 3;
+  top: 48%;
+  left: 48%;
+
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+ 
   color: #ffffff;
 
-  /* centraliza mais pro meio do banner */
-  top: 50%;
-  left: 60%;
-  transform: translate(-50%, -50%);
+  font-family: "Inter", sans-serif;
+}
 
-  
+/* TÍTULO */
+.hero-title {
+  margin: 0;
+  font-size: 2.3rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color:#313030c7;
+}
+
+/* SUBTÍTULO */
+.hero-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.45;
+  color: #076d0c;
+}
+
+/* BOTÃO */
+.hero-btn {
+  margin-top: 8px;
+  align-self: flex-start;
+
+  background: #22c55e;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.hero-btn:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .hero-content {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 90%;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .hero-title {
+    font-size: 1.8rem;
+  }
+
+  .hero-btn {
+    align-self: center;
+  }
 }
