@@ -7,7 +7,7 @@ import { Component , OnInit} from '@angular/core';
 })
 export class InicioComponent implements OnInit {
     menuItems: any[] = [];
-
+ scrolled = false;
   constructor() {
     console.log('PaginainicialComponent inicializado');
   }
@@ -23,5 +23,7 @@ export class InicioComponent implements OnInit {
       { label: 'Entrar', routerLink: '/login' },
     ];
   }
+
+  
 
 }

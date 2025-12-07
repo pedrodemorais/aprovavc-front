@@ -20,7 +20,7 @@
 /* Título principal */
 .headline h1 {
     font-size: 2rem;
-    color: #003d82;
+    color:  #54ba67;
     margin-bottom: 10px;
 }
 
@@ -33,7 +33,7 @@
 .benefits h2 {
     font-size: 1.5rem;
     margin-top: 20px;
-    color: #007bff;
+    color: #54ba67;
 }
 
 .benefits ul {
@@ -57,7 +57,7 @@
 .preco {
     font-size: 1.8rem;
     font-weight: bold;
-    color: #007bff;
+    color: #00B36B;
     margin-top: 20px;
 }
 .call-to-action{
@@ -67,7 +67,7 @@
     margin-top: 20px;
 }
 .btn-assine {
-    background: #003d82;
+    background:  #54ba67;
     color: white;
     border: none;
     padding: 15px;
@@ -82,7 +82,7 @@
 }
 
 .btn-assine:hover {
-    background: #0056b3;
+    background: #295a32;
 }
 
 .garantia {
