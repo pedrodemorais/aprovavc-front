@@ -77,7 +77,7 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
 private montarMenuTeste(): void {
   this.items = [
     {
-      label: 'Início',
+      label: 'Página inicial',
       icon: 'pi pi-home',
       routerLink: ['/area-restrita/dashboard']
     },

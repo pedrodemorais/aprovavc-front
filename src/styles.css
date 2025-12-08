@@ -221,6 +221,9 @@ body {
   border-radius: 8px !important;
   box-shadow: none !important;
   background: transparent !important;
+  font-size: 0.85rem;   /* diminui o tamanho */
+  font-weight: 300;     /* deixa mais fina */
+  font-family: 'Poppins', sans-serif; /* se estiver usando essa no resto */
 }
 
 /* Tira o “card” e o espaço entre seções */
@@ -239,7 +242,7 @@ body {
 /* (opcional) hover discreto */
 .p-panelmenu.menu-flat .p-panelmenu-header-action:hover,
 .p-panelmenu.menu-flat .p-menuitem-link:hover {
-  background: rgba(23, 152, 192, 0.396) !important;
+  background: rgba(94, 161, 130, 0.247) !important;
 }
 
 /* Garanta que a própria sidebar não tenha linha/sombra */
