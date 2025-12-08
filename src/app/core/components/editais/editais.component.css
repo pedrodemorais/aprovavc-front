@@ -3,10 +3,13 @@
    =========================== */
 
 .page-edital {
-  background: #f3f4f6;
+  background: #ffffff;
   width: 100%;
   height: 88dvh;
   box-sizing: border-box;
+ font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
 
 .page-edital .layout {
@@ -22,10 +25,20 @@
 .card {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  
   padding: 16px 18px 18px;
   box-sizing: border-box;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
+.separador{
+  background: rgba(13, 85, 4, 0.562);
+  width: 100%;
+  
+ height:1px;
+}
+
 
 /* FORM EM CIMA, LISTA EMBAIXO */
 .painel-form {
@@ -53,6 +66,9 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: #111827;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
 
 .form-sub {
@@ -98,6 +114,9 @@
 .nome-data .campo {
   display: flex;
   flex-direction: column;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
 
 .nome-data .campo-nome {
@@ -105,7 +124,7 @@
 }
 
 .nome-data .campo-data {
-  flex: 0 0 200px;
+ 
 }
 
 /* responsivo: quebra em coluna */
@@ -135,8 +154,8 @@
 }
 
 .input-text:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+  border-color: #54ba67;
+  box-shadow: 0 0 0 1px rgba(84, 186, 103, 0.25);
   background: #ffffff;
 }
 
@@ -152,6 +171,9 @@
   margin-top: 3px;
   font-size: 0.75rem;
   color: #b91c1c;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
 
 /* BOTÕES DO FORM */
@@ -164,7 +186,6 @@
 
 /* ===========================
    BOTÕES GENÉRICOS
-   (mesma pegada da tela de matérias)
    =========================== */
 
 .btn {
@@ -178,6 +199,9 @@
   justify-content: center;
   font-family: inherit;
   transition: background 0.12s ease, transform 0.05s ease;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
 
 .btn:active {
@@ -185,13 +209,13 @@
 }
 
 .btn.primario {
-  background: #0ea5e9;
+  background: #54ba67;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.45);
+  box-shadow: 0 2px 6px rgba(84, 186, 103, 0.45);
 }
 
 .btn.primario:hover:not(:disabled) {
-  background: #0284c7;
+  background: #3b9150;
 }
 
 .btn.primario:disabled {
@@ -201,17 +225,18 @@
 }
 
 .btn.secundario {
-  background: #eef2ff;
-  color: #4f46e5;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
 }
 
 .btn.secundario:hover:not(:disabled) {
-  background: #e0e7ff;
+  background: #e5e7eb;
 }
 
 .btn.texto {
   background: transparent;
-  color: #2563eb;
+  color: #54ba67;
   padding: 4px 6px;
 }
 
@@ -253,6 +278,9 @@
   padding: 8px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
 
 .chip-materia {
@@ -266,24 +294,31 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
-    box-shadow 0.12s ease, transform 0.05s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.05s ease;
+    font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
 }
 
 .chip-materia:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
+  background: #e8f8ee;
+  border-color: #a7e0b4;
 }
 
 .chip-materia-ativa {
-  background: #2563eb;
-  border-color: #1d4ed8;
+  background: #54ba67;
+  border-color: #3b9150;
   color: #ffffff;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 0 0 1px rgba(84, 186, 103, 0.3);
 }
 
 .chip-materia-ativa:hover {
-  background: #1d4ed8;
+  background: #3b9150;
 }
 
 @media (max-width: 640px) {
@@ -370,11 +405,11 @@
 }
 
 .edital-card-header:hover {
-  background: #f3f4ff;
+  background: #f0fdf4;
 }
 
 .edital-card-header.aberto {
-  background: #eef2ff;
+  background: #e8f8ee;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -444,13 +479,13 @@
 }
 
 .pill-progresso {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: #e8f8ee;
+  color: #3b9150;
 }
 
 .pill-dominio {
-  background: #ecfdf3;
-  color: #15803d;
+  background: #e8f8ee;
+  color: #3b9150;
 }
 
 /* coluna direita do cabeçalho */
@@ -526,8 +561,8 @@
 }
 
 .materia-header:hover {
-  background: #f3f4ff;
-  border-color: #e0e7ff;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
 }
 
 .materia-info {
@@ -587,7 +622,7 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #c4b5fd;
+  background: #54ba67;
   flex-shrink: 0;
 }
 

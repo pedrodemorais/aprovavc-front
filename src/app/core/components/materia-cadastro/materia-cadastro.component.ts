@@ -36,7 +36,7 @@ export class MateriaCadastroComponent implements OnInit {
   materiaForm!: FormGroup;
   submeteuMateria: boolean = false;
 
-  // modo do campo superior
+  // modo do campo superior (continua sendo usado para proteger mudanças de contexto)
   modoTopicoGlobal: boolean = false;
 
   // edição de tópico
@@ -103,20 +103,19 @@ export class MateriaCadastroComponent implements OnInit {
 
           let status: StatusRevisao = 'SEM';
 
-         if (proxima) {
-  // monta a data como LOCAL, não UTC
-  const dataRev = this.construirDataLocal(proxima);
+          if (proxima) {
+            // monta a data como LOCAL, não UTC
+            const dataRev = this.construirDataLocal(proxima);
 
-  const hojeTime = hoje.getTime();
-  const revTime  = dataRev.getTime();
+            const hojeTime = hoje.getTime();
+            const revTime  = dataRev.getTime();
 
-  const hojeFlag     = revTime === hojeTime;
-  const atrasadoFlag = revTime < hojeTime;
+            const hojeFlag     = revTime === hojeTime;
+            const atrasadoFlag = revTime < hojeTime;
 
-  if (atrasadoFlag)       status = 'ATRASADA';
-  else if (hojeFlag)      status = 'HOJE';
-  else                    status = 'FUTURA';
-
+            if (atrasadoFlag)       status = 'ATRASADA';
+            else if (hojeFlag)      status = 'HOJE';
+            else                    status = 'FUTURA';
 
             console.log(`-- Item dashboard #${idx} ----------------------`);
             console.log(item);
@@ -273,7 +272,7 @@ export class MateriaCadastroComponent implements OnInit {
     this.focarNomeMateria();
   }
 
-  // abre/fecha a linha de tópicos da matéria e entra em modo tópico
+  // abre/fecha a "seleção" da matéria e entra em modo tópico
   toggleMateria(m: Materia): void {
     // Se clicar na mesma matéria (recolher)
     if (this.materiaExpandida?.id === m.id) {
@@ -363,14 +362,14 @@ export class MateriaCadastroComponent implements OnInit {
     this.focarNomeMateria();
   }
 
-  iniciarEdicaoTopico(topico: any): void {
-    this.modoTopicoGlobal = true; // garante que o campo está em modo tópico
-    this.modoEdicaoTopico = true;
-    this.topicoEmEdicao = topico;
-    this.topicoSelecionado = topico;
-    this.novoTopicoDescricao = topico.descricao || '';
-    this.focarNovoTopico();
-  }
+iniciarEdicaoTopico(topico: any): void {
+  this.modoTopicoGlobal = true; // garante que o campo está em modo tópico
+  this.modoEdicaoTopico = true;
+  this.topicoEmEdicao = topico;
+  this.topicoSelecionado = topico;
+  this.novoTopicoDescricao = topico.descricao || '';
+  this.focarNovoTopico();
+}
 
   salvarMateria(): void {
     this.submeteuMateria = true;
@@ -538,41 +537,43 @@ export class MateriaCadastroComponent implements OnInit {
     this.focarNovoTopico();
   }
 
-  private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
-    if (!this.materiaSelecionada?.id) {
-      alert('Selecione e salve a matéria antes de adicionar tópicos.');
-      this.focarNomeMateria();
-      return;
-    }
-
-    const payload: any = {
-      id: (topico as any).id ?? null,
-      descricao: topico.descricao,
-      ativo: topico.ativo
-    };
-
-    if (pai && (pai as any).id) {
-      payload.topicoPaiId = (pai as any).id;
-    }
-
-    this.salvando = true;
-
-    this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
-      next: (salvo) => {
-        this.salvando = false;
-
-        // garante que o ID do topo local seja atualizado
-        if (salvo && (salvo as any).id) {
-          (topico as any).id = (salvo as any).id;
-        }
-      },
-      error: (err) => {
-        this.salvando = false;
-        this.mensagemErro = 'Erro ao salvar o tópico.';
-        console.error('[SALVAR-TOPICO] Erro ao salvar tópico:', err);
-      }
-    });
+ private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
+  if (!this.materiaSelecionada?.id) {
+    alert('Selecione e salve a matéria antes de adicionar tópicos.');
+    this.focarNomeMateria();
+    return;
   }
+
+  const payload: any = {
+    id: (topico as any).id ?? null,
+    descricao: topico.descricao,
+    ativo: topico.ativo
+  };
+
+  if (pai && (pai as any).id) {
+    payload.topicoPaiId = (pai as any).id;
+  }
+
+  console.log('[SALVAR-TOPICO] Payload enviado para API:', payload);
+
+  this.salvando = true;
+
+  this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
+    next: (salvo) => {
+      this.salvando = false;
+
+      if (salvo && (salvo as any).id) {
+        (topico as any).id = (salvo as any).id;
+      }
+    },
+    error: (err) => {
+      this.salvando = false;
+      this.mensagemErro = 'Erro ao salvar o tópico.';
+      console.error('[SALVAR-TOPICO] Erro ao salvar tópico:', err);
+    }
+  });
+}
+
 
   adicionarTopico(): void {
     const descricao = (this.novoTopicoDescricao || '').trim();
@@ -586,15 +587,15 @@ export class MateriaCadastroComponent implements OnInit {
     }
 
     // MODO EDIÇÃO
-    if (this.modoEdicaoTopico && this.topicoEmEdicao) {
-      this.topicoEmEdicao.descricao = descricao;
-      this.salvarTopicoAutomatico(this.topicoEmEdicao);
-      this.novoTopicoDescricao = '';
-      this.modoEdicaoTopico = false;
-      this.topicoEmEdicao = null;
-      this.focarNovoTopico();
-      return;
-    }
+   if (this.modoEdicaoTopico && this.topicoEmEdicao) {
+    this.topicoEmEdicao.descricao = descricao;
+    this.salvarTopicoAutomatico(this.topicoEmEdicao);
+    this.novoTopicoDescricao = '';
+    this.modoEdicaoTopico = false;
+    this.topicoEmEdicao = null;
+    this.focarNovoTopico();
+    return;
+  }
 
     // MODO CRIAÇÃO
     const novoTopico: any = {
@@ -649,24 +650,31 @@ export class MateriaCadastroComponent implements OnInit {
     }
   }
 
-  private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
-    const filhos: Topico[] = (dto.subtopicos || []).map((sub: any) =>
-      this.converterDtoParaTopico(sub, nivel + 1)
-    );
+private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
+  const filhos: Topico[] = (dto.subtopicos || []).map((sub: any) =>
+    this.converterDtoParaTopico(sub, nivel + 1)
+  );
 
-    const topico: Topico = {
-      id: dto.id,
-      descricao: dto.descricao,
-      ativo: dto.ativo ?? true,
-      nivel,
-      filhos,
-      // ⚠️ Ajusta os nomes conforme vierem do back
-      proximaRevisao: dto.proximaRevisao ?? dto.dataProximaRevisao ?? null,
-      statusRevisao: dto.statusRevisao  // se existir
-    };
+  const idConvertido =
+    dto.id ??
+    dto.topicoId ??
+    dto.subtopicoId ??
+    dto.idTopico ??
+    dto.idSubtopico ??
+    null;
 
-    return topico;
-  }
+  const topico: Topico = {
+    id: idConvertido,
+    descricao: dto.descricao,
+    ativo: dto.ativo ?? true,
+    nivel,
+    filhos,
+    proximaRevisao: dto.proximaRevisao ?? dto.dataProximaRevisao ?? null,
+    statusRevisao: dto.statusRevisao
+  };
+
+  return topico;
+}
 
   iniciarCadastroTopico(materia: Materia): void {
     // se estiver digitando/alterando tópico de outra matéria, pergunta antes
@@ -678,7 +686,7 @@ export class MateriaCadastroComponent implements OnInit {
 
     this.modoTopicoGlobal = true;
 
-    // garante que a matéria esteja expandida
+    // garante que a matéria esteja selecionada/expandida
     if (!this.materiaExpandida || this.materiaExpandida.id !== materia.id) {
       this.materiaExpandida = materia;
       this.selecionarMateria(materia);
@@ -748,18 +756,17 @@ export class MateriaCadastroComponent implements OnInit {
     }
 
     // 2) Se o próprio tópico tiver data de revisão, calcula
-if ((topico as any).proximaRevisao) {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+    if ((topico as any).proximaRevisao) {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
 
-  const proxima = String((topico as any).proximaRevisao);
-  const dataRev = this.construirDataLocal(proxima);
+      const proxima = String((topico as any).proximaRevisao);
+      const dataRev = this.construirDataLocal(proxima);
 
-  if (dataRev.getTime() < hoje.getTime())   return 'ATRASADA';
-  if (dataRev.getTime() === hoje.getTime()) return 'HOJE';
-  return 'FUTURA';
-}
-
+      if (dataRev.getTime() < hoje.getTime())   return 'ATRASADA';
+      if (dataRev.getTime() === hoje.getTime()) return 'HOJE';
+      return 'FUTURA';
+    }
 
     // 3) Sem nada
     return 'SEM';
@@ -776,21 +783,20 @@ if ((topico as any).proximaRevisao) {
     }
   }
 
-  /** 
- * Constrói uma data local (sem timezone) a partir de 'YYYY-MM-DD',
- * evitando o bug de o JS interpretar como UTC e mudar o dia.
- */
-private construirDataLocal(isoDate: string): Date {
-  const [anoStr, mesStr, diaStr] = isoDate.split('-');
-  const ano = Number(anoStr);
-  const mes = Number(mesStr);   // 1..12
-  const dia = Number(diaStr);   // 1..31
+  /**
+   * Constrói uma data local (sem timezone) a partir de 'YYYY-MM-DD',
+   * evitando o bug de o JS interpretar como UTC e mudar o dia.
+   */
+  private construirDataLocal(isoDate: string): Date {
+    const [anoStr, mesStr, diaStr] = isoDate.split('-');
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);   // 1..12
+    const dia = Number(diaStr);   // 1..31
 
-  const data = new Date(ano, mes - 1, dia); // <-- data local
-  data.setHours(0, 0, 0, 0);
-  return data;
-}
-
+    const data = new Date(ano, mes - 1, dia); // <-- data local
+    data.setHours(0, 0, 0, 0);
+    return data;
+  }
 
   /**
    * Calcula o status consolidado do tópico:

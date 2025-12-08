@@ -38,9 +38,23 @@ listarTopicos(materiaId: number): Observable<Topico[]> {
 }
 
 
-salvarTopico(materiaId: number, topico: Topico): Observable<Topico> {
-  return this.http.post<Topico>(`${this.apiUrl}/${materiaId}/topicos`, topico);
-}
+// materia.service.ts
+salvarTopico(materiaId: number, payload: any) {
+    // UPDATE (PUT) -> quando tem ID
+    if (payload.id) {
+      return this.http.put<any>(
+        `${this.apiUrl}/${materiaId}/topicos/${payload.id}`,
+        payload
+      );
+    }
+
+    // CREATE (POST) -> quando não tem ID
+    return this.http.post<any>(
+      `${this.apiUrl}/${materiaId}/topicos`,
+      payload
+    );
+  }
+
 
 excluirTopico(materiaId: number, topicoId: number): Observable<void> {
   return this.http.delete<void>(`${this.apiUrl}/${materiaId}/topicos/${topicoId}`);

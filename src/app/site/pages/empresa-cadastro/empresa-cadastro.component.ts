@@ -71,7 +71,7 @@ private subscriptions: Subscription[] = [];
 
   ngOnInit(): void {
     this.inicializarFormularios();
-    this.carregarLogo();
+   
     setTimeout(() => {
       this.carregarParametroExigeDoc();
     }, 500); // 🔥 
@@ -238,19 +238,7 @@ resizeImage(file: File, maxWidth = 300, maxHeight = 300, quality = 0.8): Promise
   });
 }
 
-  carregarLogo(): void {
-    this.empresaService.getLogo().subscribe({
-      next: (blob) => {
-        const reader = new FileReader();
-        reader.onload = () => this.logoPreview = reader.result as string;
-        reader.readAsDataURL(blob);
-      },
-      error: () => {
-        console.warn("⚠️ Nenhuma logomarca encontrada.");
-        this.logoPreview = null;
-      }
-    });
-  }
+  
 
   
   onLogoUpload1(event: Event): void {
@@ -519,20 +507,7 @@ onSalvar(): void {
               const formDataLogo = new FormData();
               formDataLogo.append("file", new File([resizedImage], this.selectedLogoFile!.name, { type: this.selectedLogoFile!.type }));
 
-              this.empresaService.uploadLogo(formDataLogo).subscribe({
-                  next: (res) => {
-                      console.log("✅ Logomarca enviada com sucesso!", res);
-                      alert("Logomarca salva com sucesso!");
-                      
-                      // 🔥 Após upload, salvar os dados da empresa
-                      this.salvarDadosEmpresa(dadosEmpresa);
-                      this.salvarParametro(); // 🔥 Agora chama sempre
-                  },
-                  error: (err) => {
-                      console.error("❌ Erro ao enviar logomarca:", err);
-                      alert("Erro ao salvar logomarca.");
-                  }
-              });
+             
           }).catch(err => {
               console.error("❌ Erro ao redimensionar imagem:", err);
               alert("Erro ao processar a imagem.");

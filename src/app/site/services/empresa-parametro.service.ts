@@ -20,7 +20,7 @@ export interface EmpresaParametroDTO {
 })
 
 export class EmpresaParametroService {
-   private apiUrl = `${environment.apiUrl}/empresas/parametros`;
+   private apiUrl = `${environment.apiUrl}/alunos/parametros`;
   
     constructor(private http: HttpClient) { }
     getParametros(): Observable<EmpresaParametro[]> {

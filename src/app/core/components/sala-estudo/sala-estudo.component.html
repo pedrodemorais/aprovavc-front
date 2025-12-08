@@ -1,31 +1,72 @@
 <div class="sala-container" *ngIf="!carregando; else loadingTpl"
   [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }">
-
   <!-- CABEÇALHO DA SALA -->
   <section class="card sala-header">
-    <div class="sala-header-esquerda">
-      <p class="sala-subtitulo">Sala de estudo</p>
-      <h1 class="sala-titulo">
-        {{ materia?.nome || 'Matéria' }}
-      </h1>
-      <div class="sala-descricao" *ngIf="materia">
-        Foque seus estudos, faça anotações e acompanhe o tempo dedicado a esta matéria.
-      </div>
+   <div class="titulo-sala">
+  <!-- TÍTULO DA MATÉRIA -->
+  <h1 class="sala-titulo">
+    {{ materia?.nome || 'Matéria' }}
+  </h1>
+
+  <!-- ABAS DO MODO (AO LADO DO TÍTULO) -->
+  <div class="abas-modo titulo-abas">
+    <div class="botoes">
+      <button
+        type="button"
+        class="aba"
+        [class.ativa]="modo === 'estudar'"
+        (click)="mudarModo('estudar')"
+      >
+        Estudar
+      </button>
+
+      <button
+        type="button"
+        class="aba"
+        [class.ativa]="modo === 'revisar'"
+        (click)="mudarModo('revisar')"
+      >
+        Revisar
+      </button>
     </div>
+  </div>
+</div>
+
+
     <div>
+      <!-- SONS DE FOCO -->
+      <div class="sons-foco-header">
+        <div class="sons-foco-info">
+          <span class="sons-foco-label">Som de foco (Melhor com Fone)</span>
+          <span class="sons-foco-hint">
+            Ative um som ambiente para manter a concentração.
+          </span>
 
 
+          <div class="icones-sons">
+            <button type="button" class="som-icone" *ngFor="let som of sonsFoco" [class.ativo]="somAtivoId === som.id"
+              (click)="onClickSomIcone(som.id)" [title]="som.nome">
+              <div class="som-icone-avatar-wrapper">
+                <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
+                <span class="som-icone-badge" *ngIf="somAtivoId === som.id">
+                  ▶
+                </span>
+              </div>
 
-
-  
+              <div class="som-icone-textos">
+                <span class="som-icone-nome">{{ som.nome }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-
+  <div class="separador"></div>
 
   <!-- CORPO DA SALA -->
   <section class="card sala-body">
-
     <!-- COLUNA ESQUERDA: LISTA DE TÓPICOS -->
     <aside class="coluna-esquerda">
       <div class="coluna-header">
@@ -40,7 +81,6 @@
         <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
           [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
           (click)="!t.hasFilhos && selecionarTopico(t)">
-
           <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
             <span class="badge-nivel" [ngClass]="classeSemaforoRevisaoSala(t)"></span>
             <span class="descricao-topico">
@@ -53,7 +93,7 @@
       <ng-template #semTopicos>
         <p class="muted">
           Esta matéria ainda não possui tópicos cadastrados.
-          <br>
+          <br />
           Volte ao cadastro de matérias para criar sua árvore de tópicos.
         </p>
       </ng-template>
@@ -61,32 +101,11 @@
 
     <!-- COLUNA DIREITA: CONTEÚDO DA SALA -->
     <main class="coluna-direita">
-
       <!-- Abas do modo -->
-      <div class="abas-modo">
-        <div class="botoes">
-          <button type="button" class="aba" [class.ativa]="modo === 'estudar'" (click)="mudarModo('estudar')">
-            Estudar
-          </button>
 
-          <button type="button" class="aba" [class.ativa]="modo === 'revisar'" (click)="mudarModo('revisar')">
-            Revisar
-          </button>
-
-         
-        </div>
-        <div class="icones-sons">
-          <button type="button" class="som-icone" *ngFor="let som of sonsFoco" [class.ativo]="somAtivoId === som.id"
-            (click)="onClickSomIcone(som.id)" [title]="som.nome">
-            <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
-            <span class="som-icone-nome">{{ som.nome }}</span>
-          </button>
-        </div>
-      </div>
 
       <!-- ===================== MODO ESTUDAR ===================== -->
       <section *ngIf="modo === 'estudar'" class="modo-conteudo">
-
         <ng-template #selecioneTopico>
           <h2 class="titulo-section">
             Selecione um tópico ao lado para começar a estudar.
@@ -94,14 +113,15 @@
         </ng-template>
 
         <div class="bloco bloco-anotacoes">
-
           <div class="timer-botoes">
             <div *ngIf="topicoSelecionado; else selecioneTopico">
               <h2 class="titulo-section">
                 Estudando:
                 <span>{{ topicoSelecionado.descricao }}</span>
               </h2>
+
             </div>
+
 
             <div class="timer-modos">
               <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
@@ -116,31 +136,33 @@
             </div>
           </div>
 
-          <!-- AVISO QUANDO NÃO PODE EDITAR -->
-          <div class="editor-aviso" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
-            <span class="editor-aviso-icon">🔒</span>
-            <div class="editor-aviso-texto">
-              <strong>Editor bloqueado</strong>
-
-              <span *ngIf="!topicoSelecionado">
-                Selecione um tópico na coluna à esquerda para começar.
-              </span>
-
-              <span *ngIf="topicoSelecionado && topicoSelecionado.hasFilhos">
-                Este tópico possui subtópicos. Selecione um subtópico específico para registrar o estudo.
-              </span>
-
-              <span *ngIf="topicoPermiteEstudo && !timerAtivo">
-                Inicie o cronômetro para liberar as anotações deste tópico.
-              </span>
-            </div>
-          </div>
-
-          <!-- Editor -->
+          <!-- Editor com BANNER DE BLOQUEIO cobrindo tudo -->
           <div class="editor-wrapper">
             <p-editor id="anotacoes" [(ngModel)]="anotacoes" name="anotacoes"
               [readonly]="!topicoPermiteEstudo || !timerAtivo">
             </p-editor>
+
+            <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
+              <div class="editor-aviso">
+                <span class="editor-aviso-icon">🔒</span>
+                <div class="editor-aviso-texto">
+                  <strong>Editor bloqueado</strong>
+
+                  <span *ngIf="!topicoSelecionado">
+                    Selecione um tópico na coluna à esquerda para começar.
+                  </span>
+
+                  <span *ngIf="topicoSelecionado && topicoSelecionado.hasFilhos">
+                    Este tópico possui subtópicos. Selecione um subtópico
+                    específico para registrar o estudo.
+                  </span>
+
+                  <span *ngIf="topicoPermiteEstudo && !timerAtivo">
+                    Inicie o cronômetro para liberar as anotações deste tópico.
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="timer-header-linha">
@@ -150,8 +172,11 @@
                 {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
               </button>
 
-              <button type="button" class="btn secundario" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre')
-                  || (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
+              <button type="button" class="btn secundario" (click)="zerarTimer()" [disabled]="
+                  (!tempoTotalSegundos && modoTemporizador === 'livre') ||
+                  (modoTemporizador === 'pomodoro' &&
+                    pomodoroSegundosRestantes === duracaoFaseAtual)
+                ">
                 Zerar
               </button>
             </div>
@@ -183,12 +208,10 @@
             {{ mensagemEstudoSalvo }}
           </span>
         </div>
-
       </section>
 
       <!-- ===================== MODO REVISAR ===================== -->
       <section *ngIf="modo === 'revisar'" class="modo-conteudo">
-
         <div class="cabecalho-revisao">
           <div>
             <button type="button" class="btn fantasma" *ngIf="!modoRevisaoFocoAtivo" (click)="ativarModoFocoRevisao()">
@@ -216,24 +239,21 @@
               (click)="ativarRevisaoFlashcards()">
               🃏 Flashcards
             </button>
-
           </div>
         </div>
 
-         <div class="alerta-revisao" *ngIf="mensagemRevisao">
-    <span class="alerta-revisao-icone">✔</span>
-    <span class="alerta-revisao-texto">{{ mensagemRevisao }}</span>
-  </div>
+        <div class="alerta-revisao" *ngIf="mensagemRevisao">
+          <span class="alerta-revisao-icone">✔</span>
+          <span class="alerta-revisao-texto">{{ mensagemRevisao }}</span>
+        </div>
 
         <!-- REVISÃO POR ANOTAÇÕES -->
         <div *ngIf="modoRevisao === 'anotacoes'" class="bloco bloco-revisao-anotacoes">
-
           <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
             <h3 class="subtitulo-section">Anotações deste tópico</h3>
 
             <!-- Renderiza o HTML vindo do editor -->
-            <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras">
-            </div>
+            <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras"></div>
 
             <!-- AVALIAÇÃO DA REVISÃO DAS ANOTAÇÕES -->
             <div class="revisao-anotacoes-feedback">
@@ -255,23 +275,21 @@
                 </button>
               </div>
             </div>
-
           </ng-container>
 
           <ng-template #semAnotacoesTpl>
             <div class="painel-revisao-placeholder">
               <p>
-                Não há anotações salvas para este tópico ainda.<br>
-                Use o modo <strong>Estudar</strong> para registrar um resumo ou pontos importantes.
+                Não há anotações salvas para este tópico ainda.<br />
+                Use o modo <strong>Estudar</strong> para registrar um resumo ou
+                pontos importantes.
               </p>
             </div>
           </ng-template>
-
         </div>
 
         <!-- REVISÃO POR FLASHCARDS -->
         <div *ngIf="modoRevisao === 'flashcards'" class="bloco bloco-revisao-flashcards">
-
           <h3 class="subtitulo-section">Revisão com flashcards</h3>
           <p class="muted pequeno">
             Treine lembrança ativa: tente responder antes de virar o cartão.
@@ -287,10 +305,12 @@
           </div>
 
           <!-- NENHUM FLASHCARD -->
-          <div *ngIf="!carregandoFlashcardsRevisao && (!flashcards || !flashcards.length)"
-            class="painel-revisao-placeholder">
+          <div *ngIf="
+              !carregandoFlashcardsRevisao &&
+              (!flashcards || !flashcards.length)
+            " class="painel-revisao-placeholder">
             <p>
-              Nenhum flashcard cadastrado para este tópico ainda.<br>
+              Nenhum flashcard cadastrado para este tópico ainda.<br />
               No modo <strong>Estudar</strong>, use o botão “Criar Flashcard”
               para transformar partes importantes em cartões de revisão.
             </p>
@@ -298,14 +318,18 @@
 
           <!-- FLASHCARD ATUAL -->
           <div *ngIf="!carregandoFlashcardsRevisao && flashcardAtual" class="flashcard-review-container">
-
             <!-- Cartão estilo Anki -->
-            <div class="flashcard-card-review" [ngClass]="{ 'frente': !mostrarVersoAtual, 'verso': mostrarVersoAtual }"
-              (click)="virarFlashcard()">
-
+            <div class="flashcard-card-review" [ngClass]="{
+                'frente': !mostrarVersoAtual,
+                'verso': mostrarVersoAtual
+              }" (click)="virarFlashcard()">
               <div class="flashcard-card-header-linha">
                 <span class="face-pill">
-                  {{ mostrarVersoAtual ? 'Verso (resposta)' : 'Frente (pergunta)' }}
+                  {{
+                  mostrarVersoAtual
+                  ? 'Verso (resposta)'
+                  : 'Frente (pergunta)'
+                  }}
                 </span>
 
                 <span class="meta-contagem" *ngIf="flashcards?.length">
@@ -315,7 +339,11 @@
 
               <div class="flashcard-card-corpo">
                 <div class="flashcard-conteudo-review">
-                  {{ mostrarVersoAtual ? flashcardAtual?.verso : flashcardAtual?.frente }}
+                  {{
+                  mostrarVersoAtual
+                  ? flashcardAtual?.verso
+                  : flashcardAtual?.frente
+                  }}
                 </div>
               </div>
 
@@ -329,7 +357,10 @@
                 </span>
 
                 <span class="meta-hint">
-                  Clique para {{ mostrarVersoAtual ? 'ver a frente' : 'ver a resposta' }}.
+                  Clique para
+                  {{
+                  mostrarVersoAtual ? 'ver a frente' : 'ver a resposta'
+                  }}.
                 </span>
               </div>
             </div>
@@ -340,7 +371,11 @@
               </button>
 
               <button type="button" class="btn primario" (click)="virarFlashcard()">
-                {{ mostrarVersoAtual ? 'Voltar para a frente' : 'Mostrar resposta' }}
+                {{
+                mostrarVersoAtual
+                ? 'Voltar para a frente'
+                : 'Mostrar resposta'
+                }}
               </button>
 
               <button type="button" class="btn secundario" (click)="proximoFlashcard()">
@@ -369,23 +404,20 @@
               </div>
             </div>
           </div>
-
         </div>
-
       </section>
-
     </main>
   </section>
 
   <!-- =============== MODAL DE FLASHCARD =============== -->
   <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard">
     <div class="flashcard-modal">
-
       <header class="flashcard-header">
         <div>
           <h2 class="flashcard-titulo">Criar Flashcard</h2>
           <p class="flashcard-subtitulo">
-            Transforme o que você acabou de estudar em perguntas rápidas para revisar depois.
+            Transforme o que você acabou de estudar em perguntas rápidas para revisar
+            depois.
           </p>
         </div>
 
@@ -452,7 +484,8 @@
             placeholder="Ex.: português, morfologia, substantivo" />
         </label>
         <small class="flashcard-dica">
-          Dica: use tags para encontrar depois todos os flashcards relacionados a um tema.
+          Dica: use tags para encontrar depois todos os flashcards relacionados a um
+          tema.
         </small>
       </div>
 
@@ -471,11 +504,9 @@
           💾 Salvar Flashcard
         </button>
       </footer>
-
     </div>
   </div>
   <!-- =============== FIM MODAL =============== -->
-
 </div>
 
 <ng-template #loadingTpl>

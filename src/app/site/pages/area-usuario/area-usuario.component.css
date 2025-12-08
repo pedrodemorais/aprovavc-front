@@ -23,18 +23,7 @@ html, body {
  align-items: stretch; 
 
 }
-.menu {
-  height: 100dvh;
-  width: 250px;
-  background: white;
-  top: 8dvh;
-  margin-left: 1rem;
-  margin-top: 5rem;
 
-  box-sizing: border-box;
-  z-index: 999;
-
-}
 
 
 
@@ -204,7 +193,59 @@ display: flex;
 }
 
 
+.menu {
+  height: 100dvh;
+  width: 10%;
+  background: white;
+  top: 8dvh;
+  margin-left: 1rem;
+  margin-top: 5rem;
 
+  box-sizing: border-box;
+  z-index: 999;
+}
+
+/* remove espaçamentos padrão da lista */
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* deixa os itens mais juntinhos */
+.menu li {
+  margin: 0;              /* tira espaço entre lis */
+}
+
+/* controla o "altura" de cada linha */
+.menu a {
+  display: block;
+  padding: 0.25rem 1rem;  /* diminui o padding vertical */
+  line-height: 1.7;       /* aproxima o texto */
+  font-size: 0.85rem;
+  font-weight: 300;
+}
+/* Estilo padrão dos itens do menu */
+.menu .p-panelmenu .p-menuitem-link {
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: #4b5563;              /* cinza mais discreto */
+  padding: 0.25rem 1rem;
+}
+
+/* Quando a rota estiver ativa (clicado/selecionado) */
+.menu .p-panelmenu .p-menuitem-link.router-link-active,
+.menu .p-panelmenu .p-menuitem-link-active {
+  font-weight: 600;             /* negrito */
+  color:  #54ba67;;               /* cor do texto ativa (verde/azul, escolha) */
+  background-color: #e0f2f1;    /* leve destaque de fundo */
+}
+
+/* Ícone do item ativo acompanha a cor */
+.menu .p-panelmenu .p-menuitem-link.router-link-active .p-menuitem-icon,
+.menu .p-panelmenu .p-menuitem-link-active .p-menuitem-icon {
+  color: #54ba67;;
+}
 
 
 @media (max-width: 769px) {
@@ -234,6 +275,8 @@ display: flex;
   overflow: hidden;
  
  align-items: stretch; 
+
+
 
 }
 
@@ -302,56 +345,4 @@ margin-top: 4rem;
     transform: translateY(0);
   }
 }
-.menu {
-  height: 100dvh;
-  width: 250px;
-  background: white;
-  top: 12dvh;
-  margin-left: 1rem;
-  margin-top: 7rem;
 
-  box-sizing: border-box;
-  z-index: 999;
-}
-
-/* remove espaçamentos padrão da lista */
-.menu ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-/* deixa os itens mais juntinhos */
-.menu li {
-  margin: 0;              /* tira espaço entre lis */
-}
-
-/* controla o "altura" de cada linha */
-.menu a {
-  display: block;
-  padding: 0.25rem 1rem;  /* diminui o padding vertical */
-  line-height: 1.7;       /* aproxima o texto */
-  font-size: 0.85rem;
-  font-weight: 300;
-}
-/* Estilo padrão dos itens do menu */
-.menu .p-panelmenu .p-menuitem-link {
-  font-size: 0.85rem;
-  font-weight: 300;
-  color: #4b5563;              /* cinza mais discreto */
-  padding: 0.25rem 1rem;
-}
-
-/* Quando a rota estiver ativa (clicado/selecionado) */
-.menu .p-panelmenu .p-menuitem-link.router-link-active,
-.menu .p-panelmenu .p-menuitem-link-active {
-  font-weight: 600;             /* negrito */
-  color:  #54ba67;;               /* cor do texto ativa (verde/azul, escolha) */
-  background-color: #e0f2f1;    /* leve destaque de fundo */
-}
-
-/* Ícone do item ativo acompanha a cor */
-.menu .p-panelmenu .p-menuitem-link.router-link-active .p-menuitem-icon,
-.menu .p-panelmenu .p-menuitem-link-active .p-menuitem-icon {
-  color: #54ba67;;
-}

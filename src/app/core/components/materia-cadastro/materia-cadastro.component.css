@@ -1,50 +1,107 @@
-/* ========= CONTAINER GERAL ========= */
+/* ======================
+   CONTAINER GERAL
+====================== */
 
-.page-container {
-  background: #f3f4f6;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.layout {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 12px 24px;
-}
-
-/* ========= CARD PRINCIPAL ========= */
-
-.card.materias-card {
+.page-materias {
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-}
-
-.card-body {
-  position: relative;
-  padding: 16px 18px 18px;
-  font-size: 0.92rem;
-  min-height: calc(100dvh - 140px);
+  width: 100%;
+  min-height: calc(100dvh - 80px);
   box-sizing: border-box;
+  padding: 16px 24px 24px;
 }
 
-/* ========= CABEÇALHO FIXO ========= */
-
-.cabecalho-fixo {
-
-  border-bottom: 1px solid #e5ecf5;
-
-}
-
-.cabecalho-linha-unica {
+.page-materias-header {
+  max-width: 1200px;
+  margin: 0 auto 10px;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #edf1f7;
+  padding-bottom: 10px;
 }
+
+.page-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #484b49;
+  margin: 0 0 4px;
+   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #6b7280;
+   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+}
+
+/* ======================
+   STEPS (1 MATÉRIAS / 2 TÓPICOS)
+====================== */
+
+.steps-indicador {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.step-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.step-item.ativo {
+  border-color: #54ba67;
+  background: #e8f8ee;
+}
+
+.step-numero {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.step-item.ativo .step-numero {
+  background: #54ba67;
+  color: #ffffff;
+}
+
+.step-texto {
+  font-size: 0.78rem;
+  color: #374151;
+  font-weight: 500;
+   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
+}
+
+.step-seta {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* ======================
+   ERRO GLOBAL
+====================== */
 
 .mensagem-erro {
-  margin: 0;
+  max-width: 1200px;
+  margin: 8px auto 0;
   padding: 8px 12px;
   border-radius: 8px;
   background: #fee2e2;
@@ -52,37 +109,70 @@
   font-size: 0.85rem;
 }
 
-/* Bloco de contexto (pílula + texto) à esquerda */
-.cabecalho-contexto {
+/* ======================
+   CONTEÚDO 2 COLUNAS
+====================== */
+
+.page-materias-content {
+  max-width: 1200px;
+  margin: 10px auto 0;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 6px;
+}
+
+.col-esquerda,
+.col-direita {
+  flex: 1;
   min-width: 0;
 }
 
-.cabecalho-texto {
+/* ======================
+   CARDS GENÉRICOS
+====================== */
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  padding: 12px 14px 12px;
+  box-sizing: border-box;
+   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+
+}
+
+.card + .card {
+  margin-top: 12px;
+}
+
+.card-header {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
-.cabecalho-titulo {
-  font-size: 0.95rem;
+.card-title {
+  font-size: 0.98rem;
   font-weight: 600;
-  color: #111827;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  color:#3c4047;
+  margin: 0 0 2px;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
 }
 
-.cabecalho-descricao {
+.card-subtitle {
   font-size: 0.8rem;
   color: #6b7280;
+  margin: 0;
 }
 
-/* Pílula de modo (Matéria / Tópico / Subtópico) */
-.pill-modo {
+/* Pílulas de passo */
+
+.pill {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
@@ -93,43 +183,43 @@
 }
 
 .pill-materia {
-  background: #e3f2ff;
-  color: #1565c0;
+ background: #ecfdf3;          /* um verdinho bem claro */
+  box-shadow: 0 0 0 1px #54ba67;
 }
 
 .pill-topico {
   background: #e8f5e9;
-  color: #2e7d32;
+  box-shadow: 0 0 0 1px #54ba67;
 }
 
-.pill-subtopico {
-  background: #fff3e0;
-  color: #ef6c00;
-}
+/* ======================
+   FORMULÁRIO DE MATÉRIA
+====================== */
 
-/* Bloco input + botões à direita */
-.cabecalho-input-acoes {
-  flex: 1;
+.form-materia {
   display: flex;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
-.form-inline {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  width: 100%;
+  margin-top: 6px;
 }
 
-.campo-principal {
-  flex: 1;
+.form-campo {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-/* ========= CAMPOS / ERROS ========= */
+.label {
+  font-size: 0.82rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.obrigatorio {
+  color: #ef4444;
+}
+
+/* Inputs */
 
 .input-text {
   width: 100%;
@@ -144,8 +234,8 @@
 }
 
 .input-text:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+  border-color: #54ba67;
+  box-shadow: 0 0 0 1px rgba(84, 186, 103, 0.25);
   background-color: #f9fafb;
 }
 
@@ -160,19 +250,13 @@
   color: #b91c1c;
 }
 
-.hint-campo {
-  font-size: 0.78rem;
-  color: #7a8899;
-}
+/* Botões */
 
-/* Botões do topo (Salvar / Nova / Salvar tópico) */
-.acoes-topo {
+.form-acoes {
   display: flex;
-  gap: 6px;
-  flex-shrink: 0;
+  gap: 8px;
+  justify-content: flex-end;
 }
-
-/* ========= BOTÕES GENÉRICOS ========= */
 
 .btn {
   border-radius: 8px;
@@ -192,9 +276,9 @@
 }
 
 .btn.primario {
-  background: #0ea5e9;
+  background: #54ba67;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.45);
+  box-shadow: 0 2px 6px rgba(6, 95, 34, 0.35);
 }
 
 .btn.primario:disabled {
@@ -213,98 +297,75 @@
   background: #e5e7eb;
 }
 
-/* ========= TEXTOS AUXILIARES ========= */
+/* ======================
+   LISTA DE MATÉRIAS
+====================== */
 
-.page-subtitle {
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-.vazio {
-  font-size: 0.86rem;
-  color: #6b7280;
-  margin-top: 6px;
-}
-
-.loading {
-  font-size: 0.86rem;
-  color: #4b5563;
-  margin-top: 4px;
-}
-
-/* ========= LISTA DE MATÉRIAS ========= */
-
-.lista-materias-wrapper {
-  margin-top: 8px;
-}
-
-/* container com scroll vertical */
-.tabela-materias-container {
-  margin-top: 4px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  max-height: calc(100dvh - 230px);
+.lista-materias {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  max-height: calc(100dvh - 320px);
   overflow-y: auto;
 }
 
-/* wrapper com scroll horizontal em tela pequena */
-.tabela-scroll {
-  width: 100%;
-  overflow-x: auto;
-}
-
-/* tabela em si */
-.tabela-materias {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.88rem;
-  min-width: 520px;
-}
-
-.tabela-materias th,
-.tabela-materias td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.tabela-materias th {
-  text-align: left;
-  font-weight: 600;
-  color: #4b5563;
-  background: #f9fafb;
-}
-
-.tabela-materias tr {
+/* item padrão */
+.item-materia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.05s ease,
+              border-color 0.12s ease;
+  border: 1px solid transparent;
 }
 
-.tabela-materias tr:hover {
+
+.item-materia:hover {
   background: #f9fafb;
 }
 
-.tabela-materias tr.selecionada {
-  background: #e0ecff;
+/* item selecionado (ativa) – bem mais suave */
+.item-materia.ativa {
+  background: #f0fdf4;              /* verde bem clarinho */
+  border-color: #bbf7d0;            /* borda verde clara */
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.15);
 }
 
-.col-acoes {
-  width: 150px;
+.materia-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-.tabela-materias td.acoes {
-  text-align: right;
-  white-space: nowrap;
+.materia-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-/* nome matéria + bolinha */
 .materia-nome {
-  margin-left: 0.5rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #111827;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
-/* Botões de ícone na tabela */
+.materia-acoes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Botões de ícone */
+
 .btn-icone {
   border: none;
   background: transparent;
@@ -313,35 +374,92 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.05s ease, filter 0.1s ease;
 }
 
 .btn-icone:hover {
   filter: brightness(0.9);
 }
 
+.btn-icone:active {
+  transform: translateY(1px);
+}
+
 .btn-icone .icone-img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
 }
 
-/* ========= ÁRVORE DE TÓPICOS ========= */
+/* ======================
+   ESTADOS / TEXTOS AUXILIARES
+====================== */
 
-.celula-topicos {
-  padding: 0;
+.estado-vazio,
+.estado-vazio-topicos {
+  font-size: 0.86rem;
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+.estado-vazio-topicos {
+  line-height: 1.5;
+}
+
+.loading {
+  font-size: 0.86rem;
+  color: #4b5563;
+  margin-top: 4px;
+}
+
+/* ======================
+   COLUNA DIREITA – TÓPICOS
+====================== */
+
+.bloco-topicos {
+  min-height: 260px;
+}
+
+/* Card de novo tópico */
+
+.novo-topico-card {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.novo-topico-linha {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.novo-topico-linha .input-text {
+  flex: 1;
+}
+
+.novo-topico-hint {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+/* Card da árvore */
+
+.arvore-card {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
   background: #f9fafb;
-}
-
-.topicos-wrapper {
-  border-top: 1px solid #e5e7eb;
-}
-
-.arvore-topicos {
-  max-height: 380px;
+  padding: 8px 8px;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 320px);
   overflow: auto;
-  padding: 8px 10px;
-  background: #ffffff;
 }
+
+/* ======================
+   ÁRVORE DE TÓPICOS
+====================== */
 
 .lista-topicos,
 .lista-topicos-filhos {
@@ -350,23 +468,39 @@
   padding-left: 0;
 }
 
+/* linha padrão */
 .topico-linha {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 6px;
+  padding: 4px 8px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.1s ease, box-shadow 0.1s ease, transform 0.05s ease;
+  border: 1px solid transparent;
+  transition:
+    background 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.05s ease,
+    border-color 0.12s ease;
 }
 
+/* hover leve */
 .topico-linha:hover {
-  background: #f3f4f6;
+  background: #f9fafb;
 }
 
+/* selecionado – mesmo conceito da matéria ativa */
 .topico-linha.selecionado {
-  background: #e0ecff;
-  box-shadow: 0 0 0 1px #bfdbfe;
+  background: #f0fdf4;                /* verde bem clarinho */
+  border-color: #bbf7d0;              /* borda verde clara */
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.15);
+}
+
+/* opcional: dar um leve destaque na bolinha do semáforo
+   quando o tópico estiver selecionado */
+.topico-linha.selecionado .badge-nivel {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
 }
 
 .topico-info {
@@ -375,7 +509,8 @@
   gap: 6px;
 }
 
-/* Badge básica */
+/* Badge semáforo */
+
 .badge-nivel {
   display: inline-flex;
   align-items: center;
@@ -386,7 +521,6 @@
   background: #d1d5db;
 }
 
-/* estados do “semáforo” */
 .badge-sem-revisao {
   background: #d1d5db;
 }
@@ -416,56 +550,59 @@
   margin-left: 0;
 }
 
-/* ========= RESPONSIVO ========= */
+/* ======================
+   RESPONSIVO
+====================== */
 
 @media (max-width: 900px) {
-  .layout {
-    padding: 12px 8px 20px;
+  .page-materias {
+    padding: 12px 12px 18px;
   }
 
-  .cabecalho-linha-unica {
+  .page-materias-header {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
-  .cabecalho-input-acoes {
-    width: 100%;
-  }
-
-  .form-inline {
+  .page-materias-content {
     flex-direction: column;
-    align-items: stretch;
   }
 
-  .acoes-topo {
+  .lista-materias,
+  .arvore-card {
+    max-height: none;
+  }
+
+  .form-acoes {
     justify-content: flex-start;
   }
 
-  .tabela-materias-container {
-    max-height: calc(100dvh - 260px);
+  .novo-topico-linha {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .novo-topico-linha .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 640px) {
-  .card-body {
-    padding: 12px 10px 14px;
-  }
-
-  .cabecalho-fixo {
-    margin: -12px -10px 8px;
-    padding: 8px 10px;
+  .page-title {
+    font-size: 1.1rem;
   }
 
   .page-subtitle {
     font-size: 0.8rem;
   }
 
+  .card {
+    padding: 10px 10px 10px;
+  }
+
   .btn {
     padding: 6px 10px;
     font-size: 0.8rem;
-  }
-
-  .tabela-materias {
-    font-size: 0.84rem;
   }
 }
