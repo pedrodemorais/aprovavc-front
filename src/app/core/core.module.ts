@@ -47,6 +47,8 @@ import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
 import { MateriaCadastroComponent } from './components/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './components/sala-estudo/sala-estudo.component';
 import { EditaisComponent } from './components/editais/editais.component';
+import { AssinaturaCanceladaComponent } from './components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
+import { AssinaturaPlanosComponent } from '../pages/assinatura/assinatura-planos/assinatura-planos.component';
 
 
 
@@ -61,6 +63,8 @@ import { EditaisComponent } from './components/editais/editais.component';
          MateriaCadastroComponent,
          SalaEstudoComponent,
          EditaisComponent, 
+         AssinaturaCanceladaComponent,
+         AssinaturaPlanosComponent,
        
     
   

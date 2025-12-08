@@ -18,7 +18,7 @@ export class ConfiguradorComponent implements OnInit {
   errorMessage: string | null = null; // 🔥 Variável para armazenar erros
 
   step = 1; // Etapa atual
-  totalSteps = 4; // Total de etapas
+  totalSteps = 2; // Total de etapas
   isSubmitting = false; // Flag para evitar requisições duplicadas
   municipios: any[] = []; // Lista de municípios
   uf: string[] = [
@@ -107,13 +107,10 @@ export class ConfiguradorComponent implements OnInit {
   atualizarTipoPessoa(): void {
     this.tipoPessoa = this.configuradorForm.get('tipoDePessoa')?.value;
   
-    if (this.tipoPessoa === 'Jurídica') {
-      this.configuradorForm.get('razaoSocial')?.setValidators([Validators.required]);
-      this.configuradorForm.get('documento')?.setValidators([Validators.required, Validators.pattern(/^\d{14}$/)]);
-    } else {
+
       this.configuradorForm.get('razaoSocial')?.clearValidators();
       this.configuradorForm.get('documento')?.setValidators([Validators.required, Validators.pattern(/^\d{11}$/)]);
-    }
+
   
     // Atualiza a validação dos campos
     this.configuradorForm.get('razaoSocial')?.updateValueAndValidity();
@@ -182,51 +179,17 @@ export class ConfiguradorComponent implements OnInit {
             this.configuradorForm.get('senha')?.value !== this.configuradorForm.get('confirmSenha')?.value) {
           camposInvalidos.push('Confirmação de Senha (As senhas devem coincidir)');
         }
-        if (!this.configuradorForm.get('tipoDePessoa')?.value) camposInvalidos.push('Tipo de Pessoa');
+       
         if (!this.configuradorForm.get('role')?.value) camposInvalidos.push('Função');
         break;
 
-        case 2:
-      if (!this.configuradorForm.get('segmentoAtividade')?.value) {
-        camposInvalidos.push('Segmento de Atividade');
-      }
-      if (!this.configuradorForm.get('tipoDeNegocio')?.value) {
-        camposInvalidos.push('Tipo de Negócio');
-      }
-      break;
-  
-        case 3:
-          if (!this.configuradorForm.get('nomeFantasia')?.value) {
-              camposInvalidos.push('Nome Fantasia');
-          }
-      
-          // 🔥 Verifica se é Pessoa Jurídica ou Física
-          const tipoPessoa = this.configuradorForm.get('tipoDePessoa')?.value;
-      
-          if (tipoPessoa === 'Jurídica') {
-              if (!this.configuradorForm.get('razaoSocial')?.value) {
-                  camposInvalidos.push('Razão Social');
-              }
-              if (!this.configuradorForm.get('documento')?.valid || this.configuradorForm.get('documento')?.value.length !== 14) {
-                  camposInvalidos.push('CNPJ inválido');
-              }
-          } else if (tipoPessoa === 'Física') {
-              if (!this.configuradorForm.get('documento')?.valid || this.configuradorForm.get('documento')?.value.length !== 11) {
-                  camposInvalidos.push('CPF inválido');
-              }
-          }
-      
-          if (!this.configuradorForm.get('telefone')?.valid) {
-              camposInvalidos.push('Telefone');
-          }
-          break;
+
       
   
-      case 4:
-        if (!this.configuradorForm.get('endereco.logradouro')?.value) camposInvalidos.push('Logradouro');
-        if (!this.configuradorForm.get('endereco.numero')?.value) camposInvalidos.push('Número');
-        if (!this.configuradorForm.get('endereco.bairro')?.value) camposInvalidos.push('Bairro');
-        if (!this.configuradorForm.get('endereco.cep')?.valid) camposInvalidos.push('CEP');
+      
+  
+      case 2:
+       
         if (!this.configuradorForm.get('endereco.municipio.uf')?.value) camposInvalidos.push('Estado (UF)');
         if (!this.configuradorForm.get('endereco.municipio.municipioIbge')?.value) camposInvalidos.push('Município');
         break;
@@ -244,7 +207,7 @@ export class ConfiguradorComponent implements OnInit {
     if (this.step < this.totalSteps) {
       this.step++;
       console.log(`✅ Avançando para a etapa ${this.step}`);
-      if (this.step === 3) {
+      if (this.step === 2) {
         this.carregarEstados();
         this.cdRef.detectChanges();
       }
@@ -272,12 +235,9 @@ export class ConfiguradorComponent implements OnInit {
       senha: this.configuradorForm.get('senha')?.value,
       role: this.configuradorForm.get('role')?.value,
       aluno: { // AlunoDTO dentro do usuário
-        nomeFantasia: this.configuradorForm.get('nomeFantasia')?.value,
-        razaoSocial: this.configuradorForm.get('razaoSocial')?.value,
-        documento: this.configuradorForm.get('documento')?.value,
-        segmentoAtividade: this.configuradorForm.get('segmentoAtividade')?.value,
-        tipoDeNegocio: this.configuradorForm.get('tipoDeNegocio')?.value,
-        tipoDePessoa: this.configuradorForm.get('tipoDePessoa')?.value,
+        nomeFantasia: this.configuradorForm.get('nomeAluno')?.value,
+       
+       
         email: this.configuradorForm.get('emailEmpresa')?.value,
         telefone: this.configuradorForm.get('telefone')?.value,
         endereco: {

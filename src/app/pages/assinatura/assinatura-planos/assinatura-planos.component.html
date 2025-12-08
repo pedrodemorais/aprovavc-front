@@ -1,0 +1,48 @@
+<div class="page-assinatura" *ngIf="!carregando; else loadingTpl">
+  <h1>Escolha seu plano</h1>
+  <p class="descricao">
+    Você tem 30 dias de teste Premium. Depois, escolha se quer continuar no Premium
+    ou migrar para o Basic.
+  </p>
+
+  <div class="planos-container">
+    <!-- PLANO BASIC -->
+    <div class="plano-card">
+      <h2>Basic</h2>
+      <p class="preco">R$ XX,XX/mês</p>
+      <ul class="beneficios">
+        <li>Acesso às matérias e tópicos</li>
+        <li>Controle de tempo de estudo</li>
+        <li>Revisão básica</li>
+      </ul>
+      <button class="btn secundario" (click)="assinar('BASIC')">
+        Assinar Basic
+      </button>
+    </div>
+
+    <!-- PLANO PREMIUM -->
+    <div class="plano-card plano-destaque">
+      <span class="tag">Recomendado</span>
+      <h2>Premium</h2>
+      <p class="preco">R$ YY,YY/mês</p>
+      <ul class="beneficios">
+        <li>Todas as features do Basic</li>
+        <li>Revisão espaçada avançada</li>
+        <li>Flashcards ilimitados</li>
+        <li>Dashboard completo</li>
+      </ul>
+      <button class="btn primario" (click)="assinar('PREMIUM')">
+        Assinar Premium
+      </button>
+    </div>
+  </div>
+
+  <p class="erro" *ngIf="erro">{{ erro }}</p>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="page-assinatura loading">
+    <p>Criando sessão de pagamento...</p>
+  </div>
+</ng-template>
+

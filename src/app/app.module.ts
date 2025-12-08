@@ -8,7 +8,6 @@ import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { AtivacaoComponent } from './site/ativacao/ativacao.component'; // Importação correta do serviço
 import { FormsModule } from '@angular/forms';
-import { PaymentComponent } from './site/pages/payment/payment.component';
 import { RecuperarSenhaComponent } from './site/pages/auth/recuperar-senha/recuperar-senha.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -22,16 +21,18 @@ import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/d
 
 
 
+
+
 registerLocaleData(localePt, 'pt-BR'); 
 
 @NgModule({
   declarations: [
     AppComponent,
     AtivacaoComponent,
-    PaymentComponent,
     RecuperarSenhaComponent,
     ContentComponent,
     DashboardRevisaoComponent,
+
     
    
   ],

@@ -8,7 +8,6 @@ import { LoginSiteComponent } from './site/pages/auth/login-site/login-site.comp
 import { AreaUsuarioComponent } from './site/pages/area-usuario/area-usuario.component';
 import { RegisterComponent } from './site/pages/register/register.component';
 import { AuthGuard } from './site/pages/guards/auth.guard';
-import { PaymentComponent } from './site/pages/payment/payment.component';
 import { RedefinirSenhaComponent } from './site/pages/auth/redefinir-senha/redefinir-senha.component';
 import { RecuperarSenhaComponent } from './site/pages/auth/recuperar-senha/recuperar-senha.component';
 import { RedefinirSenhaSiteComponent } from './site/pages/redefinir-senha-site/redefinir-senha-site.component';
@@ -21,6 +20,9 @@ import { MateriaCadastroComponent } from './core/components/materia-cadastro/mat
 import { SalaEstudoComponent } from './core/components/sala-estudo/sala-estudo.component';
 import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/dashboard-revisao.component';
 import { EditaisComponent } from './core/components/editais/editais.component';
+import { AssinaturaSucessoComponent } from './core/components/assinatura/assinatura-sucesso/assinatura-sucesso.component';
+import { AssinaturaCanceladaComponent } from './core/components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
+import { AssinaturaPlanosComponent } from './pages/assinatura/assinatura-planos/assinatura-planos.component';
 
 
 
@@ -28,6 +30,9 @@ import { EditaisComponent } from './core/components/editais/editais.component';
 
 const routes: Routes = [
   { path: 'ativacao', component: AtivacaoComponent },
+ { path: 'assinatura/planos', component: AssinaturaPlanosComponent },
+  { path: 'assinatura/sucesso', component: AssinaturaSucessoComponent },
+  { path: 'assinatura/cancelada', component: AssinaturaCanceladaComponent },
 
   { path: 'adesao', component: AdesaoPlanoComponent },
   { path: 'configurador', component: ConfiguradorComponent },
@@ -60,7 +65,6 @@ const routes: Routes = [
 
   },
   { path: 'register', component: RegisterComponent },
-  { path: 'pagamento', component: PaymentComponent },
   { path: 'recuperar-senha', component: RecuperarSenhaComponent },
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
   { path: 'assine', component: AssineComponent },
