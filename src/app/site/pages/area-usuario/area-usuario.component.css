@@ -40,7 +40,7 @@ html, body {
   height: 100%;
   width: 100%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+
   overflow: hidden;
  
 }
@@ -76,7 +76,7 @@ html, body {
 
 /* controla o tamanho proporcional da logo */
 .logo img {
-  width: 110px;   /* ajuste o valor até ficar do jeito que você quer */
+  width: 140px;   /* ajuste o valor até ficar do jeito que você quer */
   height: auto;   /* mantém a proporção automaticamente */
   display: block;
   margin-left: 2rem;
@@ -195,7 +195,7 @@ display: flex;
 
 .menu {
   height: 100dvh;
-  width: 10%;
+  
   background: white;
   top: 8dvh;
   margin-left: 1rem;
