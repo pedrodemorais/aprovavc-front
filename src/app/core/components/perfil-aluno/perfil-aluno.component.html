@@ -33,12 +33,10 @@
 
               <div class="botoes-assinatura">
                 <div>
-                  <button type="button" class="btn secundario" (click)="abrirCheckout('BASIC')">
-                    Migrar para Essencial
+                  <button type="button" class="btn primario" (click)="irParaGerenciarAssinatura()">
+                    Gerenciar Assinatura
                   </button>
-                  <button type="button" class="btn primario" (click)="abrirCheckout('PREMIUM')">
-                    Manter / assinar Premium
-                  </button>
+                 
                 </div>
               </div>
 
@@ -47,7 +45,8 @@
 
             <div class="linha-assinatura">
               <span class="label">Plano atual</span>
-              <span class="valor">{{ planoAtual || 'Não definido' }}</span>
+              <p><strong>{{ planoAtualLabel }}</strong></p>
+
             </div>
 
             <div class="linha-assinatura">

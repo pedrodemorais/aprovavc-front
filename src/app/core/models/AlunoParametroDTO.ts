@@ -31,9 +31,12 @@ export interface AlunoDTO {
   dataAtualizacao?: string;
   endereco: EnderecoDTO;
   parametros?: AlunoParametroDTO[];
+  
+
 }
 
 export interface UsuarioConsultaDTO {
+  assinaturaValida: null;
   nome: string;
   email: string;
   role: string;

@@ -1,0 +1,327 @@
+/* ===== CONTAINER GERAL DA PÁGINA ===== */
+.page-assinatura {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #111827;
+}
+
+/* ===== PAINEL SUPERIOR: RESUMO DA ASSINATURA ===== */
+.painel-assinatura {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 20px 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 28px;
+}
+
+.cabecalho-assinatura {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.cabecalho-assinatura h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.page-assinatura .descricao {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.descricao-secundaria {
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* BADGE DE STATUS (TRIAL / ATIVA / EXPIRADA / CANCELADA) */
+.badge-status {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+/* Cores por status */
+.badge-status.trial {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.badge-status.ativa {
+  background: #ecfdf3;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.badge-status.expirada,
+.badge-status.cancelada {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* RESUMO DA ASSINATURA */
+.resumo-assinatura {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.resumo-assinatura p {
+  margin: 4px 0;
+}
+
+/* AÇÕES DA ASSINATURA (GERENCIAR / CANCELAR) */
+.acoes-assinatura {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Link para painel de cobrança */
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.9rem;
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: #1d4ed8;
+}
+
+/* Botão de cancelar assinatura */
+.btn-cancelar {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.btn-cancelar:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+/* ===== BLOCO DE PLANOS ===== */
+.planos-wrapper {
+  margin-top: 32px;
+}
+
+.planos-wrapper h2 {
+  text-align: center;
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+/* CONTÊINER DOS PLANOS (GRID) */
+.planos-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  margin-top: 20px;
+}
+
+/* CARD BASE DO PLANO */
+.plano-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.plano-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+  border-color: #cbd5f5;
+}
+
+/* CARD PREMIUM EM DESTAQUE */
+.plano-card.plano-destaque {
+  border: 1.5px solid #54ba67;
+  box-shadow: 0 16px 32px rgba(84, 186, 103, 0.18);
+}
+
+/* TAG "RECOMENDADO" */
+.plano-card .tag {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #54ba67;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* TÍTULO DO PLANO */
+.plano-card h2 {
+  font-size: 1.35rem;
+  margin: 8px 0 4px;
+}
+
+/* PREÇO */
+.plano-card .preco {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+/* LISTA DE BENEFÍCIOS */
+.plano-card .beneficios {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.plano-card .beneficios li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.plano-card .beneficios li::before {
+  content: '•';
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #54ba67;
+  margin-top: 2px;
+}
+
+/* BOTÕES DENTRO DO CARD (usa suas classes .btn/.primario/.secundario) */
+.plano-card .btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.08s ease,
+    opacity 0.12s ease;
+}
+
+/* Estado desabilitado para "Plano atual" */
+.plano-card .btn[disabled] {
+  cursor: default;
+  opacity: 0.6;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Primário (Premium) */
+.plano-card .btn.primario {
+  background: #54ba67;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(84, 186, 103, 0.35);
+}
+
+.plano-card .btn.primario:hover:not([disabled]) {
+  background: #3ea653;
+  box-shadow: 0 14px 28px rgba(84, 186, 103, 0.45);
+  transform: translateY(-1px);
+}
+
+/* Secundário (Essencial) */
+.plano-card .btn.secundario {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+}
+
+.plano-card .btn.secundario:hover:not([disabled]) {
+  border-color: #54ba67;
+  color: #111827;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+/* MENSAGEM DE ERRO GERAL */
+.page-assinatura .erro {
+  margin-top: 24px;
+  text-align: center;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+/* ESTADO LOADING */
+.page-assinatura.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  text-align: center;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+  .page-assinatura {
+    padding-top: 24px;
+  }
+
+  .cabecalho-assinatura {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cabecalho-assinatura h1 {
+    font-size: 1.5rem;
+  }
+
+  .planos-container {
+    grid-template-columns: 1fr;
+  }
+
+  .plano-card.plano-destaque {
+    order: -1; /* Premium vem primeiro no mobile */
+  }
+}

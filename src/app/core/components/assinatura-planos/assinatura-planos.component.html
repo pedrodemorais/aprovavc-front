@@ -1,41 +1,122 @@
 <div class="page-assinatura" *ngIf="!carregando; else loadingTpl">
-  <h1>Escolha seu plano</h1>
-  <p class="descricao">
-    Você tem 30 dias de teste Premium. Depois, escolha se quer continuar no Premium
-    ou migrar para o Basic.
-  </p>
+  <!-- 🔹 Painel de resumo da assinatura -->
+  <section class="painel-assinatura">
+    <div class="cabecalho-assinatura">
+      <div>
+        <h1>Minha assinatura</h1>
+        <p class="descricao">
+          Acompanhe seu plano, entenda os benefícios e gerencie sua assinatura.
+        </p>
+      </div>
 
-  <div class="planos-container">
-    <!-- PLANO BASIC -->
-    <div class="plano-card">
-      <h2>Basic</h2>
-      <p class="preco">R$ XX,XX/mês</p>
-      <ul class="beneficios">
-        <li>Acesso às matérias e tópicos</li>
-        <li>Controle de tempo de estudo</li>
-        <li>Revisão básica</li>
-      </ul>
-      <button class="btn secundario" (click)="assinar('BASIC')">
-        Assinar Basic
-      </button>
+      <!-- Badge de status -->
+      <span class="badge-status"
+            [ngClass]="(statusAssinatura || '').toLowerCase()">
+        {{
+          statusAssinatura === 'TRIAL'     ? 'Período de teste' :
+          statusAssinatura === 'ATIVA'     ? 'Ativa' :
+          statusAssinatura === 'EXPIRADA'  ? 'Expirada' :
+          statusAssinatura === 'CANCELADA' ? 'Cancelada' :
+                                             'Indefinido'
+        }}
+      </span>
     </div>
 
-    <!-- PLANO PREMIUM -->
-    <div class="plano-card plano-destaque">
-      <span class="tag">Recomendado</span>
-      <h2>Premium</h2>
-      <p class="preco">R$ YY,YY/mês</p>
-      <ul class="beneficios">
-        <li>Todas as features do Basic</li>
-        <li>Revisão espaçada avançada</li>
-        <li>Flashcards ilimitados</li>
-        <li>Dashboard completo</li>
-      </ul>
-      <button class="btn primario" (click)="assinar('PREMIUM')">
-        Assinar Premium
+    <!-- ✅ Resumo do plano atual (ou teste) -->
+    <div class="resumo-assinatura"
+         *ngIf="planoAtual || statusAssinatura === 'TRIAL'; else semPlanoTpl">
+      <p>
+        Plano atual:
+        <strong>{{ planoAtualLabel }}</strong>
+      </p>
+
+      <p *ngIf="dataExpiracaoLicenca">
+        Válido até {{ dataExpiracaoLicenca | date:'dd/MM/yyyy' }}
+        <span *ngIf="statusAssinatura === 'TRIAL'">
+          (período de teste)
+        </span>
+      </p>
+
+      <p *ngIf="!assinaturaValida && statusAssinatura === 'EXPIRADA'">
+        Sua licença expirou. Escolha um plano abaixo para continuar usando todas as funcionalidades.
+      </p>
+    </div>
+
+    <!-- 🔸 Quando NÃO há plano ativo e não está em trial -->
+    <ng-template #semPlanoTpl>
+      <div class="resumo-assinatura">
+        <p><strong>Você ainda não possui um plano ativo.</strong></p>
+        <p>Escolha um dos planos abaixo para liberar todas as funcionalidades.</p>
+      </div>
+    </ng-template>
+
+    <!-- Ações gerais da assinatura -->
+    <div class="acoes-assinatura">
+      <button
+        type="button"
+        class="btn-link"
+        *ngIf="podeGerenciar"
+        (click)="gerenciarPagamento()">
+        Abrir painel de cobrança (Stripe)
+      </button>
+
+      <button
+        type="button"
+        class="btn-cancelar"
+        *ngIf="podeCancelar"
+        (click)="cancelarAssinatura()">
+        Cancelar assinatura
       </button>
     </div>
-  </div>
+  </section>
+
+  <!-- 🔹 Comparação de planos -->
+  <section class="planos-wrapper">
+    <h2>Planos disponíveis</h2>
+    <p class="descricao descricao-secundaria">
+      Compare os planos e escolha o que faz mais sentido para o seu momento.
+    </p>
+
+    <div class="planos-container">
+      <!-- PLANO ESSENCIAL -->
+      <div class="plano-card">
+        <h2>Essencial</h2>
+        <p class="preco">R$ 9,90/mês</p>
+        <ul class="beneficios">
+          <li>Acesso às matérias e tópicos</li>
+          <li>Controle de tempo de estudo</li>
+          <li>Revisão básica</li>
+        </ul>
+
+        <button
+          class="btn secundario"
+          [disabled]="isPlanoBasicoAtual"
+          (click)="assinar('BASIC')">
+          {{ textoBotaoBasico }}
+        </button>
+      </div>
+
+      <!-- PLANO PREMIUM -->
+      <div class="plano-card plano-destaque">
+        <span class="tag">Recomendado</span>
+        <h2>Premium</h2>
+        <p class="preco">R$ 14,90/mês</p>
+        <ul class="beneficios">
+          <li>Todas as features do Essencial</li>
+          <li>Revisão espaçada avançada</li>
+          <li>Flashcards ilimitados</li>
+          <li>Dashboard completo</li>
+        </ul>
+
+        <button
+          class="btn primario"
+          [disabled]="isPlanoPremiumAtual"
+          (click)="assinar('PREMIUM')">
+          {{ textoBotaoPremium }}
+        </button>
+      </div>
+    </div>
+  </section>
 
   <p class="erro" *ngIf="erro">{{ erro }}</p>
 </div>
@@ -45,4 +126,3 @@
     <p>Criando sessão de pagamento...</p>
   </div>
 </ng-template>
-

@@ -2,7 +2,6 @@ import { NgModule} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfiguradorComponent } from './pages/configurador/configurador.component';
 import { HomeComponent } from './pages/home/home.component';
-import { AdesaoPlanoComponent } from './pages/adesao-plano/adesao-plano.component';
 import { PoliticaPrivacidadeComponent } from './pages/politica-privacidade/politica-privacidade.component';
 import { TermosDeUsoComponent } from './pages/termos-de-uso/termos-de-uso.component';
 import { RouterModule } from '@angular/router';
@@ -32,7 +31,6 @@ import { PanelMenuModule } from 'primeng/panelmenu';
      ConfiguradorComponent,
      InicioComponent,
      HomeComponent,
-     AdesaoPlanoComponent,
      PoliticaPrivacidadeComponent,
      TermosDeUsoComponent,
      LoginSiteComponent,

@@ -4,13 +4,13 @@ import {
   OnDestroy,
   HostListener,
   ViewChild,
-  ElementRef
+  ElementRef,
+  ViewEncapsulation
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { filter, takeUntil } from 'rxjs/operators';
 import { MenuItem } from 'primeng/api';
-import { ViewEncapsulation } from '@angular/core';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -27,6 +27,9 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
   isHome = true;
 
   items: MenuItem[] = [];
+
+  // 🔥 Controle de assinatura
+  assinaturaValida = true;
 
   private destroy$ = new Subject<void>();
 
@@ -45,7 +48,9 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
     private router: Router,
   ) {
     this.user = this.authService.getUser();
-    if (!this.user) this.router.navigate(['/login']);
+    if (!this.user) {
+      this.router.navigate(['/login']);
+    }
 
     this.router.events
       .pipe(
@@ -59,51 +64,105 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnInit() {
-    this.user = this.authService.getUser();
-    const userName = this.authService.getUserNameFromToken();
-    if (userName) this.getUserInitials(userName);
-    if (!this.user) this.router.navigate(['/login']);
+ngOnInit() {
+  this.user = this.authService.getUser();
 
-    // 🔹 Monta um menu fake só pra testar
-    this.montarMenuTeste();
+  const userName = this.authService.getUserNameFromToken();
+  if (userName) {
+    this.getUserInitials(userName);
   }
+
+  if (!this.user) {
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  // 1) Já se inscreve pra reagir a MUDANÇAS (login, renovação, expiração, etc.)
+  this.authService.assinaturaValida$
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(valida => {
+      console.log('📡 [MENU] assinaturaValida mudou para:', valida);
+      this.assinaturaValida = valida;
+      this.montarMenu();
+    });
+
+  // 2) Checa no backend como está a assinatura AGORA
+  this.authService.checarAssinaturaNoBack()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe((valida) => {
+      console.log('📡 [MENU] Resultado checagem no back:', valida);
+      this.assinaturaValida = valida;
+      this.montarMenu();
+    });
+}
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-private montarMenuTeste(): void {
-  this.items = [
-    {
-      label: 'Página inicial',
-      icon: 'pi pi-home',
-      routerLink: ['/area-restrita/dashboard']
-    },
-    {
-      label: 'Matérias',
-      icon: 'pi pi-book',
-      routerLink: ['/area-restrita/cad-materias']
-    },
-    {
-      label: 'Editais/Provas',
-      icon: 'pi pi-file-edit',
-      routerLink: ['/area-restrita/editais']
-    },
-    {
-      label: 'Meu Cadastro',
-      icon: 'pi pi-id-card',
-      routerLink: ['/area-restrita/meu-cadastro']
-    },
- 
-    {
-      label: 'Sair',
-      icon: 'pi pi-sign-out',
-      command: () => this.logout()
+  // ============ MENU ============
+
+  private montarMenu(): void {
+    const assinaturaValida = this.assinaturaValida;
+
+    this.items = [
+      {
+        label: 'Página inicial',
+        icon: 'pi pi-home',
+        disabled: !assinaturaValida,
+        command: () => this.navegarProtegido('/area-restrita/dashboard')
+      },
+      {
+        label: 'Matérias',
+        icon: 'pi pi-book',
+        disabled: !assinaturaValida,
+        command: () => this.navegarProtegido('/area-restrita/cad-materias')
+      },
+      {
+        label: 'Editais/Provas',
+        icon: 'pi pi-file-edit',
+        disabled: !assinaturaValida,
+        command: () => this.navegarProtegido('/area-restrita/editais')
+      },
+      {
+        label: 'Meu Cadastro',
+        icon: 'pi pi-id-card',
+        routerLink: ['/area-restrita/meu-cadastro']
+      },
+      {
+        label: 'Assinatura',
+        icon: 'pi pi-credit-card',
+        routerLink: ['/area-restrita/assinatura']
+      },
+      {
+        label: 'Sair',
+        icon: 'pi pi-sign-out',
+        command: () => this.logout()
+      }
+    ];
+  }
+
+  /**
+   * Navegação protegida por assinatura:
+   * - Se assinatura válida → navega normalmente
+   * - Se expirada → manda pra tela de planos
+   */
+  private navegarProtegido(url: string): void {
+    if (!this.assinaturaValida) {
+      // opcional: mensagem amigável no front
+      localStorage.setItem(
+        'notificationMessage',
+        'Sua assinatura expirou. Renove o plano para continuar usando as funcionalidades de estudo.'
+      );
+      this.router.navigate(['/assinatura/planos'], { queryParams: { expirado: 'true' } });
+      return;
     }
-  ];
-}
+
+    this.router.navigate([url]);
+  }
+
+  // ============ MENU LATERAL / MOBILE ============
 
   toggleMenu() {
     this.menuAberto = !this.menuAberto;
@@ -112,15 +171,24 @@ private montarMenuTeste(): void {
   @HostListener('document:click', ['$event'])
   fecharMenu(event: Event) {
     if (!this.menuAberto) return;
+
     const target = event.target as Node;
     const sideEl = this.sidebarRef?.nativeElement as HTMLElement | undefined;
     const toggleEl = this.toggleRef?.nativeElement as HTMLElement | undefined;
+
     if (sideEl?.contains(target) || toggleEl?.contains(target)) return;
+
     this.menuAberto = false;
   }
 
+  // ============ UX / PERFIL ============
+
   getUserInitials(fullName: string) {
-    if (!fullName) { this.userInitials = '??'; return; }
+    if (!fullName) {
+      this.userInitials = '??';
+      return;
+    }
+
     const names = fullName.trim().split(/\s+/);
     const initials = names.length === 1
       ? names[0][0]
@@ -128,11 +196,21 @@ private montarMenuTeste(): void {
     this.userInitials = initials.toUpperCase();
   }
 
-  openProfile() { this.router.navigate(['/gestor']); }
+  openProfile() {
+    this.router.navigate(['/area-restrita/meu-cadastro']);
+  }
 
-  openSettings() { alert('Abrindo configurações...'); }
+  openSettings() {
+    alert('Abrindo configurações...');
+  }
 
-  openSupport() { alert('Abrindo suporte...'); }
+  openSupport() {
+    alert('Abrindo suporte...');
+  }
 
-  logout() { this.authService.logout(); }
+  // ============ LOGOUT ============
+
+  logout() {
+    this.authService.logout();
+  }
 }

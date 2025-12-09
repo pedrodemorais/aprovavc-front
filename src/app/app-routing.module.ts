@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AdesaoPlanoComponent } from './site/pages/adesao-plano/adesao-plano.component';
 import { ConfiguradorComponent } from './site/pages/configurador/configurador.component';
 import { PoliticaPrivacidadeComponent } from './site/pages/politica-privacidade/politica-privacidade.component';
 import { TermosDeUsoComponent } from './site/pages/termos-de-uso/termos-de-uso.component';
@@ -15,7 +14,6 @@ import { AssineComponent } from './site/pages/assine/assine.component';
 import { AtivacaoComponent } from './site/ativacao/ativacao.component';
 import { InicioComponent } from './site/pages/inicio/inicio.component';
 
-import { EmpresaCadastroComponent } from './site/pages/empresa-cadastro/empresa-cadastro.component';
 import { MateriaCadastroComponent } from './core/components/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './core/components/sala-estudo/sala-estudo.component';
 import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/dashboard-revisao.component';
@@ -24,52 +22,77 @@ import { AssinaturaSucessoComponent } from './core/components/assinatura/assinat
 import { AssinaturaCanceladaComponent } from './core/components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
 import { AssinaturaPlanosComponent } from './core/components/assinatura-planos/assinatura-planos.component';
 import { PerfilAlunoComponent } from './core/components/perfil-aluno/perfil-aluno.component';
+import { PlanoAtivoGuard } from './site/pages/guards/plano-ativo.guard';
+
 
 
 
 
 const routes: Routes = [
   { path: 'ativacao', component: AtivacaoComponent },
- { path: 'assinatura/planos', component: AssinaturaPlanosComponent },
+
+  // rotas de assinatura públicas (sem login obrigatório)
+  
   { path: 'assinatura/sucesso', component: AssinaturaSucessoComponent },
   { path: 'assinatura/cancelada', component: AssinaturaCanceladaComponent },
 
-  { path: 'adesao', component: AdesaoPlanoComponent },
   { path: 'configurador', component: ConfiguradorComponent },
   { path: 'politica-privacidade', component: PoliticaPrivacidadeComponent },
   { path: 'termos-de-uso', component: TermosDeUsoComponent },
   { path: 'home', component: InicioComponent },
+
+  // essa versão de Editais aqui parece ser pública (fora da área restrita)
   { path: 'Editais', component: EditaisComponent },
+
   { path: 'login', component: LoginSiteComponent },
+
   {
-    path: 'area-restrita', component: AreaUsuarioComponent, canActivate: [AuthGuard],
+    path: 'area-restrita',
+    component: AreaUsuarioComponent,
+    canActivate: [AuthGuard], // 🔒 precisa estar logado
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+      // 🔥 Telas que exigem PLANO ATIVO:
       {
-        path: 'dashboard', component: DashboardRevisaoComponent,
-        children: [{ path: '', redirectTo: 'home', pathMatch: 'full' }, // 👈 ESSENCIAL!
-
-
-        ]
-
+        path: 'dashboard',
+        component: DashboardRevisaoComponent,
+        canActivate: [PlanoAtivoGuard]
+      },
+      {
+        path: 'cad-materias',
+        component: MateriaCadastroComponent,
+        canActivate: [PlanoAtivoGuard]
+      },
+      {
+        path: 'editais',
+        component: EditaisComponent,
+        canActivate: [PlanoAtivoGuard]
+      },
+      {
+        path: 'sala-estudo/:materiaId',
+        component: SalaEstudoComponent,
+        canActivate: [PlanoAtivoGuard]
       },
 
+      // ✅ Tela SEM exigência de plano ativo (só precisa estar logado)
+      {
+        path: 'meu-cadastro',
+        component: PerfilAlunoComponent
+      },
+
+      // redefinir senha dentro da área logada
       { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
-      { path: 'cad-materias', component: MateriaCadastroComponent },
-      { path: 'editais', component: EditaisComponent },
-      { path: 'meu-cadastro', component: PerfilAlunoComponent },
-       { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent },
-
-
+      { path: 'assinatura', component: AssinaturaPlanosComponent },
     ]
-
   },
+
   { path: 'register', component: RegisterComponent },
   { path: 'recuperar-senha', component: RecuperarSenhaComponent },
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
   { path: 'assine', component: AssineComponent },
-  { path: '**', redirectTo: 'home', pathMatch: 'full' }
 
+  { path: '**', redirectTo: 'home', pathMatch: 'full' }
 ];
 
 @NgModule({
