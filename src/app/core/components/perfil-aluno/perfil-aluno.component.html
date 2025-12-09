@@ -1,0 +1,170 @@
+<div class="page-perfil" *ngIf="!carregando; else loadingTpl">
+  <div class="conteudo">
+
+    <!-- CABEÇALHO -->
+    <div class="perfil-header">
+      <div>
+        <h1 class="perfil-titulo">Meus dados</h1>
+        <p class="perfil-sub">
+          Veja e atualize suas informações de cadastro e acompanhe o status da sua assinatura.
+        </p>
+      </div>
+    </div>
+
+    <!-- MENSAGENS -->
+    <section class="mensagens">
+      <p *ngIf="erro" class="msg msg-erro">{{ erro }}</p>
+      <p *ngIf="mensagemSucesso" class="msg msg-sucesso">{{ mensagemSucesso }}</p>
+    </section>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="perfil-layout">
+
+      <!-- DADOS DO ALUNO -->
+      <section class="card card-perfil">
+        <!-- CARTÃO DE ASSINATURA -->
+
+<div class="separador"></div>
+        <div class="assinatura">
+
+          <aside *ngIf="usuario">
+            <div class="nome-botoes">
+              <h2 >Minha assinatura</h2>
+
+              <div class="botoes-assinatura">
+                <div>
+                  <button type="button" class="btn secundario" (click)="abrirCheckout('BASIC')">
+                    Migrar para Essencial
+                  </button>
+                  <button type="button" class="btn primario" (click)="abrirCheckout('PREMIUM')">
+                    Manter / assinar Premium
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+
+            <div class="linha-assinatura">
+              <span class="label">Plano atual</span>
+              <span class="valor">{{ planoAtual || 'Não definido' }}</span>
+            </div>
+
+            <div class="linha-assinatura">
+              <span class="label">Status</span>
+              <span class="valor">
+                <span [ngClass]="statusAssinaturaClass">
+                  {{ statusAssinaturaLabel }}
+                </span>
+              </span>
+            </div>
+
+            <div class="linha-assinatura" *ngIf="dataExpiracaoLicenca">
+              <span class="label">Válido até</span>
+              <span class="valor">
+                {{ dataExpiracaoLicenca | date:'dd/MM/yyyy' }}
+                <ng-container *ngIf="diasRestantes !== null">
+                  ({{ diasRestantes }} dia{{ diasRestantes === 1 ? '' : 's' }} restante{{ diasRestantes === 1 ? '' :
+                  's' }})
+                </ng-container>
+              </span>
+            </div>
+            <p class="texto-ajuda">
+              Sua assinatura é processada com segurança via Stripe. Você será redirecionado
+              para a página de pagamento ao escolher um plano.
+            </p>
+            <div class="separador"></div>
+
+
+          </aside>
+
+        </div>
+        <form [formGroup]="perfilForm" (ngSubmit)="salvar()" class="perfil-form">
+
+          <div class="linha-form">
+            <div class="campo">
+              <label>Nome</label>
+              <input type="text" formControlName="nomeAluno" />
+            </div>
+
+            <div class="campo">
+              <label>E-mail</label>
+              <input type="email" formControlName="email" />
+            </div>
+
+            <div class="campo">
+              <label>Telefone</label>
+              <input type="text" formControlName="telefone" />
+            </div>
+          </div>
+
+
+
+
+          <h3 class="subtitulo-secao">Endereço</h3>
+
+          <div formGroupName="endereco">
+            <div class="linha-form">
+              <div class="campo flex-2">
+                <label>Logradouro</label>
+                <input type="text" formControlName="logradouro" />
+              </div>
+
+            </div>
+
+            <div class="linha-form">
+              <div class="campo">
+                <label>Complemento</label>
+                <input type="text" formControlName="complemento" />
+              </div>
+              <div class="campo">
+                <label>Número</label>
+                <input type="text" formControlName="numero" />
+              </div>
+              <div class="campo">
+                <label>Bairro</label>
+                <input type="text" formControlName="bairro" />
+              </div>
+            </div>
+
+            <div class="linha-form">
+              <div class="campo">
+                <label>CEP</label>
+                <input type="text" formControlName="cep" />
+              </div>
+
+              <div class="campo" formGroupName="municipio">
+                <label>Cidade</label>
+                <input type="text" formControlName="municipioIbge" />
+              </div>
+
+              <div class="campo" formGroupName="municipio">
+                <label>UF</label>
+                <input type="text" formControlName="uf" />
+              </div>
+            </div>
+          </div>
+<div class="separador"></div>
+          <div class="acoes-form">
+            <button type="submit" class="btn primario">
+              Salvar alterações
+            </button>
+          </div>
+
+        </form>
+      </section>
+
+
+
+    </div>
+
+  </div>
+
+
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading">
+    Carregando seus dados...
+  </div>
+</ng-template>

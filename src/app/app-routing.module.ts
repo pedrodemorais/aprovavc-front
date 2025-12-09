@@ -22,9 +22,8 @@ import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/d
 import { EditaisComponent } from './core/components/editais/editais.component';
 import { AssinaturaSucessoComponent } from './core/components/assinatura/assinatura-sucesso/assinatura-sucesso.component';
 import { AssinaturaCanceladaComponent } from './core/components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
-import { AssinaturaPlanosComponent } from './pages/assinatura/assinatura-planos/assinatura-planos.component';
-import { PerfilAlunoComponent } from './pages/perfil-aluno/perfil-aluno/perfil-aluno.component';
-
+import { AssinaturaPlanosComponent } from './core/components/assinatura-planos/assinatura-planos.component';
+import { PerfilAlunoComponent } from './core/components/perfil-aluno/perfil-aluno.component';
 
 
 

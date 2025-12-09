@@ -1,8 +1,37 @@
 .page-perfil {
-  max-width: 1100px;
-  margin: 0 auto;
+  display: flex;
+   margin: 0 auto;
   padding: 24px 16px 40px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 98dvh;
+  justify-content: center;
+   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+ 
 }
+.conteudo{
+max-width: 1200px;
+  
+}
+
+.assinatura {
+  display: flex;
+  align-items: center;     /* Alinha verticalmente */
+              /* Espaço entre os itens */
+  flex-wrap: nowrap;  
+     /* Impede quebra de linha */
+      font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+    
+}
+
+.separador{
+  background: #a3a1a175;
+  width: 100%;
+  height: 1px;
+}
+
 
 .perfil-header {
   display: flex;
@@ -53,9 +82,8 @@
 
 .card {
   background: #fff;
-  border-radius: 12px;
-  padding: 20px 18px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+
+ 
 }
 
 .card-titulo {
@@ -67,12 +95,19 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-top: 25px;
 }
 
 .linha-form {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+.nome-botoes{
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   flex-wrap: wrap;
 }
 
 .campo {
@@ -186,6 +221,7 @@
 .botoes-assinatura {
   display: flex;
   flex-direction: column;
+  align-items: end;
   gap: 8px;
   margin: 16px 0 8px;
 }

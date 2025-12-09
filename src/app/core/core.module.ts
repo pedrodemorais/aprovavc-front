@@ -48,7 +48,8 @@ import { MateriaCadastroComponent } from './components/materia-cadastro/materia-
 import { SalaEstudoComponent } from './components/sala-estudo/sala-estudo.component';
 import { EditaisComponent } from './components/editais/editais.component';
 import { AssinaturaCanceladaComponent } from './components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
-import { AssinaturaPlanosComponent } from '../pages/assinatura/assinatura-planos/assinatura-planos.component';
+import { AssinaturaPlanosComponent } from './components/assinatura-planos/assinatura-planos.component';
+import { PerfilAlunoComponent } from './components/perfil-aluno/perfil-aluno.component';
 
 
 
@@ -65,6 +66,7 @@ import { AssinaturaPlanosComponent } from '../pages/assinatura/assinatura-planos
          EditaisComponent, 
          AssinaturaCanceladaComponent,
          AssinaturaPlanosComponent,
+         PerfilAlunoComponent
        
     
   

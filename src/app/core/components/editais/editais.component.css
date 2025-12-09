@@ -5,7 +5,8 @@
 .page-edital {
   background: #ffffff;
   width: 100%;
-  height: 88dvh;
+  height: 98dvh;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
                'Segoe UI', sans-serif;
