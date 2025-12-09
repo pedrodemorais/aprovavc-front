@@ -23,6 +23,7 @@ import { EditaisComponent } from './core/components/editais/editais.component';
 import { AssinaturaSucessoComponent } from './core/components/assinatura/assinatura-sucesso/assinatura-sucesso.component';
 import { AssinaturaCanceladaComponent } from './core/components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
 import { AssinaturaPlanosComponent } from './pages/assinatura/assinatura-planos/assinatura-planos.component';
+import { PerfilAlunoComponent } from './pages/perfil-aluno/perfil-aluno/perfil-aluno.component';
 
 
 
@@ -57,7 +58,7 @@ const routes: Routes = [
       { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
       { path: 'cad-materias', component: MateriaCadastroComponent },
       { path: 'editais', component: EditaisComponent },
-      { path: 'meu-cadastro', component: EmpresaCadastroComponent },
+      { path: 'meu-cadastro', component: PerfilAlunoComponent },
        { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent },
 
 

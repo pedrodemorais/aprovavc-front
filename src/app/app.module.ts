@@ -17,6 +17,7 @@ import { ContentComponent } from './site/pages/content/content.component';
 import { ConfirmationService } from 'primeng/api';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/dashboard-revisao.component';
+import { PerfilAlunoComponent } from './pages/perfil-aluno/perfil-aluno/perfil-aluno.component';
 
 
 
@@ -32,6 +33,7 @@ registerLocaleData(localePt, 'pt-BR');
     RecuperarSenhaComponent,
     ContentComponent,
     DashboardRevisaoComponent,
+    PerfilAlunoComponent,
 
     
    

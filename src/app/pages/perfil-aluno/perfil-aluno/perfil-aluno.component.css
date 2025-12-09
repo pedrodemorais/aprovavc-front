@@ -1,0 +1,202 @@
+.page-perfil {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.perfil-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.perfil-titulo {
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+.perfil-sub {
+  margin: 4px 0 0;
+  color: #555;
+}
+
+.mensagens {
+  margin-bottom: 16px;
+
+  .msg {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  .msg-erro {
+    background: #ffe5e5;
+    color: #b51d1d;
+  }
+
+  .msg-sucesso {
+    background: #e5ffe9;
+    color: #1d7b3a;
+  }
+}
+
+.perfil-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 20px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 18px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.card-titulo {
+  font-size: 1.2rem;
+  margin: 0 0 16px;
+}
+
+.perfil-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.linha-form {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.campo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font-size: 0.85rem;
+    color: #555;
+  }
+
+  input {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+  }
+
+  input[disabled] {
+    background: #f5f5f5;
+    color: #777;
+  }
+}
+
+.flex-2 {
+  flex: 2;
+}
+
+.subtitulo-secao {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.acoes-form {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+  &.primario {
+    background: #54ba67;
+    color: #fff;
+  }
+
+  &.secundario {
+    background: #f2f2f2;
+    color: #333;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.card-assinatura {
+  align-self: flex-start;
+}
+
+.linha-assinatura {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  .label {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .valor {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+}
+
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.badge-ativa {
+  background: #e5ffe9;
+  color: #1d7b3a;
+}
+
+.badge-trial {
+  background: #fff7e5;
+  color: #a16b03;
+}
+
+.badge-expirada {
+  background: #ffe5e5;
+  color: #b51d1d;
+}
+
+.botoes-assinatura {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+
+.texto-ajuda {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #555;
+}

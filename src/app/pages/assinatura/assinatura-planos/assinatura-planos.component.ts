@@ -5,7 +5,7 @@ import { AssinaturaService, TipoPlano } from 'src/app/core/services/assinatura.s
 @Component({
   selector: 'app-assinatura-planos',
   templateUrl: './assinatura-planos.component.html',
-  styleUrls: ['./assinatura-planos.component.scss']
+  styleUrls: ['./assinatura-planos.component.css']
 })
 export class AssinaturaPlanosComponent {
 
