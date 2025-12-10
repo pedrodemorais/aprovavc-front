@@ -61,13 +61,14 @@
         Abrir painel de cobrança (Stripe)
       </button>
 
-      <button
-        type="button"
-        class="btn-cancelar"
-        *ngIf="podeCancelar"
-        (click)="cancelarAssinatura()">
-        Cancelar assinatura
-      </button>
+   <button
+  type="button"
+  class="btn-cancelar"
+  *ngIf="podeCancelar && assinaturaValida && statusAssinatura !== 'CANCELADA'"
+  (click)="cancelarAssinatura()">
+  Cancelar assinatura
+</button>
+
     </div>
   </section>
 

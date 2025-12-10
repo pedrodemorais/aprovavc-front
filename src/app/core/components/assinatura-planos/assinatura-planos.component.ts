@@ -60,7 +60,9 @@ export class AssinaturaPlanosComponent implements OnInit {
         // usa EXCLUSIVAMENTE o que o backend mandou
         this.statusAssinatura = user.statusAssinatura ?? '';
         this.planoAtual = user.planoAtual ?? '';
-        this.assinaturaValida = !!user.assinaturaValida;
+       // this.assinaturaValida = !!user.assinaturaValida;
+        this.assinaturaValida = !!user.assinaturaAtiva;
+
         this.dataExpiracaoLicenca = user.dataExpiracaoLicenca ?? undefined;
 
         console.log('✅ [AssinaturaPlanos] Estado local:', {
@@ -81,25 +83,34 @@ export class AssinaturaPlanosComponent implements OnInit {
   }
 
   // 🔹 Label amigável do plano atual
-  get planoAtualLabel(): string {
-    if (this.statusAssinatura === 'TRIAL') {
-      return 'Período de teste (Premium liberado)';
-    }
-
-    if (this.planoAtual === 'BASIC') return 'Essencial';
-    if (this.planoAtual === 'PREMIUM') return 'Premium';
-
+get planoAtualLabel(): string {
+  if (!this.assinaturaValida) {
     return 'Nenhum plano';
   }
 
-  // 🔹 Só consideramos "plano atual" se NÃO estiver em TRIAL
-  get isPlanoBasicoAtual(): boolean {
-    return this.statusAssinatura !== 'TRIAL' && this.planoAtual === 'BASIC';
+  if (this.statusAssinatura === 'TRIAL') {
+    return 'Período de teste (Premium liberado)';
   }
 
-  get isPlanoPremiumAtual(): boolean {
-    return this.statusAssinatura !== 'TRIAL' && this.planoAtual === 'PREMIUM';
-  }
+  if (this.planoAtual === 'BASIC') return 'Essencial';
+  if (this.planoAtual === 'PREMIUM') return 'Premium';
+
+  return 'Nenhum plano';
+}
+
+
+  // 🔹 Só consideramos "plano atual" se NÃO estiver em TRIAL
+get isPlanoBasicoAtual(): boolean {
+  return this.assinaturaValida
+    && this.statusAssinatura !== 'TRIAL'
+    && this.planoAtual === 'BASIC';
+}
+
+get isPlanoPremiumAtual(): boolean {
+  return this.assinaturaValida
+    && this.statusAssinatura !== 'TRIAL'
+    && this.planoAtual === 'PREMIUM';
+}
 
   // 🔹 Texto dos botões
   get textoBotaoBasico(): string {
@@ -119,9 +130,28 @@ export class AssinaturaPlanosComponent implements OnInit {
     console.log('🔧 Em breve: abrir portal de cobrança / gerenciamento de assinatura');
   }
 
-  cancelarAssinatura() {
-    console.log('🔧 Em breve: cancelar assinatura');
+cancelarAssinatura() {
+  if (!confirm('Tem certeza que deseja cancelar sua assinatura?')) {
+    return;
   }
+
+  this.carregando = true;
+  this.erro = null;
+
+  this.assinaturaService.cancelarAssinatura().subscribe({
+    next: (resp) => {
+      console.log('✅ [AssinaturaPlanos] Assinatura cancelada:', resp);
+      // Depois de cancelar, recarrega direto do backend
+      this.carregarStatusAssinaturaDoBack();
+    },
+    error: (err) => {
+      console.error('❌ [AssinaturaPlanos] Erro ao cancelar assinatura:', err);
+      this.erro = 'Erro ao cancelar assinatura. Tente novamente.';
+      this.carregando = false;
+    }
+  });
+}
+
 
   assinar(plano: TipoPlano) {
     this.erro = null;

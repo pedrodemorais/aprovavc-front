@@ -103,27 +103,58 @@ ngOnInit() {
 
   // ============ MENU ============
 
-  private montarMenu(): void {
-    const assinaturaValida = this.assinaturaValida;
-
+private montarMenu(): void {
+  if (this.assinaturaValida) {
+    // 🔓 ASSINATURA VÁLIDA → tudo funciona normalmente
     this.items = [
       {
         label: 'Página inicial',
         icon: 'pi pi-home',
-        disabled: !assinaturaValida,
-        command: () => this.navegarProtegido('/area-restrita/dashboard')
+        routerLink: ['/area-restrita/dashboard']
       },
       {
         label: 'Matérias',
         icon: 'pi pi-book',
-        disabled: !assinaturaValida,
-        command: () => this.navegarProtegido('/area-restrita/cad-materias')
+        routerLink: ['/area-restrita/cad-materias']
       },
       {
         label: 'Editais/Provas',
         icon: 'pi pi-file-edit',
-        disabled: !assinaturaValida,
-        command: () => this.navegarProtegido('/area-restrita/editais')
+        routerLink: ['/area-restrita/editais']
+      },
+      {
+        label: 'Meu Cadastro',
+        icon: 'pi pi-id-card',
+        routerLink: ['/area-restrita/meu-cadastro']
+      },
+      {
+        label: 'Assinatura',
+        icon: 'pi pi-credit-card',
+        routerLink: ['/area-restrita/assinatura']
+      },
+      {
+        label: 'Sair',
+        icon: 'pi pi-sign-out',
+        command: () => this.logout()
+      }
+    ];
+  } else {
+    // 🔐 ASSINATURA EXPIRADA → só Cadastro e Assinatura clicáveis
+    this.items = [
+      {
+        label: 'Página inicial',
+        icon: 'pi pi-home',
+        disabled: true
+      },
+      {
+        label: 'Matérias',
+        icon: 'pi pi-book',
+        disabled: true
+      },
+      {
+        label: 'Editais/Provas',
+        icon: 'pi pi-file-edit',
+        disabled: true
       },
       {
         label: 'Meu Cadastro',
@@ -142,6 +173,7 @@ ngOnInit() {
       }
     ];
   }
+}
 
   /**
    * Navegação protegida por assinatura:

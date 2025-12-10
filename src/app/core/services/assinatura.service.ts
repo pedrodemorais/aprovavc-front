@@ -44,4 +44,12 @@ export class AssinaturaService {
   // cancelarAssinatura(): Observable<void> {
   //   return this.http.post<void>(`${this.apiUrl}/cancelar`, {});
   // }
+
+    // 👇 Novo método de cancelamento
+  cancelarAssinatura(): Observable<{ message: string; statusAssinatura?: string }> {
+    return this.http.post<{ message: string; statusAssinatura?: string }>(
+      `${this.apiUrl}/cancelar`,
+      {}
+    );
+  }
 }
