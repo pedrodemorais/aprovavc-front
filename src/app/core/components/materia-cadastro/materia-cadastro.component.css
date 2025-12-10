@@ -8,6 +8,7 @@
   min-height: calc(100dvh - 80px);
   box-sizing: border-box;
   padding: 16px 24px 24px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .page-materias-header {

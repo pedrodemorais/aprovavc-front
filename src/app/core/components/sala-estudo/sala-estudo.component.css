@@ -15,12 +15,13 @@ CONTAINER GERAL / LAYOUT
   background: #f3f4f6;
   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Card padrão */
 .card {
   background: #ffffff;
-  border-radius: 12px;
+
   padding: 16px 20px;
 }
 

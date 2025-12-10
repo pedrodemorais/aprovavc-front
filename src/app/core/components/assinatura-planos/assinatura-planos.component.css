@@ -7,13 +7,23 @@
   color: #111827;
 }
 
+
+.page-materias {
+  background: #ffffff;
+  width: 100%;
+  min-height: calc(100dvh - 80px);
+  box-sizing: border-box;
+  padding: 16px 24px 24px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
 /* ===== PAINEL SUPERIOR: RESUMO DA ASSINATURA ===== */
 .painel-assinatura {
   background: #ffffff;
-  border-radius: 16px;
+ 
   padding: 20px 20px 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e5e7eb;
+
   margin-bottom: 28px;
 }
 
