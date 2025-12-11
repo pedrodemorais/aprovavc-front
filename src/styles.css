@@ -38,6 +38,10 @@ html, body {
   );
   
 }
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
+  color: #0f762e !important;
+}
+
 
 .site-container {
   max-width: 1360px; /* largura máxima */

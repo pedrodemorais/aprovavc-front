@@ -1,64 +1,169 @@
+/* ================================
+   TERMOS DE USO - APROVAVC
+   Layout premium, clean e legível
+================================ */
+
+/* Fundo geral da página de termos (pode ajustar se já tiver um padrão global) */
+body.termos-page {
+  background: radial-gradient(circle at top, #f3faf6 0, #eef2ff 35%, #f9fafb 100%);
+}
+
+/* Seção principal */
 #termos-de-uso {
-    padding: 50px 15px;
-    background-color: #f9f9f9;
-    font-family: 'Roboto', sans-serif;
-    color: #333;
-    line-height: 1.6;
-  }
-  
-  #termos-de-uso .container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    padding: 30px;
+  padding: 48px 16px 64px;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+}
+
+/* Container centralizado e com largura máxima controlada */
+#termos-de-uso .container {
+  max-width: 960px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px 28px 40px;
+  box-shadow:
+    0 18px 40px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(148, 163, 184, 0.18);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-sizing: border-box;
+}
+
+/* Título principal */
+#termos-de-uso h1 {
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+/* Subtítulo opcional / descrição inicial */
+#termos-de-uso > .container > p:first-of-type {
+  margin-top: 6px;
+  margin-bottom: 20px;
+  font-size: 0.98rem;
+  color: #4b5563;
+}
+
+/* Títulos de seção (1., 2., 3. ...) */
+#termos-de-uso h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 8px;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Barrinha de destaque ao lado do h2 */
+#termos-de-uso h2::before {
+  content: "";
+  width: 4px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #54ba67, #22c55e);
+}
+
+/* Parágrafos padrão */
+#termos-de-uso p {
+  margin: 6px 0 10px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #374151;
+}
+
+/* Listas internas */
+#termos-de-uso ul {
+  margin: 6px 0 14px 1.15rem;
+  padding: 0;
+}
+
+#termos-de-uso li {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #374151;
+  position: relative;
+}
+
+/* Bolinha personalizada na lista */
+#termos-de-uso li::marker {
+  color: #54ba67;
+}
+
+/* Negritos importantes */
+#termos-de-uso strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Links */
+#termos-de-uso a {
+  color: #15803d;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(21, 128, 61, 0.25);
+  padding-bottom: 1px;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+#termos-de-uso a:hover {
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.5);
+  background-color: rgba(134, 239, 172, 0.08);
+}
+
+/* Bloco de contato */
+#termos-de-uso p strong {
+  color: #111827;
+}
+
+/* Último parágrafo (fechamento) com leve destaque */
+#termos-de-uso .container > p:last-of-type {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+/* ================================
+   RESPONSIVIDADE
+================================ */
+
+@media (max-width: 768px) {
+  #termos-de-uso {
+    padding: 32px 12px 48px;
   }
 
-  
+  #termos-de-uso .container {
+    padding: 24px 18px 28px;
+    border-radius: 18px;
+    box-shadow:
+      0 14px 28px rgba(15, 23, 42, 0.10),
+      0 0 0 1px rgba(148, 163, 184, 0.18);
+  }
+
   #termos-de-uso h1 {
-    text-align: center;
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #007bff;
+    font-size: 1.6rem;
   }
-  
+
   #termos-de-uso h2 {
-    font-size: 1.5rem;
-    color: #007bff;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #007bff;
-    display: inline-block;
+    font-size: 1.05rem;
   }
-  
-  #termos-de-uso p {
-    margin-bottom: 15px;
-    font-size: 1rem;
-    text-align: justify;
+
+  #termos-de-uso p,
+  #termos-de-uso li {
+    font-size: 0.9rem;
   }
-  
-  #termos-de-uso ul {
-    margin-left: 20px;
-    margin-bottom: 20px;
-    list-style: disc;
-  }
-  
-  #termos-de-uso ul li {
-    margin-bottom: 10px;
-  }
-  
-  #termos-de-uso a {
-    color: #007bff;
-    text-decoration: none;
-  }
-  
-  #termos-de-uso a:hover {
-    text-decoration: underline;
-  }
-  
-  #termos-de-uso .container p:last-child {
-    text-align: center;
-    font-weight: bold;
-  }
-  
+}
+
+/* Extra: se quiser aplicar o fundo só nessa rota,
+   no componente da página você pode adicionar a classe
+   "termos-page" no <body> via host binding ou manualmente. */
