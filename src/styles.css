@@ -30,6 +30,13 @@ html, body {
   overflow-x: hidden;
   font-family: 'Roboto', 'Helvetica Neue', sans-serif;
   background-color: #ffffff;
+    background: radial-gradient(
+    circle at top,
+    #e9f7ef 0,
+    #f5f7fa 45%,
+    #e5e7eb 100%
+  );
+  
 }
 
 .site-container {

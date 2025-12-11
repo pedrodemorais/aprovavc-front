@@ -1,22 +1,34 @@
-/* ===========================
-   CONTAINER GERAL
-   =========================== */
+/* =======================================
+   FONTE BASE
+======================================= */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
+/* =======================================
+   CONTAINER GERAL
+======================================= */
+
+.container {
+  width: 100%;
+  min-height: calc(100dvh - 80px);
+  box-sizing: border-box;
+  padding: 20px 16px 32px;
+  
+}
+
+/* Wrapper interno da página */
 .dashboard-revisao-page {
+  max-width: 1200px;
+  margin: 0 auto;
   box-sizing: border-box;
   padding: 16px 16px 24px;
- 
- 
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-.container{
-  background: white;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: #0f172a;
 }
 
-
-/* ===========================
+/* =======================================
    CABEÇALHO / RESUMO
-   =========================== */
+======================================= */
 
 .rev-header {
   display: flex;
@@ -32,18 +44,19 @@
 }
 
 .rev-title {
-  font-size: 22px;
+  font-size: 1.35rem;
   font-weight: 600;
   margin: 0;
+  color: #0f172a;
 }
 
 .rev-subtitle {
   margin: 0;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 0.9rem;
 }
 
-/* cards de resumo (vencidas, hoje, futuras) */
+/* Cards de resumo (vencidas, hoje, futuras) */
 .rev-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -51,47 +64,53 @@
 }
 
 .rev-summary-card {
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   background: #f9fafb;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
 }
 
+/* cores específicas */
 .rev-summary-card.vencidas {
   background: #fef2f2;
+  border-color: #fecaca;
   color: #b91c1c;
 }
 
 .rev-summary-card.hoje {
   background: #eff6ff;
+  border-color: #bfdbfe;
   color: #1d4ed8;
 }
 
 .rev-summary-card.futuras {
   background: #ecfdf3;
+  border-color: #bbf7d0;
   color: #15803d;
 }
 
 .rev-summary-label {
-  font-size: 11px;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .rev-summary-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
-/* ===========================
+/* =======================================
    ESTADOS (CARREGANDO / ERRO / VAZIO)
-   =========================== */
+======================================= */
 
 .rev-state {
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 0.9rem;
 }
 
 .rev-state.erro {
@@ -102,47 +121,53 @@
   color: #16a34a;
 }
 
-/* ===========================
+/* =======================================
    CARD PRINCIPAL DA LISTA
-   =========================== */
+======================================= */
 
 .rev-card {
   background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
   border: 1px solid #e5e7eb;
   overflow: hidden;
 }
 
-/* cabeçalho tipo tabela (somente desktop) */
+/* Cabeçalho tipo tabela (desktop) */
 .rev-list-header {
   display: grid;
-  grid-template-columns: 0.9fr 2fr 1.1fr 1.2fr auto;
+  grid-template-columns: 0.9fr 2.1fr 1.1fr 1.2fr auto;
   gap: 8px;
   padding: 10px 16px;
   background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
-  font-size: 12px;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #9ca3af;
 }
 
-/* linhas da lista (desktop) */
+/* Linhas (desktop) */
 .rev-list-row {
   display: grid;
-  grid-template-columns: 0.9fr 2fr 1.1fr 1.2fr auto;
+  grid-template-columns: 0.9fr 2.1fr 1.1fr 1.2fr auto;
   gap: 8px;
   padding: 10px 16px;
   align-items: center;
   border-top: 1px solid #f3f4f6;
+  background: #ffffff;
+  transition: background 0.12s ease;
 }
 
 .rev-list-row:nth-child(even) {
   background: #f9fafb;
 }
 
-/* colunas */
+.rev-list-row:hover {
+  background: #f0fdf4;
+}
+
+/* Colunas */
 .col-status,
 .col-materia,
 .col-tipo,
@@ -153,15 +178,15 @@
   gap: 4px;
 }
 
-/* ===========================
+/* =======================================
    PILLS / LABELS
-   =========================== */
+======================================= */
 
 .pill-status {
   align-self: flex-start;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
@@ -184,7 +209,7 @@
   align-self: flex-start;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
@@ -198,54 +223,56 @@
   color: #166534;
 }
 
-/* ===========================
+/* =======================================
    CONTEÚDO DAS COLUNAS
-   =========================== */
+======================================= */
 
 .materia-nome {
   font-weight: 600;
   color: #111827;
-  font-size: 14px;
+  font-size: 0.9rem;
 }
 
 .topico-descricao {
-  font-size: 13px;
+  font-size: 0.82rem;
   color: #6b7280;
 }
 
 .data-principal {
   font-weight: 500;
-  font-size: 13px;
+  font-size: 0.85rem;
 }
 
 .data-secundaria {
-  font-size: 12px;
+  font-size: 0.78rem;
   color: #9ca3af;
 }
 
-/* botão "Ir para sala de estudo" */
+/* Botão "Ir para sala de estudo" */
 .btn-ghost {
   align-self: flex-end;
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid #cbd5e1;
   background: #ffffff;
-  font-size: 12px;
+  font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  color: #0f172a;
 }
 
 .btn-ghost:hover {
   border-color: #0f766e;
   color: #0f766e;
+  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.18);
 }
 
-/* ===========================
+/* =======================================
    RESPONSIVO
-   =========================== */
+======================================= */
 
-/* telas até 900px → esconde header da "tabela" e transforma cada linha em card empilhado */
+/* até 900px → linha vira card empilhado */
 @media (max-width: 900px) {
   .dashboard-revisao-page {
     padding: 12px;
@@ -278,7 +305,7 @@
   }
 }
 
-/* telas bem pequenas (celular estreito) → resumo em 1 coluna e mais respiro */
+/* celular estreito */
 @media (max-width: 600px) {
   .rev-summary-grid {
     grid-template-columns: 1fr;
@@ -286,6 +313,6 @@
 
   .rev-card {
     box-shadow: none;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 }

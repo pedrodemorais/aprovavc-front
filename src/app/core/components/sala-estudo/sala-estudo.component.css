@@ -1,53 +1,58 @@
-/* =========================================
-FONTE APENAS NA SALA DE ESTUDO
-========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+/* ============================
+  FONTE (apenas Sala de Estudo)
+============================ */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
-/* ===========================
-CONTAINER GERAL / LAYOUT
-=========================== */
-
+/* ============================
+  CONTAINER GERAL
+============================ */
 .sala-container {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
+  padding: 5px 16px 32px;
   box-sizing: border-box;
-  background: #f3f4f6;
-  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+  background: radial-gradient(circle at top, #e9f7ef 0, #f5f7fa 45%, #e5e7eb 100%);
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Card padrão */
 .card {
+
+  margin: 0 auto;
   background: #ffffff;
-
-  padding: 16px 20px;
+  border-radius: 24px;
+  padding: 18px 20px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
 }
 
-/* separador entre header e body */
+/* tiramos o “risquinho” entre header e body */
 .separador {
-  background: rgba(92, 94, 91, 0.253);
-  width: 100%;
-  height: 1px;
+  display: none;
 }
 
-/* ===========================
-HEADER DA SALA
-=========================== */
-
+/* ============================
+  HEADER DA SALA
+============================ */
 .sala-header {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 20px;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
-.sala-header-esquerda {
-  flex: 1;
+/* Título + abas */
+.titulo-sala {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sala-titulo {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .sala-subtitulo {
@@ -58,224 +63,175 @@ HEADER DA SALA
   margin: 0;
 }
 
-.sala-titulo {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.sala-descricao {
-  margin: 2px 0 0;
-  font-size: 0.9rem;
-  color: #6b7280;
-}
-
-/* ===========================
-LADO DIREITO: TIMER (se usar)
-=========================== */
-
-.sala-header-direita {
+/* Abas Estudar / Revisar */
+.abas-modo {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 260px;
-  max-width: 320px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: radial-gradient(
-    circle at top left,
-    #eff6ff 0,
-    #f9fafb 45%,
-    #ffffff 100%
-  );
-  box-shadow: 0 1px 4px rgba(148, 163, 184, 0.25);
+  align-items: center;
+  justify-content: flex-end;
 }
 
-/* Modos do timer */
-.timer-modos {
+.botoes {
   display: inline-flex;
-  align-self: flex-end;
-  background: rgba(15, 23, 42, 0.04);
+  background: #f3f4f6;
   border-radius: 999px;
   padding: 3px;
   gap: 4px;
 }
 
-.btn-modo-timer {
+.aba {
   border: none;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.78rem;
-  cursor: pointer;
   background: transparent;
-  color: #4b5563;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: background 0.15s, color 0.15s, box-shadow 0.1s, transform 0.05s;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
 }
 
-.btn-modo-timer:hover {
-  background: rgba(148, 163, 184, 0.18);
-}
-
-/* ATIVO → VERDE */
-.btn-modo-timer.ativo {
-  background: #54ba67;
+.aba.ativa {
+  background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 1px 3px rgba(84, 186, 103, 0.4);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.35);
 }
 
-/* Caixa do timer */
-.timer-box {
-  margin-top: 4px;
-  border-radius: 10px;
-  border: 1px dashed #cbd5f5;
-  padding: 8px 10px;
+/* ============================
+  SONS DE FOCO
+============================ */
+.sons-foco-header {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: #f9fafb;
-}
-
-.timer-header-linha {
-  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
 }
 
-.timer-header-textos {
+.sons-foco-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-
-.timer-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #6b7280;
-}
-
-.timer-fase,
-.timer-fase-inline {
   font-size: 0.8rem;
-  color: #54ba67;
-  font-weight: 500;
+  color: #4b5563;
 }
 
-.timer-valor {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 1.5rem;
+.sons-foco-label {
   font-weight: 600;
   color: #0f172a;
 }
 
-.timer-botoes {
+.sons-foco-hint {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.icones-sons {
   display: flex;
-  gap: 18px;
-  justify-content: space-between;
-  margin-top: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }
 
-.botoes-do-timer {
-  display: flex;
-  gap: 10px;
-  width: 150px;
-}
-
-.timer-botoes .btn {
-  flex: 1;
-  justify-content: center;
-}
-
-/* ===========================
-BOTÕES GENÉRICOS
-=========================== */
-
-.btn {
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
+.som-icone {
   border: none;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(4px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 5px 10px;
+  transition: transform 0.12s, box-shadow 0.12s, background 0.18s, opacity 0.18s;
+  opacity: 0.95;
 }
 
-.btn:active {
-  transform: translateY(1px);
-  box-shadow: none;
+.som-icone:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.16);
+  opacity: 1;
 }
 
-/* PRIMÁRIO → VERDE */
-.btn.primario {
-  background: #54ba67;
+.som-icone.ativo {
+  background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 1px 4px rgba(84, 186, 103, 0.4);
+  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.38);
 }
 
-.btn.primario:disabled {
-  opacity: 0.7;
-  cursor: default;
-  box-shadow: none;
+.som-icone-avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
 }
 
-.btn.secundario {
-  background: #e5e7eb;
+.som-icone-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.som-icone-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1px #ffffff;
+}
+
+.som-icone-textos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.som-icone-nome {
+  font-size: 0.8rem;
+  font-weight: 500;
   color: #111827;
 }
 
-.btn.fantasma {
-  background: transparent;
-  border: 1px dashed #4b5563;
-  color: #4b5563;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
+.som-icone.ativo .som-icone-nome {
+  color: #ffffff;
 }
 
-.btn.fantasma:hover {
-  border-style: solid;
-}
-
-/* Responsivo header */
-@media (max-width: 900px) {
-  .sala-header {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .sala-header-direita {
-    align-self: stretch;
-    max-width: 100%;
-  }
-
-  .timer-modos {
-    align-self: flex-start;
-  }
-}
-
-/* ===========================
-CORPO / COLUNAS
-=========================== */
-
+/* ============================
+  CORPO / COLUNAS
+============================ */
 .sala-body {
-  flex: 1;
+  
+  margin: 0.75rem auto 0;
   display: flex;
-  gap: 8px;
-  min-height: 0;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  border-radius: 24px;
 }
 
 /* Coluna esquerda (tópicos) */
 .coluna-esquerda {
-  /* mantém como estava */
+  width: 280px;
+  border-right: 1px solid #e5e7eb;
+  padding-right: 14px;
+  margin-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .coluna-header h2 {
   margin: 0;
   font-size: 1rem;
+  font-weight: 600;
   color: #0f172a;
 }
 
@@ -296,10 +252,10 @@ CORPO / COLUNAS
 }
 
 .item-topico {
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 4px 6px;
   cursor: pointer;
-  transition: background 0.12s, box-shadow 0.08s;
+  transition: background 0.14s, box-shadow 0.14s;
 }
 
 .item-topico:hover {
@@ -307,19 +263,14 @@ CORPO / COLUNAS
 }
 
 .item-topico.selecionado {
-  background: #e8f8ee;
-  box-shadow: 0 0 0 1px #54ba67 inset;
+  background: #e7f7ee;
+  box-shadow: 0 0 0 1px #16a34a inset;
 }
 
-/* Tópico pai só como agrupador */
 .item-topico.topico-pai {
   cursor: default;
   background: transparent;
   box-shadow: none;
-}
-
-.item-topico.topico-pai:hover {
-  background: transparent;
 }
 
 .linha-topico {
@@ -328,136 +279,106 @@ CORPO / COLUNAS
   gap: 6px;
 }
 
+.badge-nivel {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.badge-sem-revisao {
+  background: #d1d5db;
+}
+.badge-revisao-futura {
+  background: #22c55e;
+}
+.badge-revisao-hoje {
+  background: #f97316;
+}
+.badge-revisao-atrasada {
+  background: #ef4444;
+}
+
 .descricao-topico {
   font-size: 0.9rem;
   color: #111827;
 }
 
-.descricao-topico.topico-pai-texto {
-  font-weight: 600;
-}
-
 /* Coluna direita (conteúdo) */
 .coluna-direita {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
   min-width: 0;
-  min-height: 0;
 }
 
-/* ===========================
-ABAS DE MODO + SONS
-=========================== */
-
-.abas-modo {
-  display: flex;
-  border-radius: 999px;
-  padding: 3px 8px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.botoes {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.aba {
-  border: none;
-  background: transparent;
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  border-radius: 999px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: background 0.15s, color 0.15s;
-}
-
-.aba.ativa {
-  background: #ffffff;
-  color: #54ba67;
-  box-shadow: 0 1px 4px rgb(26, 29, 34);
-}
-
-/* Sons de foco */
-.icones-sons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.som-icone {
-  border: none;
+/* ============================
+  BOTÕES GENÉRICOS
+============================ */
+.btn {
   border-radius: 10px;
+  padding: 7px 13px;
+  font-size: 0.86rem;
+  border: none;
   cursor: pointer;
-  font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease,
-    opacity 0.15s ease;
-  opacity: 0.9;
+  transition: background 0.16s, transform 0.08s, box-shadow 0.12s;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 4px 8px;
+  gap: 6px;
 }
 
-.som-icone:hover {
-  transform: translateY(-1px);
-  opacity: 1;
-  box-shadow: 0 1px 4px rgba(52, 57, 65, 0.4);
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 
-.som-icone.ativo {
-  background: #54ba67;
+.btn.primario {
+  background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 1px 4px rgb(26, 29, 34);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.35);
 }
 
-.som-icone-img {
-  width: 30px;
-  height: 30px;
-  border-radius: 15px;
-  object-fit: cover;
+.btn.primario:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
 }
 
-.som-icone-nome {
-  white-space: nowrap;
+.btn.secundario {
+  background: #e5e7eb;
+  color: #111827;
 }
 
-/* ===========================
-CONTEÚDO DO MODO
-=========================== */
+.btn.fantasma {
+  background: transparent;
+  border: 1px dashed #6b7280;
+  color: #4b5563;
+  padding-inline: 0.75rem;
+}
 
+/* ============================
+  TIMER / MODO ESTUDAR
+============================ */
 .modo-conteudo {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   height: 68dvh;
 }
 
-/* Blocos */
 .bloco {
   background: #f9fafb;
-  border-radius: 10px;
+  border-radius: 16px;
   padding: 10px 12px;
   border: 1px solid #e5e7eb;
   flex: 1;
-  width: 100%;
   box-sizing: border-box;
 }
 
 .bloco-anotacoes {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -469,22 +390,130 @@ CONTEÚDO DO MODO
 }
 
 .titulo-section span {
-  color: #54ba67;
+  color: #16a34a;
 }
 
-/* AVISO DO EDITOR (usado dentro do overlay) */
+.timer-botoes {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.botoes-do-timer {
+  display: flex;
+  gap: 10px;
+}
+
+/* Modos do timer */
+.timer-modos {
+  display: inline-flex;
+  background: #e5e7eb;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.btn-modo-timer {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  background: transparent;
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.18s, color 0.18s;
+}
+
+.btn-modo-timer:hover {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.btn-modo-timer.ativo {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+/* Linha texto do timer */
+.timer-header-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.timer-header-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timer-label {
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.timer-fase-inline {
+  font-weight: 500;
+  color: #16a34a;
+}
+
+/* Editor + overlay */
+.editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+}
+
+/* p-editor (PrimeNG) */
+:host ::ng-deep .editor-wrapper .p-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 38vh;
+  box-sizing: border-box;
+  border-radius: 16px;
+}
+
+:host ::ng-deep .p-editor-toolbar {
+  border-radius: 16px 16px 0 0;
+}
+
+:host ::ng-deep .p-editor-content {
+  border-radius: 0 0 16px 16px;
+}
+
+/* Overlay que bloqueia o editor */
+.editor-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
 .editor-aviso {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fef9c3;
   border: 1px solid #fde68a;
   color: #92400e;
   font-size: 0.85rem;
   max-width: 460px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.4);
 }
 
 .editor-aviso-icon {
@@ -498,85 +527,34 @@ CONTEÚDO DO MODO
   margin-bottom: 4px;
 }
 
-/* Wrapper do editor */
-.editor-wrapper {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  position: relative; /* IMPORTANTE para o banner overlay */
-}
-
-/* Banner/overlay que TAPA todo o editor quando bloqueado */
-.editor-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  padding: 12px;
-  box-sizing: border-box;
-}
-
-/* Ajustes PrimeNG editor */
-:host ::ng-deep .editor-wrapper .p-editor-container {
-  flex: 1;
-  flex-direction: column;
-  width: 100%;
-  height: 38vh;
-  box-sizing: border-box;
-}
-
-:host ::ng-deep .editor-wrapper .p-editor-content {
-  flex: 1;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-:host ::ng-deep .p-editor-container {
-  border-radius: 10px;
-}
-
-:host ::ng-deep .p-editor-toolbar {
-  border-radius: 10px 10px 0 0;
-}
-
-:host ::ng-deep .p-editor-content {
-  border-radius: 0 0 10px 10px;
-}
-
 /* Ações estudo */
 .acoes-estudo {
-  margin: 8px 0 4px;
+  margin-top: 6px;
   display: flex;
-  align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .salvo-msg {
   font-size: 0.8rem;
-  color: #54ba67;
+  color: #16a34a;
 }
 
-/* Texto secundário */
 .muted {
   color: #6b7280;
   font-size: 0.85rem;
 }
 
-/* ===========================
-REVISÃO (ANOTAÇÕES / FLASH)
-=========================== */
-
+/* ============================
+  MODO REVISAR
+============================ */
 .cabecalho-revisao {
   display: flex;
   justify-content: space-between;
   gap: 1.5rem;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 0.7rem;
   flex-wrap: wrap;
 }
 
@@ -586,9 +564,9 @@ REVISÃO (ANOTAÇÕES / FLASH)
 
 .toggle-revisao {
   display: inline-flex;
-  background: #00000033;
+  background: #f3f4f6;
   border-radius: 999px;
-  padding: 0.2rem;
+  padding: 2px;
 }
 
 .toggle-btn {
@@ -598,36 +576,17 @@ REVISÃO (ANOTAÇÕES / FLASH)
   border-radius: 999px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: #f7f4f4;
-  white-space: nowrap;
+  color: #4b5563;
 }
 
-/* ATIVO → VERDE */
 .toggle-btn.ativo {
-  background: #54ba67;
+  background: #16a34a;
   color: #ffffff;
 }
 
-.bloco-revisao-anotacoes,
-.bloco-revisao-flashcards {
-  margin-top: 0.75rem;
-}
-
-.anotacoes-renderizadas {
-  margin-top: 0.5rem;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  background: #ffffff;
-  border: 1px solid #ffffff;
-  max-height: 420px;
-  overflow: auto;
-}
-
-/* Alerta revisão */
 .alerta-revisao {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding: 0.45rem 0.85rem;
+  margin: 0.4rem 0;
+  padding: 0.4rem 0.8rem;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -636,43 +595,26 @@ REVISÃO (ANOTAÇÕES / FLASH)
   border: 1px solid #bbf7d0;
   color: #166534;
   font-size: 0.85rem;
-  font-weight: 500;
 }
 
 .alerta-revisao-icone {
   font-size: 1rem;
 }
 
-/* Semáforo revisão */
-.badge-nivel {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  display: inline-block;
-  margin-right: 8px;
-  flex-shrink: 0;
+/* Anotações renderizadas */
+.anotacoes-renderizadas {
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  max-height: 420px;
+  overflow: auto;
 }
 
-.badge-sem-revisao {
-  background: #d1d5db;
-}
-
-.badge-revisao-futura {
-  background: #22c55e;
-}
-
-.badge-revisao-hoje {
-  background: #f97316;
-}
-
-.badge-revisao-atrasada {
-  background: #ef4444;
-}
-
-/* ===========================
-FLASHCARDS
-=========================== */
-
+/* ============================
+  FLASHCARDS (REVISÃO)
+============================ */
 .flashcard-review-container {
   margin-top: 0.75rem;
   display: flex;
@@ -681,12 +623,11 @@ FLASHCARDS
   align-items: center;
 }
 
-/* Cartão de revisão */
 .flashcard-card-review {
   width: 100%;
   max-width: 520px;
   min-height: 170px;
-  border-radius: 1rem;
+  border-radius: 16px;
   padding: 1rem 1.1rem;
   background: #020617;
   border: 1px solid #1f2937;
@@ -694,13 +635,13 @@ FLASHCARDS
   flex-direction: column;
   gap: 0.75rem;
   cursor: pointer;
-  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out,
-    background-color 0.15s ease-out, transform 0.08s ease-out;
+  transition: border-color 0.16s, box-shadow 0.16s, background-color 0.16s,
+    transform 0.08s;
 }
 
 .flashcard-card-review:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55);
 }
 
 .flashcard-card-review.frente {
@@ -708,7 +649,7 @@ FLASHCARDS
 }
 
 .flashcard-card-review.verso {
-  border-color: #54ba67;
+  border-color: #16a34a;
 }
 
 .flashcard-card-header-linha {
@@ -729,7 +670,7 @@ FLASHCARDS
 }
 
 .flashcard-card-review.verso .face-pill {
-  border-color: #54ba67;
+  border-color: #16a34a;
   color: #bbf7d0;
 }
 
@@ -739,7 +680,7 @@ FLASHCARDS
 }
 
 .flashcard-card-corpo {
-  flex: 1 1 auto;
+  flex: 1;
   display: flex;
   align-items: center;
 }
@@ -786,24 +727,18 @@ FLASHCARDS
   justify-content: center;
 }
 
-.flashcard-acoes-review .btn.primario {
-  background: #54ba67;
-  color: #ffffff;
-}
-
 .flashcard-feedback-review {
   font-size: 0.75rem;
   color: #9ca3af;
 }
 
-/* ===========================
-MODAL FLASHCARD
-=========================== */
-
+/* ============================
+  MODAL FLASHCARD
+============================ */
 .flashcard-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -812,11 +747,11 @@ MODAL FLASHCARD
 
 .flashcard-modal {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 20px 24px;
   width: min(720px, 100% - 32px);
   max-height: 90vh;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.4);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -858,7 +793,7 @@ MODAL FLASHCARD
   color: #4b5563;
 }
 
-/* Contexto matéria/tópico */
+/* Contexto Matéria / Tópico */
 .flashcard-contexto {
   background: #f9fafb;
   border-radius: 12px;
@@ -884,7 +819,7 @@ MODAL FLASHCARD
   color: #111827;
 }
 
-/* Campos */
+/* Campos do modal */
 .flashcard-campos {
   display: flex;
   flex-direction: column;
@@ -901,7 +836,7 @@ MODAL FLASHCARD
 
 .flashcard-textarea {
   width: 100%;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid #d1d5db;
   padding: 8px 10px;
   min-height: 70px;
@@ -912,8 +847,8 @@ MODAL FLASHCARD
 
 .flashcard-textarea:focus {
   outline: none;
-  border-color: #54ba67;
-  box-shadow: 0 0 0 1px rgba(84, 186, 103, 0.4);
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.35);
 }
 
 /* Tipo / dificuldade */
@@ -959,7 +894,6 @@ MODAL FLASHCARD
   color: #0f766e;
 }
 
-/* Rodapé modal */
 .flashcard-footer {
   margin-top: 8px;
   display: flex;
@@ -967,12 +901,11 @@ MODAL FLASHCARD
   gap: 8px;
 }
 
-/* ===========================
-MODO FOCO REVISÃO
-=========================== */
-
+/* ============================
+  MODO FOCO REVISÃO
+============================ */
 .sala-container.revisao-foco {
-  background-color: #ffffff;
+  background: #020617;
 }
 
 .sala-container.revisao-foco .sala-header,
@@ -980,19 +913,41 @@ MODO FOCO REVISÃO
   display: none !important;
 }
 
-.sala-container.revisao-foco .modo-conteudo {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 2rem);
-  margin: 0;
-  padding: 1rem 1.5rem;
+.sala-container.revisao-foco .card.sala-body {
+  max-width: 900px;
+  margin-top: 24px;
+  border-radius: 24px;
+  background: #020617;
+  box-shadow: none;
 }
 
-/* ===========================
-RESPONSIVO GERAL
-=========================== */
+.sala-container.revisao-foco .modo-conteudo {
+  height: calc(100vh - 3rem);
+  padding: 0;
+}
 
-/* <= 1024px: coluna esquerda em cima, direita embaixo */
+/* ============================
+  LOADING / ERRO
+============================ */
+.sala-loading {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Poppins", sans-serif;
+  color: #4b5563;
+}
+
+.mensagem-erro {
+  margin-top: 1rem;
+  text-align: center;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+/* ============================
+  RESPONSIVO
+============================ */
 @media (max-width: 1024px) {
   .sala-body {
     flex-direction: column;
@@ -1000,35 +955,32 @@ RESPONSIVO GERAL
 
   .coluna-esquerda {
     width: 100%;
-    max-width: 100%;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
     padding-right: 0;
-    padding-bottom: 12px;
+    padding-bottom: 10px;
+    margin-right: 0;
     margin-bottom: 8px;
-  }
-
-  .coluna-direita {
-    padding-left: 0;
   }
 }
 
-/* <= 768px: ajuste forte para celular */
 @media (max-width: 768px) {
   .card {
-    padding: 12px 12px;
+    padding: 14px 12px;
+  }
+
+  .titulo-sala {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .sala-titulo {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
 
-  .abas-modo {
+  .sons-foco-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    padding: 6px 0;
-    border-radius: 0;
   }
 
   .icones-sons {
@@ -1050,155 +1002,17 @@ RESPONSIVO GERAL
     align-items: stretch;
   }
 
-  .flashcard-footer .btn {
-    width: 100%;
-  }
-
   .flashcard-contexto {
     grid-template-columns: 1fr;
   }
 }
 
-/* <= 480px: refinamento extra celular pequeno */
 @media (max-width: 480px) {
-  .sala-header {
-    padding: 0;
-  }
-
-  .sala-header-direita {
-    padding: 8px 10px;
-  }
-
   .som-icone-nome {
-    display: none; /* só ícone quando tela é bem estreita */
-  }
-}
-
-/* Sons de foco header */
-
-.sons-foco-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.sons-foco-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 0.8rem;
-  color: #4b5563;
-}
-
-.sons-foco-label {
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.sons-foco-hint {
-  font-size: 0.78rem;
-  color: #6b7280;
-}
-
-/* Ajuste nos cards de som já existentes */
-.som-icone {
-  align-items: center;
-  padding: 4px 10px;
-}
-
-.som-icone-avatar-wrapper {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.som-icone-img {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  object-fit: cover;
-}
-
-/* Badge de "tocando" quando ativo */
-.som-icone-badge {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: #54ba67;
-  color: #ffffff;
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 1px #ffffff;
-}
-
-.som-icone-textos {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.som-icone-nome {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #111827;
-}
-
-.som-icone-legenda {
-  font-size: 0.7rem;
-  color: #6b7280;
-}
-
-/* Já temos .som-icone.ativo no CSS principal → só reforça visualmente */
-.som-icone.ativo {
-  background: #54ba67;
-  color: #ffffff;
-}
-
-.som-icone.ativo .som-icone-nome {
-  color: #ffffff;
-}
-
-.som-icone.ativo .som-icone-legenda {
-  color: #e5f9eb;
-}
-
-.titulo-sala {
-  display: flex;
-  align-items: center;      /* alinha verticalmente */
-  justify-content: space-between; /* título à esquerda, abas à direita */
-  gap: 12px;
-  margin-top: -50px!important;
- 
- 
-}
-
-.titulo-sala .sala-titulo {
-  margin: 0;
-  white-space: nowrap;      /* evita quebrar o nome da matéria */
-}
-
-.titulo-sala .titulo-abas {
-  display: flex;
-  align-items: center;
-}
-
-
-
-/* Responsivo: quebra melhor em telas menores */
-@media (max-width: 768px) {
-  .sons-foco-header {
-    flex-direction: column;
-    align-items: flex-start;
+    display: none;
   }
 
-  .icones-sons {
-    justify-content: flex-start;
+  .sala-body {
+    padding-inline: 12px;
   }
 }

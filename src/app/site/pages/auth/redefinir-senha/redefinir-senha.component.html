@@ -1,41 +1,52 @@
+<div class="page-redefinir">
 
 
-<div class="main">
 
-  <div class="topo-login-site"> 
-  
-    <img class="logo" src="assets/img/logo/aprovavc.png" alt="Logo">
-    <a routerLink="/home">
-    <h1 >
-      <span style="color: #ffffff; font-weight: 300; letter-spacing: 1px; margin-right: 5px;">Aprova</span>
-      <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">VC</span>
-    </h1>
-  </a>
-  </div>
-<div class="painel">
-
-<div>
-       
-    <div class="container">
-      <a routerLink="/home"><img class="logo" src="assets/img/logo/mei3.png" alt="Logo"></a>
-      <h2>🔑 Redefinir Senha</h2>
-    
-      <p *ngIf="mensagem" class="mensagem">{{ mensagem }}</p>
-      <p *ngIf="erro" class="erro">{{ erro }}</p>
-    
-      <div *ngIf="!erro">
-        <input type="password" [(ngModel)]="novaSenha" placeholder="Nova senha" required>
-        <button (click)="redefinirSenha()">Alterar Senha</button>
+  <!-- CONTEÚDO CENTRAL -->
+  <main class="redefinir-main">
+    <section class="redefinir-card">
+      <div class="brand">
+        <a routerLink="/home" class="logo-link">
+      <img class="logo" src="assets/img/logo/dynamo.png" alt="AprovaVC">
+      
+    </a>
+        <h2 class="card-title">🔑 Redefinir senha</h2>
+        <p class="card-subtitle">
+          Escolha uma nova senha para acessar sua conta com segurança.
+        </p>
       </div>
-    </div>
-   
-   
- 
 
- 
+      <!-- Mensagens gerais -->
+      <div *ngIf="mensagem" class="mensagem mensagem-info">
+        {{ mensagem }}
+      </div>
 
-   
-   
+      <div *ngIf="erro" class="mensagem mensagem-erro">
+        {{ erro }}
+      </div>
 
-  </div>
+      <!-- Formulário só aparece se não houver erro -->
+      <form *ngIf="!erro" class="redefinir-form" (ngSubmit)="redefinirSenha()">
+        <div class="input-group">
+          <label for="novaSenha">Nova senha</label>
+          <input
+            type="password"
+            id="novaSenha"
+            name="novaSenha"
+            [(ngModel)]="novaSenha"
+            placeholder="Digite sua nova senha"
+            required
+          />
+        </div>
 
+        <button type="submit" class="btn-confirmar">
+          Alterar senha
+        </button>
+      </form>
+
+      <a routerLink="/login" class="voltar-link">
+        Voltar ao login
+      </a>
+    </section>
+  </main>
+</div>

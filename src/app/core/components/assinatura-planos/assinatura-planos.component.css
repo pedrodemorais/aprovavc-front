@@ -1,30 +1,52 @@
-/* ===== CONTAINER GERAL DA PÁGINA ===== */
-.page-assinatura {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 32px 16px 48px;
-  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #111827;
-}
+/* =======================================
+   FONTE / BASE
+======================================= */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
+/* =======================================
+   CONTAINER GERAL DA PÁGINA
+======================================= */
 
 .page-materias {
-  background: #ffffff;
   width: 100%;
   min-height: calc(100dvh - 80px);
   box-sizing: border-box;
-  padding: 16px 24px 24px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px 16px 32px;
+ 
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
 }
 
+/* Wrapper da página de assinatura */
+.page-assinatura {
+  max-width: 960px;
+  margin: 0 auto;
+  color: #111827;
+}
 
-/* ===== PAINEL SUPERIOR: RESUMO DA ASSINATURA ===== */
+/* Estado loading */
+.page-assinatura.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  text-align: center;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+/* =======================================
+   PAINEL SUPERIOR: RESUMO DA ASSINATURA
+======================================= */
+
 .painel-assinatura {
   background: #ffffff;
- 
-  padding: 20px 20px 16px;
-
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
+  padding: 20px 20px 18px;
   margin-bottom: 28px;
+  box-sizing: border-box;
 }
 
 .cabecalho-assinatura {
@@ -36,14 +58,15 @@
 }
 
 .cabecalho-assinatura h1 {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 600;
   margin: 0 0 4px;
+  color: #0f172a;
 }
 
 .page-assinatura .descricao {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #4b5563;
 }
 
@@ -52,19 +75,19 @@
   margin-top: 4px;
 }
 
-/* BADGE DE STATUS (TRIAL / ATIVA / EXPIRADA / CANCELADA) */
+/* Badge de status: TRIAL / ATIVA / EXPIRADA / CANCELADA */
 .badge-status {
   align-self: flex-start;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
   border: 1px solid transparent;
 }
 
-/* Cores por status */
+/* Cores por status (class via .toLowerCase()) */
 .badge-status.trial {
   background: #eff6ff;
   color: #1d4ed8;
@@ -84,10 +107,10 @@
   border-color: #fecaca;
 }
 
-/* RESUMO DA ASSINATURA */
+/* Resumo de assinatura */
 .resumo-assinatura {
   margin-top: 8px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: #374151;
 }
 
@@ -95,7 +118,10 @@
   margin: 4px 0;
 }
 
-/* AÇÕES DA ASSINATURA (GERENCIAR / CANCELAR) */
+/* =======================================
+   AÇÕES DA ASSINATURA (GERENCIAR / CANCELAR)
+======================================= */
+
 .acoes-assinatura {
   margin-top: 14px;
   display: flex;
@@ -103,15 +129,16 @@
   gap: 12px;
 }
 
-/* Link para painel de cobrança */
+/* Link para painel de cobrança (Stripe) */
 .btn-link {
   background: none;
   border: none;
   padding: 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: #2563eb;
   cursor: pointer;
   text-decoration: underline;
+  transition: color 0.15s ease;
 }
 
 .btn-link:hover {
@@ -125,7 +152,7 @@
   border: 1px solid #fecaca;
   background: #fef2f2;
   color: #b91c1c;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -140,18 +167,22 @@
   transform: translateY(-1px);
 }
 
-/* ===== BLOCO DE PLANOS ===== */
+/* =======================================
+   BLOCO DE PLANOS
+======================================= */
+
 .planos-wrapper {
   margin-top: 32px;
 }
 
 .planos-wrapper h2 {
   text-align: center;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   margin-bottom: 4px;
+  color: #0f172a;
 }
 
-/* CONTÊINER DOS PLANOS (GRID) */
+/* Contêiner dos planos (grid) */
 .planos-container {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -160,13 +191,16 @@
   margin-top: 20px;
 }
 
-/* CARD BASE DO PLANO */
+/* =======================================
+   CARD BASE DO PLANO
+======================================= */
+
 .plano-card {
   position: relative;
   background: #ffffff;
-  border-radius: 16px;
-  padding: 24px 20px 20px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  padding: 22px 20px 20px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
   border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -175,41 +209,43 @@
     transform 0.18s ease,
     box-shadow 0.18s ease,
     border-color 0.18s ease;
+  box-sizing: border-box;
 }
 
 .plano-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
   border-color: #cbd5f5;
 }
 
-/* CARD PREMIUM EM DESTAQUE */
+/* Card Premium em destaque */
 .plano-card.plano-destaque {
-  border: 1.5px solid #54ba67;
-  box-shadow: 0 16px 32px rgba(84, 186, 103, 0.18);
+  border: 1.5px solid #16a34a;
+  box-shadow: 0 18px 40px rgba(22, 163, 74, 0.22);
 }
 
-/* TAG "RECOMENDADO" */
+/* Tag "Recomendado" */
 .plano-card .tag {
   position: absolute;
-  top: 16px;
-  right: 20px;
+  top: 14px;
+  right: 18px;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: #54ba67;
-  color: #fff;
+  background: #16a34a;
+  color: #ffffff;
   padding: 4px 10px;
   border-radius: 999px;
 }
 
-/* TÍTULO DO PLANO */
+/* Título do plano */
 .plano-card h2 {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   margin: 8px 0 4px;
+  color: #0f172a;
 }
 
-/* PREÇO */
+/* Preço */
 .plano-card .preco {
   font-size: 1.4rem;
   font-weight: 600;
@@ -217,7 +253,7 @@
   color: #111827;
 }
 
-/* LISTA DE BENEFÍCIOS */
+/* Lista de benefícios */
 .plano-card .beneficios {
   list-style: none;
   margin: 0 0 20px;
@@ -234,31 +270,42 @@
 }
 
 .plano-card .beneficios li::before {
-  content: '•';
+  content: "•";
   font-size: 1.1rem;
   line-height: 1;
-  color: #54ba67;
+  color: #16a34a;
   margin-top: 2px;
 }
 
-/* BOTÕES DENTRO DO CARD (usa suas classes .btn/.primario/.secundario) */
+/* =======================================
+   BOTÕES DENTRO DOS CARDS DE PLANO
+   (usa .btn .primario .secundario)
+======================================= */
+
+.btn {
+  border-radius: 999px;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.14s ease, color 0.14s ease, box-shadow 0.12s ease,
+    transform 0.08s ease, opacity 0.12s ease;
+}
+
+/* Botão genérico dentro dos planos */
 .plano-card .btn {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 999px;
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition:
-    background-color 0.16s ease,
-    color 0.16s ease,
-    box-shadow 0.16s ease,
-    transform 0.08s ease,
-    opacity 0.12s ease;
 }
 
-/* Estado desabilitado para "Plano atual" */
+/* Estado desabilitado: "Plano atual" */
 .plano-card .btn[disabled] {
   cursor: default;
   opacity: 0.6;
@@ -267,33 +314,35 @@
 }
 
 /* Primário (Premium) */
-.plano-card .btn.primario {
-  background: #54ba67;
+.btn.primario {
+  background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 10px 20px rgba(84, 186, 103, 0.35);
+  box-shadow: 0 12px 26px rgba(22, 163, 74, 0.35);
 }
 
-.plano-card .btn.primario:hover:not([disabled]) {
-  background: #3ea653;
-  box-shadow: 0 14px 28px rgba(84, 186, 103, 0.45);
+.btn.primario:hover:not(:disabled) {
+  background: #15803d;
+  box-shadow: 0 16px 32px rgba(22, 163, 74, 0.44);
   transform: translateY(-1px);
 }
 
 /* Secundário (Essencial) */
-.plano-card .btn.secundario {
+.btn.secundario {
   background: #ffffff;
   color: #111827;
   border: 1px solid #d1d5db;
 }
 
-.plano-card .btn.secundario:hover:not([disabled]) {
-  border-color: #54ba67;
-  color: #111827;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+.btn.secundario:hover:not(:disabled) {
+  border-color: #16a34a;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 
-/* MENSAGEM DE ERRO GERAL */
+/* =======================================
+   ERRO GERAL
+======================================= */
+
 .page-assinatura .erro {
   margin-top: 24px;
   text-align: center;
@@ -301,21 +350,13 @@
   font-size: 0.9rem;
 }
 
-/* ESTADO LOADING */
-.page-assinatura.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 220px;
-  text-align: center;
-  color: #4b5563;
-  font-size: 0.95rem;
-}
+/* =======================================
+   RESPONSIVIDADE
+======================================= */
 
-/* ===== RESPONSIVIDADE ===== */
 @media (max-width: 768px) {
   .page-assinatura {
-    padding-top: 24px;
+    padding-top: 8px;
   }
 
   .cabecalho-assinatura {
@@ -324,7 +365,7 @@
   }
 
   .cabecalho-assinatura h1 {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
 
   .planos-container {

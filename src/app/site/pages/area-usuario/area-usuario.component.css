@@ -1,344 +1,306 @@
-html, body {
+/* =======================================
+   FONTE BASE
+======================================= */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+/* =======================================
+   RESET BÁSICO
+======================================= */
+
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-.nome-site-area-usuario{
-  color: black;
-}
-
-.content {
-  
-  height: 100dvh; /* força ocupar 100% da altura da tela */
-  width: 100%; /* força ocupar 100% da largura da tela */
-  background: #ffffff;
-  justify-content: center;
-  padding-top: 8dvh;
-  padding-left: 1dvh;
-  padding-right: 1dvh;
-  
-
- 
- align-items: stretch; 
-
-}
-
-
-
-
-.dashboard{
-  width:100%;
-  height: 100%;
-
-
-
-}
-.container {
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  width: 100%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
-  overflow: hidden;
- 
-}
 :host {
   display: block;
   height: 100%;
   width: 100%;
 }
 
-/* 🔹 Topo fixo com logo e menu */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* =======================================
+   DASHBOARD (MOLDURA GERAL)
+======================================= */
 
-  color: white;
-  
-  height: 8dvh;
-  
- 
-  left: 0;
+.dashboard {
+  min-height: 100dvh;
   width: 100%;
-  z-index: 1000;
-
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(
+    circle at top,
+    #e9f7ef 0,
+    #f5f7fa 45%,
+    #e5e7eb 100%
+  );
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: #111827;
 }
 
+/* =======================================
+   TOPO FIXO
+======================================= */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 1.5rem;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e5e7eb;
+  box-sizing: border-box;
+}
+
+.nome-site-area-usuario {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Logo */
 
 .logo {
   display: flex;
   align-items: center;
-  /* você pode tirar o width fixo daqui */
 }
 
-/* controla o tamanho proporcional da logo */
 .logo img {
-  width: 140px;   /* ajuste o valor até ficar do jeito que você quer */
-  height: auto;   /* mantém a proporção automaticamente */
+  width: 140px;
+  height: auto;
   display: block;
-  margin-left: 2rem;
 }
 
-.logo h1 {
-  font-size: 1.5rem;
-  margin: 0;
-}
+/* Botão hambúrguer (mobile) */
 
-.mei2o {
-  flex: 0 0 auto;
-  max-width: 1200px; /* mesmo limite da .content */
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 0 10px;
-  margin: 0 auto; /* centraliza a área */
-}
-.user-initials {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: transparent;
-  border: 2px solid white;
-  color: white;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 2.5rem;
-  cursor: pointer;
-  text-transform: uppercase;
-}
-
-
-.botao-menu {
-  background-color: #000203;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s;
-
-    box-shadow: 0 4px 8px rgb(255, 255, 255);
-}
-
-.botao-menu:hover {
-  background-color: #05d4f4ad;
-}
-
-
-/* menu.component.css */
-.sidebar {
-  width: 240px;
-  
-  height: 100vh;
-  padding: 20px 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-right: 0px solid #eee;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-}
-
-.menu-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.menu-item {
-display: flex;
-  align-items: center;
-  padding: 12px 20px;
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  border-radius: 10px;
-  margin: 5px 10px; /* 🔹 Espaçamento entre os itens */
-  transition: background 0.3s, color 0.3s;
-}
-
-.menu-item i {
-  margin-right: 10px;
-  font-size: 16px;
-  width: 20px;
-  text-align: center;
-}
-
-.menu-item:hover,
-.menu-item.active {
-  background-color: #0b90e84b;
-  color: #333;
-  
-}
-
-.menu-footer {
-  text-align: center;
-  font-size: 12px;
-  padding: 10px;
-  color: #aaa;
-}
 .menu-toggle {
   display: none;
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 1.4rem;
   cursor: pointer;
-  color: #333;
+  color: #4b5563;
 }
 
+/* =======================================
+   CONTAINER PRINCIPAL
+======================================= */
+
+.container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  width: 100%;
+ 
+  margin: 0 auto;
+  padding: 16px 16px 24px;
+  box-sizing: border-box;
+}
+
+/* =======================================
+   MENU LATERAL / SIDEBAR
+======================================= */
 
 .menu {
-  height: 100dvh;
-  
-  background: white;
-  top: 8dvh;
-  margin-left: 1rem;
-  margin-top: 5rem;
-
-  box-sizing: border-box;
-  z-index: 999;
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
 }
 
-/* remove espaçamentos padrão da lista */
+/* Wrapper do PanelMenu */
+.sidebar {
+  width: 240px;
+  padding: 12px 0;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* PanelMenu “flat” */
+.menu-flat {
+  width: 100%;
+}
+
+/* Remover margens padrão */
 .menu ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* deixa os itens mais juntinhos */
 .menu li {
-  margin: 0;              /* tira espaço entre lis */
+  margin: 0;
 }
 
-/* controla o "altura" de cada linha */
-.menu a {
-  display: block;
-  padding: 0.25rem 1rem;  /* diminui o padding vertical */
-  line-height: 1.7;       /* aproxima o texto */
-  font-size: 0.85rem;
-  font-weight: 300;
-}
-/* Estilo padrão dos itens do menu */
+/* Links dos itens do menu (PanelMenu) */
 .menu .p-panelmenu .p-menuitem-link {
   font-size: 0.85rem;
-  font-weight: 300;
-  color: #4b5563;              /* cinza mais discreto */
-  padding: 0.25rem 1rem;
+  font-weight: 400;
+  color: #4b5563;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
 }
 
-/* Quando a rota estiver ativa (clicado/selecionado) */
+/* Hover leve */
+.menu .p-panelmenu .p-menuitem-link:hover {
+  background: #f3f4f6;
+}
+
+/* Estado ativo (rota atual) */
 .menu .p-panelmenu .p-menuitem-link.router-link-active,
 .menu .p-panelmenu .p-menuitem-link-active {
-  font-weight: 600;             /* negrito */
-  color:  #54ba67;;               /* cor do texto ativa (verde/azul, escolha) */
-  background-color: #e0f2f1;    /* leve destaque de fundo */
+  font-weight: 600;
+  color: #54ba67;
+  background-color: #e8f8ee;
 }
 
-/* Ícone do item ativo acompanha a cor */
+/* Ícone do item ativo */
 .menu .p-panelmenu .p-menuitem-link.router-link-active .p-menuitem-icon,
 .menu .p-panelmenu .p-menuitem-link-active .p-menuitem-icon {
-  color: #54ba67;;
+  color: #54ba67;
 }
 
+/* =======================================
+   ÁREA DE CONTEÚDO
+======================================= */
 
-@media (max-width: 769px) {
-
-.logo img {
-  height: 20px;
- 
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto;
+  background: transparent;
+  padding: 4px 0 0;
+  box-sizing: border-box;
 }
 
+/* O conteúdo interno (pages) já cuidam dos próprios cards/sombras */
 
- .container {
-    flex-direction: flex;
-    width: 100dvw;
-    height: 100dvh;
+/* =======================================
+   AVATAR / BOTÕES (SE FOR USAR)
+======================================= */
+
+.user-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background-color: transparent;
+  border: 2px solid #e5e7eb;
+  color: #4b5563;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.botao-menu {
+  background-color: #111827;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.25s, box-shadow 0.15s, transform 0.08s;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.35);
+}
+
+.botao-menu:hover {
+  background-color: #0f766e;
+  transform: translateY(-1px);
+}
+
+/* =======================================
+   RESPONSIVO
+======================================= */
+
+/* Até 768px → sidebar vira off-canvas e hambúrguer aparece */
+@media (max-width: 768px) {
+  .logo img {
+    width: 110px;
   }
 
-  .content {
-  
-  height: 100dvh; /* força ocupar 100% da altura da tela */
-  width: 100%; /* força ocupar 100% da largura da tela */
-  background: #565d6015;
-  justify-content: center;
-  padding-top: 0dvh;
-  padding-left: 0dvh;
-  padding-right: 0dvh;
-  
-  overflow: hidden;
- 
- align-items: stretch; 
+  .menu-toggle {
+    display: inline-block;
+  }
 
+  .container {
+    padding: 10px 10px 16px;
+    gap: 10px;
+  }
 
-
-}
-
-
-  .menu{
-  height: 0dvh;
-  width: 0px;
- background: white;
-  top: 8dvh;
-  left: 0;
-margin-top: 4rem;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-  padding: 0px;
-  box-sizing: border-box;
-  z-index: 999; /* Garante que o menu fique acima de outros elementos */
-}
+  .menu {
+    position: static;
+  }
 
   .sidebar {
-    display: none;
-    position: absolute;
-    top: 60px; /* abaixo do header */
+    position: fixed;
+    top: 64px; /* altura da topbar */
     left: 0;
-    width: 80%;
-    max-width: 300px;
-    height: calc(100vh - 60px);
-    background: white;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    transition: all 0.3s ease;
+    height: calc(100dvh - 64px);
+    width: 78%;
+    max-width: 280px;
+    border-radius: 0 14px 14px 0;
+    box-shadow: 10px 0 30px rgba(15, 23, 42, 0.25);
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease;
+    z-index: 60;
   }
 
+  /* Quando menuAberto = true (classe menu-mobile) */
   .sidebar.menu-mobile {
-    display: block;
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .content {
-    padding-top: 3rem;
-  }
-
-.menu-toggle {
-    display: inline-block; /* aparece só no mobile */
+    padding-top: 4px;
   }
 
   .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 20px;
-    height: 60px;
-    background-color: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 0 1rem;
   }
-
 }
 
+/* Telas bem estreitas */
+@media (max-width: 480px) {
+  .topbar {
+    height: 56px;
+  }
 
+  .sidebar {
+    top: 56px;
+    height: calc(100dvh - 56px);
+  }
+}
 
-/* 🔹 Animação */
-@keyframes fadeIn {
+/* =======================================
+   ANIMAÇÃO SUAVE (CASO QUEIRA USAR)
+======================================= */
+
+@keyframes fadeInTopbar {
   from {
     opacity: 0;
-    transform: translateY(-5px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
@@ -346,3 +308,6 @@ margin-top: 4rem;
   }
 }
 
+.topbar {
+  animation: fadeInTopbar 0.25s ease-out;
+}
