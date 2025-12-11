@@ -1,108 +1,54 @@
-/* CONTAINER DO HERO */
+/* CONTAINER DO BANNER */
 .full-width-image {
   position: relative;
   width: 100%;
-  /*height: 60vh;          /* altura da faixa do hero */
-  min-height: 380px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;   /* alinha o conteúdo verticalmente */
+  overflow: hidden;      /* corta qualquer sobra da imagem */
+  display: block;
+  
 }
 
-/* SLIDES (IMAGENS DE FUNDO) */
-/* .full-width-image .slide {
-  position: absolute;
-  inset: 0;             
+/* IMAGEM DO BANNER */
+.full-width-image img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;    
-  object-position: center; 
-  opacity: 0;
-  transition: opacity 1.5s ease-in-out;
-  transform: scale(1);    
-} */
+  height: auto;  
+  max-height: auto;        /* mantém proporção original */
+}
 
-/* se você quiser mostrar mais o lado direito (texto “Organize tudo”) */
-/*.full-width-image .slide {
-  object-position: 70% center; 
-}*/
-
+/* SLIDE ATIVO (CASO TENHA MAIS DE UMA IMAGEM) */
 .full-width-image .slide.active {
   opacity: 1;
   z-index: 1;
-  transform: scale(1);    /* 0.9 = 90% do tamanho */
+  transform: scale(1);
 }
 
-/* GRADIENTE POR CIMA DA IMAGEM (ESQUERDA → TRANSPARENTE) */
+/* GRADIENTE POR CIMA DA IMAGEM */
 .full-width-image::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(0, 0, 0, 0.048),
-    rgba(0,0,0,0.048));
+  background: linear-gradient(
+    rgba(0, 0, 0, 0.048),
+    rgba(0, 0, 0, 0.048)
+  );
   z-index: 2;
   pointer-events: none;
 }
 
-/* CONTEÚDO (TEXTO / BOTÕES) EM CIMA DA IMAGEM */
-.hero-content {
-  position: relative;
-  z-index: 3;
-  color: #ffffff;
-  padding: 0 6vw;
-  max-width: 600px;
-}
-
-/* MOBILE */
-@media (max-width: 768px) {
-  .full-width-image {
-    height: 45vh;
-    min-height: 260px;
-    align-items: flex-end;     /* texto mais para baixo no mobile */
-  }
-
-  .hero-content {
-    padding: 0 16px 24px;
-  }
-
-  .full-width-image::before {
-    /* gradient mais forte embaixo pra ler o texto no mobile */
-    background: linear-gradient(
-      to top,
-      rgba(17, 24, 39, 0.9),
-      rgba(17, 24, 39, 0.4),
-      transparent
-    );
-  }
-}
-.hero-content {
-  display: flex;
- 
-  color: #ffffff;
-  flex-direction: column;
-  /* centraliza mais pro meio do banner */
-  top: 35%;
-  left: 48%;
-  
- 
- 
-  
-}
-
-/* CONTAINER DO TEXTO */
+/* CONTEÚDO (TEXTO / BOTÃO) POR CIMA DO BANNER */
 .hero-content {
   position: absolute;
-  top: 48%;
-  left: 48%;
-
+  top: 50%;              /* centro vertical */
+  left: 72%;             /* puxa um pouco pro lado direito */
+  transform: translate(-50%, -50%);
+  z-index: 3;
 
   display: flex;
   flex-direction: column;
   gap: 14px;
 
- 
+  max-width: 600px;
   color: #ffffff;
-
   font-family: "Inter", sans-serif;
 }
 
@@ -113,7 +59,7 @@
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.5px;
-  color:#313030c7;
+   color: #333333;
 }
 
 /* SUBTÍTULO */
@@ -147,8 +93,24 @@
   transform: translateY(-1px);
 }
 
-/* MOBILE */
+/* --- MOBILE --- */
 @media (max-width: 768px) {
+  .full-width-image {
+    height: 45vh;
+    min-height: 260px;
+    align-items: flex-end;
+  }
+
+  /* gradient mais forte embaixo pra ler o texto no mobile */
+  .full-width-image::before {
+    background: linear-gradient(
+      to top,
+      rgba(17, 24, 39, 0.9),
+      rgba(17, 24, 39, 0.4),
+      transparent
+    );
+  }
+
   .hero-content {
     top: auto;
     bottom: 20px;

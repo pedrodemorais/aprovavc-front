@@ -224,18 +224,19 @@ body {
   font-size: 0.85rem;   /* diminui o tamanho */
   font-weight: 300;     /* deixa mais fina */
   font-family: 'Poppins', sans-serif; /* se estiver usando essa no resto */
+  
 }
 
 /* Tira o “card” e o espaço entre seções */
 .p-panelmenu.menu-flat .p-panelmenu-panel { margin: 0 !important; }
 
 /* Header como item simples (sem caixinha) */
-.p-panelmenu.menu-flat .p-panelmenu-header-action {
- 
-}
+
 
 /* Submenu sem box e com leve indentação */
-.p-panelmenu.menu-flat .p-panelmenu-content { padding: 0 !important; }
+.p-panelmenu.menu-flat .p-panelmenu-content {
+  
+   padding: 0 !important; }
 .p-panelmenu.menu-flat .p-submenu-list { padding: 0 0 0 14px !important; margin: 0 !important; }
 .p-panelmenu.menu-flat .p-menuitem { margin: 0 !important; }
 
@@ -251,6 +252,17 @@ body {
   box-shadow: none !important;
 }
 
+/* Aumenta espaço entre ícone e texto */
+.p-panelmenu.menu-flat .p-menuitem-link {
+  display: flex;
+  align-items: center;
+}
+
+.p-panelmenu.menu-flat .p-menuitem-icon {
+  margin-right: 0.8rem; /* aqui você regula o quanto quer de espaço */
+}
+
+/* se quiser um pouco mais ainda, mexe aqui: 0.75rem, 1rem, etc */
 
 
 @media (max-width: 768px) {

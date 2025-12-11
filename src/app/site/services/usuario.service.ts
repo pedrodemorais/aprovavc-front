@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { UsuarioConsultaDTO } from 'src/app/core/models/AlunoParametroDTO';
 
 
 @Injectable({
@@ -23,7 +24,9 @@ export class UsuarioService {
     return this.http.put(`${environment.apiUrl}/usuarios/atualizar`, usuario);
   }
 
-  
+  getUsuarioLogado(): Observable<UsuarioConsultaDTO> {
+  return this.http.get<UsuarioConsultaDTO>(`${environment.apiUrl}/usuarios/me`);
+}
 
   cadastrarUsuario(empresaData: any): Observable<any> {
     

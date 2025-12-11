@@ -3,13 +3,14 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import {
   AlunoDTO,
   UsuarioConsultaDTO,
-  AlunoParametroDTO
+  AlunoParametroDTO,
+  UsuarioUpdateDTO
 } from 'src/app/core/models/AlunoParametroDTO';
 
 import { PerfilAlunoService } from 'src/app/services/perfil-aluno.service';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/site/services/auth.service';
-
+import { UsuarioService } from 'src/app/site/services/usuario.service';
 @Component({
   selector: 'app-perfil-aluno',
   templateUrl: './perfil-aluno.component.html',
@@ -34,6 +35,7 @@ export class PerfilAlunoComponent implements OnInit {
 
   constructor(
     private perfilAlunoService: PerfilAlunoService,
+    private usuarioService: UsuarioService,
     private fb: FormBuilder,
      private router: Router,
       private authService: AuthService 
@@ -63,23 +65,19 @@ export class PerfilAlunoComponent implements OnInit {
     });
   }
 
- private carregarDados(): void {
+private carregarDados(): void {
   this.carregando = true;
   this.erro = undefined;
 
-  this.perfilAlunoService.getUsuarioLogado().subscribe({
+  this.usuarioService.getUsuarioLogado().subscribe({
     next: (usuario) => {
       console.log('📥 [PerfilAluno] Usuario recebido do backend:', usuario);
       this.usuario = usuario;
       this.aluno = usuario.aluno;
 
-      // 🔁 Mantém sincronizado com a mesma lógica da assinatura-planos
       this.authService.atualizarStatusAssinaturaFromUser(usuario);
 
-      // 🔍 Parâmetros do aluno (ainda podem ser usados como apoio, mas NUNCA acima do backend)
       const parametros: AlunoParametroDTO[] = this.aluno?.parametros || [];
-      console.log('🔍 [PerfilAluno] Parâmetros do aluno:', parametros);
-
       const mapa = new Map<string, string>();
       parametros.forEach(p => {
         if (p.chave) {
@@ -87,15 +85,8 @@ export class PerfilAlunoComponent implements OnInit {
         }
       });
 
-      const planoParam = mapa.get('PLANO_ATUAL');          // ex: 'PREMIUM'
-      const statusParam = mapa.get('STATUS_ASSINATURA');   // ex: 'ATIVA', 'EXPIRADA' etc.
-
-      console.log('🧩 [PerfilAluno] PLANO_ATUAL (parametro):', planoParam);
-      console.log('🧩 [PerfilAluno] STATUS_ASSINATURA (parametro):', statusParam);
-
-      // 🚨 AQUI ESTAVA O PROBLEMA:
-      // ANTES: parâmetro tinha prioridade sobre o que veio do backend
-      // AGORA: backend é a verdade principal, igual na tela de assinatura
+      const planoParam = mapa.get('PLANO_ATUAL');
+      const statusParam = mapa.get('STATUS_ASSINATURA');
 
       const backendStatus = usuario.statusAssinatura ?? null;
       const backendPlano = usuario.planoAtual ?? null;
@@ -106,16 +97,8 @@ export class PerfilAlunoComponent implements OnInit {
       this.statusAssinatura = backendStatus || statusParam || undefined;
       this.assinaturaAtiva = backendAssinaturaValida ?? false;
       this.dataExpiracaoLicenca = backendDataExp ?? undefined;
-
-      console.log('✅ [PerfilAluno] planoAtual final:', this.planoAtual);
-      console.log('✅ [PerfilAluno] statusAssinatura final:', this.statusAssinatura);
-      console.log('✅ [PerfilAluno] assinaturaAtiva:', this.assinaturaAtiva);
-      console.log('✅ [PerfilAluno] dataExpiracaoLicenca:', this.dataExpiracaoLicenca);
-
       this.diasRestantes = this.calcularDiasRestantes(this.dataExpiracaoLicenca);
-      console.log('⏳ [PerfilAluno] Dias restantes:', this.diasRestantes);
 
-      // Preenche formulário (igual já estava)
       if (this.aluno) {
         this.perfilForm.patchValue({
           nomeAluno: this.aluno.nomeAluno,
@@ -144,6 +127,7 @@ export class PerfilAlunoComponent implements OnInit {
     }
   });
 }
+
 
 private calcularDiasRestantes(dataExpiracao?: string): number | null {
   if (!dataExpiracao) {
@@ -210,16 +194,72 @@ private calcularDiasRestantes(dataExpiracao?: string): number | null {
     }
   }
 
-  salvar(): void {
-    if (this.perfilForm.invalid) {
-      this.erro = 'Verifique os dados antes de salvar.';
-      return;
-    }
+salvar(): void {
+  this.erro = undefined;
+  this.mensagemSucesso = undefined;
 
-    // Por enquanto ainda é só simulação
-    this.mensagemSucesso = 'Dados salvos (simulação). Depois conectamos com o backend.';
-    setTimeout(() => this.mensagemSucesso = undefined, 4000);
+  if (this.perfilForm.invalid) {
+    this.erro = 'Verifique os dados antes de salvar.';
+    return;
   }
+
+  if (!this.usuario || !this.aluno) {
+    this.erro = 'Não foi possível identificar o aluno logado.';
+    return;
+  }
+
+  const formValue = this.perfilForm.getRawValue();
+
+  const alunoAtualizado: AlunoDTO = {
+    id: this.aluno.id,
+    nomeAluno: this.aluno.nomeAluno, // se no futuro você quiser editar, pega do form
+    email: formValue.email || this.aluno.email,
+    telefone: formValue.telefone || this.aluno.telefone,
+    exigeDocNoCadastro: this.aluno.exigeDocNoCadastro,
+    dataCriacao: this.aluno.dataCriacao,
+    dataAtualizacao: this.aluno.dataAtualizacao,
+    endereco: {
+      id: this.aluno.endereco?.id,
+      logradouro: formValue.endereco.logradouro,
+      numero: formValue.endereco.numero,
+      complemento: formValue.endereco.complemento,
+      bairro: formValue.endereco.bairro,
+      cep: formValue.endereco.cep,
+      municipio: {
+        id: this.aluno.endereco?.municipio?.id,
+        municipioIbge: formValue.endereco.municipio.municipioIbge,
+        uf: formValue.endereco.municipio.uf
+      }
+    },
+    parametros: this.aluno.parametros // não vai ser usado no update, mas não atrapalha
+  };
+
+  const dto: UsuarioUpdateDTO = {
+    nome: this.usuario.nome,
+    email: this.usuario.email,
+    aluno: alunoAtualizado
+  };
+
+  this.carregando = true;
+
+  this.usuarioService.atualizarUsuario(dto).subscribe({
+    next: (resp) => {
+      console.log('✅ [PerfilAluno] Dados atualizados com sucesso:', resp);
+      this.mensagemSucesso = 'Dados salvos com sucesso.';
+      this.carregando = false;
+
+      // Recarrega para atualizar `this.usuario`/`this.aluno` e o form
+      this.carregarDados();
+    },
+    error: (err) => {
+      console.error('❌ [PerfilAluno] Erro ao atualizar perfil:', err);
+      this.erro = err?.error?.error || err?.error?.message || 'Erro ao salvar seus dados.';
+      this.carregando = false;
+    }
+  });
+}
+
+
 
   abrirCheckout(plano: 'BASIC' | 'PREMIUM'): void {
     this.perfilAlunoService.criarCheckout(plano).subscribe({

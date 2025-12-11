@@ -14,7 +14,7 @@ export class FullWidthSliderComponent implements OnInit {
       link: '/solucoes'
     },
     {
-      image: 'assets/img/Freedom.png',
+      image: 'assets/img/dyn.png',
       title: 'Organize seu Negócio com Facilidade',
       description: 'Automatize tarefas e tenha controle total sobre seus clientes, vendas e estoque.',
       link: '/organizacao'

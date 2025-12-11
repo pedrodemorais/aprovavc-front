@@ -1,370 +1,226 @@
-  html, body {
+/* Fundo geral da página de login */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+  background: radial-gradient(circle at top, #e9f7ef 0, #f5f7fa 45%, #e5e7eb 100%);
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
+/* Cartão central */
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px 28px 26px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.20);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cabeçalho: logo + voltar */
+.login-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.login-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-logo {
+  height: 36px;
+  width: auto;
+}
+
+.login-product-name {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #111827;
+}
+
+.login-back {
+  font-size: 0.8rem;
+  text-decoration: none;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.login-back:hover {
+  color: #111827;
+}
+
+/* Boas-vindas */
+.login-welcome h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 4px 0;
+}
+
+.login-welcome p {
+  font-size: 0.9rem;
+  color: #6b7280;
   margin: 0;
-  padding: 0;
-  overflow-x: hidden; /* Impede rolagem horizontal */
+}
+
+/* Formulário */
+.login-form {
   display: flex;
-  justify-content: center; /* Centraliza o conteúdo */
-  align-items: center; /* Mantém o conteúdo no centro verticalmente */
-
+  flex-direction: column;
+  gap: 14px;
 }
-.topo-login-site {
+
+.form-group {
   display: flex;
-  flex-direction: row;   /* Coloca os elementos lado a lado */
-  align-items: center;   /* Centraliza verticalmente */
-  justify-content: center; /* Centraliza horizontalmente */
-  gap: 10px;             /* Espaço entre os elementos */
-}
-.nome-site-topo-login{
- display: flex;
-  flex-direction: row;   /* Coloca os elementos lado a lado */
-  align-items: center;   /* Centraliza verticalmente */
-  justify-content: center; /* Centraliza horizontalmente */
-             /* Espaço entre os elementos */
+  flex-direction: column;
+  gap: 6px;
 }
 
-  ::ng-deep .topo-login-site{
-    display: flex;
-    align-items: baseline;
-    justify-content: center; /* Centraliza o conteúdo */
-  
-    
-    height: 5rem;
-    width: 100%;
-  }
-  .topo-login-site a{
-    text-decoration: none;
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4b5563;
+}
 
-  }
-  body {
-    font-family: 'Poppins', sans-serif;
-    
-  
-    height: 100vh;
-    margin: 0;
-  }
-  .main{
-    display: block;
-    width: 100%;
-    height: 100%;
-    justify-content: center !important;
-    align-items: center;
+.form-group input {
+  width: 100%;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  background: #f9fafb;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
 
-    
-   
-  }
-  .painel{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  
-    width: 100dvw;
-    height: 88dvh;
-  
-  }
+.form-group input::placeholder {
+  color: #9ca3af;
+}
 
-  /* Estilização do contêiner central */
-  .container {
-    width: 100%;
-    max-width: 400px;
-    margin: 100px auto;
-    padding: 40px;
-   
-    border-radius: 8px;
-    text-align: center;
+.form-group input:focus {
+  outline: none;
+  border-color: #54ba67;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(84, 186, 103, 0.35);
+}
 
-    overflow: hidden; /* Evita qualquer expansão que cause rolagem */
-  }
-  .error-message{
-    color: red;
-  }
-  
+/* Alerts */
+.alert {
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  text-align: left;
+}
 
-  /* Título */
-  h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #007bff;
-  }
-  
-  /* Input Fields */
-  input {
-    width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: 0.3s;
-  }
-  
-  input:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }
-  
-  /* Botão */
-  button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    background: linear-gradient(135deg, rgb(3, 101, 180), #02c9fb);
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-  
-  button:hover {
-    background: linear-gradient(135deg, #417a03, #074305);
-  }
-  
-  /* Mensagem de erro */
-  .error {
-    color: red;
-    font-size: 14px;
-    margin-top: 10px;
-  }
-  
-  /* Link para cadastro */
-  p {
-    margin-top: 15px;
-    font-size: 14px;
-  }
-  
-  a {
-    text-decoration: none;
-    color: #007bff;
-    font-weight: bold;
-  }
-  
-  a:hover {
-    text-decoration: underline;
-  }
+.alert-success {
+  background: #ecfdf3;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
 
-  ::ng-deep .cadastro-link {
-    margin-top: 5px !important; /* Reduz o espaçamento entre os parágrafos */
-  }
+.alert-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
 
-  .logo{
-    height: 40px;
-    width: auto;
-  }
-    .logo-login{
-       height: 40px;
-    width: auto;
-    margin-top: -30px;
-    margin-left: 8rem;
-  }
-  
-  .boas-vindas {
-   
-    color: #534f4f;
-    font-size: 1.2rem;
-    text-align: center;
-    padding: 15px 20px;
-    border-radius: 8px;
-    
-    margin-bottom: 10px;
-   
-    animation: fadeIn 1s ease-in-out;
-  }
-  
-  .notification {
-    padding: 15px;
-    border-radius: 5px;
-    text-align: center;
-    font-weight: bold;
-    margin-bottom: 15px;
-  }
-  
-  .success {
-    background-color: #4caf50;
-    color: white;
-  }
+/* Botão principal */
+.btn-login {
+  width: 100%;
+  margin-top: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 12px 30px rgba(22, 163, 74, 0.32);
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
 
-  @media (max-width: 768px) {
+.btn-login:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 36px rgba(22, 163, 74, 0.38);
+}
 
-  html, body {
+.btn-login:active {
+  transform: translateY(0);
+  box-shadow: 0 9px 20px rgba(22, 163, 74, 0.26);
+}
 
+/* Links inferiores */
+.login-links {
+  margin-top: 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.link-inline {
+  font-size: 0.85rem;
+  color: #4b5563;
+  text-decoration: none;
+}
+
+.link-inline:hover {
+  color: #111827;
+  text-decoration: underline;
+}
+
+.divider {
+  height: 1px;
+  width: 100%;
+  background: #e5e7eb;
+  margin: 2px 0;
+}
+
+.no-account {
+  font-size: 0.86rem;
+  color: #6b7280;
   margin: 0;
-  padding: 0;
-  overflow-x: hidden; /* Impede rolagem horizontal */
-  display: flex;
-  justify-content: center; /* Centraliza o conteúdo */
-  align-items: center; /* Mantém o conteúdo no centro verticalmente */
- 
 }
-  ::ng-deep .topo-login-site{
-    display: flex;
-    align-items: baseline;
-    justify-content: center; /* Centraliza o conteúdo */
-    background: rgb(48, 47, 47);
-    
-    height: 5rem;
-    width: 100%;
-  }
-  .topo-login-site a{
-    text-decoration: none;
 
-  }
-  body {
-    font-family: 'Poppins', sans-serif;
-    
-  
-    height: 100vh;
-    margin: 0;
-  }
-  .main{
-    display: block;
-    width: 100%;
-    height: 100%;
-    justify-content: center !important;
-    align-items: center;
+.link-strong {
+  color: #16a34a;
+  font-weight: 600;
+  text-decoration: none;
+}
 
-    
-   
-  }
-  .painel{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  
-    width: 100dvw;
-    height: 88dvh;
-  
+.link-strong:hover {
+  text-decoration: underline;
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 24px 20px 22px;
+    border-radius: 20px;
   }
 
-  /* Estilização do contêiner central */
-  .container {
-    width: 100%;
-    
-     
-   
-
-    border-radius: 8px;
-    text-align: center;
-
-    overflow: hidden; /* Evita qualquer expansão que cause rolagem */
-  }
-    .boas-vindas {
-    width: 100%;
-    
-    color: #534f4f;
-    font-size: 1.0rem;
-    text-align: center;
-   padding: 0px 0px;
-    border-radius: 8px;
-  
-   
- 
-    animation: fadeIn 1s ease-in-out;
-  }
-  .error-message{
-    color: red;
-  }
-  
-
-  /* Título */
-  h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #007bff;
-  }
-  
-  /* Input Fields */
-  input {
-    width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 10px;
-    transition: 0.3s;
-  }
-  
-  input:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }
-  
-  /* Botão */
-  button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    background: linear-gradient(135deg, rgb(3, 101, 180), #02c9fb);
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-  
-  button:hover {
-    background: linear-gradient(135deg, #417a03, #074305);
-  }
-  
-  /* Mensagem de erro */
-  .error {
-    color: red;
-    font-size: 14px;
-    margin-top: 10px;
-  }
-  
-  /* Link para cadastro */
-  p {
-    margin-top: 40px;
-    font-size: 14px;
-  }
-  
-  a {
-    text-decoration: none;
-    color: #007bff;
-    font-weight: bold;
-  }
-  .logo-login{
-       height: 40px;
-    width: auto;
-    margin-top: -30px;
-    margin-left: 6rem;
-  }
-  
-  a:hover {
-    text-decoration: underline;
+  .login-welcome h1 {
+    font-size: 1.3rem;
   }
 
- ::ng-deep .cadastro-link {
-    margin-top: 5px !important; /* Reduz o espaçamento entre os parágrafos */
+  .login-product-name {
+    display: none; /* Deixa só o logo no mobile */
   }
 
-
-  .logo{
-    height: 40px;
-    width: auto;
+  .login-back {
+    font-size: 0.75rem;
   }
-  
-  
-
-  
-  .notification {
-    padding: 15px;
-    border-radius: 5px;
-    text-align: center;
-    font-weight: bold;
-    margin-bottom: 15px;
-  }
-  
-  .success {
-    background-color: #4caf50;
-    color: white;
-  }
-
-  }
+}

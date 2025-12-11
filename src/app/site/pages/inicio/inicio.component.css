@@ -59,13 +59,12 @@ header .logo img {
 
 /* MENU FIXO NO TOPO SOBRE A IMAGEM */
 .menu-topo {
-  position: fixed;
+  
   top: 0;
   left: 0;
   right: 0;
+margin-top: 1rem;
 
-  width: 48%;
-  margin-left: 25%;
 
   display: flex;
   align-items: center;
@@ -86,7 +85,7 @@ header .logo img {
 }
 
 .logo-img {
-  height: 35px;
+  height: 45px;
   width: auto;
 }
 
@@ -172,8 +171,15 @@ header .logo img {
   transition: color 0.3s;
 }
 
+.logo-aprovavc-diferente{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hero-item:hover {
-  color: #f2ff00;
+  color: #0fa70a;
 }
 
 .hero-item:first-child {
@@ -221,7 +227,7 @@ section {
 .sobre-nos .container {
   max-width: 1300px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 40px 24px;
 }
 
 .conteudo-sobre {
@@ -438,7 +444,7 @@ section {
 ========================= */
 
 .plans {
-  padding: 120px 20px;
+
   background-color: #f9f9f9;
   text-align: center;
 }

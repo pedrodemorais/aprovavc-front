@@ -49,3 +49,9 @@ export interface UsuarioConsultaDTO {
 
   aluno?: AlunoDTO;
 }
+/** DTO usado no PUT /api/usuarios/atualizar */
+export interface UsuarioUpdateDTO {
+  nome: string;
+  email: string;
+  aluno: AlunoDTO;
+}
