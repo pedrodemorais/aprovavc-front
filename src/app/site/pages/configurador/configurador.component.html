@@ -1,21 +1,22 @@
-<div class="main">
+<div class="main configurador-page">
 
- 
   <div class="painel">
     <div class="configurador-container">
-       <div class="topo-login-site">
 
-    <img class="logo" src="assets/img/logo/aprova.png" alt="Logo">
-    <a routerLink="/home">
+      <div class="topo-login-site">
+        <img class="logo" src="assets/img/logo/dynamo.png" alt="Logo">
 
-    </a>
-  </div>
-      <h2>Bem-vindo ao Configurador Inicial!</h2>
+        <a routerLink="/home" class="voltar-site" aria-label="Voltar para o site">
+          Voltar para o site
+        </a>
+      </div>
+
+
+      <h2>Bem-vindo ao Cadastro Inicial!</h2>
+
       <div *ngIf="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>
-
-     
 
       <form [formGroup]="configuradorForm" (ngSubmit)="onSubmit()">
 
@@ -59,18 +60,11 @@
               As senhas não coincidem.
             </p>
           </div>
-
-     
-
         </div>
-    
-     
 
-        <!-- Etapa 3: Endereço (com Município dentro) -->
+        <!-- Etapa 2: Endereço (com Município dentro) -->
         <div *ngIf="step === 2" formGroupName="endereco">
           <h3>Endereço</h3>
-
-                  
 
           <!-- Estado e Município dentro de Endereço -->
           <div formGroupName="municipio">
@@ -87,10 +81,9 @@
               <select id="cidade" formControlName="municipioIbge" required>
                 <option value="">Selecione um município</option>
                 <option *ngFor="let municipio of municipios" [value]="municipio.nome">
-                  {{ municipio.nome }} <!-- ✅ Pegando o nome correto agora! -->
+                  {{ municipio.nome }}
                 </option>
               </select>
-
             </div>
           </div>
         </div>
@@ -104,6 +97,7 @@
             Confirmar
           </button>
         </div>
+
       </form>
     </div>
   </div>

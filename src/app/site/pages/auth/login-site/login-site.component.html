@@ -1,14 +1,14 @@
 <div class="login-page">
-
   <div class="login-card">
 
     <div class="login-header">
       <div class="login-logo-wrap">
-        <img class="login-logo" src="assets/img/logo/dynamo.png" alt="Logo AprovaVC" />
-   
+        <img class="login-logo" src="assets/img/logo/dynamo.png" alt="Logo" />
       </div>
 
-      <a routerLink="/home" class="login-back">&larr; Voltar para o site</a>
+      <a routerLink="/home" class="login-back" aria-label="Voltar para o site">
+        Voltar para o site
+      </a>
     </div>
 
     <div class="login-welcome">
@@ -26,6 +26,7 @@
           [(ngModel)]="email"
           name="email"
           required
+          autocomplete="email"
         />
       </div>
 
@@ -38,6 +39,7 @@
           [(ngModel)]="password"
           name="password"
           required
+          autocomplete="current-password"
         />
       </div>
 
@@ -59,3 +61,15 @@
     <div class="login-links">
       <a routerLink="/recuperar-senha" class="link-inline">
         Esqueceu a senha?
+      </a>
+
+      <div class="divider"></div>
+
+      <p class="no-account">
+        Ainda não tem conta?
+        <a routerLink="/configurador" class="link-strong">Criar agora</a>
+      </p>
+    </div>
+
+  </div>
+</div>
