@@ -1,29 +1,40 @@
 /* =========================
-   BASE / RESET
+   BASE / RESET (somente HOME)
 ========================= */
-
 html {
   scroll-behavior: smooth;
 }
 
-body {
+:host {
+  display: block;
+}
+
+/* Evita a quebra por CSS global da dashboard (container virando flex) */
+.home-page .container,
+.home-page .site-container {
+  display: block !important;
+  flex: none !important;
+}
+
+/* Estilo geral da HOME */
+.home-page {
+  --topo-h: 80px;               /* ✅ NOVO: altura do topo (desktop) */
   margin: 0;
-  padding-top: 80px; /* espaço pro menu fixo */
-  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
-               'Segoe UI', sans-serif;
+  padding-top: var(--topo-h);    /* ✅ antes: 80px fixo */
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #111827;
   background: #f3f4f6;
 }
 
 /* container genérico */
-.site-container{
-    max-width: 1200px;
+.home-page .site-container {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
   box-sizing: border-box;
 }
 
-.container {
+.home-page .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
@@ -33,37 +44,37 @@ body {
 /* =========================
    MENU / TOPO
 ========================= */
-.topo {
+.home-page .topo {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;          /* garante que ocupe 100% */
+  right: 0; /* garante 100% */
   width: 100%;
+  height: var(--topo-h);         /* ✅ NOVO: fixa a altura do topo */
+  padding: 8px 0;                /* ✅ NOVO: respiro sem virar “buraco” */
   display: flex;
-  justify-content: center;  /* centraliza o conteúdo interno */
+  justify-content: center;
   align-items: center;
-
   background: rgba(255, 255, 255, 0.93);
   z-index: 88888;
+  box-sizing: border-box;
 }
 
 /* “pílula” centralizada dentro do topo */
-.menu-topo {
+.home-page .menu-topo {
   width: 100%;
-  max-width: 1250px;       /* limite máximo do conteúdo */
-  margin: 8px auto;        /* centraliza horizontalmente */
+  max-width: 1250px;
+  margin: 0 auto;                /* ✅ antes: 8px auto (isso criava espaço extra) */
   padding: 10px 18px;
   border-radius: 999px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   z-index: 999999;
+  box-sizing: border-box;
 }
 
-
-.logo-img {
+.home-page .logo-img {
   height: 32px;
   width: auto;
   display: block;
@@ -84,15 +95,15 @@ body {
 :host ::ng-deep .custom-menubar .p-menuitem-link {
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  color: #e5e7eb;
+  color: #374151;           /* ✅ estava branco (sumia no topo branco) */
   font-size: 0.85rem;
   font-weight: 400;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 :host ::ng-deep .custom-menubar .p-menuitem-link:hover {
-  background: rgba(248, 250, 252, 0.12);
-  color: #ffffff;
+  background: rgba(15, 23, 42, 0.06);
+  color: #111827;
 }
 
 :host ::ng-deep .custom-menubar .p-menuitem-text {
@@ -101,14 +112,13 @@ body {
 
 /* botão mobile do menubar */
 :host ::ng-deep .custom-menubar .p-menubar-button {
-  color: #e5e7eb;
+  color: #374151;
 }
 
 /* =========================
    WHATSAPP FLOAT
 ========================= */
-
-.whatsapp-btn {
+.home-page .whatsapp-btn {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -124,12 +134,12 @@ body {
   transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
-.whatsapp-btn img {
+.home-page .whatsapp-btn img {
   width: 34px;
   height: 34px;
 }
 
-.whatsapp-btn:hover {
+.home-page .whatsapp-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 22px 55px rgba(22, 163, 74, 0.7);
 }
@@ -137,20 +147,19 @@ body {
 /* =========================
    HERO – NAVEGAÇÃO DE PASSOS
 ========================= */
-
-.hero {
+.home-page .hero {
   background: rgba(235, 232, 232, 0.932);
   color: #0f172a;
   padding-bottom: 40px;
 }
 
-.hero-content {
+.home-page .hero-content {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.hero-nav {
+.home-page .hero-nav {
   width: 100%;
   max-width: 1200px;
   padding: 26px 0 10px;
@@ -159,7 +168,7 @@ body {
   gap: 18px;
 }
 
-.hero-item {
+.home-page .hero-item {
   flex: 1;
   display: flex;
   align-items: center;
@@ -172,26 +181,20 @@ body {
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(148, 163, 184, 0.35);
   backdrop-filter: blur(8px);
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    border-color 0.12s ease,
-    background 0.12s ease,
-    color 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
 }
 
-.hero-item:hover {
+.home-page .hero-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.45);
   border-color: #22c55e;
-
 }
 
-.hero-item span {
+.home-page .hero-item span {
   white-space: nowrap;
 }
 
-.circle {
+.home-page .circle {
   width: 28px;
   height: 28px;
   border-radius: 999px;
@@ -208,51 +211,50 @@ body {
 /* =========================
    SEÇÃO – SOBRE NÓS
 ========================= */
-
-.sobre-nos {
+.home-page .sobre-nos {
   background: #f9fafb;
   padding: 56px 0 40px;
 }
 
-.sobre-nos .container {
+.home-page .sobre-nos .container {
   padding-top: 8px;
 }
 
-.conteudo-sobre {
+.home-page .conteudo-sobre {
   display: flex;
   flex-wrap: wrap;
   gap: 40px;
   align-items: flex-start;
 }
 
-.conteudo-sobre .texto {
+.home-page .conteudo-sobre .texto {
   flex: 1 1 360px;
   text-align: left;
 }
 
-.conteudo-sobre .texto h2 {
+.home-page .conteudo-sobre .texto h2 {
   font-size: 1.9rem;
   margin-bottom: 14px;
   color: #111827;
 }
 
-.sobre-nos p {
+.home-page .sobre-nos p {
   font-size: 0.95rem;
   line-height: 1.8;
   color: #4b5563;
   margin-bottom: 12px;
 }
 
-.sobre-nos strong {
+.home-page .sobre-nos strong {
   color: #22c55e;
 }
 
-#sobre-nos ul {
+.home-page #sobre-nos ul {
   margin: 8px 0 12px 1rem;
   padding-left: 0.5rem;
 }
 
-#sobre-nos li {
+.home-page #sobre-nos li {
   margin-bottom: 4px;
   color: #4b5563;
 }
@@ -260,25 +262,24 @@ body {
 /* =========================
    SERVICES – DIFERENCIAIS / SOLUÇÕES
 ========================= */
-
-.services {
+.home-page .services {
   background: #f3f4f6;
   padding: 56px 0;
 }
 
-.services-title {
+.home-page .services-title {
   font-size: 1.7rem;
   margin-bottom: 24px;
   color: #111827;
 }
 
-.service-list {
+.home-page .service-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 22px;
 }
 
-.service-item {
+.home-page .service-item {
   position: relative;
   padding: 22px 20px 20px;
   background: #ffffff;
@@ -286,42 +287,39 @@ body {
   text-align: left;
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
   border: 1px solid #e5e7eb;
-  transition:
-    transform 0.14s ease,
-    box-shadow 0.14s ease,
-    border-color 0.14s ease;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
 }
 
-.service-item:hover {
+.home-page .service-item:hover {
   transform: translateY(-4px);
   box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
   border-color: #c4e5cf;
 }
 
-.logo-aprovavc-diferente {
+.home-page .logo-aprovavc-diferente {
   display: flex;
   justify-content: center;
   margin-bottom: 12px;
 }
 
-.logo-aprovavc-diferente .logo-img {
+.home-page .logo-aprovavc-diferente .logo-img {
   height: 40px;
 }
 
-.service-item h3 {
+.home-page .service-item h3 {
   font-size: 1.05rem;
   margin: 4px 0 8px;
   color: #111827;
 }
 
-.service-item p {
+.home-page .service-item p {
   font-size: 0.9rem;
   line-height: 1.6;
   color: #4b5563;
 }
 
 /* selo “Em breve” */
-.service-item .badge {
+.home-page .service-item .badge {
   position: absolute;
   top: 14px;
   right: 14px;
@@ -337,8 +335,7 @@ body {
 /* =========================
    PLANS
 ========================= */
-
-.plans {
+.home-page .plans {
   background: #f9fafb;
   padding: 56px 0 40px;
 }
@@ -346,33 +343,32 @@ body {
 /* =========================
    BLOG
 ========================= */
-
-.blog {
+.home-page .blog {
   background: #f3f4f6;
   padding: 56px 0 60px;
   text-align: center;
 }
 
-.blog h2 {
+.home-page .blog h2 {
   font-size: 1.7rem;
   margin-bottom: 10px;
   color: #111827;
 }
 
-.blog-intro {
+.home-page .blog-intro {
   max-width: 640px;
   margin: 0 auto 32px;
   font-size: 0.95rem;
   color: #4b5563;
 }
 
-.blog-posts {
+.home-page .blog-posts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 22px;
 }
 
-.blog-post {
+.home-page .blog-post {
   background: #ffffff;
   border-radius: 18px;
   overflow: hidden;
@@ -384,31 +380,31 @@ body {
   transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
 }
 
-.blog-post:hover {
+.home-page .blog-post:hover {
   transform: translateY(-4px);
   box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
   border-color: #cbd5f5;
 }
 
-.blog-post img {
+.home-page .blog-post img {
   width: 100%;
   height: 190px;
   object-fit: cover;
 }
 
-.blog-post h3 {
+.home-page .blog-post h3 {
   font-size: 1.1rem;
   margin: 14px 16px 6px;
   color: #111827;
 }
 
-.blog-post p {
+.home-page .blog-post p {
   font-size: 0.9rem;
   margin: 0 16px 10px;
   color: #4b5563;
 }
 
-.read-more {
+.home-page .read-more {
   display: inline-block;
   margin: 0 16px 16px;
   font-size: 0.85rem;
@@ -417,65 +413,64 @@ body {
   text-decoration: none;
 }
 
-.read-more:hover {
+.home-page .read-more:hover {
   text-decoration: underline;
 }
 
 /* =========================
    FOOTER
 ========================= */
-
-footer {
+.home-page footer {
   background: #2B3C50;
   color: #e5e7eb;
   padding: 26px 0 18px;
 }
 
-.rodape {
+.home-page .rodape {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 10px;
 }
 
-.logo-nome .logo-img {
+.home-page .logo-nome .logo-img {
   height: 30px;
 }
 
-.social-icons {
+.home-page .social-icons {
   display: flex;
   gap: 12px;
   margin-top: 8px;
   justify-content: center;
 }
 
-.social-icons a {
+.home-page .social-icons a {
   color: #e5e7eb;
   font-size: 1.3rem;
 }
 
-.social-icons a i {
+.home-page .social-icons a i {
   transition: transform 0.12s ease, color 0.12s ease;
 }
 
-.social-icons a:hover i {
+.home-page .social-icons a:hover i {
   transform: translateY(-1px);
   color: #22c55e;
 }
 
-.separador-rodape {
+.home-page .separador-rodape {
   height: 1px;
   background: rgba(148, 163, 184, 0.35);
   max-width: 960px;
   margin: 8px auto 10px;
 }
 
-.politicas {
+.home-page .politicas {
   text-align: center;
   margin-bottom: 10px;
 }
 
-.link-politicas ul {
+.home-page .link-politicas ul {
   list-style: none;
   display: inline-flex;
   gap: 8px;
@@ -483,88 +478,87 @@ footer {
   margin: 4px 0 0;
 }
 
-.link-politicas a {
+.home-page .link-politicas a {
   font-size: 0.8rem;
   color: #9ca3af;
   text-decoration: none;
 }
 
-.link-politicas a:hover {
+.home-page .link-politicas a:hover {
   color: #e5e7eb;
   text-decoration: underline;
 }
 
-.direitos p {
+.home-page .direitos p {
   margin: 0;
   font-size: 0.8rem;
   color: #9ca3af;
 }
 
-.desenvolvido-por {
+.home-page .desenvolvido-por {
   text-align: center;
   font-size: 0.75rem;
   color: #6b7280;
 }
 
-.desenvolvido-por a {
+.home-page .desenvolvido-por a {
   color: #9ca3af;
   text-decoration: none;
 }
 
-.desenvolvido-por a:hover {
+.home-page .desenvolvido-por a:hover {
   color: #e5e7eb;
 }
 
 /* =========================
    RESPONSIVO
 ========================= */
-
 @media (max-width: 900px) {
-  .menu-topo {
+  .home-page .menu-topo {
     padding-inline: 14px;
   }
 
-  .hero-nav {
+  .home-page .hero-nav {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .hero-item {
+  .home-page .hero-item {
     font-size: 0.85rem;
   }
 
-  .sobre-nos .container {
+  .home-page .sobre-nos .container {
     padding-inline: 16px;
   }
 }
 
 @media (max-width: 640px) {
-  body {
-    padding-top: 72px;
+  .home-page {
+    --topo-h: 72px; /* ✅ antes: padding-top: 72px */
   }
 
-  .menu-topo {
+  .home-page .menu-topo {
     top: 10px;
     width: min(100% - 20px, 600px);
   }
 
-  .logo-img {
+  .home-page .logo-img {
     height: 26px;
   }
 
-  .hero-nav {
+  .home-page .hero-nav {
     padding-top: 20px;
   }
 
-  .services,
-  .sobre-nos,
-  .blog,
-  .plans {
+  .home-page .services,
+  .home-page .sobre-nos,
+  .home-page .blog,
+  .home-page .plans {
     padding-inline: 16px;
   }
 
-  .service-item,
-  .blog-post {
+  .home-page .service-item,
+  .home-page .blog-post {
     border-radius: 16px;
   }
 }
