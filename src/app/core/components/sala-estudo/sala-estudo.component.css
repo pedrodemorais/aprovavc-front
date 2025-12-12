@@ -1145,3 +1145,51 @@
   border: 1px solid rgba(255,255,255,0.14) !important;
   color: #e5e7eb !important;
 }
+/* =========================================================
+   MODAL FLASHCARD — DARK (sem transparência)
+   (cole no FINAL, substituindo o seu bloco atual do modal)
+========================================================= */
+:host-context(body.theme-dark) .flashcard-overlay{
+  background: rgba(2, 6, 23, 0.78) !important;   /* overlay mais firme */
+  backdrop-filter: blur(6px);
+}
+
+:host-context(body.theme-dark) .flashcard-modal{
+  background: #0b1220 !important;               /* ✅ sólido (não transparente) */
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.70) !important;
+}
+
+:host-context(body.theme-dark) .flashcard-fechar{
+  color: #cbd5e1 !important;
+}
+:host-context(body.theme-dark) .flashcard-fechar:hover{
+  background: rgba(255,255,255,0.08) !important;
+  color: #ffffff !important;
+}
+
+:host-context(body.theme-dark) .flashcard-contexto{
+  background: #0a0f1b !important;               /* sólido também */
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .flashcard-textarea,
+:host-context(body.theme-dark) .flashcard-input,
+:host-context(body.theme-dark) .flashcard-select{
+  background: #0f172a !important;               /* sólido */
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .flashcard-textarea::placeholder,
+:host-context(body.theme-dark) .flashcard-input::placeholder{
+  color: rgba(226, 232, 240, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .flashcard-textarea:focus,
+:host-context(body.theme-dark) .flashcard-input:focus,
+:host-context(body.theme-dark) .flashcard-select:focus{
+  outline: none !important;
+  border-color: rgba(84, 186, 103, 0.70) !important;
+  box-shadow: 0 0 0 2px rgba(84, 186, 103, 0.22) !important;
+}
