@@ -12,6 +12,8 @@ import { AuthService } from 'src/app/site/services/auth.service';
 import { filter, takeUntil } from 'rxjs/operators';
 import { MenuItem } from 'primeng/api';
 import { Subject } from 'rxjs';
+import { ModoLeituraService } from 'src/app/core/services/modo-leitura.service';
+
 
 @Component({
   selector: 'app-area-usuario',
@@ -46,6 +48,7 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
+    public modoLeituraService: ModoLeituraService
   ) {
     this.user = this.authService.getUser();
     if (!this.user) {
@@ -65,6 +68,7 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
   }
 
 ngOnInit() {
+  this.modoLeituraService.init();
   this.user = this.authService.getUser();
 
   const userName = this.authService.getUserNameFromToken();
@@ -99,6 +103,7 @@ ngOnInit() {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+     document.body.classList.remove('modo-leitura');
   }
 
   // ============ MENU ============

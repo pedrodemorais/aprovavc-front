@@ -16,6 +16,9 @@
       </button>
 
     </div>
+<button class="btn-modo-leitura" type="button" (click)="modoLeituraService.toggle()">
+  <i class="pi" [ngClass]="modoLeituraService.isDark() ? 'pi-sun' : 'pi-moon'"></i>
+</button>
 
 
 

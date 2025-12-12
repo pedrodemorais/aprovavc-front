@@ -40,6 +40,17 @@ body {
   color: #111827;
 }
 
+.btn-modo-leitura{
+  margin-left: auto;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 999px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+
 /* =======================================
    TOPO FIXO
 ======================================= */

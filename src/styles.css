@@ -1,225 +1,221 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+/* =========================================================
+   IMPORTS
+========================================================= */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 @import "primeng/resources/themes/lara-light-blue/theme.css";
 @import "primeng/resources/primeng.min.css";
 
-
-
-
-
-/* Evita barra de rolagem horizontal */
-html, body {
-  width: 100%;
-  max-width: 100%;
- overflow-x: hidden;  /* Nunca mostra barra horizontal */
-overflow-y: auto;    /* Mostra vertical apenas se necessário */
-
- 
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
- height: 100%;
- max-height: 100%;
-  -webkit-text-size-adjust: 100%; /* Para mobile */
-  background-color: #ffffff;
-
-  color: #2a2929d9;
-}
-html, body {
+/* =========================================================
+   RESET / BASE
+========================================================= */
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+
+  overflow-x: hidden; /* evita scroll horizontal */
+  overflow-y: auto;
+
+  font-family: "Roboto", "Helvetica Neue", sans-serif;
+  -webkit-text-size-adjust: 100%;
+
+  color: #2a2929d9;
+
+  /* fundo padrão (site) */
   background-color: #ffffff;
-    background: radial-gradient(
-    circle at top,
-    #e9f7ef 0,
-    #f5f7fa 45%,
-    #e5e7eb 100%
-  );
-  
-}
-.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
-  color: #0f762e !important;
+  background: radial-gradient(circle at top, #e9f7ef 0, #f5f7fa 45%, #e5e7eb 100%);
 }
 
-
-.site-container {
-  max-width: 1360px; /* largura máxima */
-  margin: 0 auto;    /* centraliza horizontalmente */
-  
-  
-}
-
-.site-container-menu {
-  max-width: 1360px; /* largura máxima */
-  margin: 0 auto;    /* centraliza horizontalmente */
-
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Garantir que imagens e vídeos nunca ultrapassem o container */
-img, picture, video, canvas, svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-/* Remove estilos padrão de listas */
-ul, ol {
-  list-style: none;
- 
-  margin: 10px 0;  /* Espaço externo (em cima e embaixo) */
-    font-size: 16px;
-   font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
-}
-
-/* Remove sublinhado padrão de links */
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Botões e inputs com aparência consistente */
- input, textarea, select {
-  font: inherit;
-  border: none;
-  background: none;
-  outline: none;
-  background: rgb(240, 236, 236);
-  font-size: 16px;
-   font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
-  display: block;
-  
-  margin-bottom: 0.5rem;
-  color: #414441; /* Cor do texto */
-  font-size: medium;
-     border-radius: 4px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    background: #24586c22;
-      font-size: 16px;
-}
-
-
-
-/* Previne zoom estranho em dispositivos iOS */
-input, textarea {
-  font-size: 16px;
-}
-
-header{
-   position: fixed;      /* Fixa no topo da tela */
-  top: 0;               /* Alinha no topo */
-  left: 0;              /* Garante que fique alinhada à esquerda */
-  width: 100%;          /* Ocupa toda a largura */
- 
-  background-color: #fff; /* Cor de fundo */
-  z-index: 1000;         /* Fica acima de outros elementos */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Opcional: sombra */
-}
-/* Garantir que seções não criem overflow */
-section,  footer, main, nav, div {
-  max-width: 100%;
-
-}
-
-/* Forçar palavras grandes a quebrarem e não criarem scroll horizontal */
+/* quebra palavras grandes e evita overflow */
 body {
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-
-.field label {
-  font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
+/* mídia nunca ultrapassa container */
+img,
+picture,
+video,
+canvas,
+svg {
   display: block;
-  
+  max-width: 100%;
+  height: auto;
+}
+
+/* elementos estruturais não estouram largura */
+section,
+footer,
+main,
+nav,
+div {
+  max-width: 100%;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* =========================================================
+   CONTAINERS (SITE PÚBLICO)
+========================================================= */
+.site-container,
+.site-container-menu {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.site-container-menu {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* =========================================================
+   LISTAS
+========================================================= */
+ul,
+ol {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  font-size: 16px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* =========================================================
+   INPUTS / FORMS (GLOBAL)
+   Obs: você estava setando background duas vezes e repetindo fontes.
+========================================================= */
+input,
+textarea,
+select {
+  font: inherit;
+  outline: none;
+
+  display: block;
+  width: 100%;
   margin-bottom: 0.5rem;
-  color: #414441; /* Cor do texto */
+
+  border: none;
+  border-radius: 4px;
+  box-sizing: border-box;
+
+  color: #414441;
+  background: #24586c22;
+
+  transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* previne zoom iOS */
+input,
+textarea {
+  font-size: 16px;
+}
+
+/* labels padrão */
+.field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #414441;
   font-size: medium;
-
-}
-.p-component{
-  font-size: large;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.p-dropdown{
-   height: 2rem;
-  font-size: 1rem;
-  align-items: center;
-  background: #41424211;
-}
-
+/* campo inválido */
 .campo-invalido {
   border: 2px solid red !important;
   background-color: #fff0e6;
 }
 
-  /* Reduzindo o tamanho dos campos de entrada */
-  .field input,
-  .field textarea,
-  
- 
-  .field p-inputtext {
-      width: 100%;
-      padding: 0.6rem;
-      font-size: 1rem;
-      font-weight: 500;
-      border-radius: 4px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-      color: #063a77;
-    background: #24586c22;
-    }
+/* =========================================================
+   PRIME NG - AJUSTES GERAIS
+========================================================= */
+.p-component {
+  font-size: large;
+}
 
-    .field select{
-      width: 100%;
-      padding: 0.5rem;
-      font-size:1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
+.p-dropdown {
+  height: 2rem;
+  font-size: 1rem;
+  align-items: center;
+  background: #41424211;
+}
 
-    
+.p-menubar .p-submenu-list {
+  z-index: 10000;
+}
 
-    .p-menubar .p-submenu-list {
-      z-index: 10000;
-    }
+.p-menubar
+  .p-menubar-root-list
+  > .p-menuitem
+  > .p-menuitem-content
+  .p-menuitem-link
+  .p-menuitem-text {
+  color: #0f762e !important;
+}
 
-    ::ng-deep .custom-dialog-cliente .p-dialog {
+/* =========================================================
+   CAMPOS DENTRO DE .field (PADRÃO DO SEU FORM)
+========================================================= */
+.field input,
+.field textarea,
+.field .p-inputtext {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 4px;
+  box-sizing: border-box;
+
+  color: #063a77;
+  background: #24586c22;
+
+  transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.field select {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* =========================================================
+   DIALOG (PRIMENG) - SE VOCÊ AINDA PRECISAR
+   Obs: ::ng-deep em styles.css é OK (global), mas use com cuidado.
+========================================================= */
+::ng-deep .custom-dialog-cliente .p-dialog {
   width: 95vw !important;
   max-width: 600px !important;
 }
 
-::ng-deep .full-width-image {
-   
-    background-size: cover; /* Faz a imagem preencher o container */
-    background-position: center 10%; /* Centraliza a imagem */
-    background-repeat: no-repeat; /* Evita repetiÃ§Ã£o da imagem */
-    width: 100%; /* Ocupa toda a largura da tela */
-    height: 90dvh; /* Altura fixa de 300px */
-    display: flex; /* Alinha o texto sobreposto */
-    
-
-    position: relative; /* NecessÃ¡rio para a sobreposiÃ§Ã£o */
-  }
-
-  .full-width-image{
+/* =========================================================
+   FULL WIDTH IMAGE (HERO)
+   Obs: você tinha conflito: uma regra dizia height: 90dvh e outra height:auto.
+   Aqui deixei um padrão seguro. Ajuste conforme sua home.
+========================================================= */
+.full-width-image {
   width: 100%;
-  height: auto;
   display: block;
   margin: 0 auto;
 }
-/* FLAT total: sem borda/sombra/raio/“cards” e sem espaçamento */
+
+/* se você quiser forçar altura do hero na HOME pública, descomente:
+.full-width-image {
+  height: 90dvh;
+}
+*/
+
+/* =========================================================
+   PANELMENU FLAT (SEU MENU)
+========================================================= */
 .p-panelmenu.menu-flat,
 .p-panelmenu.menu-flat .p-panelmenu-panel,
 .p-panelmenu.menu-flat .p-panelmenu-header,
@@ -232,116 +228,1340 @@ body {
   border-radius: 8px !important;
   box-shadow: none !important;
   background: transparent !important;
-  font-size: 0.85rem;   /* diminui o tamanho */
-  font-weight: 300;     /* deixa mais fina */
-  font-family: 'Poppins', sans-serif; /* se estiver usando essa no resto */
-  
+
+  font-size: 0.85rem;
+  font-weight: 300;
+  font-family: "Poppins", sans-serif; /* se você usa Poppins no dashboard */
 }
 
-/* Tira o “card” e o espaço entre seções */
-.p-panelmenu.menu-flat .p-panelmenu-panel { margin: 0 !important; }
+.p-panelmenu.menu-flat .p-panelmenu-panel {
+  margin: 0 !important;
+}
 
-/* Header como item simples (sem caixinha) */
-
-
-/* Submenu sem box e com leve indentação */
 .p-panelmenu.menu-flat .p-panelmenu-content {
-  
-   padding: 0 !important; }
-.p-panelmenu.menu-flat .p-submenu-list { padding: 0 0 0 14px !important; margin: 0 !important; }
-.p-panelmenu.menu-flat .p-menuitem { margin: 0 !important; }
+  padding: 0 !important;
+}
 
-/* (opcional) hover discreto */
+.p-panelmenu.menu-flat .p-submenu-list {
+  padding: 0 0 0 14px !important;
+  margin: 0 !important;
+}
+
+.p-panelmenu.menu-flat .p-menuitem {
+  margin: 0 !important;
+}
+
+/* hover discreto */
 .p-panelmenu.menu-flat .p-panelmenu-header-action:hover,
 .p-panelmenu.menu-flat .p-menuitem-link:hover {
   background: rgba(94, 161, 130, 0.247) !important;
 }
 
-/* Garanta que a própria sidebar não tenha linha/sombra */
-.sidebar, nav.sidebar, .layout-sidebar {
+/* sidebar sem sombra/borda (você controla isso no CSS do componente) */
+.sidebar,
+nav.sidebar,
+.layout-sidebar {
   border: 0 !important;
   box-shadow: none !important;
 }
 
-/* Aumenta espaço entre ícone e texto */
+/* espaçamento ícone/texto */
 .p-panelmenu.menu-flat .p-menuitem-link {
   display: flex;
   align-items: center;
 }
 
 .p-panelmenu.menu-flat .p-menuitem-icon {
-  margin-right: 0.8rem; /* aqui você regula o quanto quer de espaço */
+  margin-right: 0.8rem;
 }
 
-/* se quiser um pouco mais ainda, mexe aqui: 0.75rem, 1rem, etc */
-
-
-@media (max-width: 768px) {
-html, body {
+/* =========================================================
+   HEADER GLOBAL (CUIDADO!)
+   Obs: isso fixa TODO header do site inteiro.
+   Se só a home pública precisa disso, ideal mover para o CSS do componente.
+========================================================= */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 100%;
-  overflow: auto;
- 
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
- height: 100%;
- max-height: 100%;
-  -webkit-text-size-adjust: 100%; /* Para mobile */
-  
 
-  color: #333;
+  background-color: #fff;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+/* ============================
+   MODO LEITURA (NOTURNO)
+   aplica só quando body tem .modo-leitura
+============================ */
+
+body.modo-leitura {
+  background: radial-gradient(circle at top, #0b1220 0, #0a0f1a 45%, #070b12 100%) !important;
+  color: #e5e7eb !important;
 }
 
-.field label {
-  font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
-  display: block;
-  
-  margin-bottom: 0.5rem;
-  color: #414441; /* Cor do texto */
-  font-size: small;
+/* seu layout restrito */
+body.modo-leitura .dashboard {
+  background: radial-gradient(circle at top, #0b1220 0, #0a0f1a 45%, #070b12 100%) !important;
+  color: #e5e7eb !important;
 }
 
- .field input,
+/* topbar / sidebar */
+body.modo-leitura .topbar {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .sidebar {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* links do menu */
+body.modo-leitura .menu .p-panelmenu .p-menuitem-link {
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .menu .p-panelmenu .p-menuitem-link:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* ativo */
+body.modo-leitura .menu .p-panelmenu .p-menuitem-link.router-link-active,
+body.modo-leitura .menu .p-panelmenu .p-menuitem-link-active {
+  color: #54ba67 !important;
+  background: rgba(84, 186, 103, 0.16) !important;
+}
+
+/* inputs básicos */
+body.modo-leitura input,
+body.modo-leitura textarea,
+body.modo-leitura select,
+body.modo-leitura .p-inputtext,
+body.modo-leitura .p-dropdown {
+  background: rgba(255,255,255,0.06) !important;
+  color: #e5e7eb !important;
+}
+/* =========================================
+   MODO LEITURA - PERFIL (override global)
+========================================= */
+body.modo-leitura .page-perfil {
+  color: #e5e7eb;
+}
+
+body.modo-leitura .page-perfil .card {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+body.modo-leitura .page-perfil .perfil-titulo,
+body.modo-leitura .page-perfil .subtitulo-secao,
+body.modo-leitura .page-perfil .nome-botoes h2 {
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-perfil .perfil-sub,
+body.modo-leitura .page-perfil .linha-assinatura .label,
+body.modo-leitura .page-perfil .texto-ajuda {
+  color: #a1a1aa !important;
+}
+
+body.modo-leitura .page-perfil .linha-assinatura .valor,
+body.modo-leitura .page-perfil .linha-assinatura p {
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-perfil .separador {
+  background: rgba(255,255,255,0.12) !important;
+}
+
+/* inputs do perfil */
+body.modo-leitura .page-perfil .campo label {
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .page-perfil .campo input {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-perfil .campo input:focus {
+  border-color: rgba(84,186,103,0.65) !important;
+  box-shadow: 0 0 0 2px rgba(84,186,103,0.20) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* mensagens */
+body.modo-leitura .page-perfil .msg-erro {
+  background: rgba(185, 28, 28, 0.22) !important;
+  color: #fecaca !important;
+}
+
+body.modo-leitura .page-perfil .msg-sucesso {
+  background: rgba(22, 101, 52, 0.22) !important;
+  color: #bbf7d0 !important;
+}
+
+/* botão secundário */
+body.modo-leitura .page-perfil .btn.secundario {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+/* =========================================
+   MODO LEITURA - MATÉRIAS (override global)
+========================================= */
+body.modo-leitura .page-materias {
+  color: #e5e7eb;
+}
+
+/* Header */
+body.modo-leitura .page-materias-header {
+  border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .page-title {
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-subtitle {
+  color: #a1a1aa !important;
+}
+
+/* Steps */
+body.modo-leitura .step-item {
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.06) !important;
+}
+
+body.modo-leitura .step-numero {
+  background: rgba(255,255,255,0.16) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .step-texto {
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .step-seta {
+  color: #64748b !important;
+}
+
+body.modo-leitura .step-item.ativo {
+  border-color: rgba(84,186,103,0.55) !important;
+  background: rgba(84,186,103,0.12) !important;
+  box-shadow: none !important;
+}
+
+body.modo-leitura .step-item.ativo .step-numero {
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+/* Erro global */
+body.modo-leitura .mensagem-erro {
+  background: rgba(185, 28, 28, 0.22) !important;
+  color: #fecaca !important;
+}
+
+/* Cards */
+body.modo-leitura .page-materias .card {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+body.modo-leitura .page-materias .card-title {
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-materias .card-subtitle {
+  color: #a1a1aa !important;
+}
+
+/* Pills */
+body.modo-leitura .pill-materia,
+body.modo-leitura .pill-topico {
+  background: rgba(84,186,103,0.14) !important;
+  box-shadow: 0 0 0 1px rgba(84,186,103,0.45) !important;
+  color: #86efac !important;
+}
+
+/* Labels / hints */
+body.modo-leitura .page-materias .label {
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .estado-vazio,
+body.modo-leitura .estado-vazio-topicos,
+body.modo-leitura .novo-topico-hint,
+body.modo-leitura .loading {
+  color: #a1a1aa !important;
+}
+
+/* Inputs */
+body.modo-leitura .page-materias .input-text {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-materias .input-text:focus {
+  border-color: rgba(84,186,103,0.65) !important;
+  box-shadow: 0 0 0 2px rgba(84,186,103,0.20) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+body.modo-leitura .page-materias .input-text:disabled {
+  background: rgba(255,255,255,0.04) !important;
+  color: #94a3b8 !important;
+}
+
+/* Erros de validação */
+body.modo-leitura .page-materias .erro {
+  color: #fca5a5 !important;
+}
+
+/* Botões */
+body.modo-leitura .page-materias .btn.secundario {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-materias .btn.secundario:hover:not(:disabled) {
+  background: rgba(255,255,255,0.10) !important;
+}
+
+/* Lista de matérias */
+body.modo-leitura .item-materia:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
+
+body.modo-leitura .item-materia.ativa {
+  background: rgba(84,186,103,0.12) !important;
+  border-color: rgba(84,186,103,0.35) !important;
+  box-shadow: 0 0 0 1px rgba(84,186,103,0.18) !important;
+}
+
+body.modo-leitura .materia-nome {
+  color: #e5e7eb !important;
+}
+
+/* Ícones (se forem imagens, mantém; se forem font-icons, melhora contraste) */
+body.modo-leitura .btn-icone {
+  filter: brightness(1.05);
+}
+
+/* Card da árvore */
+body.modo-leitura .arvore-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* Linha do tópico */
+body.modo-leitura .topico-linha:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
+
+body.modo-leitura .topico-linha.selecionado {
+  background: rgba(84,186,103,0.12) !important;
+  border-color: rgba(84,186,103,0.35) !important;
+  box-shadow: 0 0 0 1px rgba(84,186,103,0.18) !important;
+}
+
+body.modo-leitura .topico-descricao {
+  color: #e5e7eb !important;
+}
+
+/* badges de revisão: mantêm cores, mas dá um “pop” no dark */
+body.modo-leitura .badge-sem-revisao { background: rgba(255,255,255,0.18) !important; }
+body.modo-leitura .topico-linha.selecionado .badge-nivel {
+  box-shadow: 0 0 0 3px rgba(84,186,103,0.18) !important;
+}
+/* =========================================
+   MODO LEITURA - EDITAIS (override global)
+========================================= */
+body.modo-leitura .page-edital {
+  color: #e5e7eb;
+}
+
+/* Separador */
+body.modo-leitura .page-edital .separador {
+  background: rgba(255,255,255,0.12) !important;
+}
+
+/* Cards (genéricos) */
+body.modo-leitura .page-edital .card {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+/* Header do formulário */
+body.modo-leitura .page-edital .titulo-form {
+  color: #e5e7eb !important;
+}
+body.modo-leitura .page-edital .form-sub {
+  color: #a1a1aa !important;
+}
+
+/* Mensagens */
+body.modo-leitura .page-edital .msg-erro {
+  background: rgba(185, 28, 28, 0.22) !important;
+  color: #fecaca !important;
+}
+body.modo-leitura .page-edital .msg-sucesso {
+  background: rgba(22, 163, 74, 0.18) !important;
+  color: #bbf7d0 !important;
+}
+
+/* Labels */
+body.modo-leitura .page-edital .form-group label,
+body.modo-leitura .page-edital .campo label {
+  color: #cbd5e1 !important;
+}
+
+/* Inputs */
+body.modo-leitura .page-edital .input-text {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-edital .input-text:focus {
+  border-color: rgba(84,186,103,0.65) !important;
+  box-shadow: 0 0 0 2px rgba(84,186,103,0.20) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* Hint / erro */
+body.modo-leitura .page-edital .hint {
+  color: #94a3b8 !important;
+}
+body.modo-leitura .page-edital .erro {
+  color: #fca5a5 !important;
+}
+
+/* Botões */
+body.modo-leitura .page-edital .btn.secundario {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+body.modo-leitura .page-edital .btn.secundario:hover:not(:disabled) {
+  background: rgba(255,255,255,0.10) !important;
+}
+body.modo-leitura .page-edital .btn.texto {
+  color: #86efac !important;
+}
+
+/* Chips matérias */
+body.modo-leitura .page-edital .chips-materias-wrapper {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .page-edital .chip-materia {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-edital .chip-materia:hover {
+  background: rgba(84,186,103,0.12) !important;
+  border-color: rgba(84,186,103,0.35) !important;
+}
+
+body.modo-leitura .page-edital .chip-materia-ativa {
+  background: #16a34a !important;
+  border-color: #15803d !important;
+  color: #ffffff !important;
+}
+
+/* Lista header */
+body.modo-leitura .page-edital .titulo-bloco {
+  color: #e5e7eb !important;
+}
+body.modo-leitura .page-edital .lista-legenda,
+body.modo-leitura .page-edital .estado,
+body.modo-leitura .page-edital .estado-vazio,
+body.modo-leitura .page-edital .estado-vazio-menor,
+body.modo-leitura .page-edital .estado-carregando,
+body.modo-leitura .page-edital .estado-carregando-menor {
+  color: #a1a1aa !important;
+}
+
+/* Card de edital (gradiente vira dark) */
+body.modo-leitura .page-edital .edital-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .page-edital .edital-card-header:hover {
+  background: rgba(255,255,255,0.06) !important;
+}
+
+body.modo-leitura .page-edital .edital-card-header.aberto {
+  background: rgba(84,186,103,0.10) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+body.modo-leitura .page-edital .edital-nome {
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-edital .edital-desc {
+  color: #a1a1aa !important;
+}
+
+/* Meta */
+body.modo-leitura .page-edital .meta-chip {
+  color: #cbd5e1 !important;
+}
+body.modo-leitura .page-edital .meta-label {
+  color: #94a3b8 !important;
+}
+body.modo-leitura .page-edital .pill-progresso,
+body.modo-leitura .page-edital .pill-dominio {
+  background: rgba(84,186,103,0.14) !important;
+  color: #86efac !important;
+}
+
+/* Botões ícone */
+body.modo-leitura .page-edital .btn-icone:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
+body.modo-leitura .page-edital .btn-icone-danger:hover {
+  background: rgba(248, 113, 113, 0.18) !important;
+}
+
+/* Chevron */
+body.modo-leitura .page-edital .chevron {
+  color: #94a3b8 !important;
+}
+
+/* Matérias dentro do edital */
+body.modo-leitura .page-edital .materia-header {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .page-edital .materia-header:hover {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(84,186,103,0.28) !important;
+}
+
+body.modo-leitura .page-edital .materia-indice {
+  color: #94a3b8 !important;
+}
+
+body.modo-leitura .page-edital .materia-nome {
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .page-edital .materia-legenda {
+  color: #a1a1aa !important;
+}
+
+/* Wrapper tópicos */
+body.modo-leitura .page-edital .materia-topicos-wrapper {
+  border-left: 2px solid rgba(255,255,255,0.12) !important;
+}
+
+/* Tópicos */
+body.modo-leitura .page-edital .topico-bullet {
+  background: #16a34a !important;
+}
+
+body.modo-leitura .page-edital .topico-descricao {
+  color: #cbd5e1 !important;
+}
+/* =========================================
+   MODO LEITURA - SALA DE ESTUDO (override)
+   Cole no FINAL do styles.css
+========================================= */
+body.modo-leitura .sala-container{
+  background: radial-gradient(circle at top, #0b1220 0, #0a0f1b 55%, #070b14 100%) !important;
+  color: #e5e7eb;
+}
+
+/* Card base */
+body.modo-leitura .sala-container .card{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+/* Títulos / textos */
+body.modo-leitura .sala-container .sala-titulo,
+body.modo-leitura .sala-container .sons-foco-label,
+body.modo-leitura .sala-container .coluna-header h2,
+body.modo-leitura .sala-container .titulo-section{
+  color: #e5e7eb !important;
+}
+body.modo-leitura .sala-container .sala-subtitulo,
+body.modo-leitura .sala-container .sons-foco-info,
+body.modo-leitura .sala-container .sons-foco-hint,
+body.modo-leitura .sala-container .hint,
+body.modo-leitura .sala-container .timer-label,
+body.modo-leitura .sala-container .muted{
+  color: #a1a1aa !important;
+}
+body.modo-leitura .sala-container .titulo-section span,
+body.modo-leitura .sala-container .timer-fase-inline,
+body.modo-leitura .sala-container .salvo-msg{
+  color: #86efac !important;
+}
+
+/* Abas (Estudar/Revisar) */
+body.modo-leitura .sala-container .botoes{
+  background: rgba(255,255,255,0.08) !important;
+}
+body.modo-leitura .sala-container .aba{
+  color: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container .aba.ativa{
+  background: #16a34a !important;
+  color: #fff !important;
+  box-shadow: 0 10px 26px rgba(22,163,74,0.25) !important;
+}
+
+/* Sons de foco */
+body.modo-leitura .sala-container .sons-foco-header{
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+}
+body.modo-leitura .sala-container .som-icone{
+  background: rgba(255,255,255,0.06) !important;
+  color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+body.modo-leitura .sala-container .som-icone:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+body.modo-leitura .sala-container .som-icone.ativo{
+  background: #16a34a !important;
+  color: #fff !important;
+  box-shadow: 0 14px 30px rgba(22,163,74,0.22) !important;
+}
+body.modo-leitura .sala-container .som-icone-nome{
+  color: #e5e7eb !important;
+}
+body.modo-leitura .sala-container .som-icone.ativo .som-icone-nome{
+  color: #ffffff !important;
+}
+body.modo-leitura .sala-container .som-icone-badge{
+  box-shadow: 0 0 0 1px rgba(15,23,42,0.85) !important;
+}
+
+/* Corpo / colunas */
+body.modo-leitura .sala-container .card.sala-body{
+  background: rgba(255,255,255,0.06) !important;
+}
+body.modo-leitura .sala-container .coluna-esquerda{
+  border-right: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* Lista de tópicos */
+body.modo-leitura .sala-container .item-topico:hover{
+  background: rgba(255,255,255,0.08) !important;
+}
+body.modo-leitura .sala-container .item-topico.selecionado{
+  background: rgba(84,186,103,0.14) !important;
+  box-shadow: 0 0 0 1px rgba(84,186,103,0.45) inset !important;
+}
+body.modo-leitura .sala-container .descricao-topico{
+  color: #e5e7eb !important;
+}
+
+/* Blocos internos (timer/anotações) */
+body.modo-leitura .sala-container .bloco{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+/* Modos do timer */
+body.modo-leitura .sala-container .timer-modos{
+  background: rgba(255,255,255,0.08) !important;
+}
+body.modo-leitura .sala-container .btn-modo-timer{
+  color: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container .btn-modo-timer:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+body.modo-leitura .sala-container .btn-modo-timer.ativo{
+  background: #16a34a !important;
+  color: #fff !important;
+}
+
+/* Botões genéricos */
+body.modo-leitura .sala-container .btn.secundario{
+  background: rgba(255,255,255,0.08) !important;
+  color: #e5e7eb !important;
+}
+body.modo-leitura .sala-container .btn.fantasma{
+  border-color: rgba(255,255,255,0.22) !important;
+  color: #cbd5e1 !important;
+}
+
+/* ==========================
+   PRIME EDITOR (p-editor)
+========================== */
+body.modo-leitura :root { color-scheme: dark; }
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-container{
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.04) !important;
+}
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar{
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+body.modo-leitura .sala-container ::ng-deep .p-editor-content{
+  background: rgba(2,6,23,0.55) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+body.modo-leitura .sala-container ::ng-deep .p-editor-content .ql-editor{
+  color: #e5e7eb !important;
+}
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar .ql-stroke{
+  stroke: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar .ql-fill{
+  fill: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar button:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+
+/* Overlay do editor (quando bloqueia) */
+body.modo-leitura .sala-container .editor-overlay{
+  background: rgba(2,6,23,0.72) !important;
+}
+body.modo-leitura .sala-container .editor-aviso{
+  background: rgba(254,249,195,0.12) !important;
+  border-color: rgba(253,230,138,0.25) !important;
+  color: #fde68a !important;
+}
+
+/* Anotações renderizadas */
+body.modo-leitura .sala-container .anotacoes-renderizadas{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #e5e7eb !important;
+}
+
+/* ==========================
+   FLASHCARD MODAL (criação)
+========================== */
+body.modo-leitura .sala-container .flashcard-overlay{
+  background: rgba(2,6,23,0.72) !important;
+}
+body.modo-leitura .sala-container .flashcard-modal{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+body.modo-leitura .sala-container .flashcard-titulo{
+  color: #e5e7eb !important;
+}
+body.modo-leitura .sala-container .flashcard-subtitulo{
+  color: #a1a1aa !important;
+}
+body.modo-leitura .sala-container .flashcard-fechar{
+  color: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container .flashcard-fechar:hover{
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* Contexto do modal */
+body.modo-leitura .sala-container .flashcard-contexto{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+body.modo-leitura .sala-container .contexto-label{
+  color: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container .contexto-valor{
+  color: #e5e7eb !important;
+}
+
+/* Inputs do modal */
+body.modo-leitura .sala-container .flashcard-label{
+  color: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container .flashcard-textarea,
+body.modo-leitura .sala-container .flashcard-input,
+body.modo-leitura .sala-container .flashcard-select{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+body.modo-leitura .sala-container .flashcard-textarea:focus,
+body.modo-leitura .sala-container .flashcard-input:focus,
+body.modo-leitura .sala-container .flashcard-select:focus{
+  outline: none !important;
+  border-color: rgba(84,186,103,0.60) !important;
+  box-shadow: 0 0 0 2px rgba(84,186,103,0.18) !important;
+}
+body.modo-leitura .sala-container .flashcard-dica,
+body.modo-leitura .sala-container .flashcard-feedback-review{
+  color: #94a3b8 !important;
+}
+
+/* Loading / erro */
+body.modo-leitura .sala-container .sala-loading{
+  color: #a1a1aa !important;
+}
+body.modo-leitura .sala-container .mensagem-erro{
+  color: #fca5a5 !important;
+}
+/* =========================================
+   MODO LEITURA - SALA DE ESTUDO (completo)
+   Cole no FINAL do styles.css
+========================================= */
+
+/* Base */
+body.modo-leitura .sala-container{
+  background: radial-gradient(circle at top, #0b1220 0, #0a0f1b 55%, #070b14 100%) !important;
+  color: #e5e7eb;
+}
+
+/* Cards */
+body.modo-leitura .sala-container .card{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+/* Header divisores */
+body.modo-leitura .sala-container .sons-foco-header{
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* Títulos / textos */
+body.modo-leitura .sala-container .sala-titulo,
+body.modo-leitura .sala-container .sons-foco-label,
+body.modo-leitura .sala-container .coluna-header h2,
+body.modo-leitura .sala-container .titulo-section,
+body.modo-leitura .sala-container .subtitulo-section{
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .sala-container .sala-subtitulo,
+body.modo-leitura .sala-container .sons-foco-hint,
+body.modo-leitura .sala-container .sons-foco-info,
+body.modo-leitura .sala-container .hint,
+body.modo-leitura .sala-container .muted,
+body.modo-leitura .sala-container .timer-label,
+body.modo-leitura .sala-container .pequeno{
+  color: #a1a1aa !important;
+}
+
+body.modo-leitura .sala-container .titulo-section span,
+body.modo-leitura .sala-container .timer-fase-inline,
+body.modo-leitura .sala-container .salvo-msg{
+  color: #86efac !important;
+}
+
+/* Coluna esquerda divisor */
+body.modo-leitura .sala-container .coluna-esquerda{
+  border-right: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* Abas (Estudar/Revisar) */
+body.modo-leitura .sala-container .botoes{
+  background: rgba(255,255,255,0.08) !important;
+}
+
+body.modo-leitura .sala-container .aba{
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .aba.ativa{
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(22,163,74,0.25) !important;
+}
+
+/* Sons de foco */
+body.modo-leitura .sala-container .som-icone{
+  background: rgba(255,255,255,0.06) !important;
+  color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+body.modo-leitura .sala-container .som-icone:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+
+body.modo-leitura .sala-container .som-icone.ativo{
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 30px rgba(22,163,74,0.22) !important;
+}
+
+body.modo-leitura .sala-container .som-icone-nome{
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .sala-container .som-icone.ativo .som-icone-nome{
+  color: #ffffff !important;
+}
+
+body.modo-leitura .sala-container .som-icone-badge{
+  box-shadow: 0 0 0 1px rgba(2,6,23,0.85) !important;
+}
+
+/* Lista de tópicos */
+body.modo-leitura .sala-container .item-topico:hover{
+  background: rgba(255,255,255,0.08) !important;
+}
+
+body.modo-leitura .sala-container .item-topico.selecionado{
+  background: rgba(84,186,103,0.14) !important;
+  box-shadow: 0 0 0 1px rgba(84,186,103,0.45) inset !important;
+}
+
+body.modo-leitura .sala-container .descricao-topico{
+  color: #e5e7eb !important;
+}
+
+/* Blocos internos */
+body.modo-leitura .sala-container .bloco{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+/* Botões */
+body.modo-leitura .sala-container .btn.secundario{
+  background: rgba(255,255,255,0.08) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .sala-container .btn.secundario:hover{
+  background: rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .sala-container .btn.fantasma{
+  border-color: rgba(255,255,255,0.22) !important;
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .btn.primario{
+  box-shadow: 0 10px 26px rgba(22,163,74,0.22) !important;
+}
+
+/* Modos do timer */
+body.modo-leitura .sala-container .timer-modos{
+  background: rgba(255,255,255,0.08) !important;
+}
+
+body.modo-leitura .sala-container .btn-modo-timer{
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .btn-modo-timer:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+
+body.modo-leitura .sala-container .btn-modo-timer.ativo{
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+/* Toggle revisão (Anotações / Flashcards) */
+body.modo-leitura .sala-container .toggle-revisao{
+  background: rgba(255,255,255,0.08) !important;
+}
+
+body.modo-leitura .sala-container .toggle-btn{
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .toggle-btn.ativo{
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+/* Alerta revisão */
+body.modo-leitura .sala-container .alerta-revisao{
+  background: rgba(84,186,103,0.12) !important;
+  border-color: rgba(84,186,103,0.28) !important;
+  color: #bbf7d0 !important;
+}
+
+/* Placeholders (sem anotações / carregando / vazio etc.) */
+body.modo-leitura .sala-container .painel-revisao-placeholder{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 12px;
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .painel-revisao-placeholder p{
+  color: #cbd5e1 !important;
+}
+
+/* Botões de avaliação */
+body.modo-leitura .sala-container .botoes-avaliacao .btn.secundario{
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #e5e7eb !important;
+}
+
+/* ==========================
+   PRIME EDITOR (p-editor)
+========================== */
+body.modo-leitura{ color-scheme: dark; }
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-container{
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.04) !important;
+}
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar{
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-content{
+  background: rgba(2,6,23,0.55) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-content .ql-editor{
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar .ql-stroke{
+  stroke: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar .ql-fill{
+  fill: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container ::ng-deep .p-editor-toolbar button:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+
+/* Overlay do editor (bloqueio) */
+body.modo-leitura .sala-container .editor-overlay{
+  background: rgba(2,6,23,0.72) !important;
+}
+
+body.modo-leitura .sala-container .editor-aviso{
+  background: rgba(254,249,195,0.12) !important;
+  border: 1px solid rgba(253,230,138,0.22) !important;
+  color: #fde68a !important;
+}
+
+body.modo-leitura .sala-container .editor-aviso-texto strong{
+  color: #fde68a !important;
+}
+
+/* Anotações renderizadas */
+body.modo-leitura .sala-container .anotacoes-renderizadas{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #e5e7eb !important;
+}
+
+/* Links / códigos dentro do HTML das anotações */
+body.modo-leitura .sala-container .anotacoes-renderizadas a{
+  color: #86efac !important;
+}
+body.modo-leitura .sala-container .anotacoes-renderizadas code,
+body.modo-leitura .sala-container .anotacoes-renderizadas pre{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #e5e7eb !important;
+}
+
+/* ==========================
+   MODAL FLASHCARD
+========================== */
+body.modo-leitura .sala-container .flashcard-overlay{
+  background: rgba(2,6,23,0.72) !important;
+}
+
+body.modo-leitura .sala-container .flashcard-modal{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+body.modo-leitura .sala-container .flashcard-titulo{
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .sala-container .flashcard-subtitulo{
+  color: #a1a1aa !important;
+}
+
+body.modo-leitura .sala-container .flashcard-fechar{
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .flashcard-fechar:hover{
+  background: rgba(255,255,255,0.08) !important;
+  color: #e5e7eb !important;
+}
+
+/* Contexto (matéria/tópico) */
+body.modo-leitura .sala-container .flashcard-contexto{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+body.modo-leitura .sala-container .contexto-label{
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .contexto-valor{
+  color: #e5e7eb !important;
+}
+
+/* Campos do modal */
+body.modo-leitura .sala-container .flashcard-label{
+  color: #cbd5e1 !important;
+}
+
+body.modo-leitura .sala-container .flashcard-textarea,
+body.modo-leitura .sala-container .flashcard-input,
+body.modo-leitura .sala-container .flashcard-select{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .sala-container .flashcard-textarea::placeholder,
+body.modo-leitura .sala-container .flashcard-input::placeholder{
+  color: rgba(203,213,225,0.60) !important;
+}
+
+body.modo-leitura .sala-container .flashcard-textarea:focus,
+body.modo-leitura .sala-container .flashcard-input:focus,
+body.modo-leitura .sala-container .flashcard-select:focus{
+  outline: none !important;
+  border-color: rgba(84,186,103,0.60) !important;
+  box-shadow: 0 0 0 2px rgba(84,186,103,0.18) !important;
+}
+
+body.modo-leitura .sala-container .flashcard-dica,
+body.modo-leitura .sala-container .flashcard-feedback-review{
+  color: #94a3b8 !important;
+}
+
+body.modo-leitura .sala-container .flashcard-mensagem-sucesso{
+  color: #86efac !important;
+}
+
+/* ==========================
+   FLASHCARD REVIEW (já é dark, mas ajusta detalhes)
+========================== */
+body.modo-leitura .sala-container .flashcard-card-review{
+  box-shadow: none !important;
+}
+
+body.modo-leitura .sala-container .flashcard-card-review:hover{
+  box-shadow: 0 18px 35px rgba(0,0,0,0.45) !important;
+}
+
+/* Loading / erro */
+body.modo-leitura .sala-container .sala-loading{
+  color: #a1a1aa !important;
+}
+
+body.modo-leitura .sala-container .mensagem-erro{
+  color: #fca5a5 !important;
+}
+/* =====================================================
+   QUILL (p-editor) - DARK OVERRIDE p/ MODO LEITURA
+   (cole no FINAL do styles.css)
+===================================================== */
+
+body.modo-leitura .sala-container .editor-wrapper .ql-toolbar.ql-snow,
+body.modo-leitura .sala-container .editor-wrapper .ql-container.ql-snow{
+  border-color: rgba(255,255,255,0.14) !important;
+}
+
+/* Toolbar */
+body.modo-leitura .sala-container .editor-wrapper .ql-toolbar.ql-snow{
+  background: rgba(255,255,255,0.06) !important;
+}
+
+/* Área do editor (onde está branco na tua print) */
+body.modo-leitura .sala-container .editor-wrapper .ql-container.ql-snow{
+  background: rgba(2,6,23,0.55) !important;
+}
+
+body.modo-leitura .sala-container .editor-wrapper .ql-editor{
+  color: #e5e7eb !important;
+}
+
+body.modo-leitura .sala-container .editor-wrapper .ql-editor.ql-blank::before{
+  color: rgba(203,213,225,0.55) !important; /* placeholder */
+}
+
+/* Ícones (strokes/fill) */
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-stroke{
+  stroke: #cbd5e1 !important;
+}
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-fill,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-stroke.ql-fill{
+  fill: #cbd5e1 !important;
+}
+
+/* Texto dos pickers (Normal, Sans Serif, etc) */
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-picker{
+  color: #e5e7eb !important;
+}
+
+/* Hover/ativo (Quill usa #06c por padrão) */
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar button:hover,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar button:hover,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar button.ql-active,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar button.ql-active,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar .ql-picker-label:hover,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar .ql-picker-label:hover,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar .ql-picker-item:hover,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar .ql-picker-item:hover,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar .ql-picker-item.ql-selected{
+  color: #86efac !important;
+}
+
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar button:hover .ql-stroke,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar button:hover .ql-stroke,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar button.ql-active .ql-stroke{
+  stroke: #86efac !important;
+}
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar button:hover .ql-fill,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar button:hover .ql-fill,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow.ql-toolbar button.ql-active .ql-fill,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-toolbar button.ql-active .ql-fill{
+  fill: #86efac !important;
+}
+
+/* Dropdown do picker (options) */
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-picker-options{
+  background: #0b1220 !important;
+  border-color: rgba(255,255,255,0.14) !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.45) !important;
+}
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-picker-item{
+  color: #e5e7eb !important;
+}
+
+/* Código / pre */
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-editor code,
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-editor pre{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #e5e7eb !important;
+}
+
+/* Tooltip de link/imagem/video */
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-tooltip{
+  background: #0b1220 !important;
+  border-color: rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-tooltip a{
+  color: #86efac !important;
+}
+body.modo-leitura .sala-container .editor-wrapper .ql-snow .ql-tooltip input[type="text"]{
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+/* ====== DARK p-editor (PrimeNG + Quill) ====== */
+
+/* 1) fundo do content (pai do quill) */
+.sala-container .p-editor-container .p-editor-content {
+  background: rgba(2, 6, 23, 0.55) !important;
+}
+
+/* 2) fundo do container do quill */
+.sala-container .p-editor-container .p-editor-content .ql-container {
+  background: rgba(2, 6, 23, 0.55) !important;
+}
+
+/* 3) fundo do editor em si */
+.sala-container .p-editor-container .p-editor-content .ql-editor {
+  background: rgba(2, 6, 23, 0.55) !important;
+  color: #e5e7eb !important;
+}
+
+/* placeholder do quill no dark */
+.sala-container .p-editor-container .p-editor-content .ql-editor.ql-blank::before {
+  color: rgba(203, 213, 225, 0.55) !important;
+}
+
+
+/* Responsivo: divisor da coluna esquerda em telas menores */
+@media (max-width: 1024px){
+  body.modo-leitura .sala-container .coluna-esquerda{
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+  }
+}
+
+/* Responsivo: divisor da coluna esquerda em telas menores */
+@media (max-width: 1024px){
+  body.modo-leitura .sala-container .coluna-esquerda{
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVO
+========================================================= */
+@media (max-width: 768px) {
+  html,
+  body {
+    overflow: auto;
+    color: #333;
+  }
+
+  .field label {
+    font-size: small;
+  }
+
+  .field input,
   .field textarea,
- 
-  .field p-inputtext {
-      width: 100%;
-      padding: 0.4rem;
-      font-size: 0.8rem;
-      font-weight: 500;
-      border-radius: 2px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    
-        color: #063a77;
+  .field .p-inputtext {
+    padding: 0.4rem;
+    font-size: 0.8rem;
+    border-radius: 2px;
+
+    color: #063a77;
     background: #41424211;
-    }
+  }
 
-    .select-estado{
-  
-      padding: 0.5rem;
-      font-size: 0.5rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
+  .field select {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
 
-       .field select{
-      padding: 0.5rem;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
+  .select-estado {
+    padding: 0.5rem;
+    font-size: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
 
-    .p-dropdown{
- height: 1.8rem;
-  font-size: 0.85rem;
-  align-items: center;
+  .p-dropdown {
+    height: 1.8rem;
+    font-size: 0.85rem;
+  }
 }
-
-}
-
