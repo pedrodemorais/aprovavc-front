@@ -150,7 +150,7 @@ html {
 .home-page .hero {
   background: rgba(235, 232, 232, 0.932);
   color: #0f172a;
-  padding-bottom: 40px;
+ 
 }
 
 .home-page .hero-content {
@@ -513,6 +513,10 @@ html {
 /* =========================
    RESPONSIVO
 ========================= */
+.home-page {
+  overflow-x: hidden; /* remove o scroll horizontal e o "espaço" do fim */
+}
+
 @media (max-width: 900px) {
   .home-page .menu-topo {
     padding-inline: 14px;

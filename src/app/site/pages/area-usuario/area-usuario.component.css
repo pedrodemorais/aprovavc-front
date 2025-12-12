@@ -24,6 +24,56 @@ body {
   width: 100%;
 }
 
+/* =========================
+   FIX: remove scroll fantasma e deixa rolar só quando precisar
+========================= */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* ✅ não deixa a página criar scroll à toa */
+}
+
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* ✅ trava scroll no host também */
+}
+
+/* A dashboard ocupa a viewport e não “vaza” */
+.dashboard {
+  height: 100dvh;     /* ✅ em vez de min-height */
+  min-height: 0;      /* ✅ MUITO importante em flex */
+  overflow: hidden;   /* ✅ evita scroll no wrapper */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container precisa permitir “encolher” dentro do flex */
+.container {
+  flex: 1 1 auto;
+  min-height: 0;      /* ✅ evita overflow vertical fantasma */
+  overflow: hidden;   /* ✅ quem rola é o .content */
+}
+
+/* Sidebar pode rolar quando for maior que a tela */
+.sidebar {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ✅ Só o conteúdo rola quando precisar */
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;      /* ✅ evita scroll fantasma */
+  overflow-y: auto;   /* ✅ aparece só se precisar */
+  overflow-x: hidden;
+}
+
+
 /* =======================================
    DASHBOARD (MOLDURA GERAL) - LIGHT
 ======================================= */

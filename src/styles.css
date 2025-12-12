@@ -378,3 +378,7 @@ body.theme-dark .p-panelmenu .p-panelmenu-header:not(.p-disabled) .p-panelmenu-h
   box-shadow: none !important;
   outline: none !important;
 }
+html, body {
+  margin: 0;
+  overflow-x: hidden;
+}
