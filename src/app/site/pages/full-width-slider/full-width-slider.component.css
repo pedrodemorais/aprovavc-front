@@ -2,20 +2,34 @@
 .full-width-image {
   position: relative;
   width: 100%;
-  overflow: hidden;      /* corta qualquer sobra da imagem */
+  overflow: hidden;       /* corta qualquer sobra da imagem */
   display: block;
-  
+  background: #0b1220;    /* evita “flash branco” durante o fade */
 }
 
 /* IMAGEM DO BANNER */
 .full-width-image img {
   display: block;
   width: 100%;
-  height: auto;  
-  max-height: auto;        /* mantém proporção original */
+  height: auto;
+  max-height: auto;       /* mantém o seu original (mesmo sendo redundante) */
 }
 
-/* SLIDE ATIVO (CASO TENHA MAIS DE UMA IMAGEM) */
+/* SLIDE */
+.full-width-image .slide {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 450ms ease, transform 1200ms ease;
+  will-change: opacity, transform;
+}
+
+/* quando estiver trocando */
+.full-width-image .slide.fade-out {
+  opacity: 0;
+  transform: scale(1.02);
+}
+
+/* SLIDE ATIVO (mantém o seu padrão) */
 .full-width-image .slide.active {
   opacity: 1;
   z-index: 1;
@@ -38,8 +52,8 @@
 /* CONTEÚDO (TEXTO / BOTÃO) POR CIMA DO BANNER */
 .hero-content {
   position: absolute;
-  top: 50%;              /* centro vertical */
-  left: 72%;             /* puxa um pouco pro lado direito */
+  top: 50%;
+  left: 72%;
   transform: translate(-50%, -50%);
   z-index: 3;
 
@@ -50,6 +64,16 @@
   max-width: 600px;
   color: #ffffff;
   font-family: "Inter", sans-serif;
+
+  opacity: 1;
+  transition: opacity 420ms ease, transform 420ms ease;
+  will-change: opacity, transform;
+}
+
+/* fade do texto junto */
+.hero-content.fade-out {
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 8px));
 }
 
 /* TÍTULO */
@@ -59,7 +83,7 @@
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.5px;
-   color: #333333;
+  color: #333333;
 }
 
 /* SUBTÍTULO */
@@ -101,7 +125,6 @@
     align-items: flex-end;
   }
 
-  /* gradient mais forte embaixo pra ler o texto no mobile */
   .full-width-image::before {
     background: linear-gradient(
       to top,
@@ -119,6 +142,10 @@
     max-width: 90%;
     text-align: center;
     gap: 10px;
+  }
+
+  .hero-content.fade-out {
+    transform: translateX(-50%) translateY(8px);
   }
 
   .hero-title {

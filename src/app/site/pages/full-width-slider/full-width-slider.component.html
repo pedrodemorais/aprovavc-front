@@ -1,22 +1,24 @@
 <div class="full-width-image">
-  <!-- AQUI É ONDE A MAGIA ACONTECE -->
   <img
     [src]="slides[currentIndex].image"
     class="slide active"
+    [class.fade-out]="isTransitioning"
     alt="Slide AprovaVC"
   />
 
-  <div class="hero-content">
-    <h1 class="hero-title">
-      Clareza no plano.<br />
-      Constânica no estudo.<br />
-      Resultado na aprovação.
-    </h1>
+  <div class="hero-content" [class.fade-out]="isTransitioning">
+    <h1 class="hero-title" [innerHTML]="slides[currentIndex].titleHtml"></h1>
 
     <p class="hero-subtitle">
-    O Aprovavc organiza sua rotina, acompanha seu progresso e transforma esforço em aprovação real.
+      {{ slides[currentIndex].description }}
     </p>
 
-    <button routerLink="/configurador" class="hero-btn">Começar agora</button>
+    <button
+      [routerLink]="slides[currentIndex].link"
+      class="hero-btn"
+      type="button"
+    >
+      {{ slides[currentIndex].buttonText || 'Começar agora' }}
+    </button>
   </div>
 </div>
