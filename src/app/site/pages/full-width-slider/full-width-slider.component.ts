@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 
 type Slide = {
   image: string;
-  titleHtml: string;     // <- permite <br>
+  titleHtml: string;     // permite <br/>
   description: string;
   link: string;
   buttonText?: string;
@@ -32,32 +32,41 @@ export class FullWidthSliderComponent implements OnInit, OnDestroy {
     }
   ];
 
-  currentIndex: number = 0;
+  currentIndex = 0;
 
-  isTransitioning = false;
+  isTextAnimating = false;
 
   private intervalId: any;
   private readonly slideIntervalMs = 8000;
-  private readonly transitionMs = 450;
 
-  ngOnInit() {
+  // sincronize com o CSS (opacity transition)
+  private readonly fadeMs = 900;
+  private readonly textSwapDelayMs = 220;
+
+  ngOnInit(): void {
+    if (this.slides.length <= 1) return;
+
     this.intervalId = setInterval(() => {
       this.nextSlide();
     }, this.slideIntervalMs);
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     if (this.intervalId) clearInterval(this.intervalId);
   }
 
-  nextSlide() {
-    if (this.isTransitioning) return;
+  nextSlide(): void {
+    if (this.slides.length <= 1) return;
 
-    this.isTransitioning = true;
+    // anima o texto (some -> troca -> aparece)
+    this.isTextAnimating = true;
 
     setTimeout(() => {
       this.currentIndex = (this.currentIndex + 1) % this.slides.length;
-      this.isTransitioning = false;
-    }, this.transitionMs);
+    }, this.textSwapDelayMs);
+
+    setTimeout(() => {
+      this.isTextAnimating = false;
+    }, this.fadeMs);
   }
 }

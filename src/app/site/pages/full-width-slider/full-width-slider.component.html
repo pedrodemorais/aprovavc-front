@@ -1,12 +1,16 @@
 <div class="full-width-image">
+  <!-- Slides empilhados (crossfade real) -->
   <img
-    [src]="slides[currentIndex].image"
-    class="slide active"
-    [class.fade-out]="isTransitioning"
-    alt="Slide AprovaVC"
+    *ngFor="let s of slides; let i = index"
+    [src]="s.image"
+    class="slide"
+    [class.active]="i === currentIndex"
+    [attr.aria-hidden]="i !== currentIndex"
+    alt="Slide"
   />
 
-  <div class="hero-content" [class.fade-out]="isTransitioning">
+  <!-- Conteúdo -->
+  <div class="hero-content" [class.content-fade]="isTextAnimating">
     <h1 class="hero-title" [innerHTML]="slides[currentIndex].titleHtml"></h1>
 
     <p class="hero-subtitle">
@@ -14,9 +18,9 @@
     </p>
 
     <button
-      [routerLink]="slides[currentIndex].link"
-      class="hero-btn"
       type="button"
+      class="hero-btn"
+      [routerLink]="slides[currentIndex].link"
     >
       {{ slides[currentIndex].buttonText || 'Começar agora' }}
     </button>

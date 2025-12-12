@@ -1,39 +1,55 @@
 /* CONTAINER DO BANNER */
 .full-width-image {
   position: relative;
-  width: 100%;
-  overflow: hidden;       /* corta qualquer sobra da imagem */
+  overflow: hidden;
   display: block;
-  background: #0b1220;    /* evita “flash branco” durante o fade */
+
+  /* ✅ força full width mesmo estando dentro de .container */
+  width: 100vw;
+
+
+  /* ✅ mantém proporção parecida com 1920x950 (não “estreita”) */
+  aspect-ratio: 1920 / 950;
+  min-height: 320px;
+  max-height: 720px;
+
+  /* evita flash branco no crossfade */
+  background: #0b1220;
 }
 
-/* IMAGEM DO BANNER */
-.full-width-image img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: auto;       /* mantém o seu original (mesmo sendo redundante) */
-}
 
-/* SLIDE */
+/* SLIDES (empilhados) */
 .full-width-image .slide {
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 450ms ease, transform 1200ms ease;
-  will-change: opacity, transform;
-}
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 
-/* quando estiver trocando */
-.full-width-image .slide.fade-out {
+  /* premium: ocupa a área sem deformar */
+  object-fit: cover;
+
+  /* crossfade */
   opacity: 0;
-  transform: scale(1.02);
+  transition: opacity 900ms ease-in-out;
+
+  /* performance */
+  will-change: opacity, transform;
+  transform: translateZ(0);
 }
 
-/* SLIDE ATIVO (mantém o seu padrão) */
+/* slide visível */
 .full-width-image .slide.active {
   opacity: 1;
   z-index: 1;
-  transform: scale(1);
+
+  /* leve movimento (Ken Burns) */
+  animation: kenburns 8000ms linear both;
+}
+
+/* Ken Burns sutil */
+@keyframes kenburns {
+  from { transform: scale(1.03); }
+  to   { transform: scale(1.08); }
 }
 
 /* GRADIENTE POR CIMA DA IMAGEM */
@@ -42,8 +58,8 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    rgba(0, 0, 0, 0.048),
-    rgba(0, 0, 0, 0.048)
+    rgba(0, 0, 0, 0.05),
+    rgba(0, 0, 0, 0.05)
   );
   z-index: 2;
   pointer-events: none;
@@ -66,14 +82,12 @@
   font-family: "Inter", sans-serif;
 
   opacity: 1;
-  transition: opacity 420ms ease, transform 420ms ease;
-  will-change: opacity, transform;
+  transition: opacity 450ms ease;
 }
 
-/* fade do texto junto */
-.hero-content.fade-out {
+/* fade do texto na troca */
+.hero-content.content-fade {
   opacity: 0;
-  transform: translate(-50%, calc(-50% + 8px));
 }
 
 /* TÍTULO */
@@ -122,7 +136,6 @@
   .full-width-image {
     height: 45vh;
     min-height: 260px;
-    align-items: flex-end;
   }
 
   .full-width-image::before {
@@ -142,10 +155,6 @@
     max-width: 90%;
     text-align: center;
     gap: 10px;
-  }
-
-  .hero-content.fade-out {
-    transform: translateX(-50%) translateY(8px);
   }
 
   .hero-title {
