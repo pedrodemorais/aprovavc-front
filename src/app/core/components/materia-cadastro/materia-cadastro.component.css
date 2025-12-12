@@ -4,7 +4,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 /* ============================
-  CONTAINER GERAL
+  CONTAINER GERAL (LIGHT)
 ============================ */
 .page-materias {
   width: 100%;
@@ -16,10 +16,8 @@
     "Segoe UI", sans-serif;
 }
 
-
-
 /* ============================
-  TOPO / HEADER
+  TOPO / HEADER (LIGHT)
 ============================ */
 .page-materias-header {
   max-width: 1180px;
@@ -46,7 +44,7 @@
 }
 
 /* ============================
-  STEPS (1 MATÉRIAS / 2 TÓPICOS)
+  STEPS (1 MATÉRIAS / 2 TÓPICOS) (LIGHT)
 ============================ */
 .steps-indicador {
   display: inline-flex;
@@ -100,7 +98,7 @@
 }
 
 /* ============================
-  ERRO GLOBAL
+  ERRO GLOBAL (LIGHT)
 ============================ */
 .mensagem-erro {
   max-width: 1180px;
@@ -113,7 +111,7 @@
 }
 
 /* ============================
-  CONTEÚDO 2 COLUNAS
+  CONTEÚDO 2 COLUNAS (LIGHT)
 ============================ */
 .page-materias-content {
   max-width: 1180px;
@@ -130,7 +128,7 @@
 }
 
 /* ============================
-  CARDS GENÉRICOS
+  CARDS GENÉRICOS (LIGHT)
 ============================ */
 .card {
   background: #ffffff;
@@ -166,7 +164,7 @@
   margin: 0;
 }
 
-/* Pílulas de passo */
+/* Pílulas de passo (LIGHT) */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -190,7 +188,7 @@
 }
 
 /* ============================
-  FORMULÁRIO DE MATÉRIA
+  FORMULÁRIO DE MATÉRIA (LIGHT)
 ============================ */
 .form-materia {
   display: flex;
@@ -215,7 +213,7 @@
   color: #ef4444;
 }
 
-/* Input padrão */
+/* Input padrão (LIGHT) */
 .input-text {
   width: 100%;
   border-radius: 10px;
@@ -225,7 +223,8 @@
   outline: none;
   background-color: #ffffff;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 .input-text:focus {
@@ -246,7 +245,7 @@
 }
 
 /* ============================
-  BOTÕES
+  BOTÕES (LIGHT)
 ============================ */
 .form-acoes {
   display: flex;
@@ -260,7 +259,8 @@
   font-size: 0.85rem;
   border: none;
   cursor: pointer;
-  transition: background 0.16s, color 0.16s, box-shadow 0.12s, transform 0.08s;
+  transition: background 0.16s, color 0.16s, box-shadow 0.12s,
+    transform 0.08s;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -294,7 +294,7 @@
 }
 
 /* ============================
-  LISTA DE MATÉRIAS
+  LISTA DE MATÉRIAS (LIGHT)
 ============================ */
 .lista-materias {
   list-style: none;
@@ -304,7 +304,6 @@
   overflow-y: auto;
 }
 
-/* Item padrão */
 .item-materia {
   display: flex;
   align-items: center;
@@ -322,7 +321,6 @@
   background: #f3f4f6;
 }
 
-/* Item selecionado */
 .item-materia.ativa {
   background: #f0fdf4;
   border-color: #bbf7d0;
@@ -358,7 +356,7 @@
   flex-shrink: 0;
 }
 
-/* Botões de ícone */
+/* Botões de ícone (LIGHT) */
 .btn-icone {
   border: none;
   background: transparent;
@@ -385,7 +383,7 @@
 }
 
 /* ============================
-  ESTADOS AUXILIARES
+  ESTADOS AUXILIARES (LIGHT)
 ============================ */
 .estado-vazio,
 .estado-vazio-topicos {
@@ -405,13 +403,12 @@
 }
 
 /* ============================
-  COLUNA DIREITA – TÓPICOS
+  COLUNA DIREITA – TÓPICOS (LIGHT)
 ============================ */
 .bloco-topicos {
   min-height: 260px;
 }
 
-/* Card de novo tópico */
 .novo-topico-card {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -435,7 +432,7 @@
   color: #6b7280;
 }
 
-/* Card da árvore */
+/* Card da árvore (LIGHT) */
 .arvore-card {
   border-radius: 14px;
   border: 1px solid #e5e7eb;
@@ -447,7 +444,7 @@
 }
 
 /* ============================
-  ÁRVORE DE TÓPICOS
+  ÁRVORE DE TÓPICOS (LIGHT)
 ============================ */
 .lista-topicos,
 .lista-topicos-filhos {
@@ -456,7 +453,6 @@
   padding-left: 0;
 }
 
-/* Linha do tópico */
 .topico-linha {
   display: flex;
   justify-content: space-between;
@@ -473,7 +469,6 @@
   background: #f3f4f6;
 }
 
-/* Selecionado – mesma lógica da matéria ativa */
 .topico-linha.selecionado {
   background: #f0fdf4;
   border-color: #bbf7d0;
@@ -486,7 +481,6 @@
   gap: 6px;
 }
 
-/* Badge semáforo */
 .badge-nivel {
   display: inline-flex;
   align-items: center;
@@ -513,7 +507,6 @@
   background: #ef4444;
 }
 
-/* quando o tópico estiver selecionado, dá um glow leve na bolinha */
 .topico-linha.selecionado .badge-nivel {
   transform: scale(1.05);
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
@@ -588,4 +581,243 @@
     padding: 6px 11px;
     font-size: 0.8rem;
   }
+}
+
+/* ============================
+  DARK MODE (Angular)
+  - depende de body.theme-dark
+  - cola no final do arquivo
+============================ */
+:host-context(body.theme-dark) .page-materias {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+/* header */
+:host-context(body.theme-dark) .page-materias-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .page-title {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .page-subtitle {
+  color: var(--muted) !important;
+}
+
+/* steps */
+:host-context(body.theme-dark) .step-item {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+:host-context(body.theme-dark) .step-item.ativo {
+  border-color: rgba(34, 197, 94, 0.45) !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35) !important;
+}
+
+:host-context(body.theme-dark) .step-numero {
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .step-item.ativo .step-numero {
+  background: var(--primary) !important;
+  color: #0b1220 !important;
+}
+
+:host-context(body.theme-dark) .step-texto {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .step-seta {
+  color: rgba(148, 163, 184, 0.75) !important;
+}
+
+/* cards */
+:host-context(body.theme-dark) .card {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .card-title {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .card-subtitle {
+  color: var(--text-2) !important;
+}
+
+/* pills */
+:host-context(body.theme-dark) .pill-materia,
+:host-context(body.theme-dark) .pill-topico {
+  background: rgba(34, 197, 94, 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35) !important;
+  color: #bbf7d0 !important;
+}
+
+/* labels / inputs */
+:host-context(body.theme-dark) .label {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .input-text {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .input-text:focus {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(34, 197, 94, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25) !important;
+}
+
+:host-context(body.theme-dark) .input-text:disabled {
+  background: rgba(255, 255, 255, 0.04) !important;
+  opacity: 0.7;
+}
+
+/* lista matérias */
+:host-context(body.theme-dark) .item-materia:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+:host-context(body.theme-dark) .item-materia.ativa {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.18) !important;
+}
+
+:host-context(body.theme-dark) .materia-nome {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .btn-icone:hover {
+  filter: brightness(1.15);
+}
+
+/* estados auxiliares */
+:host-context(body.theme-dark) .estado-vazio,
+:host-context(body.theme-dark) .estado-vazio-topicos,
+:host-context(body.theme-dark) .loading {
+  color: var(--muted) !important;
+}
+
+/* árvore */
+:host-context(body.theme-dark) .arvore-card {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .topico-linha:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+:host-context(body.theme-dark) .topico-linha.selecionado {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .topico-descricao {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .badge-nivel {
+  background: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* botões */
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario {
+  background: var(--primary) !important;
+  color: #0b1220 !important;
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.22) !important;
+}
+
+/* erro global */
+:host-context(body.theme-dark) .mensagem-erro {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fecaca !important;
+  border: 1px solid rgba(239, 68, 68, 0.26) !important;
+}
+/* =======================================
+   BOTÕES – PADRÃO GLOBAL (LIGHT + DARK)
+======================================= */
+
+/* BOTÃO PRIMÁRIO */
+.btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.45) !important;
+  border: none !important;
+}
+
+.btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+.btn.primario:active {
+  transform: translateY(1px);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.45) !important;
+}
+
+.btn.primario:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+/* =======================================
+   BOTÃO PRIMÁRIO — DARK MODE
+======================================= */
+
+:host-context(body.theme-dark) .btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.7) !important;
+}
+
+/* =======================================
+   BOTÃO SECUNDÁRIO (NEUTRO)
+======================================= */
+
+.btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn.secundario:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Dark */
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
 }

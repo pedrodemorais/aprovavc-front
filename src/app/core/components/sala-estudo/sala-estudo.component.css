@@ -945,6 +945,7 @@
   font-size: 0.9rem;
 }
 
+
 /* ============================
   RESPONSIVO
 ============================ */
@@ -1015,4 +1016,132 @@
   .sala-body {
     padding-inline: 12px;
   }
+}
+/* =========================================================
+   SALA DE ESTUDO - DARK MODE (override)
+   (Cole no FINAL do sala-estudo.component.css)
+========================================================= */
+:host-context(body.theme-dark) .sala-container{
+  background: radial-gradient(circle at top, #0b1220 0, #0a0f1b 55%, #070b14 100%) !important;
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .card{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 0 18px 45px rgba(0,0,0,0.55) !important;
+}
+
+:host-context(body.theme-dark) .sala-titulo,
+:host-context(body.theme-dark) .sons-foco-label,
+:host-context(body.theme-dark) .coluna-header h2,
+:host-context(body.theme-dark) .titulo-section,
+:host-context(body.theme-dark) .flashcard-titulo{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .sala-subtitulo,
+:host-context(body.theme-dark) .sons-foco-info,
+:host-context(body.theme-dark) .sons-foco-hint,
+:host-context(body.theme-dark) .hint,
+:host-context(body.theme-dark) .timer-label,
+:host-context(body.theme-dark) .muted,
+:host-context(body.theme-dark) .pequeno,
+:host-context(body.theme-dark) .flashcard-subtitulo{
+  color: #a1a1aa !important;
+}
+
+:host-context(body.theme-dark) .botoes,
+:host-context(body.theme-dark) .toggle-revisao,
+:host-context(body.theme-dark) .timer-modos{
+  background: rgba(255,255,255,0.08) !important;
+}
+
+:host-context(body.theme-dark) .aba,
+:host-context(body.theme-dark) .toggle-btn,
+:host-context(body.theme-dark) .btn-modo-timer{
+  color: #cbd5e1 !important;
+}
+
+:host-context(body.theme-dark) .aba.ativa,
+:host-context(body.theme-dark) .toggle-btn.ativo,
+:host-context(body.theme-dark) .btn-modo-timer.ativo{
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+:host-context(body.theme-dark) .sons-foco-header{
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .som-icone{
+  background: rgba(255,255,255,0.06) !important;
+  color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+:host-context(body.theme-dark) .som-icone:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+:host-context(body.theme-dark) .som-icone-nome{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .sala-body{
+  background: transparent !important;
+}
+
+:host-context(body.theme-dark) .coluna-esquerda{
+  border-right: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .item-topico:hover{
+  background: rgba(255,255,255,0.08) !important;
+}
+:host-context(body.theme-dark) .item-topico.selecionado{
+  background: rgba(84,186,103,0.14) !important;
+  box-shadow: 0 0 0 1px rgba(84,186,103,0.45) inset !important;
+}
+
+:host-context(body.theme-dark) .descricao-topico{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .bloco{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+:host-context(body.theme-dark) .anotacoes-renderizadas{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #e5e7eb !important;
+}
+
+/* Modal flashcard no dark */
+:host-context(body.theme-dark) .flashcard-modal{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .flashcard-contexto{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .contexto-label{
+  color: #cbd5e1 !important;
+}
+:host-context(body.theme-dark) .contexto-valor{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .flashcard-label{
+  color: #cbd5e1 !important;
+}
+:host-context(body.theme-dark) .flashcard-textarea,
+:host-context(body.theme-dark) .flashcard-input,
+:host-context(body.theme-dark) .flashcard-select{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
 }

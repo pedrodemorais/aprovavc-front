@@ -312,6 +312,64 @@
   font-size: 0.9rem;
   color: #4b5563;
 }
+/* PERFIL - DARK MODE (mais forte e visível) */
+:host-context(body.theme-dark) .page-perfil{
+  color: #e5e7eb !important;
+  background: transparent !important; /* deixa aparecer o fundo dark do body */
+}
+
+:host-context(body.theme-dark) .conteudo{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .card{
+  background: rgba(15,23,42,0.72) !important; /* <-- antes era branco 0.06 */
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 0 18px 45px rgba(0,0,0,0.55) !important;
+}
+
+:host-context(body.theme-dark) .perfil-titulo,
+:host-context(body.theme-dark) .nome-botoes h2,
+:host-context(body.theme-dark) .subtitulo-secao{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .perfil-sub,
+:host-context(body.theme-dark) .linha-assinatura .label,
+:host-context(body.theme-dark) .texto-ajuda,
+:host-context(body.theme-dark) .campo label{
+  color: #a1a1aa !important;
+}
+
+:host-context(body.theme-dark) .linha-assinatura .valor,
+:host-context(body.theme-dark) .linha-assinatura p{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .separador{
+  background: rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .campo input{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .campo input:focus{
+  border-color: rgba(22,163,74,0.65) !important;
+  box-shadow: 0 0 0 2px rgba(22,163,74,0.18) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario{
+  background: rgba(255,255,255,0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+}
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled){
+  background: rgba(255,255,255,0.10) !important;
+}
 
 /* =======================================
    RESPONSIVO
@@ -348,4 +406,72 @@
     font-size: 0.85rem;
     padding: 7px 14px;
   }
+}
+/* =======================================
+   BOTÕES – PADRÃO GLOBAL (LIGHT + DARK)
+======================================= */
+
+/* BOTÃO PRIMÁRIO */
+.btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.45) !important;
+  border: none !important;
+}
+
+.btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+.btn.primario:active {
+  transform: translateY(1px);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.45) !important;
+}
+
+.btn.primario:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+/* =======================================
+   BOTÃO PRIMÁRIO — DARK MODE
+======================================= */
+
+:host-context(body.theme-dark) .btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.7) !important;
+}
+
+/* =======================================
+   BOTÃO SECUNDÁRIO (NEUTRO)
+======================================= */
+
+.btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn.secundario:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Dark */
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
 }

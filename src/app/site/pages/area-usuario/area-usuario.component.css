@@ -6,6 +6,10 @@
 /* =======================================
    RESET BÁSICO
 ======================================= */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
 
 html,
 body {
@@ -21,26 +25,21 @@ body {
 }
 
 /* =======================================
-   DASHBOARD (MOLDURA GERAL)
+   DASHBOARD (MOLDURA GERAL) - LIGHT
 ======================================= */
-
 .dashboard {
   min-height: 100dvh;
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(
-    circle at top,
-    #e9f7ef 0,
-    #f5f7fa 45%,
-    #e5e7eb 100%
-  );
-  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   color: #111827;
 }
 
-.btn-modo-leitura{
+/* Botão do modo leitura */
+.btn-modo-leitura {
   margin-left: auto;
   border: 1px solid #e5e7eb;
   background: #ffffff;
@@ -49,12 +48,26 @@ body {
   padding: 8px 10px;
   cursor: pointer;
 }
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden; /* ajuda muito em SPA */
+}
 
+.dashboard {
+  width: 100%;
+  overflow-x: hidden; /* trava qualquer sobra */
+}
+
+.container {
+  width: 100%;
+  min-width: 0;
+}
 
 /* =======================================
-   TOPO FIXO
+   TOPO FIXO - LIGHT
 ======================================= */
-
 .topbar {
   position: sticky;
   top: 0;
@@ -64,10 +77,12 @@ body {
   justify-content: space-between;
   height: 64px;
   padding: 0 1.5rem;
-  background: rgba(255, 255, 255, 0.96);
+ 
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e5e7eb;
+  
   box-sizing: border-box;
+
+  animation: fadeInTopbar 0.25s ease-out;
 }
 
 .nome-site-area-usuario {
@@ -77,7 +92,6 @@ body {
 }
 
 /* Logo */
-
 .logo {
   display: flex;
   align-items: center;
@@ -90,7 +104,6 @@ body {
 }
 
 /* Botão hambúrguer (mobile) */
-
 .menu-toggle {
   display: none;
   background: none;
@@ -101,50 +114,43 @@ body {
 }
 
 /* =======================================
-   CONTAINER PRINCIPAL
+   CONTAINER PRINCIPAL - LIGHT
 ======================================= */
-
 .container {
   flex: 1 1 auto;
   display: flex;
   flex-direction: row;
   gap: 16px;
   width: 100%;
- 
   margin: 0 auto;
   padding: 16px 16px 24px;
   box-sizing: border-box;
 }
 
 /* =======================================
-   MENU LATERAL / SIDEBAR
+   MENU LATERAL / SIDEBAR - LIGHT
 ======================================= */
-
 .menu {
   flex-shrink: 0;
   display: flex;
   align-items: stretch;
 }
 
-/* Wrapper do PanelMenu */
 .sidebar {
   width: 240px;
   padding: 12px 0;
   border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+
   box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
 
-/* PanelMenu “flat” */
 .menu-flat {
   width: 100%;
 }
 
-/* Remover margens padrão */
 .menu ul {
   list-style: none;
   margin: 0;
@@ -164,12 +170,12 @@ body {
   border-radius: 8px;
 }
 
-/* Hover leve */
+/* Hover */
 .menu .p-panelmenu .p-menuitem-link:hover {
   background: #f3f4f6;
 }
 
-/* Estado ativo (rota atual) */
+/* Estado ativo */
 .menu .p-panelmenu .p-menuitem-link.router-link-active,
 .menu .p-panelmenu .p-menuitem-link-active {
   font-weight: 600;
@@ -177,16 +183,14 @@ body {
   background-color: #e8f8ee;
 }
 
-/* Ícone do item ativo */
 .menu .p-panelmenu .p-menuitem-link.router-link-active .p-menuitem-icon,
 .menu .p-panelmenu .p-menuitem-link-active .p-menuitem-icon {
   color: #54ba67;
 }
 
 /* =======================================
-   ÁREA DE CONTEÚDO
+   ÁREA DE CONTEÚDO - LIGHT
 ======================================= */
-
 .content {
   flex: 1 1 auto;
   min-width: 0;
@@ -196,12 +200,9 @@ body {
   box-sizing: border-box;
 }
 
-/* O conteúdo interno (pages) já cuidam dos próprios cards/sombras */
-
 /* =======================================
-   AVATAR / BOTÕES (SE FOR USAR)
+   AVATAR / BOTÕES (SE FOR USAR) - LIGHT
 ======================================= */
-
 .user-initials {
   width: 40px;
   height: 40px;
@@ -238,8 +239,6 @@ body {
 /* =======================================
    RESPONSIVO
 ======================================= */
-
-/* Até 768px → sidebar vira off-canvas e hambúrguer aparece */
 @media (max-width: 768px) {
   .logo img {
     width: 110px;
@@ -260,7 +259,7 @@ body {
 
   .sidebar {
     position: fixed;
-    top: 64px; /* altura da topbar */
+    top: 64px;
     left: 0;
     height: calc(100dvh - 64px);
     width: 78%;
@@ -270,13 +269,10 @@ body {
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;
-    transition:
-      transform 0.25s ease,
-      opacity 0.25s ease;
+    transition: transform 0.25s ease, opacity 0.25s ease;
     z-index: 60;
   }
 
-  /* Quando menuAberto = true (classe menu-mobile) */
   .sidebar.menu-mobile {
     transform: translateX(0);
     opacity: 1;
@@ -292,7 +288,6 @@ body {
   }
 }
 
-/* Telas bem estreitas */
 @media (max-width: 480px) {
   .topbar {
     height: 56px;
@@ -305,9 +300,92 @@ body {
 }
 
 /* =======================================
-   ANIMAÇÃO SUAVE (CASO QUEIRA USAR)
+   DARK MODE (body.theme-dark)
+   (colar aqui mesmo no final)
 ======================================= */
+:host-context(body.theme-dark) .dashboard {
+  background: radial-gradient(
+    circle at top,
+    #0b1220 0,
+    #0a0f1a 45%,
+    #070b12 100%
+  ) !important;
+  color: #e5e7eb !important;
+}
 
+:host-context(body.theme-dark) .btn-modo-leitura {
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e5e7eb !important;
+}
+
+/* Topbar */
+:host-context(body.theme-dark) .topbar {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Botão hambúrguer */
+:host-context(body.theme-dark) .menu-toggle {
+  color: #cbd5e1 !important;
+}
+
+/* Sidebar */
+:host-context(body.theme-dark) .sidebar {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Links do menu */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link {
+  color: #cbd5e1 !important;
+}
+
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Ativo */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link.router-link-active,
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link-active {
+  color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+
+:host-context(body.theme-dark)
+  .menu
+  .p-panelmenu
+  .p-menuitem-link.router-link-active
+  .p-menuitem-icon,
+:host-context(body.theme-dark)
+  .menu
+  .p-panelmenu
+  .p-menuitem-link-active
+  .p-menuitem-icon {
+  color: #22c55e !important;
+}
+
+/* Avatar */
+:host-context(body.theme-dark) .user-initials {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Botão menu (se usar) */
+:host-context(body.theme-dark) .botao-menu {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #e5e7eb !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+:host-context(body.theme-dark) .botao-menu:hover {
+  background: rgba(34, 197, 94, 0.18) !important;
+}
+
+/* =======================================
+   ANIMAÇÃO
+======================================= */
 @keyframes fadeInTopbar {
   from {
     opacity: 0;
@@ -318,7 +396,69 @@ body {
     transform: translateY(0);
   }
 }
+/* =======================================
+   PRIME NG PANELMENU — DARK MODE
+   (menu lateral ainda branco)
+======================================= */
 
-.topbar {
-  animation: fadeInTopbar 0.25s ease-out;
+:host-context(body.theme-dark) .sidebar {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* container do panelmenu */
+:host-context(body.theme-dark) .menu .p-panelmenu {
+  background: transparent !important;
+}
+
+/* headers (itens “pai”) */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header > a {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--text) !important;
+}
+
+/* conteúdo (itens “filho”) */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-content {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* links */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link {
+  color: var(--text-2) !important;
+  background: transparent !important;
+  border-radius: 10px;
+}
+
+/* hover */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* estado ativo (rota atual) */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link.router-link-active,
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link-active {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: var(--text) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25) inset;
+}
+
+/* ícones do menu */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-icon,
+:host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-icon {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link.router-link-active .p-menuitem-icon,
+:host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-link-active .p-menuitem-icon {
+  color: var(--primary) !important;
+}
+
+/* separadores/bordas que às vezes aparecem brancas */
+:host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header,
+:host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-content,
+:host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header:not(.p-highlight) > a {
+  border-color: rgba(255, 255, 255, 0.10) !important;
 }

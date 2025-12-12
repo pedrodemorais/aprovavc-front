@@ -2,7 +2,15 @@
   <div class="conteudo">
 
     <!-- CABEÇALHO -->
-    <div class="perfil-header">
+   
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="perfil-layout">
+
+      <!-- DADOS DO ALUNO -->
+      <section class="card card-perfil">
+        <!-- CARTÃO DE ASSINATURA -->
+ <div class="perfil-header">
       <div>
         <h1 class="perfil-titulo">Meus dados</h1>
         <p class="perfil-sub">
@@ -16,27 +24,19 @@
       <p *ngIf="erro" class="msg msg-erro">{{ erro }}</p>
       <p *ngIf="mensagemSucesso" class="msg msg-sucesso">{{ mensagemSucesso }}</p>
     </section>
-
-    <!-- CONTEÚDO PRINCIPAL -->
-    <div class="perfil-layout">
-
-      <!-- DADOS DO ALUNO -->
-      <section class="card card-perfil">
-        <!-- CARTÃO DE ASSINATURA -->
-
-<div class="separador"></div>
+        <div class="separador"></div>
         <div class="assinatura">
 
           <aside *ngIf="usuario">
             <div class="nome-botoes">
-              <h2 >Minha assinatura</h2>
+              <h2>Minha assinatura</h2>
 
               <div class="botoes-assinatura">
                 <div>
                   <button type="button" class="btn primario" (click)="irParaGerenciarAssinatura()">
                     Gerenciar Assinatura
                   </button>
-                 
+
                 </div>
               </div>
 
@@ -143,7 +143,7 @@
               </div>
             </div>
           </div>
-<div class="separador"></div>
+          <div class="separador"></div>
           <div class="acoes-form">
             <button type="submit" class="btn primario">
               Salvar alterações

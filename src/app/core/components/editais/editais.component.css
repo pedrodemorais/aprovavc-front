@@ -4,14 +4,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 /* =======================================
-   CONTAINER GERAL
+   CONTAINER GERAL (LIGHT)
 ======================================= */
 .page-edital {
   width: 100%;
   min-height: calc(100dvh - 80px);
   box-sizing: border-box;
   padding: 20px 16px 32px;
-  
+
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
 }
@@ -30,7 +30,7 @@
 }
 
 /* =======================================
-   CARDS GENÉRICOS
+   CARDS GENÉRICOS (LIGHT)
 ======================================= */
 .card {
   background: #ffffff;
@@ -52,7 +52,7 @@
 }
 
 /* =======================================
-   CABEÇALHO DO FORMULÁRIO
+   CABEÇALHO DO FORMULÁRIO (LIGHT)
 ======================================= */
 .form-header {
   display: flex;
@@ -75,7 +75,7 @@
 }
 
 /* =======================================
-   MENSAGENS GLOBAIS
+   MENSAGENS GLOBAIS (LIGHT)
 ======================================= */
 .mensagens {
   margin-top: 4px;
@@ -102,7 +102,7 @@
 }
 
 /* =======================================
-   FORMULÁRIO DO EDITAL
+   FORMULÁRIO DO EDITAL (LIGHT)
 ======================================= */
 .form-edital {
   display: flex;
@@ -203,7 +203,7 @@
 }
 
 /* =======================================
-   BOTÕES GENÉRICOS
+   BOTÕES GENÉRICOS (LIGHT)
 ======================================= */
 .acoes-form {
   display: flex;
@@ -265,7 +265,7 @@
 }
 
 /* =======================================
-   CHIPS DE MATÉRIA
+   CHIPS DE MATÉRIA (LIGHT)
 ======================================= */
 .chips-materias-wrapper {
   display: flex;
@@ -316,7 +316,7 @@
 }
 
 /* =======================================
-   LISTA DE EDITAIS – HEADER
+   LISTA DE EDITAIS – HEADER (LIGHT)
 ======================================= */
 .lista-header {
   display: flex;
@@ -374,7 +374,7 @@
 }
 
 /* =======================================
-   CARD DE EDITAL
+   CARD DE EDITAL (LIGHT)
 ======================================= */
 .edital-card {
   border-radius: 14px;
@@ -515,7 +515,7 @@
 }
 
 /* =======================================
-   CORPO DO CARD (MATÉRIAS)
+   CORPO DO CARD (MATÉRIAS) (LIGHT)
 ======================================= */
 .edital-card-body {
   padding: 8px 12px 12px;
@@ -671,4 +671,296 @@
   .painel-lista {
     max-height: none;
   }
+}
+
+/* =======================================
+   EDITAIS - DARK MODE (Angular)
+   - depende de body.theme-dark
+   - cola no final do arquivo
+======================================= */
+:host-context(body.theme-dark) .page-edital {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .page-edital .layout {
+  color: var(--text) !important;
+}
+
+/* Separador */
+:host-context(body.theme-dark) .separador {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+/* Cards genéricos */
+:host-context(body.theme-dark) .card {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Header do formulário */
+:host-context(body.theme-dark) .titulo-form {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .form-sub {
+  color: var(--text-2) !important;
+}
+
+/* Mensagens */
+:host-context(body.theme-dark) .msg-erro {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fecaca !important;
+  border: 1px solid rgba(239, 68, 68, 0.26) !important;
+}
+
+:host-context(body.theme-dark) .msg-sucesso {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #bbf7d0 !important;
+  border: 1px solid rgba(34, 197, 94, 0.26) !important;
+}
+
+/* Labels */
+:host-context(body.theme-dark) .form-group label,
+:host-context(body.theme-dark) .campo label {
+  color: var(--text-2) !important;
+}
+
+/* Inputs */
+:host-context(body.theme-dark) .input-text {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .input-text:focus {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(34, 197, 94, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25) !important;
+}
+
+/* Helper / erro */
+:host-context(body.theme-dark) .hint {
+  color: rgba(148, 163, 184, 0.75) !important;
+}
+
+:host-context(body.theme-dark) .erro {
+  color: #fecaca !important;
+}
+
+/* Botões */
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario {
+  background: var(--primary) !important;
+  color: #0b1220 !important;
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .btn.texto {
+  color: #86efac !important;
+}
+
+/* Chips de matérias */
+:host-context(body.theme-dark) .chips-materias-wrapper {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .chip-materia {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .chip-materia:hover {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.26) !important;
+}
+
+:host-context(body.theme-dark) .chip-materia-ativa {
+  background: var(--primary) !important;
+  border-color: rgba(34, 197, 94, 0.55) !important;
+  color: #0b1220 !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.22) !important;
+}
+
+/* Lista header */
+:host-context(body.theme-dark) .titulo-bloco {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .lista-legenda,
+:host-context(body.theme-dark) .estado,
+:host-context(body.theme-dark) .estado-vazio,
+:host-context(body.theme-dark) .estado-vazio-menor,
+:host-context(body.theme-dark) .estado-carregando-menor {
+  color: var(--muted) !important;
+}
+
+/* Card de edital */
+:host-context(body.theme-dark) .edital-card {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.72),
+    rgba(15, 23, 42, 0.62)
+  ) !important;
+}
+
+:host-context(body.theme-dark) .edital-card-header:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+:host-context(body.theme-dark) .edital-card-header.aberto {
+  background: rgba(34, 197, 94, 0.10) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .edital-nome {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .edital-desc {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .meta-chip {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .meta-label {
+  color: var(--muted) !important;
+}
+
+:host-context(body.theme-dark) .pill-progresso,
+:host-context(body.theme-dark) .pill-dominio {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #bbf7d0 !important;
+}
+
+/* Ações / ícones */
+:host-context(body.theme-dark) .btn-icone:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+:host-context(body.theme-dark) .btn-icone-danger:hover {
+  background: rgba(239, 68, 68, 0.16) !important;
+}
+
+:host-context(body.theme-dark) .chevron {
+  color: var(--muted) !important;
+}
+
+/* Corpo: matérias */
+:host-context(body.theme-dark) .materia-header {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .materia-header:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .materia-indice {
+  color: rgba(148, 163, 184, 0.75) !important;
+}
+
+:host-context(body.theme-dark) .materia-nome {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .materia-legenda {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .materia-topicos-wrapper {
+  border-left-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Tópicos */
+:host-context(body.theme-dark) .topico-bullet {
+  background: var(--primary) !important;
+}
+
+:host-context(body.theme-dark) .topico-descricao {
+  color: var(--text-2) !important;
+}
+/* =======================================
+   BOTÕES – PADRÃO GLOBAL (LIGHT + DARK)
+======================================= */
+
+/* BOTÃO PRIMÁRIO */
+.btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.45) !important;
+  border: none !important;
+}
+
+.btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+.btn.primario:active {
+  transform: translateY(1px);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.45) !important;
+}
+
+.btn.primario:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+/* =======================================
+   BOTÃO PRIMÁRIO — DARK MODE
+======================================= */
+
+:host-context(body.theme-dark) .btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.7) !important;
+}
+
+/* =======================================
+   BOTÃO SECUNDÁRIO (NEUTRO)
+======================================= */
+
+.btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn.secundario:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Dark */
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
 }

@@ -376,3 +376,204 @@
     order: -1; /* Premium vem primeiro no mobile */
   }
 }
+/* =======================================
+   ASSINATURA / PLANOS - DARK MODE
+   (colar no final do arquivo)
+======================================= */
+
+:host-context(body.theme-dark) .page-materias {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .page-assinatura {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .page-assinatura.loading {
+  color: var(--muted) !important;
+}
+
+/* Painel superior */
+:host-context(body.theme-dark) .painel-assinatura {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .cabecalho-assinatura h1,
+:host-context(body.theme-dark) .planos-wrapper h2,
+:host-context(body.theme-dark) .plano-card h2 {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .page-assinatura .descricao,
+:host-context(body.theme-dark) .resumo-assinatura,
+:host-context(body.theme-dark) .resumo-assinatura p,
+:host-context(body.theme-dark) .plano-card .beneficios {
+  color: var(--text-2) !important;
+}
+
+/* Badges */
+:host-context(body.theme-dark) .badge-status {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .badge-status.trial {
+  background: rgba(59, 130, 246, 0.14) !important;
+  color: #bfdbfe !important;
+  border-color: rgba(59, 130, 246, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .badge-status.ativa {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #bbf7d0 !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .badge-status.expirada,
+:host-context(body.theme-dark) .badge-status.cancelada {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fecaca !important;
+  border-color: rgba(239, 68, 68, 0.26) !important;
+}
+
+/* Links / ações */
+:host-context(body.theme-dark) .btn-link {
+  color: #93c5fd !important;
+}
+
+:host-context(body.theme-dark) .btn-link:hover {
+  color: #bfdbfe !important;
+}
+
+:host-context(body.theme-dark) .btn-cancelar {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fecaca !important;
+  border-color: rgba(239, 68, 68, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .btn-cancelar:hover {
+  background: rgba(239, 68, 68, 0.18) !important;
+  border-color: rgba(239, 68, 68, 0.36) !important;
+}
+
+/* Cards dos planos */
+:host-context(body.theme-dark) .plano-card {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+:host-context(body.theme-dark) .plano-card:hover {
+  border-color: rgba(148, 163, 184, 0.35) !important;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .plano-card.plano-destaque {
+  border-color: color-mix(in srgb, var(--primary) 70%, transparent) !important;
+  box-shadow: 0 18px 40px rgba(34, 197, 94, 0.18) !important;
+}
+
+:host-context(body.theme-dark) .plano-card .preco {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .plano-card .beneficios li::before {
+  color: var(--primary) !important;
+}
+
+/* Botões */
+:host-context(body.theme-dark) .btn.primario {
+  background: var(--primary) !important;
+  color: #0b1220 !important;
+  box-shadow: 0 12px 26px rgba(34, 197, 94, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario:hover:not(:disabled) {
+  box-shadow: 0 16px 32px rgba(34, 197, 94, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  border-color: rgba(34, 197, 94, 0.45) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Erro */
+:host-context(body.theme-dark) .page-assinatura .erro {
+  color: #fecaca !important;
+}
+/* =======================================
+   BOTÕES – PADRÃO GLOBAL (LIGHT + DARK)
+======================================= */
+
+/* BOTÃO PRIMÁRIO */
+.btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.45) !important;
+  border: none !important;
+}
+
+.btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+.btn.primario:active {
+  transform: translateY(1px);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.45) !important;
+}
+
+.btn.primario:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+/* =======================================
+   BOTÃO PRIMÁRIO — DARK MODE
+======================================= */
+
+:host-context(body.theme-dark) .btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.7) !important;
+}
+
+/* =======================================
+   BOTÃO SECUNDÁRIO (NEUTRO)
+======================================= */
+
+.btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn.secundario:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Dark */
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
+}

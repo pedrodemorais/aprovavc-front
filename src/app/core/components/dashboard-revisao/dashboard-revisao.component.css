@@ -316,3 +316,181 @@
     border-radius: 10px;
   }
 }
+/* =======================================
+   DASHBOARD REVISÕES — DARK MODE (SAFE)
+   Cole NO FINAL do CSS (não muda layout)
+======================================= */
+
+:host-context(body.theme-dark) .container {
+  background: transparent !important;
+}
+
+/* Wrapper geral e textos */
+:host-context(body.theme-dark) .dashboard-revisao-page {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .rev-title {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .rev-subtitle {
+  color: var(--text-2) !important;
+}
+
+/* Estados */
+:host-context(body.theme-dark) .rev-state {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .rev-state.erro {
+  color: #fecaca !important;
+}
+
+:host-context(body.theme-dark) .rev-state.ok {
+  color: #bbf7d0 !important;
+}
+
+/* =======================================
+   SUMMARY CARDS (mantém o grid!)
+======================================= */
+
+:host-context(body.theme-dark) .rev-summary-card {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Vencidas */
+:host-context(body.theme-dark) .rev-summary-card.vencidas {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.26) !important;
+  color: #fecaca !important;
+}
+
+/* Hoje */
+:host-context(body.theme-dark) .rev-summary-card.hoje {
+  background: rgba(59, 130, 246, 0.14) !important;
+  border-color: rgba(59, 130, 246, 0.28) !important;
+  color: #bfdbfe !important;
+}
+
+/* Futuras */
+:host-context(body.theme-dark) .rev-summary-card.futuras {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+  color: #bbf7d0 !important;
+}
+
+:host-context(body.theme-dark) .rev-summary-label {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .rev-summary-value {
+  color: var(--text) !important;
+}
+
+/* =======================================
+   CARD PRINCIPAL + LISTA
+======================================= */
+
+:host-context(body.theme-dark) .rev-card {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Cabeçalho (linha “tabela”) */
+:host-context(body.theme-dark) .rev-list-header {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: var(--muted) !important;
+}
+
+/* Linhas */
+:host-context(body.theme-dark) .rev-list-row {
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+:host-context(body.theme-dark) .rev-list-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+:host-context(body.theme-dark) .rev-list-row:hover {
+  background: rgba(34, 197, 94, 0.08) !important;
+}
+
+/* Textos das colunas */
+:host-context(body.theme-dark) .materia-nome {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .topico-descricao {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .data-principal {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .data-secundaria {
+  color: var(--muted) !important;
+}
+
+/* =======================================
+   PILLS (status/tipo)
+======================================= */
+
+:host-context(body.theme-dark) .status-vencida {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #fecaca !important;
+}
+
+:host-context(body.theme-dark) .status-hoje {
+  background: rgba(59, 130, 246, 0.16) !important;
+  color: #bfdbfe !important;
+}
+
+:host-context(body.theme-dark) .status-futura {
+  background: rgba(148, 163, 184, 0.14) !important;
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .pill-anotacao {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #fde68a !important;
+}
+
+:host-context(body.theme-dark) .pill-flashcard {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: #bbf7d0 !important;
+}
+
+/* =======================================
+   BOTÃO PADRÃO (verde + texto branco + sombra verde)
+======================================= */
+
+:host-context(body.theme-dark) .btn-ghost {
+  background: var(--primary) !important;      /* seu verde padrão */
+  color: #ffffff !important;                 /* texto branco */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 26px rgba(34, 197, 94, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .btn-ghost:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 16px 32px rgba(34, 197, 94, 0.28) !important;
+  transform: translateY(-1px);
+}
+
+:host-context(body.theme-dark) .btn-ghost:active {
+  transform: translateY(1px);
+}
+
+/* Mobile: remove sombra do card (mantém o layout original) */
+@media (max-width: 600px) {
+  :host-context(body.theme-dark) .rev-card {
+    box-shadow: none !important;
+  }
+}
