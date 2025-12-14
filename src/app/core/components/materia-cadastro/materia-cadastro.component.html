@@ -3,12 +3,23 @@
     <!-- TOPO DA PÁGINA -->
     <div class="page-materias-header">
       
-      <div>
-        <h1 class="page-title">Biblioteca de matérias</h1>
-        <p class="page-subtitle">
-          Primeiro cadastre suas matérias. Depois, organize os tópicos e subtópicos que serão usados nos seus editais.
-        </p>
-      </div>
+<div>
+<h1 class="page-title">
+  Biblioteca de matérias
+
+  <i
+    class="pi pi-info-circle info-icon"
+    pTooltip="Primeiro cadastre suas matérias. Depois, organize os tópicos e subtópicos que serão usados nos seus editais."
+    tooltipPosition="right"
+    [showDelay]="150"
+    [hideDelay]="80"
+    tabindex="0"
+    aria-label="Ajuda"
+  ></i>
+</h1>
+
+</div>
+
 
       <div class="steps-indicador">
         <div class="step-item ativo">
@@ -39,12 +50,23 @@
       <!-- CARD: CADASTRO DA MATÉRIA -->
       <section class="card bloco-materia-form">
         <div class="card-header">
-          <div>
-            <h2 class="card-title">Passo 1 – Cadastrar matéria</h2>
-            <p class="card-subtitle">
-              Dê um nome claro para cada matéria. Mais tarde você poderá ligar tópicos e revisões a ela.
-            </p>
-          </div>
+        <div>
+<h2 class="card-title">
+  Passo 1 – Cadastrar matéria
+
+  <i
+    class="pi pi-info-circle info-icon"
+    pTooltip="Dê um nome claro para cada matéria. Mais tarde você poderá ligar tópicos e revisões a ela."
+    tooltipPosition="right"
+    [showDelay]="150"
+    [hideDelay]="80"
+    tabindex="0"
+    aria-label="Ajuda"
+  ></i>
+</h2>
+
+</div>
+
           <span class="pill pill-materia">Passo 1</span>
         </div>
 
@@ -78,12 +100,22 @@
       <!-- CARD: LISTA DE MATÉRIAS -->
       <section class="card bloco-materias-lista">
         <div class="card-header">
-          <div>
-            <h2 class="card-title">Minhas matérias</h2>
-            <p class="card-subtitle">
-              Clique em uma matéria para ver e cadastrar tópicos do lado direito.
-            </p>
-          </div>
+       <div>
+  <h2 class="card-title">
+    Minhas matérias
+
+    <i
+      class="pi pi-info-circle info-icon"
+      pTooltip="Clique em uma matéria para ver e cadastrar tópicos do lado direito."
+      tooltipPosition="right"
+      [showDelay]="150"
+      [hideDelay]="80"
+      tabindex="0"
+      aria-label="Ajuda"
+    ></i>
+  </h2>
+</div>
+
         </div>
 
         <div *ngIf="carregandoMaterias" class="loading">

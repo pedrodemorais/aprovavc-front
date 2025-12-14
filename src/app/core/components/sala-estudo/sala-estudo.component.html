@@ -2,78 +2,82 @@
   [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }">
   <!-- CABEÇALHO DA SALA -->
   <section class="card sala-header">
-   <div class="titulo-sala">
-  <!-- TÍTULO DA MATÉRIA -->
-  <h1 class="sala-titulo">
-    {{ materia?.nome || 'Matéria' }}
-  </h1>
+    <div class="titulo-sala">
+      <!-- TÍTULO DA MATÉRIA -->
+      <div class ='titulo-botoes'>
+      
+        <div class="botoes">
+          <button type="button" class="aba" [class.ativa]="modo === 'estudar'" (click)="mudarModo('estudar')">
+            Estudar
+          </button>
 
-  <!-- ABAS DO MODO (AO LADO DO TÍTULO) -->
-  <div class="abas-modo titulo-abas">
-    <div class="botoes">
-      <button
-        type="button"
-        class="aba"
-        [class.ativa]="modo === 'estudar'"
-        (click)="mudarModo('estudar')"
-      >
-        Estudar
-      </button>
-
-      <button
-        type="button"
-        class="aba"
-        [class.ativa]="modo === 'revisar'"
-        (click)="mudarModo('revisar')"
-      >
-        Revisar
-      </button>
-    </div>
-  </div>
-</div>
+          <button type="button" class="aba" [class.ativa]="modo === 'revisar'" (click)="mudarModo('revisar')">
+            Revisar
+          </button>
+        </div>
+      
+      </div>
 
 
-    <div>
-      <!-- SONS DE FOCO -->
-      <div class="sons-foco-header">
-        <div class="sons-foco-info">
-          <span class="sons-foco-label">Som de foco (Melhor com Fone)</span>
-          <span class="sons-foco-hint">
-            Ative um som ambiente para manter a concentração.
-          </span>
+      <!-- ABAS DO MODO (AO LADO DO TÍTULO) -->
+      <div class="abas-modo titulo-abas">
+
+      </div>
+      <div>
+        <!-- SONS DE FOCO -->
+        <div class="sons-foco-header">
+          <div class="sons-foco-info">
+            <span class="sons-foco-label">
+              Som de foco (Melhor com Fone)
+
+              <i class="pi pi-info-circle info-icon info-icon--inline"
+                pTooltip="Ative um som ambiente para manter a concentração." tooltipPosition="top" [showDelay]="150"
+                [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+            </span>
 
 
-          <div class="icones-sons">
-            <button type="button" class="som-icone" *ngFor="let som of sonsFoco" [class.ativo]="somAtivoId === som.id"
-              (click)="onClickSomIcone(som.id)" [title]="som.nome">
-              <div class="som-icone-avatar-wrapper">
-                <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
-                <span class="som-icone-badge" *ngIf="somAtivoId === som.id">
-                  ▶
-                </span>
-              </div>
 
-              <div class="som-icone-textos">
-                <span class="som-icone-nome">{{ som.nome }}</span>
-              </div>
-            </button>
+            <div class="icones-sons">
+              <button type="button" class="som-icone" *ngFor="let som of sonsFoco" [class.ativo]="somAtivoId === som.id"
+                (click)="onClickSomIcone(som.id)" [title]="som.nome">
+                <div class="som-icone-avatar-wrapper">
+                  <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
+                  <span class="som-icone-badge" *ngIf="somAtivoId === som.id">
+                    ▶
+                  </span>
+                </div>
+
+                <div class="som-icone-textos">
+                  <span class="som-icone-nome">{{ som.nome }}</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
+
+
+
   </section>
 
-  <div class="separador"></div>
+  <div class="separador">teste</div>
 
   <!-- CORPO DA SALA -->
   <section class="card sala-body">
     <!-- COLUNA ESQUERDA: LISTA DE TÓPICOS -->
     <aside class="coluna-esquerda">
       <div class="coluna-header">
-        <h2>Tópicos da matéria</h2>
-        <p class="hint">
-          Clique em um tópico para focar o estudo.
-        </p>
+        <h2 class="titulo-com-info">
+            
+          {{ materia?.nome || 'Matéria' }}
+       
+
+          <i class="pi pi-info-circle info-icon" pTooltip="Clique em um tópico para focar o estudo."
+            tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+        </h2>
+
       </div>
 
       <!-- LISTA HIERÁRQUICA -->
@@ -138,47 +142,42 @@
 
           <!-- Editor com BANNER DE BLOQUEIO cobrindo tudo -->
           <div class="editor-wrapper">
-<p-editor
-  id="anotacoes"
-  [(ngModel)]="anotacoes"
-  name="anotacoes"
-  [readonly]="!topicoPermiteEstudo || !timerAtivo"
-  (onInit)="onEditorInit($event)"
->
-  <ng-template pTemplate="header">
-    <span class="ql-formats">
-      <button class="ql-bold" aria-label="Negrito"></button>
-      <button class="ql-italic" aria-label="Itálico"></button>
-      <button class="ql-underline" aria-label="Sublinhado"></button>
-      <button class="ql-strike" aria-label="Riscado"></button>
-    </span>
+            <p-editor id="anotacoes" [(ngModel)]="anotacoes" name="anotacoes"
+              [readonly]="!topicoPermiteEstudo || !timerAtivo" (onInit)="onEditorInit($event)">
+              <ng-template pTemplate="header">
+                <span class="ql-formats">
+                  <button class="ql-bold" aria-label="Negrito"></button>
+                  <button class="ql-italic" aria-label="Itálico"></button>
+                  <button class="ql-underline" aria-label="Sublinhado"></button>
+                  <button class="ql-strike" aria-label="Riscado"></button>
+                </span>
 
-    <span class="ql-formats">
-      <select class="ql-size" aria-label="Tamanho"></select>
-    </span>
+                <span class="ql-formats">
+                  <select class="ql-size" aria-label="Tamanho"></select>
+                </span>
 
-    <span class="ql-formats">
-      <select class="ql-color" aria-label="Cor do texto"></select>
-      <select class="ql-background" aria-label="Cor de fundo"></select>
-    </span>
+                <span class="ql-formats">
+                  <select class="ql-color" aria-label="Cor do texto"></select>
+                  <select class="ql-background" aria-label="Cor de fundo"></select>
+                </span>
 
-    <span class="ql-formats">
-      <button class="ql-list" value="ordered" aria-label="Lista ordenada"></button>
-      <button class="ql-list" value="bullet" aria-label="Lista"></button>
-      <button class="ql-indent" value="-1" aria-label="Diminuir recuo"></button>
-      <button class="ql-indent" value="+1" aria-label="Aumentar recuo"></button>
-    </span>
+                <span class="ql-formats">
+                  <button class="ql-list" value="ordered" aria-label="Lista ordenada"></button>
+                  <button class="ql-list" value="bullet" aria-label="Lista"></button>
+                  <button class="ql-indent" value="-1" aria-label="Diminuir recuo"></button>
+                  <button class="ql-indent" value="+1" aria-label="Aumentar recuo"></button>
+                </span>
 
-    <span class="ql-formats">
-      <button class="ql-link" aria-label="Link"></button>
-  
-    </span>
+                <span class="ql-formats">
+                  <button class="ql-link" aria-label="Link"></button>
 
-    <span class="ql-formats">
-      <button class="ql-clean" aria-label="Limpar formatação"></button>
-    </span>
-  </ng-template>
-</p-editor>
+                </span>
+
+                <span class="ql-formats">
+                  <button class="ql-clean" aria-label="Limpar formatação"></button>
+                </span>
+              </ng-template>
+            </p-editor>
 
 
             <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">

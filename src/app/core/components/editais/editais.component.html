@@ -6,12 +6,22 @@
 
       <!-- Cabeçalho do formulário -->
       <div class="form-header">
-        <div>
-          <h2 class="titulo-form">{{ tituloFormulario }}</h2>
-          <p class="form-sub">
-            Cadastre um edital/prova e vincule as matérias da sua biblioteca.
-          </p>
-        </div>
+     <div>
+  <h2 class="titulo-form">
+    {{ tituloFormulario }}
+
+    <i
+      class="pi pi-info-circle info-icon"
+      pTooltip="Cadastre um edital/prova e vincule as matérias da sua biblioteca."
+      tooltipPosition="right"
+      [showDelay]="150"
+      [hideDelay]="80"
+      tabindex="0"
+      aria-label="Ajuda"
+    ></i>
+  </h2>
+</div>
+
       </div>
 
       <!-- MENSAGENS GLOBAIS -->
@@ -54,13 +64,20 @@
 
         <!-- MATÉRIAS -->
         <div class="form-group">
-          <label>
-            Matérias da biblioteca <span class="obrigatorio">*</span>
-          </label>
+         <label class="label-com-info">
+  Matérias da biblioteca <span class="obrigatorio">*</span>
 
-          <small class="hint">
-            Clique nas matérias para adicionar ou remover do edital.
-          </small>
+  <i
+    class="pi pi-info-circle info-icon"
+    pTooltip="Clique nas matérias para adicionar ou remover do edital."
+    tooltipPosition="right"
+    [showDelay]="150"
+    [hideDelay]="80"
+    tabindex="0"
+    aria-label="Ajuda"
+  ></i>
+</label>
+
 
           <div class="chips-materias-wrapper">
             <button
@@ -98,12 +115,22 @@
     <section class="card painel-lista">
 
       <div class="lista-header">
-        <div>
-          <h2 class="titulo-bloco">Meus editais / provas</h2>
-          <p class="lista-legenda">
-            Visualize seus editais, acompanhe o progresso e o nível de domínio.
-          </p>
-        </div>
+    <div>
+  <h2 class="titulo-bloco">
+    Meus editais / provas
+
+    <i
+      class="pi pi-info-circle info-icon"
+      pTooltip="Visualize seus editais, acompanhe o progresso e o nível de domínio."
+      tooltipPosition="right"
+      [showDelay]="150"
+      [hideDelay]="80"
+      tabindex="0"
+      aria-label="Ajuda"
+    ></i>
+  </h2>
+</div>
+
     
         <button type="button" class="btn primario" (click)="novoEdital()">
           + Novo edital

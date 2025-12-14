@@ -50,6 +50,8 @@ import { EditaisComponent } from './components/editais/editais.component';
 import { AssinaturaCanceladaComponent } from './components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
 import { AssinaturaPlanosComponent } from './components/assinatura-planos/assinatura-planos.component';
 import { PerfilAlunoComponent } from './components/perfil-aluno/perfil-aluno.component';
+import { TooltipModule } from 'primeng/tooltip';
+
 
 
 
@@ -110,6 +112,7 @@ import { PerfilAlunoComponent } from './components/perfil-aluno/perfil-aluno.com
    BrowserModule,
     BrowserAnimationsModule,
     RichTextEditorModule,
+    TooltipModule,
   BrowserAnimationsModule,   // PRECISA estar aqui
     NgxMaskModule.forChild()
   ],

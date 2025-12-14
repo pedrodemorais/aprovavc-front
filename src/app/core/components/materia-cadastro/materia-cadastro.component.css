@@ -749,3 +749,85 @@
   color: #fecaca !important;
   border: 1px solid rgba(239, 68, 68, 0.26) !important;
 }
+/* Defaults (modo claro) */
+:root{
+  --tip-bg: rgba(0, 0, 0, 0.04);
+  --tip-bg-hover: rgba(0, 0, 0, 0.08);
+  --tip-border: rgb(0, 0, 0);
+  --tip-border-hover: rgba(0, 0, 0, 0.28);
+  --tip-color: rgba(0, 0, 0, 0.78);
+}
+
+/* Modo escuro (ajuste a classe conforme seu app: body.dark, .dark-mode, etc.) */
+body.theme-dark,
+:root.theme-dark {
+  --tip-bg: rgba(255, 255, 255, 0.06);
+  --tip-bg-hover: rgba(255, 255, 255, 0.12);
+  --tip-border: rgba(255, 255, 255, 0.18);
+  --tip-border-hover: rgba(255, 255, 255, 0.28);
+  --tip-color: rgba(255, 255, 255, 0.92);
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-tip {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  border: 1px solid var(--tip-border);
+
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+
+  cursor: pointer;
+  user-select: none;
+
+  background: var(--tip-bg);
+  color: var(--tip-color);
+
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.info-tip:hover,
+.info-tip:focus {
+  transform: translateY(-1px);
+  background: var(--tip-bg-hover);
+  border-color: var(--tip-border-hover);
+  outline: none;
+}
+.card-title{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-title,
+.card-title{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-icon{
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .55;
+  transform: translateY(1px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.info-icon:hover,
+.info-icon:focus{
+  opacity: .9;
+  transform: translateY(0);
+  outline: none;
+}
