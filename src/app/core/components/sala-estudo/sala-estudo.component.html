@@ -138,9 +138,48 @@
 
           <!-- Editor com BANNER DE BLOQUEIO cobrindo tudo -->
           <div class="editor-wrapper">
-            <p-editor id="anotacoes" [(ngModel)]="anotacoes" name="anotacoes"
-              [readonly]="!topicoPermiteEstudo || !timerAtivo">
-            </p-editor>
+<p-editor
+  id="anotacoes"
+  [(ngModel)]="anotacoes"
+  name="anotacoes"
+  [readonly]="!topicoPermiteEstudo || !timerAtivo"
+  (onInit)="onEditorInit($event)"
+>
+  <ng-template pTemplate="header">
+    <span class="ql-formats">
+      <button class="ql-bold" aria-label="Negrito"></button>
+      <button class="ql-italic" aria-label="Itálico"></button>
+      <button class="ql-underline" aria-label="Sublinhado"></button>
+      <button class="ql-strike" aria-label="Riscado"></button>
+    </span>
+
+    <span class="ql-formats">
+      <select class="ql-size" aria-label="Tamanho"></select>
+    </span>
+
+    <span class="ql-formats">
+      <select class="ql-color" aria-label="Cor do texto"></select>
+      <select class="ql-background" aria-label="Cor de fundo"></select>
+    </span>
+
+    <span class="ql-formats">
+      <button class="ql-list" value="ordered" aria-label="Lista ordenada"></button>
+      <button class="ql-list" value="bullet" aria-label="Lista"></button>
+      <button class="ql-indent" value="-1" aria-label="Diminuir recuo"></button>
+      <button class="ql-indent" value="+1" aria-label="Aumentar recuo"></button>
+    </span>
+
+    <span class="ql-formats">
+      <button class="ql-link" aria-label="Link"></button>
+  
+    </span>
+
+    <span class="ql-formats">
+      <button class="ql-clean" aria-label="Limpar formatação"></button>
+    </span>
+  </ng-template>
+</p-editor>
+
 
             <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
               <div class="editor-aviso">

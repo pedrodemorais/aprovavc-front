@@ -125,6 +125,38 @@ mensagemRevisao?: string;
     });
   }
 
+onEditorInit(event: any) {
+  const quill = event?.editor || event; // PrimeNG pode mandar direto ou dentro de .editor
+
+  // Remove qualquer IMG que venha do clipboard (inclui base64)
+  quill.clipboard.addMatcher('IMG', () => {
+    return { ops: [] };
+  });
+
+  // Bloqueia drop de imagem
+  quill.root.addEventListener('drop', (e: DragEvent) => {
+    const files = e.dataTransfer?.files;
+    if (!files?.length) return;
+
+    const hasImage = Array.from(files).some(f => f.type.startsWith('image/'));
+    if (hasImage) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  // Bloqueia paste de imagem (binário)
+  quill.root.addEventListener('paste', (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items?.length) return;
+
+    const hasImage = Array.from(items).some(i => i.type.startsWith('image/'));
+    if (hasImage) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+}
 
   ngOnDestroy(): void {
     this.pararTimerInterno();

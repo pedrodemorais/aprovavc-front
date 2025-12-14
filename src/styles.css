@@ -39,9 +39,9 @@ body.theme-dark {
 
   --border: rgba(255, 255, 255, 0.12);
 
-  --text: #e5e7eb;
-  --text-2: #cbd5e1;
-  --muted: #94a3b8;
+  --text: #fbfffc80;
+  --text-2: #ffffff9a;
+  --muted: #94a3b886;
 
   --primary: #22c55e;
 
@@ -64,7 +64,7 @@ body {
   padding: 0;
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  background: var(--bg);
+ 
   color: var(--text);
 }
 
@@ -123,8 +123,7 @@ body {
 .container {
   flex: 1;
   display: flex;
-  gap: 16px;
-  padding: 16px;
+
 }
 
 /* =======================================
@@ -132,8 +131,8 @@ body {
 ======================================= */
 .sidebar {
   width: 240px;
-  padding: 12px 0;
-  border-radius: 14px;
+  
+ 
   border: 1px solid var(--border);
  
   box-shadow: var(--shadow);
@@ -160,7 +159,7 @@ body {
 .p-panelmenu .p-menuitem-link-active {
   font-weight: 600;
   color: var(--primary) !important;
-  background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
+ 
 }
 
 .p-panelmenu .p-menuitem-icon {

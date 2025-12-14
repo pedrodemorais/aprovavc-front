@@ -5073,18 +5073,23 @@
   }
   .p-panelmenu .p-panelmenu-header {
     outline: 0 none;
+    
   }
-  .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content {
-    border: 1px solid #dee2e6;
-    color: #495057;
-    background: #f8f9fa;
-    border-radius: 3px;
-    transition: box-shadow 0.2s;
-  }
+.p-panelmenu .p-panelmenu-header .p-panelmenu-header-content {
+  color: #424443;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  border-radius: 3px;
+  transition: box-shadow 0.2s;
+  font-size: 0.85rem;   /* diminui a fonte */
+  line-height: 1.2;     /* opcional: deixa mais “compacto” */
+}
+
   .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content .p-panelmenu-header-action {
     color: #495057;
-    padding: 1rem;
-    font-weight: 600;
+    margin-left: 0.8rem;
+    
+    padding: 0.5rem;
+    
   }
   .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content .p-panelmenu-header-action .p-submenu-icon {
     margin-right: 0.5rem;

@@ -1,23 +1,21 @@
 /* ============================
-  FONTE / BASE
+   FONTE / BASE
 ============================ */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 /* ============================
-  CONTAINER GERAL (LIGHT)
+   CONTAINER GERAL (LIGHT)
 ============================ */
 .page-materias {
   width: 100%;
   min-height: calc(100dvh - 80px);
   box-sizing: border-box;
   padding: 20px 16px 28px;
-
-  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* ============================
-  TOPO / HEADER (LIGHT)
+   TOPO / HEADER (LIGHT)
 ============================ */
 .page-materias-header {
   max-width: 1180px;
@@ -44,7 +42,7 @@
 }
 
 /* ============================
-  STEPS (1 MATÉRIAS / 2 TÓPICOS) (LIGHT)
+   STEPS (LIGHT)
 ============================ */
 .steps-indicador {
   display: inline-flex;
@@ -98,7 +96,7 @@
 }
 
 /* ============================
-  ERRO GLOBAL (LIGHT)
+   ERRO GLOBAL (LIGHT)
 ============================ */
 .mensagem-erro {
   max-width: 1180px;
@@ -111,7 +109,7 @@
 }
 
 /* ============================
-  CONTEÚDO 2 COLUNAS (LIGHT)
+   CONTEÚDO 2 COLUNAS (LIGHT)
 ============================ */
 .page-materias-content {
   max-width: 1180px;
@@ -128,14 +126,14 @@
 }
 
 /* ============================
-  CARDS GENÉRICOS (LIGHT)
+   CARDS (LIGHT)
 ============================ */
 .card {
   background: #ffffff;
   border-radius: 22px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
-  padding: 14px 16px 14px;
+  padding: 14px 16px;
   box-sizing: border-box;
 }
 
@@ -175,20 +173,15 @@
   white-space: nowrap;
 }
 
-.pill-materia {
+.pill-materia,
+.pill-topico {
   background: #ecfdf3;
   box-shadow: 0 0 0 1px #16a34a;
   color: #166534;
 }
 
-.pill-topico {
-  background: #e8f5e9;
-  box-shadow: 0 0 0 1px #16a34a;
-  color: #166534;
-}
-
 /* ============================
-  FORMULÁRIO DE MATÉRIA (LIGHT)
+   FORMULÁRIO (LIGHT)
 ============================ */
 .form-materia {
   display: flex;
@@ -223,8 +216,7 @@
   outline: none;
   background-color: #ffffff;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease,
-    background 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .input-text:focus {
@@ -245,7 +237,7 @@
 }
 
 /* ============================
-  BOTÕES (LIGHT)
+   BOTÕES (LIGHT)
 ============================ */
 .form-acoes {
   display: flex;
@@ -259,8 +251,7 @@
   font-size: 0.85rem;
   border: none;
   cursor: pointer;
-  transition: background 0.16s, color 0.16s, box-shadow 0.12s,
-    transform 0.08s;
+  transition: background 0.16s, color 0.16s, box-shadow 0.12s, transform 0.08s;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -271,18 +262,24 @@
   transform: translateY(1px);
 }
 
+/* Primário */
 .btn.primario {
   background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.35);
+}
+
+.btn.primario:hover:not(:disabled) {
+  background: #15803d;
+  transform: translateY(-1px);
 }
 
 .btn.primario:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: default;
   box-shadow: none;
 }
 
+/* Secundário */
 .btn.secundario {
   background: #f3f4f6;
   color: #374151;
@@ -294,7 +291,7 @@
 }
 
 /* ============================
-  LISTA DE MATÉRIAS (LIGHT)
+   LISTA DE MATÉRIAS (LIGHT)
 ============================ */
 .lista-materias {
   list-style: none;
@@ -312,8 +309,7 @@
   padding: 6px 10px;
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.14s, box-shadow 0.14s, border-color 0.14s,
-    transform 0.06s;
+  transition: background 0.14s, box-shadow 0.14s, border-color 0.14s, transform 0.06s;
   border: 1px solid transparent;
 }
 
@@ -383,7 +379,7 @@
 }
 
 /* ============================
-  ESTADOS AUXILIARES (LIGHT)
+   ESTADOS AUXILIARES (LIGHT)
 ============================ */
 .estado-vazio,
 .estado-vazio-topicos {
@@ -403,15 +399,14 @@
 }
 
 /* ============================
-  COLUNA DIREITA – TÓPICOS (LIGHT)
+   COLUNA DIREITA – TÓPICOS (LIGHT)
 ============================ */
 .bloco-topicos {
   min-height: 260px;
 }
 
 .novo-topico-card {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin: 10px 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -437,14 +432,14 @@
   border-radius: 14px;
   border: 1px solid #e5e7eb;
   background: #f9fafb;
-  padding: 8px 8px;
+  padding: 8px;
   box-sizing: border-box;
   max-height: calc(100dvh - 320px);
   overflow: auto;
 }
 
 /* ============================
-  ÁRVORE DE TÓPICOS (LIGHT)
+   ÁRVORE DE TÓPICOS (LIGHT)
 ============================ */
 .lista-topicos,
 .lista-topicos-filhos {
@@ -461,8 +456,7 @@
   border-radius: 10px;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.14s, box-shadow 0.14s, border-color 0.14s,
-    transform 0.06s;
+  transition: background 0.14s, box-shadow 0.14s, border-color 0.14s, transform 0.06s;
 }
 
 .topico-linha:hover {
@@ -527,7 +521,7 @@
 }
 
 /* ============================
-  RESPONSIVO
+   RESPONSIVO
 ============================ */
 @media (max-width: 900px) {
   .page-materias {
@@ -573,7 +567,7 @@
   }
 
   .card {
-    padding: 12px 12px 12px;
+    padding: 12px;
     border-radius: 18px;
   }
 
@@ -584,9 +578,8 @@
 }
 
 /* ============================
-  DARK MODE (Angular)
-  - depende de body.theme-dark
-  - cola no final do arquivo
+   DARK MODE (Angular)
+   - depende de body.theme-dark
 ============================ */
 :host-context(body.theme-dark) .page-materias {
   background: transparent !important;
@@ -731,87 +724,15 @@
 }
 
 /* botões */
-:host-context(body.theme-dark) .btn.secundario {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: var(--text) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-}
-
-:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.09) !important;
-}
-
 :host-context(body.theme-dark) .btn.primario {
-  background: var(--primary) !important;
-  color: #0b1220 !important;
-  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.22) !important;
-}
-
-/* erro global */
-:host-context(body.theme-dark) .mensagem-erro {
-  background: rgba(239, 68, 68, 0.12) !important;
-  color: #fecaca !important;
-  border: 1px solid rgba(239, 68, 68, 0.26) !important;
-}
-/* =======================================
-   BOTÕES – PADRÃO GLOBAL (LIGHT + DARK)
-======================================= */
-
-/* BOTÃO PRIMÁRIO */
-.btn.primario {
-  background: #16a34a !important;
+  background: #16a34a8c !important;
   color: #ffffff !important;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.45) !important;
-  border: none !important;
-}
-
-.btn.primario:hover:not(:disabled) {
-  background: #15803d !important;
-  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.6) !important;
-  transform: translateY(-1px);
-}
-
-.btn.primario:active {
-  transform: translateY(1px);
-  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.45) !important;
-}
-
-.btn.primario:disabled {
-  opacity: 0.55;
-  cursor: default;
-  box-shadow: none !important;
-}
-
-/* =======================================
-   BOTÃO PRIMÁRIO — DARK MODE
-======================================= */
-
-:host-context(body.theme-dark) .btn.primario {
-  background: #16a34a !important;
-  color: #ffffff !important;
-  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.55) !important;
 }
 
 :host-context(body.theme-dark) .btn.primario:hover:not(:disabled) {
   background: #15803d !important;
-  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.7) !important;
 }
 
-/* =======================================
-   BOTÃO SECUNDÁRIO (NEUTRO)
-======================================= */
-
-.btn.secundario {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-}
-
-.btn.secundario:hover:not(:disabled) {
-  background: #e5e7eb;
-}
-
-/* Dark */
 :host-context(body.theme-dark) .btn.secundario {
   background: rgba(255, 255, 255, 0.06) !important;
   color: #e5e7eb !important;
@@ -820,4 +741,11 @@
 
 :host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* erro global */
+:host-context(body.theme-dark) .mensagem-erro {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fecaca !important;
+  border: 1px solid rgba(239, 68, 68, 0.26) !important;
 }
