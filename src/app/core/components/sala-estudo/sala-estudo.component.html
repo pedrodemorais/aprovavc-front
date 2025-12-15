@@ -332,7 +332,7 @@
         <!-- REVISÃO POR ANOTAÇÕES -->
         <div *ngIf="modoRevisao === 'anotacoes'" class="bloco bloco-revisao-anotacoes">
           <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
-            <h3 class="subtitulo-section">Anotações deste tópico</h3>
+            <div class="subtitulo-section">Anotações deste tópico</div>
 
             <!-- Renderiza o HTML vindo do editor -->
             <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras"></div>
