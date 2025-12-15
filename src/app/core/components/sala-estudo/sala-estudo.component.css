@@ -7,7 +7,7 @@
   CONTAINER GERAL
 ============================ */
 .sala-container {
-  min-height: 100vh;
+ 
   padding: 5px 16px 32px;
   box-sizing: border-box;
  
@@ -39,7 +39,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  
+ 
    width: 100%;
 }
 
@@ -117,7 +117,7 @@
 
 .sons-foco-label {
 
-  color: #38383a;
+ color: #2b2b2c9c;
 }
 
 .sons-foco-hint {
@@ -140,10 +140,7 @@
   font-size: 0.82rem;
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(4px);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 5px 10px;
+ 
   transition: transform 0.12s, box-shadow 0.12s, background 0.18s, opacity 0.18s;
   opacity: 0.95;
 }
@@ -215,14 +212,19 @@
 }
 
 /* Coluna esquerda (tópicos) */
+/* Coluna esquerda (tópicos) */
 .coluna-esquerda {
   width: 280px;
-  border-right: 1px solid #e5e7eb;
+ 
   padding-right: 14px;
-  margin-right: 10px;
+
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.lista-de-topicos{
+ border-top: 1px solid #4f5351af;
+
 }
 
 .coluna-header h2 {
@@ -230,6 +232,18 @@
   font-size: 1rem;
   font-weight: 600;
   color: #0f172a;
+  color: #2b2b2c9c;
+}
+.titulo-com-info{
+  display: flex;
+  flex-direction: row;     /* garante linha */
+ 
+
+
+  align-items: baseline;   /* alinha pelo baseline do texto */
+  justify-content: space-between; /* começa da esquerda */
+  gap: 8px;                /* espaço entre os itens */
+  flex-wrap: nowrap;       /* não quebrar linha */
 }
 
 .hint {
@@ -298,7 +312,7 @@
 
 .descricao-topico {
   font-size: 0.9rem;
-  color: #111827;
+  color: #2b2b2cbb;
 }
 
 /* Coluna direita (conteúdo) */
@@ -359,8 +373,8 @@
 .modo-conteudo {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 68dvh;
+  
+  height: 82dvh;
 }
 
 .bloco {
@@ -383,7 +397,7 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #2b2b2c9c;
 }
 
 .titulo-section span {

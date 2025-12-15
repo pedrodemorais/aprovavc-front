@@ -1,86 +1,38 @@
 <div class="sala-container" *ngIf="!carregando; else loadingTpl"
   [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }">
-  <!-- CABEÇALHO DA SALA -->
-  <section class="card sala-header">
-    <div class="titulo-sala">
-      <!-- TÍTULO DA MATÉRIA -->
-      <div class ='titulo-botoes'>
-      
-        <div class="botoes">
-          <button type="button" class="aba" [class.ativa]="modo === 'estudar'" (click)="mudarModo('estudar')">
-            Estudar
-          </button>
-
-          <button type="button" class="aba" [class.ativa]="modo === 'revisar'" (click)="mudarModo('revisar')">
-            Revisar
-          </button>
-        </div>
-      
-      </div>
 
 
-      <!-- ABAS DO MODO (AO LADO DO TÍTULO) -->
-      <div class="abas-modo titulo-abas">
-
-      </div>
-      <div>
-        <!-- SONS DE FOCO -->
-        <div class="sons-foco-header">
-          <div class="sons-foco-info">
-            <span class="sons-foco-label">
-              Som de foco (Melhor com Fone)
-
-              <i class="pi pi-info-circle info-icon info-icon--inline"
-                pTooltip="Ative um som ambiente para manter a concentração." tooltipPosition="top" [showDelay]="150"
-                [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
-            </span>
-
-
-
-            <div class="icones-sons">
-              <button type="button" class="som-icone" *ngFor="let som of sonsFoco" [class.ativo]="somAtivoId === som.id"
-                (click)="onClickSomIcone(som.id)" [title]="som.nome">
-                <div class="som-icone-avatar-wrapper">
-                  <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
-                  <span class="som-icone-badge" *ngIf="somAtivoId === som.id">
-                    ▶
-                  </span>
-                </div>
-
-                <div class="som-icone-textos">
-                  <span class="som-icone-nome">{{ som.nome }}</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-
-
-  </section>
-
-  <div class="separador">teste</div>
 
   <!-- CORPO DA SALA -->
   <section class="card sala-body">
     <!-- COLUNA ESQUERDA: LISTA DE TÓPICOS -->
     <aside class="coluna-esquerda">
-      <div class="coluna-header">
-        <h2 class="titulo-com-info">
-            
-          {{ materia?.nome || 'Matéria' }}
-       
+      <div class="nome-botoes">
+        <div class="coluna-header">
 
-          <i class="pi pi-info-circle info-icon" pTooltip="Clique em um tópico para focar o estudo."
-            tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
-        </h2>
+          <div class="titulo-com-info">
 
+            {{ materia?.nome || 'Matéria' }}
+
+
+            <i class="pi pi-info-circle info-icon" pTooltip="Clique em um tópico para focar o estudo."
+              tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+            <div class="botoes">
+              <button type="button" class="aba" [class.ativa]="modo === 'estudar'" (click)="mudarModo('estudar')">
+                Estudar
+              </button>
+
+              <button type="button" class="aba" [class.ativa]="modo === 'revisar'" (click)="mudarModo('revisar')">
+                Revisar
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <!-- LISTA HIERÁRQUICA -->
+       <div class="lista-de-topicos">
       <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
         <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
           [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
@@ -93,7 +45,7 @@
           </div>
         </li>
       </ul>
-
+       </div>
       <ng-template #semTopicos>
         <p class="muted">
           Esta matéria ainda não possui tópicos cadastrados.
@@ -245,6 +197,38 @@
           <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">
             {{ mensagemEstudoSalvo }}
           </span>
+        </div>
+        <div>
+          <!-- SONS DE FOCO -->
+          <div class="sons-foco-header">
+            <div class="sons-foco-info">
+              <span class="sons-foco-label">
+                Som de foco (Melhor com Fone)
+
+                <i class="pi pi-info-circle info-icon info-icon--inline"
+                  pTooltip="Ative um som ambiente para manter a concentração." tooltipPosition="top" [showDelay]="150"
+                  [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+              </span>
+
+
+
+              <div class="icones-sons">
+                <button type="button" class="som-icone" *ngFor="let som of sonsFoco"
+                  [class.ativo]="somAtivoId === som.id" (click)="onClickSomIcone(som.id)" [title]="som.nome">
+                  <div class="som-icone-avatar-wrapper">
+                    <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
+                    <span class="som-icone-badge" *ngIf="somAtivoId === som.id">
+                      ▶
+                    </span>
+                  </div>
+
+                  <div class="som-icone-textos">
+                    <span class="som-icone-nome">{{ som.nome }}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
