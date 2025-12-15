@@ -468,8 +468,7 @@ body {
   gap: 0.75rem;
 
   
-  padding-right: 0.75rem; /* espaço entre ícones e a borda */
-  margin-right: 0.75rem;  /* espaço após a borda (opcional) */
+ 
 }
 
 
@@ -574,8 +573,9 @@ body {
 .volume-vertical {
   width: 34px;
   height: 120px;
-   background: red;
+  
 }
+
 
 /* =======================================
    ANIMAÇÃO

@@ -8,27 +8,57 @@
     <!-- COLUNA ESQUERDA: LISTA DE TÓPICOS -->
     <aside class="coluna-esquerda">
       <div class="nome-botoes">
-        <div class="coluna-header">
+  <div class="coluna-header">
 
-          <div class="titulo-com-info">
+  <div class="titulo-com-info">
 
-            {{ materia?.nome || 'Matéria' }}
+    <span class="titulo-materia">
+      {{ materia?.nome || 'Matéria' }}
+    </span>
 
+    <i
+      class="pi pi-info-circle info-icon"
+      pTooltip="Clique em um tópico para focar o estudo."
+      tooltipPosition="right"
+      [showDelay]="150"
+      [hideDelay]="80"
+      tabindex="0"
+      aria-label="Ajuda"
+    ></i>
 
-            <i class="pi pi-info-circle info-icon" pTooltip="Clique em um tópico para focar o estudo."
-              tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
-            <div class="botoes">
-              <button type="button" class="aba" [class.ativa]="modo === 'estudar'" (click)="mudarModo('estudar')">
-                Estudar
-              </button>
+    <!-- SEGMENTADO (reaproveita o CSS do timer: .timer-modos + .btn-modo-timer + .ativo) -->
+    <div class="timer-modos" role="tablist" aria-label="Modo da sala">
+      <button
+        type="button"
+        class="btn-modo-timer"
+        [class.ativo]="modo === 'estudar'"
+        (click)="mudarModo('estudar')"
+        aria-label="Modo estudar"
+        pTooltip="Estudar"
+        tooltipPosition="top"
+      >
+        <i class="pi pi-book"></i>
+        <span>Estudar</span>
+      </button>
 
-              <button type="button" class="aba" [class.ativa]="modo === 'revisar'" (click)="mudarModo('revisar')">
-                Revisar
-              </button>
-            </div>
-          </div>
+      <button
+        type="button"
+        class="btn-modo-timer"
+        [class.ativo]="modo === 'revisar'"
+        (click)="mudarModo('revisar')"
+        aria-label="Modo revisar"
+        pTooltip="Revisar"
+        tooltipPosition="top"
+      >
+        <i class="pi pi-refresh"></i>
+        <span>Revisar</span>
+      </button>
+    </div>
 
-        </div>
+  </div>
+
+</div>
+
       </div>
 
       <!-- LISTA HIERÁRQUICA -->
@@ -78,18 +108,75 @@
 
             </div>
 
+           <div class="tipo-estudo">
 
-            <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
-                (click)="setModoTemporizador('livre')">
-                ⏱ Livre
-              </button>
+  <div class="timer-bar">
 
-              <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
-                (click)="setModoTemporizador('pomodoro')">
-                🍅 Pomodoro
-              </button>
-            </div>
+    <!-- MODOS (segmentado premium) -->
+    <div class="timer-modos" role="tablist" aria-label="Modo do temporizador">
+      <button
+        type="button"
+        class="btn-modo-timer"
+        [class.ativo]="modoTemporizador === 'livre'"
+        (click)="setModoTemporizador('livre')"
+        aria-label="Modo livre"
+        pTooltip="Modo livre"
+        tooltipPosition="top"
+      >
+        <i class="pi pi-stopwatch"></i>
+        <span>Livre</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn-modo-timer"
+        [class.ativo]="modoTemporizador === 'pomodoro'"
+        (click)="setModoTemporizador('pomodoro')"
+        aria-label="Pomodoro"
+        pTooltip="Pomodoro"
+        tooltipPosition="top"
+      >
+        <span class="emoji">🍅</span>
+        <span>Pomodoro</span>
+      </button>
+    </div>
+
+    <!-- AÇÕES -->
+    <div class="botoes-do-timer">
+
+      <button
+        type="button"
+        class="btn-icon btn-play"
+        (click)="toggleTimer()"
+        [disabled]="!topicoSelecionado || !topicoPermiteEstudo"
+        [attr.aria-label]="timerAtivo ? 'Pausar' : 'Iniciar'"
+        [pTooltip]="timerAtivo ? 'Pausar' : 'Iniciar'"
+        tooltipPosition="top"
+      >
+        <i class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></i>
+      </button>
+
+      <button
+        type="button"
+        class="btn-icon btn-reset"
+        (click)="zerarTimer()"
+        [disabled]="
+          (!tempoTotalSegundos && modoTemporizador === 'livre') ||
+          (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)
+        "
+        aria-label="Zerar"
+        pTooltip="Zerar"
+        tooltipPosition="top"
+      >
+        <i class="pi pi-refresh"></i>
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
           </div>
 
           <!-- Editor com BANNER DE BLOQUEIO cobrindo tudo -->
@@ -128,7 +215,18 @@
                 <span class="ql-formats">
                   <button class="ql-clean" aria-label="Limpar formatação"></button>
                 </span>
+        <span class="timer-toolbar-right">
+  <span class="timer-label">
+    {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
+    <ng-container *ngIf="modoTemporizador === 'pomodoro'">
+      – <span class="timer-fase-inline">{{ labelFasePomodoro }}</span>
+    </ng-container>
+    · {{ tempoFormatado }}
+  </span>
+</span>
+
               </ng-template>
+              
             </p-editor>
 
 
@@ -159,12 +257,7 @@
             <!-- AÇÕES DO ESTUDO -->
             <div class="acoes-estudo">
 
-              <!-- SALVAR -->
-              <button type="button" class="btn primario btn-acao" [disabled]="!topicoPermiteEstudo"
-                (click)="salvarEstudo()" pTooltip="Salvar estudo" tooltipPosition="top" aria-label="Salvar estudo">
-                <i class="pi pi-check"></i>
-                <span class="btn-text">Salvar</span>
-              </button>
+           
 
               <!-- FLASHCARD -->
               <button type="button" class="btn secundario btn-acao" (click)="abrirModalFlashcard()"
@@ -174,6 +267,13 @@
                 <span class="btn-text">Flashcard</span>
               </button>
 
+                 <!-- SALVAR -->
+              <button type="button" class="btn primario btn-acao" [disabled]="!topicoPermiteEstudo"
+                (click)="salvarEstudo()" pTooltip="Salvar estudo" tooltipPosition="top" aria-label="Salvar estudo">
+                <i class="pi pi-check"></i>
+                <span class="btn-text">Salvar</span>
+              </button>
+
               <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">
                 {{ mensagemEstudoSalvo }}
               </span>
@@ -181,35 +281,7 @@
             </div>
 
 
-            <div class="timer-header-textos">
-              <div class="botoes-do-timer">
-
-                <!-- INICIAR / PAUSAR -->
-                <button type="button" class="btn primario btn-icon" (click)="toggleTimer()"
-                  [disabled]="!topicoSelecionado || !topicoPermiteEstudo"
-                  [attr.aria-label]="timerAtivo ? 'Pausar' : 'Iniciar'" [pTooltip]="timerAtivo ? 'Pausar' : 'Iniciar'"
-                  tooltipPosition="top">
-                  <i class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></i>
-                </button>
-
-                <!-- ZERAR -->
-                <button type="button" class="btn secundario btn-icon" (click)="zerarTimer()" [disabled]="
-        (!tempoTotalSegundos && modoTemporizador === 'livre') ||
-        (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)
-      " aria-label="Zerar" pTooltip="Zerar" tooltipPosition="top">
-                  <i class="pi pi-refresh"></i>
-                </button>
-
-              </div>
-
-              <span class="timer-label">
-                {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
-                <ng-container *ngIf="modoTemporizador === 'pomodoro'">
-                  – <span class="timer-fase-inline">{{ labelFasePomodoro }}</span>
-                </ng-container>
-                · {{ tempoFormatado }}
-              </span>
-            </div>
+           
 
           </div>
         </div>
@@ -247,7 +319,9 @@
               (click)="ativarRevisaoFlashcards()">
               🃏 Flashcards
             </button>
+
           </div>
+
         </div>
 
         <div class="alerta-revisao" *ngIf="mensagemRevisao">

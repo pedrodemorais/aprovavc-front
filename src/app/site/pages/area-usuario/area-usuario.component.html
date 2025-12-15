@@ -21,7 +21,9 @@
     <div>
       <div class="son-e-modo-escuro">
         <!-- SONS DE FOCO -->
-        
+          <button class="btn-modo-leitura" type="button" (click)="modoLeituraService.toggle()">
+        <i class="pi" [ngClass]="modoLeituraService.isDark() ? 'pi-sun' : 'pi-moon'"></i>
+      </button>
         <div class="sons-foco-header">
           <div class="sons-foco-info">
             <span class="sons-foco-label">
@@ -52,9 +54,7 @@
               </div>
           </div>
         </div>
-         <button class="btn-modo-leitura" type="button" (click)="modoLeituraService.toggle()">
-        <i class="pi" [ngClass]="modoLeituraService.isDark() ? 'pi-sun' : 'pi-moon'"></i>
-      </button>
+       
       </div>
      
 
