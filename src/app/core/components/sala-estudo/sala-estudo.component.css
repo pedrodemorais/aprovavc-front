@@ -93,113 +93,10 @@
 .aba.ativa {
   background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.35);
-}
-
-/* ============================
-  SONS DE FOCO
-============================ */
-.sons-foco-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
   
- 
 }
 
-.sons-foco-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 0.8rem;
-  color: #4b5563;
-}
 
-.sons-foco-label {
-
- color: #2b2b2c9c;
-}
-
-.sons-foco-hint {
- 
-  color: #6b7280;
-}
-
-.icones-sons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.som-icone {
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(4px);
- 
-  transition: transform 0.12s, box-shadow 0.12s, background 0.18s, opacity 0.18s;
-  opacity: 0.95;
-}
-
-.som-icone:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.16);
-  opacity: 1;
-}
-
-.som-icone.ativo {
-  background: #16a34a;
-  color: #ffffff;
-  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.38);
-}
-
-.som-icone-avatar-wrapper {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.som-icone-img {
-  width: 25px;
-  height: 25px;
-  border-radius: 999px;
-  object-fit: cover;
-}
-
-.som-icone-badge {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: #16a34a;
-  color: #ffffff;
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 1px #ffffff;
-}
-
-.som-icone-textos {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.som-icone-nome {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #111827;
-}
-
-.som-icone.ativo .som-icone-nome {
-  color: #ffffff;
-}
 
 /* ============================
   CORPO / COLUNAS
@@ -223,7 +120,7 @@
   gap: 8px;
 }
 .lista-de-topicos{
- border-top: 1px solid #4f5351af;
+ border-top: 1px solid #4f535136;
 
 }
 
@@ -291,8 +188,8 @@
 }
 
 .badge-nivel {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   flex-shrink: 0;
 }
@@ -346,7 +243,7 @@
 .btn.primario {
   background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.35);
+ 
 }
 
 .btn.primario:disabled {
@@ -378,10 +275,10 @@
 }
 
 .bloco {
-  background: #f9fafb;
-  border-radius: 16px;
+ 
+ 
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
   flex: 1;
   box-sizing: border-box;
 }
@@ -389,7 +286,7 @@
 .bloco-anotacoes {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
   min-height: 0;
 }
 
@@ -458,13 +355,15 @@
 
 .timer-header-textos {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 2px;
+  align-items: center;
 }
 
 .timer-label {
   font-size: 0.8rem;
   color: #4b5563;
+  width: 10rem;
 }
 
 .timer-fase-inline {
@@ -475,7 +374,7 @@
 /* Editor + overlay */
 .editor-wrapper {
   flex: 1;
-  min-height: 0;
+  
   width: 100%;
   position: relative;
 }
@@ -486,7 +385,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 38vh;
+  
   box-sizing: border-box;
   border-radius: 16px;
 }
@@ -956,6 +855,58 @@
   font-size: 0.9rem;
 }
 
+.botoes-do-timer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-icon {
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+}
+
+.btn-icon .pi {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.acoes-estudo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-acao .pi {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* Mobile: deixa só ícone (mais clean) */
+@media (max-width: 768px) {
+  .btn-acao .btn-text {
+    display: none;
+  }
+
+  .btn-acao {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 12px;
+  }
+}
 
 /* ============================
   RESPONSIVO

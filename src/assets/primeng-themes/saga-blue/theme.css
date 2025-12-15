@@ -232,11 +232,11 @@
   border: 1px solid #dee2e6;
 }
 .p-editor-container .p-editor-content .ql-editor {
-  background: #d8eee6;
+  background:#f0f0f0;;
   color: #495057;
-  border-bottom-right-radius: 3px;
-  border-bottom-left-radius: 3px;
-  height: 57dvh;
+  border-bottom-right-radius: 16px;
+  border-bottom-left-radius: 16px;
+  height: 65dvh;
 }
 .p-editor-container .ql-snow.ql-toolbar button:hover,
 .p-editor-container .ql-snow.ql-toolbar button:focus {

@@ -431,6 +431,152 @@ body {
   background: rgba(34, 197, 94, 0.18) !important;
 }
 
+/* ============================
+  SONS DE FOCO
+============================ */
+.sons-foco-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  
+ 
+}
+
+.sons-foco-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.sons-foco-label {
+
+ color: #2b2b2c9c;
+}
+
+.sons-foco-hint {
+ 
+  color: #6b7280;
+}
+
+.icones-sons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+
+  
+  padding-right: 0.75rem; /* espaço entre ícones e a borda */
+  margin-right: 0.75rem;  /* espaço após a borda (opcional) */
+}
+
+
+.som-icone {
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(4px);
+ 
+  transition: transform 0.12s, box-shadow 0.12s, background 0.18s, opacity 0.18s;
+  opacity: 0.95;
+}
+
+.som-icone:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.16);
+  opacity: 1;
+}
+
+.som-icone.ativo {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.38);
+}
+
+.som-icone-avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.som-icone-img {
+  width: 25px;
+  height: 25px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.som-icone-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1px #ffffff;
+}
+
+.som-icone-textos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.som-icone-nome {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.som-icone.ativo .som-icone-nome {
+  color: #ffffff;
+}
+
+
+.son-e-modo-escuro {
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;          /* espaçamento entre os itens */
+  flex-wrap: nowrap;  /* garante que não quebre linha */
+}
+.volume-vertical {
+  background: red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0.75rem; /* se estiver do lado direito */
+  margin-left: 0.75rem;
+  border-left: 1px solid rgba(255,255,255,0.12); /* opcional */
+}
+
+/* abordagem mais compatível: rotate */
+.volume-slider {
+  width: 110px;     /* vira "altura" depois do rotate */
+  height: 28px;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  cursor: pointer;
+  background: red;
+}
+
+/* opcional: melhora área clicável */
+.volume-vertical {
+  width: 34px;
+  height: 120px;
+   background: red;
+}
+
 /* =======================================
    ANIMAÇÃO
 ======================================= */

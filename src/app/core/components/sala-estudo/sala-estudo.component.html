@@ -32,20 +32,20 @@
       </div>
 
       <!-- LISTA HIERÁRQUICA -->
-       <div class="lista-de-topicos">
-      <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
-        <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
-          [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
-          (click)="!t.hasFilhos && selecionarTopico(t)">
-          <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
-            <span class="badge-nivel" [ngClass]="classeSemaforoRevisaoSala(t)"></span>
-            <span class="descricao-topico">
-              {{ t.descricao }}
-            </span>
-          </div>
-        </li>
-      </ul>
-       </div>
+      <div class="lista-de-topicos">
+        <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
+          <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
+            [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
+            (click)="!t.hasFilhos && selecionarTopico(t)">
+            <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
+              <span class="badge-nivel" [ngClass]="classeSemaforoRevisaoSala(t)"></span>
+              <span class="descricao-topico">
+                {{ t.descricao }}
+              </span>
+            </div>
+          </li>
+        </ul>
+      </div>
       <ng-template #semTopicos>
         <p class="muted">
           Esta matéria ainda não possui tópicos cadastrados.
@@ -156,22 +156,52 @@
           </div>
 
           <div class="timer-header-linha">
-            <div class="botoes-do-timer">
-              <button type="button" class="btn primario" (click)="toggleTimer()"
-                [disabled]="!topicoSelecionado || !topicoPermiteEstudo">
-                {{ timerAtivo ? 'Pausar' : 'Iniciar' }}
+            <!-- AÇÕES DO ESTUDO -->
+            <div class="acoes-estudo">
+
+              <!-- SALVAR -->
+              <button type="button" class="btn primario btn-acao" [disabled]="!topicoPermiteEstudo"
+                (click)="salvarEstudo()" pTooltip="Salvar estudo" tooltipPosition="top" aria-label="Salvar estudo">
+                <i class="pi pi-check"></i>
+                <span class="btn-text">Salvar</span>
               </button>
 
-              <button type="button" class="btn secundario" (click)="zerarTimer()" [disabled]="
-                  (!tempoTotalSegundos && modoTemporizador === 'livre') ||
-                  (modoTemporizador === 'pomodoro' &&
-                    pomodoroSegundosRestantes === duracaoFaseAtual)
-                ">
-                Zerar
+              <!-- FLASHCARD -->
+              <button type="button" class="btn secundario btn-acao" (click)="abrirModalFlashcard()"
+                [disabled]="!topicoPermiteEstudo" pTooltip="Criar flashcard" tooltipPosition="top"
+                aria-label="Criar flashcard">
+                <i class="pi pi-clone"></i>
+                <span class="btn-text">Flashcard</span>
               </button>
+
+              <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">
+                {{ mensagemEstudoSalvo }}
+              </span>
+
             </div>
 
+
             <div class="timer-header-textos">
+              <div class="botoes-do-timer">
+
+                <!-- INICIAR / PAUSAR -->
+                <button type="button" class="btn primario btn-icon" (click)="toggleTimer()"
+                  [disabled]="!topicoSelecionado || !topicoPermiteEstudo"
+                  [attr.aria-label]="timerAtivo ? 'Pausar' : 'Iniciar'" [pTooltip]="timerAtivo ? 'Pausar' : 'Iniciar'"
+                  tooltipPosition="top">
+                  <i class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></i>
+                </button>
+
+                <!-- ZERAR -->
+                <button type="button" class="btn secundario btn-icon" (click)="zerarTimer()" [disabled]="
+        (!tempoTotalSegundos && modoTemporizador === 'livre') ||
+        (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)
+      " aria-label="Zerar" pTooltip="Zerar" tooltipPosition="top">
+                  <i class="pi pi-refresh"></i>
+                </button>
+
+              </div>
+
               <span class="timer-label">
                 {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
                 <ng-container *ngIf="modoTemporizador === 'pomodoro'">
@@ -180,56 +210,12 @@
                 · {{ tempoFormatado }}
               </span>
             </div>
+
           </div>
         </div>
 
-        <!-- AÇÕES DO ESTUDO -->
-        <div class="acoes-estudo">
-          <button type="button" class="btn primario" [disabled]="!topicoPermiteEstudo" (click)="salvarEstudo()">
-            Salvar estudo
-          </button>
-
-          <button type="button" class="btn secundario" (click)="abrirModalFlashcard()"
-            [disabled]="!topicoPermiteEstudo">
-            + Criar flashcard
-          </button>
-
-          <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">
-            {{ mensagemEstudoSalvo }}
-          </span>
-        </div>
-        <div>
-          <!-- SONS DE FOCO -->
-          <div class="sons-foco-header">
-            <div class="sons-foco-info">
-              <span class="sons-foco-label">
-                Som de foco (Melhor com Fone)
-
-                <i class="pi pi-info-circle info-icon info-icon--inline"
-                  pTooltip="Ative um som ambiente para manter a concentração." tooltipPosition="top" [showDelay]="150"
-                  [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
-              </span>
 
 
-
-              <div class="icones-sons">
-                <button type="button" class="som-icone" *ngFor="let som of sonsFoco"
-                  [class.ativo]="somAtivoId === som.id" (click)="onClickSomIcone(som.id)" [title]="som.nome">
-                  <div class="som-icone-avatar-wrapper">
-                    <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
-                    <span class="som-icone-badge" *ngIf="somAtivoId === som.id">
-                      ▶
-                    </span>
-                  </div>
-
-                  <div class="som-icone-textos">
-                    <span class="som-icone-nome">{{ som.nome }}</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       <!-- ===================== MODO REVISAR ===================== -->
