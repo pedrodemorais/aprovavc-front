@@ -211,13 +211,14 @@
 .modo-conteudo {
   display: flex;
   flex-direction: column;
-  height: 82dvh;
+ 
 }
 
 .bloco {
   padding: 10px 12px;
-  border-left: 1px solid #e5e7eb;
+  border-left: 1px solid #8b87867e;
   box-sizing: border-box;
+ 
 }
 
 .bloco-anotacoes {
@@ -225,6 +226,7 @@
   flex-direction: column;
   gap: 5px;
   min-height: 0;
+  height: 90dvh;
 }
 
 /* ============================
@@ -949,7 +951,7 @@
 :host-context(body.theme-dark) .titulo-materia,
 :host-context(body.theme-dark) .titulo-section,
 :host-context(body.theme-dark) .flashcard-titulo {
-  color: #8d9bb6 !important;
+  color: #ecececbb !important;
 }
 
 :host-context(body.theme-dark) .muted,
@@ -1144,8 +1146,9 @@
 .coluna-esquerda{
   display: flex;
   flex-direction: column;
-  height: 100%;            /* ou 100vh se essa coluna for a tela inteira */
-  min-height: 0;
+  height: 100dvh;            /* ou 100vh se essa coluna for a tela inteira */
+ 
+ 
 }
 /* o container das colunas precisa ter altura para o scroll funcionar */
 .sala-body{
@@ -1164,7 +1167,7 @@
   flex-direction: column;
   gap: 8px;
 
-  height: 100%;
+  height: 88vh;
   min-height: 0;     /* essencial */
 }
 
@@ -1188,4 +1191,14 @@
 /* só pra garantir que o UL não “empurre” */
 .lista-topicos{
   margin: 8px 0 0;
+}
+@media (max-width: 1024px){
+  .sala-body{
+    height: auto;
+    min-height: 0;
+  }
+
+  .lista-de-topicos{
+    max-height: 40vh;   /* scroll ainda existe, mas sem quebrar o mobile */
+  }
 }
