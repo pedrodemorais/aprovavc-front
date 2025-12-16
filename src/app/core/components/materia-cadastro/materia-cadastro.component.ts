@@ -1383,5 +1383,42 @@ async importarEditalCompleto(): Promise<void> {
     this.salvandoEdital = false;
   }
 }
+  // ==========================
+  // ✅ AÇÕES ÚNICAS (TOPBAR) - TÓPICOS
+  // ==========================
+  editarTopicoSelecionado(): void {
+    if (!this.topicoSelecionado) return;
+    this.iniciarEdicaoTopico(this.topicoSelecionado);
+  }
+
+  excluirTopicoSelecionado(): void {
+    if (!this.topicoSelecionado) return;
+
+    const parentArray = this.encontrarParentArrayDoTopico(this.topicoSelecionado, this.topicos);
+    if (!parentArray) {
+      // fallback seguro (não faz nada se não encontrar)
+      console.warn('[TOPICO] Não encontrei parentArray do tópico selecionado.');
+      return;
+    }
+
+    this.excluirTopico(this.topicoSelecionado, parentArray);
+  }
+
+  private encontrarParentArrayDoTopico(alvo: Topico, lista: Topico[]): Topico[] | null {
+    if (!alvo || !lista) return null;
+
+    // se o alvo está neste nível, o parentArray é "lista"
+    if (lista.includes(alvo)) return lista;
+
+    // senão, procura nos filhos
+    for (const t of lista) {
+      const filhos = (t as any).filhos || [];
+      const achou = this.encontrarParentArrayDoTopico(alvo, filhos);
+      if (achou) return achou;
+    }
+
+    return null;
+  }
+
 
 }
