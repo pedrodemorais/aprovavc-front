@@ -21,6 +21,10 @@ interface InfoRevisaoTopico {
   proximaRevisao?: string | null;
   materiaId: number;
 }
+interface MateriaImport {
+  nome: string;
+  topicos: Topico[];
+}
 
 @Component({
   selector: 'app-materia-cadastro',
@@ -34,8 +38,14 @@ export class MateriaCadastroComponent implements OnInit {
 
   materiaForm!: FormGroup;
   submeteuMateria: boolean = false;
-
+mostrarModalEdital = false;
+textoEdital = '';
+salvandoEdital = false;
   modoTopicoGlobal: boolean = false;
+  previewTopicosArvore: Topico[] = [];
+previewTotalItens = 0;
+previewDuplicadosIgnorados = 0;
+
 
   // edição de tópico
   modoEdicaoTopico: boolean = false;
@@ -124,7 +134,87 @@ export class MateriaCadastroComponent implements OnInit {
     }
     this.mostrarModalLote = true;
     this.textoLoteTopicos = '';
+     this.atualizarPreviewLote();
   }
+atualizarPreviewLote(): void {
+  const texto = (this.textoLoteTopicos || '').trim();
+
+  if (!texto) {
+    this.previewTopicosArvore = [];
+    this.previewTotalItens = 0;
+    this.previewDuplicadosIgnorados = 0;
+    return;
+  }
+
+  // 1) monta árvore a partir do texto colado
+  const arvore = this.parseTopicosHierarquicos(texto);
+
+  // 2) remove duplicados contra o destino (raiz ou filhos do selecionado)
+  const destino = this.topicoSelecionado
+    ? (this.topicoSelecionado.filhos || [])
+    : this.topicos;
+
+  const res = this.removerDuplicadosArvore(arvore, destino);
+
+  this.previewTopicosArvore = res.arvore;
+  this.previewTotalItens = res.total;
+  this.previewDuplicadosIgnorados = res.removidos;
+}
+
+private removerDuplicadosArvore(
+  entrada: Topico[],
+  destinoNivel: Topico[]
+): { arvore: Topico[]; total: number; removidos: number } {
+
+  const vistos = new Set<string>();
+  const existentesNoDestino = new Set<string>((destinoNivel || []).map(d => this.chaveTopico(d.descricao)));
+
+  let total = 0;
+  let removidos = 0;
+
+  const filtrarNivel = (nodos: Topico[], destinoAqui: Topico[]): Topico[] => {
+    const saida: Topico[] = [];
+
+    for (const n of (nodos || [])) {
+      const key = this.chaveTopico(n.descricao);
+
+      // duplicado no PRÓPRIO lote (mesmo nível) OU já existe no destino desse nível
+      if (vistos.has(key) || (destinoAqui || []).some(d => this.chaveTopico(d.descricao) === key) || existentesNoDestino.has(key)) {
+        removidos++;
+        continue;
+      }
+
+      vistos.add(key);
+
+      const copia: any = {
+        ...n,
+        filhos: []
+      };
+
+      total++;
+
+      // filhos: o "destino" dos filhos é o array de filhos do item existente (se existir),
+      // mas como esse é preview, basta comparar com filhos do destino equivalente (se houver).
+      const filhosEntrada = (n.filhos || []) as Topico[];
+
+      // tenta achar item equivalente no destino para comparar filhos
+      const existenteNoDestino = (destinoAqui || []).find(d => this.chaveTopico(d.descricao) === key);
+      const destinoFilhos = existenteNoDestino?.filhos || [];
+
+      if (filhosEntrada.length) {
+        copia.filhos = filtrarNivel(filhosEntrada, destinoFilhos);
+      }
+
+      saida.push(copia);
+    }
+
+    return saida;
+  };
+
+  const arvoreFiltrada = filtrarNivel(entrada || [], destinoNivel || []);
+
+  return { arvore: arvoreFiltrada, total, removidos };
+}
 
   fecharModalLote(): void {
     this.mostrarModalLote = false;
@@ -282,10 +372,23 @@ private parseTopicosHierarquicos(texto: string): Topico[] {
 
   return raiz;
 }
+/** Salva árvore em sequência (pai antes dos filhos) */
+private async salvarArvoreTopicos(nodos: Topico[], pai?: Topico): Promise<void> {
+  for (const n of nodos) {
+    await this.salvarTopicoAutomaticoPromise(n, pai);
+    if ((n.filhos || []).length) {
+      await this.salvarArvoreTopicos(n.filhos || [], n);
+    }
+  }
+}
 
 
   /** Promisifica salvarTopico (pra salvar em sequência pai->filhos) */
   private salvarTopicoAutomaticoPromise(topico: Topico, pai?: Topico): Promise<void> {
+    const desc = String((topico as any).descricao || '');
+if (desc.length > 255) {
+  console.warn('[TOPICO] Muito grande:', desc.length, desc);
+}
     return new Promise((resolve, reject) => {
       if (!this.materiaSelecionada?.id) {
         reject('Matéria não selecionada.');
@@ -1035,4 +1138,250 @@ private parseTopicosHierarquicos(texto: string): Topico[] {
       (topico as any).id = (salvo as any).id;
     }
   }
+
+  get previewEdital(): MateriaImport[] {
+  return this.parseEditalParaMaterias(this.textoEdital);
+}
+
+abrirModalImportarEdital(): void {
+  this.mostrarModalEdital = true;
+  this.textoEdital = '';
+}
+
+fecharModalImportarEdital(): void {
+  this.mostrarModalEdital = false;
+  this.textoEdital = '';
+}
+
+// Conta itens na árvore (pra preview)
+contarTopicosRecursivo(lista: Topico[]): number {
+  let total = 0;
+  for (const t of (lista || [])) {
+    total++;
+    total += this.contarTopicosRecursivo((t as any).filhos || []);
+  }
+  return total;
+}
+
+// Normaliza espaços e quebras
+private normalizarTextoEdital(texto: string): string {
+  return (texto || '')
+    .replace(/\r/g, '')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\n+/g, '\n')
+    .trim();
+}
+
+// Divide em blocos por "NOME DA MATÉRIA:"
+private splitMateriasPorTitulo(texto: string): Array<{ nome: string; conteudo: string }> {
+  const s = this.normalizarTextoEdital(texto);
+
+  // regex encontra títulos tipo: "LÍNGUA PORTUGUESA:" "NOÇÕES DE DIREITO ADMINISTRATIVO:"
+  const re = /(^|\n|\s)([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ0-9\/\-\(\)\s]{3,}):/g;
+
+  const matches: Array<{ nome: string; start: number; end: number }> = [];
+  let m: RegExpExecArray | null;
+
+  while ((m = re.exec(s)) !== null) {
+    const nome = (m[2] || '').trim().replace(/\s{2,}/g, ' ');
+    matches.push({ nome, start: m.index + (m[1]?.length ?? 0), end: re.lastIndex });
+  }
+
+  if (!matches.length) return [];
+
+  const blocos: Array<{ nome: string; conteudo: string }> = [];
+
+  for (let i = 0; i < matches.length; i++) {
+    const atual = matches[i];
+    const prox = matches[i + 1];
+
+    const inicioConteudo = atual.end;
+    const fimConteudo = prox ? prox.start : s.length;
+
+    const conteudo = s.substring(inicioConteudo, fimConteudo).trim();
+
+    if (atual.nome && conteudo) {
+      blocos.push({ nome: atual.nome, conteudo });
+    }
+  }
+
+  return blocos;
+}
+
+// Extrai itens numerados "1", "1.1", "3.2.1" etc
+private extrairItensNumerados(conteudo: string): Array<{ num: string; desc: string }> {
+  // junta linhas quebradas em espaço (edital costuma quebrar no meio)
+  const texto = (conteudo || '').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
+  const itens: Array<{ num: string; desc: string }> = [];
+
+  // pega: "4 Domínio..." "4.1 Emprego..." etc até antes do próximo número
+  const re = /(\d+(?:\.\d+)*)\s+(.+?)(?=\s+\d+(?:\.\d+)*\s+|$)/g;
+
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(texto)) !== null) {
+    const num = (m[1] || '').trim();
+    let desc = (m[2] || '').trim();
+
+    // limpa espaços e pontas
+    desc = desc.replace(/\s{2,}/g, ' ').trim();
+    if (!num || !desc) continue;
+
+    itens.push({ num, desc });
+  }
+
+  // remove duplicadas pelo próprio número (mantém a primeira ocorrência)
+  const vistos = new Set<string>();
+  const saida: typeof itens = [];
+  for (const it of itens) {
+    if (vistos.has(it.num)) continue;
+    vistos.add(it.num);
+    saida.push(it);
+  }
+
+  return saida;
+}
+
+// Monta árvore usando a numeração
+private montarArvorePorNumeracao(itens: Array<{ num: string; desc: string }>): Topico[] {
+  const raiz: Topico[] = [];
+  const map = new Map<string, Topico>(); // num -> node
+
+  for (const it of itens) {
+    const partes = it.num.split('.').filter(Boolean);
+    const nivel = partes.length; // 1 = raiz, 2 = filho, ...
+
+    const node: Topico = {
+      id: undefined as any,
+      descricao: it.desc as any,
+      ativo: true as any,
+      nivel: (nivel - 1) as any,
+      filhos: [] as any
+    } as any;
+
+    map.set(it.num, node);
+
+    if (nivel === 1) {
+      // evita duplicada por descrição na raiz
+      const ja = this.encontrarPorDescricao(raiz, node.descricao);
+      if (!ja) raiz.push(node);
+      continue;
+    }
+
+    const parentNum = partes.slice(0, -1).join('.');
+    const pai = map.get(parentNum);
+
+    if (pai) {
+      (pai as any).filhos = (pai as any).filhos || [];
+      // evita duplicada dentro do mesmo pai
+      const ja = this.encontrarPorDescricao((pai as any).filhos, node.descricao);
+      if (!ja) (pai as any).filhos.push(node);
+    } else {
+      // fallback: se não achou pai, joga na raiz
+      const ja = this.encontrarPorDescricao(raiz, node.descricao);
+      if (!ja) raiz.push(node);
+    }
+  }
+
+  return raiz;
+}
+
+// Converte texto completo do edital em lista de matérias + árvore
+private parseEditalParaMaterias(texto: string): MateriaImport[] {
+  const blocos = this.splitMateriasPorTitulo(texto);
+
+  const saida: MateriaImport[] = [];
+
+  for (const b of blocos) {
+    const itens = this.extrairItensNumerados(b.conteudo);
+    const arvore = this.montarArvorePorNumeracao(itens);
+
+    if (b.nome && arvore.length) {
+      saida.push({ nome: b.nome, topicos: arvore });
+    }
+  }
+
+  return saida;
+}
+
+// Promisifica salvar matéria
+private async salvarMateriaAsync(nome: string): Promise<Materia> {
+  const dto: Materia = { id: null as any, nome } as any;
+  return await firstValueFrom(this.materiaService.salvarMateria(dto));
+}
+
+// ✅ Importa tudo: cria matéria e salva tópicos/subtópicos em ordem
+async importarEditalCompleto(): Promise<void> {
+  const materiasImport = this.parseEditalParaMaterias(this.textoEdital);
+
+  if (!materiasImport.length) {
+    alert('Não consegui identificar matérias no texto. Verifique se os títulos estão como "NOME DA MATÉRIA:".');
+    return;
+  }
+
+  this.salvandoEdital = true;
+  this.mensagemErro = undefined;
+
+  const falhas: Array<{ materia: string; erro: any }> = [];
+  let okCount = 0;
+
+  try {
+    // garante que lista atual está carregada
+    if (!this.materias?.length) {
+      const lista = await firstValueFrom(this.materiaService.listarMaterias());
+      this.materias = lista || [];
+    }
+
+    for (const imp of materiasImport) {
+      const nomeMateria = (imp.nome || '').trim();
+      if (!nomeMateria) continue;
+
+      try {
+        // 1) cria/reusa matéria
+        const existenteMateria = this.materias.find(
+          m => this.normalizarTexto(m.nome) === this.normalizarTexto(nomeMateria)
+        );
+
+        let materiaFinal: Materia;
+
+        if (existenteMateria?.id) {
+          materiaFinal = existenteMateria;
+        } else {
+          materiaFinal = await this.salvarMateriaAsync(nomeMateria);
+          this.materias.push(materiaFinal);
+        }
+
+        // 2) muda contexto para salvar tópicos nessa matéria
+        this.materiaSelecionada = materiaFinal;
+        this.materiaExpandida = materiaFinal;
+
+        // 3) salva árvore (pai antes dos filhos)
+        await this.salvarArvoreTopicos(imp.topicos);
+
+        okCount++;
+      } catch (err) {
+        console.error('[IMPORTAR-EDITAL] Falha na matéria:', nomeMateria, err);
+        falhas.push({ materia: nomeMateria, erro: err });
+        // continua para a próxima matéria
+        continue;
+      }
+    }
+
+    // fecha modal
+    this.fecharModalImportarEdital();
+    this.carregarMaterias();
+
+    if (falhas.length) {
+      this.mensagemErro =
+        `Importação finalizada com falhas. OK: ${okCount}. Falharam: ${falhas.length}. ` +
+        `Veja o console (F12) para detalhes.`;
+    }
+  } catch (e) {
+    console.error('[IMPORTAR-EDITAL] Erro geral:', e);
+    this.mensagemErro = 'Erro ao importar edital.';
+  } finally {
+    this.salvandoEdital = false;
+  }
+}
+
 }
