@@ -1,15 +1,16 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+
 import { Materia } from 'src/app/core/models/materia.model';
 import { Topico } from 'src/app/core/models/topico.model';
 import { MateriaService } from 'src/app/core/services/materia.service';
-import { Router } from '@angular/router';
 import { SalaEstudoService } from 'src/app/core/services/sala-estudo.service';
 import { RevisaoDashboardItem } from 'src/app/core/models/RevisaoDashboardItem';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 
-// Tópico "turbinado" com info de revisão (pra usar no semáforo)
 type TopicoComRevisao = Topico & {
   proximaRevisao?: string | null;
   statusRevisao?: StatusRevisao | string;
@@ -29,14 +30,11 @@ interface InfoRevisaoTopico {
 export class MateriaCadastroComponent implements OnInit {
 
   private revisaoPorMateria = new Map<number, StatusRevisao>();
-
-  // 👇 AGORA TIPADO COM InfoRevisaoTopico (inclui materiaId)
   private revisoesPorTopico = new Map<number, InfoRevisaoTopico>();
 
   materiaForm!: FormGroup;
   submeteuMateria: boolean = false;
 
-  // modo do campo superior (continua sendo usado para proteger mudanças de contexto)
   modoTopicoGlobal: boolean = false;
 
   // edição de tópico
@@ -45,10 +43,29 @@ export class MateriaCadastroComponent implements OnInit {
 
   materias: Materia[] = [];
   materiaSelecionada?: Materia;
-  materiaExpandida?: Materia | null; // matéria com tópicos visíveis
+  materiaExpandida?: Materia | null;
 
   topicos: Topico[] = [];
   novoTopicoDescricao: string = '';
+
+  // ==========================
+  // ✅ MODAL LOTE (NOME NOVO)
+  // ==========================
+  mostrarModalLote = false;
+  textoLoteTopicos: string = '';
+  salvandoLote = false;
+
+  // ==========================
+  // ✅ ALIASES (COMPAT) - se seu HTML usa nomes antigos
+  // ==========================
+  get modalLoteAberto(): boolean { return this.mostrarModalLote; }
+  set modalLoteAberto(v: boolean) { this.mostrarModalLote = v; }
+
+  get loteTexto(): string { return this.textoLoteTopicos; }
+  set loteTexto(v: string) { this.textoLoteTopicos = v; }
+
+  // se houver pai selecionado, importar como subtópico desse pai
+  loteComoSubtopico = true;
 
   topicoSelecionado?: Topico | null;
 
@@ -65,7 +82,7 @@ export class MateriaCadastroComponent implements OnInit {
     private materiaService: MateriaService,
     private router: Router,
     private salaEstudoService: SalaEstudoService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.montarForm();
@@ -80,21 +97,362 @@ export class MateriaCadastroComponent implements OnInit {
     });
   }
 
+  // ==========================
+  // ✅ HOTKEYS
+  // ==========================
+  @HostListener('document:keydown.escape')
+  onEsc(): void {
+    if (this.mostrarModalLote) {
+      this.fecharModalLote();
+    }
+  }
+
+  // ==========================
+  // ✅ PREVIEW (se seu HTML mostra preview)
+  // ==========================
+  get loteItensPreview(): string[] {
+    return this.extrairItensDoLote(this.textoLoteTopicos);
+  }
+
+  // ==========================
+  // ✅ MODAL LOTE
+  // ==========================
+  abrirModalLote(): void {
+    if (!this.materiaSelecionada?.id) {
+      alert('Selecione uma matéria antes de importar tópicos.');
+      return;
+    }
+    this.mostrarModalLote = true;
+    this.textoLoteTopicos = '';
+  }
+
+  fecharModalLote(): void {
+    this.mostrarModalLote = false;
+    this.textoLoteTopicos = '';
+  }
+
+  // =========================================================
+  // ✅ LOTE: ORDEM EXATA + SEM DUPLICADAS (MESCLA)
+  // =========================================================
+
+  /** Normaliza (chave) para comparar duplicados (mesmo pai) */
+  private chaveTopico(descricao: string): string {
+    return (descricao || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private encontrarPorDescricao(array: Topico[], descricao: string): Topico | undefined {
+    const chave = this.chaveTopico(descricao);
+    return (array || []).find(t => this.chaveTopico((t as any).descricao) === chave);
+  }
+
+  /** Remove bullets/numeração e normaliza espaços */
+  private limparLinhaTopico(linha: string): string {
+    let s = (linha || '').replace(/\r/g, '');
+
+    // bullets comuns
+    s = s.replace(/^\s*([\-*•]+)\s+/, '');
+
+    // numeração tipo "1.", "1.2", "01)", "01 -"
+    s = s.replace(/^\s*(\d+(\.\d+)*[\)\.\-]?)\s+/, '');
+
+    // romanos tipo "I)", "II."
+    s = s.replace(/^\s*([IVXLCDM]+[\)\.\-]?)\s+/i, '');
+
+    // letras tipo "a)", "b."
+    s = s.replace(/^\s*([a-zA-Z][\)\.\-]?)\s+/, '');
+
+    return s.trim();
+  }
+
+  /**
+   * Detecta unidade de indentação (2 ou 4 espaços, etc) baseado no menor recuo encontrado.
+   * Aceita tabs (vira 2 espaços).
+   */
+  private detectarUnidadeIndentacao(linhas: string[]): number {
+    const indents: number[] = [];
+
+    for (const l of linhas) {
+      const raw = l.replace(/\t/g, '  ');
+      const match = raw.match(/^(\s+)/);
+      if (match) {
+        const n = match[1].length;
+        if (n > 0) indents.push(n);
+      }
+    }
+
+    if (!indents.length) return 2;
+    return Math.max(2, Math.min(...indents));
+  }
+
+  /**
+   * Parseia texto em árvore por indentação.
+   * ✅ Mantém ordem do texto
+   * ✅ Não cria duplicado no mesmo pai (mescla)
+   */
+private parseTopicosHierarquicos(texto: string): Topico[] {
+  const linhasBrutas = (texto || '')
+    .split('\n')
+    .map(l => l.replace(/\r/g, ''))
+    .filter(l => l.trim().length > 0);
+
+  const unidade = this.detectarUnidadeIndentacao(linhasBrutas);
+
+  const raiz: Topico[] = [];
+  const stack: { nivel: number; node: Topico }[] = [];
+
+  for (const linhaBruta of linhasBrutas) {
+    const raw = linhaBruta.replace(/\t/g, '  ');
+    const indent = (raw.match(/^(\s*)/)?.[1]?.length ?? 0);
+    let nivel = Math.floor(indent / unidade);
+
+    const desc = this.limparLinhaTopico(raw);
+    if (!desc) continue;
+
+    if (stack.length > 0) {
+      const maxPermitido = stack[stack.length - 1].nivel + 1;
+      if (nivel > maxPermitido) nivel = maxPermitido;
+    }
+
+    // =========================
+    // NÍVEL RAIZ (0)
+    // =========================
+    if (nivel <= 0) {
+      const achado = this.encontrarPorDescricao(raiz, desc);
+      let node: Topico;
+
+      if (achado) {
+        node = achado;
+        (node as any).filhos = (node as any).filhos || [];
+      } else {
+        node = {
+          id: undefined as any,
+          descricao: desc as any,
+          ativo: true as any,
+          nivel: 0 as any,
+          filhos: [] as any
+        } as any;
+
+        raiz.push(node);
+      }
+
+      stack.length = 0;
+      stack.push({ nivel: 0, node });
+      continue;
+    }
+
+    // =========================
+    // NÍVEL > 0 (FILHOS)
+    // =========================
+    while (stack.length && stack[stack.length - 1].nivel >= nivel) {
+      stack.pop();
+    }
+
+    const pai = stack[stack.length - 1]?.node;
+
+    // se por algum motivo não achou pai, volta pra raiz
+    const destino = pai
+      ? (((pai as any).filhos || ((pai as any).filhos = [])) as Topico[])
+      : raiz;
+
+    const achado = this.encontrarPorDescricao(destino, desc);
+    let node: Topico;
+
+    if (achado) {
+      node = achado;
+      (node as any).filhos = (node as any).filhos || [];
+    } else {
+      node = {
+        id: undefined as any,
+        descricao: desc as any,
+        ativo: true as any,
+        nivel: nivel as any,
+        filhos: [] as any
+      } as any;
+
+      destino.push(node);
+    }
+
+    stack.push({ nivel, node });
+  }
+
+  return raiz;
+}
+
+
+  /** Promisifica salvarTopico (pra salvar em sequência pai->filhos) */
+  private salvarTopicoAutomaticoPromise(topico: Topico, pai?: Topico): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.materiaSelecionada?.id) {
+        reject('Matéria não selecionada.');
+        return;
+      }
+
+      const payload: any = {
+        id: (topico as any).id ?? null,
+        descricao: (topico as any).descricao,
+        ativo: (topico as any).ativo
+      };
+
+      if (pai && (pai as any).id) {
+        payload.topicoPaiId = (pai as any).id;
+      }
+
+      this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
+        next: (salvo) => {
+          if (salvo && (salvo as any).id) {
+            (topico as any).id = (salvo as any).id;
+          }
+          resolve();
+        },
+        error: (err) => reject(err)
+      });
+    });
+  }
+
+  /**
+   * Mescla árvore colada no destino:
+   * ✅ não duplica no mesmo pai
+   * ✅ mantém ordem exata do texto (para os novos que entram)
+   * ✅ salva apenas o que for novo, na sequência correta
+   */
+  private async mesclarESalvar(destArray: Topico[], incoming: Topico[], pai?: Topico): Promise<void> {
+    for (const inc of incoming) {
+      const desc = (inc as any).descricao;
+
+      const existente = this.encontrarPorDescricao(destArray, desc);
+
+      if (existente) {
+        (existente as any).filhos = (existente as any).filhos || [];
+        const filhosInc: Topico[] = (inc as any).filhos || [];
+        if (filhosInc.length) {
+          await this.mesclarESalvar((existente as any).filhos, filhosInc, existente);
+        }
+        continue;
+      }
+
+      // Novo -> entra na ordem exata do texto
+      const novo: Topico = {
+        id: undefined as any,
+        descricao: desc as any,
+        ativo: ((inc as any).ativo ?? true) as any,
+        nivel: ((inc as any).nivel ?? 0) as any,
+        filhos: [] as any
+      } as any;
+
+      // garante filhos
+      (novo as any).filhos = ((inc as any).filhos || []).map((f: any) => ({
+        id: undefined,
+        descricao: f.descricao,
+        ativo: f.ativo ?? true,
+        nivel: f.nivel,
+        filhos: (f.filhos || [])
+      })) as any;
+
+      destArray.push(novo);
+
+      // salva nó (pai->filho)
+      await this.salvarTopicoAutomaticoPromise(novo, pai);
+
+      // salva filhos (e mescla se necessário)
+      const filhosNovo: Topico[] = (novo as any).filhos || [];
+      if (filhosNovo.length) {
+        await this.mesclarESalvar((novo as any).filhos, filhosNovo, novo);
+      }
+    }
+  }
+
+  /** Ação principal do botão do modal */
+  async importarTopicosEmLote(): Promise<void> {
+    const texto = (this.textoLoteTopicos || '').trim();
+    if (!texto) return;
+
+    if (!this.materiaSelecionada?.id) {
+      alert('Selecione uma matéria antes de importar.');
+      return;
+    }
+
+    this.salvandoLote = true;
+    this.mensagemErro = undefined;
+
+    try {
+      const arvore = this.parseTopicosHierarquicos(texto);
+
+      const paiDestino = (this.topicoSelecionado && this.loteComoSubtopico) ? this.topicoSelecionado : undefined;
+      const destinoArray: Topico[] = paiDestino
+        ? (((paiDestino as any).filhos || ((paiDestino as any).filhos = [])) as Topico[])
+        : this.topicos;
+
+      // ✅ mescla + salva (ordem do texto garantida para os novos)
+      await this.mesclarESalvar(destinoArray, arvore, paiDestino);
+
+      // ✅ NÃO recarrega aqui (pra não perder a ordem colada na UI)
+      this.fecharModalLote();
+      this.focarNovoTopico();
+    } catch (err) {
+      console.error('[LOTE-TOPICOS] Erro ao importar:', err);
+      this.mensagemErro = 'Erro ao importar tópicos por lote.';
+    } finally {
+      this.salvandoLote = false;
+    }
+  }
+
+  // ✅ Se seu HTML antigo chama salvarLote(), mantém compatível:
+  async salvarLote(): Promise<void> {
+    await this.importarTopicosEmLote();
+  }
+
+  // =========================================================
+  // Helpers de preview (lista simples)
+  // =========================================================
+  private extrairItensDoLote(texto: string): string[] {
+    const linhas = (texto || '')
+      .split('\n')
+      .map(l => this.limparPrefixosLista(l))
+      .map(l => (l || '').trim())
+      .filter(Boolean);
+
+    // remove duplicados dentro do próprio lote
+    const vistos = new Set<string>();
+    const saida: string[] = [];
+
+    for (const l of linhas) {
+      const key = this.normalizarTexto(l);
+      if (!key) continue;
+      if (vistos.has(key)) continue;
+      vistos.add(key);
+      saida.push(l);
+    }
+
+    return saida;
+  }
+
+  private limparPrefixosLista(linha: string): string {
+    let s = (linha || '').trim();
+    s = s.replace(/^(\s*[-•*]+\s+)/, '');
+    s = s.replace(/^(\s*\d+(\.\d+)*\s*[-–—.)]?\s+)/, '');
+    s = s.replace(/^(\s*[IVXLCDM]+\s*[-–—.)]?\s+)/i, '');
+    s = s.replace(/^(\s*[a-zA-Z]\s*[-–—.)]\s+)/, '');
+    return s.trim();
+  }
+
+  // ==========================
+  // DASHBOARD REVISÕES
+  // ==========================
   private carregarRevisoesDashboard(): void {
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
       next: (itens: RevisaoDashboardItem[]) => {
         this.revisoesPorTopico.clear();
 
-        console.log('[DASHBOARD-REVISAO] Itens recebidos do back:', itens);
-        console.log('========================================');
-
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        (itens || []).forEach((item, idx) => {
-          if (!item.topicoId || !item.materiaId) {
-            return;
-          }
+        (itens || []).forEach((item) => {
+          if (!item.topicoId || !item.materiaId) return;
 
           const proxima: string | null =
             (item as any).proximaRevisao ||
@@ -104,25 +462,13 @@ export class MateriaCadastroComponent implements OnInit {
           let status: StatusRevisao = 'SEM';
 
           if (proxima) {
-            // monta a data como LOCAL, não UTC
             const dataRev = this.construirDataLocal(proxima);
-
             const hojeTime = hoje.getTime();
-            const revTime  = dataRev.getTime();
+            const revTime = dataRev.getTime();
 
-            const hojeFlag     = revTime === hojeTime;
-            const atrasadoFlag = revTime < hojeTime;
-
-            if (atrasadoFlag)       status = 'ATRASADA';
-            else if (hojeFlag)      status = 'HOJE';
-            else                    status = 'FUTURA';
-
-            console.log(`-- Item dashboard #${idx} ----------------------`);
-            console.log(item);
-            console.log('   topicoId:', item.topicoId);
-            console.log('   proximaRevisao:', proxima);
-            console.log('   hojeFlag:', hojeFlag, 'atrasadoFlag:', atrasadoFlag);
-            console.log('   => status calculado:', status);
+            if (revTime < hojeTime) status = 'ATRASADA';
+            else if (revTime === hojeTime) status = 'HOJE';
+            else status = 'FUTURA';
           }
 
           this.revisoesPorTopico.set(item.topicoId, {
@@ -131,48 +477,33 @@ export class MateriaCadastroComponent implements OnInit {
             materiaId: item.materiaId
           });
         });
-
-        console.log('[DASHBOARD-REVISAO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
-        console.log('========================================');
       },
-      error: (err) => {
-        console.error('[DASHBOARD-REVISAO] Erro ao carregar revisões:', err);
-      }
+      error: (err) => console.error('[DASHBOARD-REVISAO] Erro ao carregar revisões:', err)
     });
   }
 
-  /** Status consolidado da MATÉRIA (usa o pior status entre todos os tópicos dela) */
+  /** Status consolidado da MATÉRIA (pior status entre todos os tópicos) */
   private getStatusRevisaoMateria(m: Materia): StatusRevisao {
-    if (!m.id) {
-      return 'SEM';
-    }
+    if (!m.id) return 'SEM';
 
-    // 1) Se a matéria estiver EXPANDIDA, usa a árvore de tópicos da tela
-    if (this.materiaExpandida && this.materiaExpandida.id === m.id && this.topicos && this.topicos.length > 0) {
+    if (this.materiaExpandida && this.materiaExpandida.id === m.id && this.topicos?.length) {
       let pior: StatusRevisao = 'SEM';
 
       const acumulaStatus = (t: Topico) => {
         const st = this.getStatusRevisaoTopicoComFilhos(t);
-        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) {
-          pior = st;
-        }
+        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) pior = st;
         (t.filhos || []).forEach(acumulaStatus);
       };
 
       this.topicos.forEach(acumulaStatus);
-
       return pior;
     }
 
-    // 2) Matéria FECHADA: consolida olhando o mapa de revisões por TÓPICO
     let pior: StatusRevisao = 'SEM';
-
     this.revisoesPorTopico.forEach((info) => {
       if (info.materiaId === m.id) {
         const st = info.status;
-        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) {
-          pior = st;
-        }
+        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) pior = st;
       }
     });
 
@@ -181,7 +512,6 @@ export class MateriaCadastroComponent implements OnInit {
 
   classeSemaforoMateria(m: Materia) {
     const status = this.getStatusRevisaoMateria(m);
-
     return {
       'badge-sem-revisao': status === 'SEM',
       'badge-revisao-futura': status === 'FUTURA',
@@ -192,27 +522,20 @@ export class MateriaCadastroComponent implements OnInit {
 
   campoInvalido(campo: string): boolean {
     const control = this.materiaForm.get(campo);
-    if (!control) {
-      return false;
-    }
+    if (!control) return false;
     return control.invalid && this.submeteuMateria;
   }
 
   // ---------- SALA DE ESTUDO ----------
-
   abrirSalaEstudoMateria(m: Materia): void {
     if (!m.id) {
       alert('Salve a matéria antes de entrar na sala de estudo.');
       return;
     }
-
-    this.router.navigate(
-      ['/area-restrita/sala-estudo', m.id]
-    );
+    this.router.navigate(['/area-restrita/sala-estudo', m.id]);
   }
 
   // ---------- UTIL ----------
-
   private normalizarTexto(texto: string | undefined | null): string {
     return (texto || '').trim().toLowerCase();
   }
@@ -236,7 +559,6 @@ export class MateriaCadastroComponent implements OnInit {
   }
 
   // ---------- MATÉRIA ----------
-
   carregarMaterias(): void {
     this.carregandoMaterias = true;
     this.mensagemErro = undefined;
@@ -254,10 +576,7 @@ export class MateriaCadastroComponent implements OnInit {
   }
 
   novaMateria(): void {
-    this.materiaForm.reset({
-      id: null,
-      nome: ''
-    });
+    this.materiaForm.reset({ id: null, nome: '' });
     this.materiaSelecionada = undefined;
     this.materiaExpandida = null;
     this.modoTopicoGlobal = false;
@@ -272,14 +591,9 @@ export class MateriaCadastroComponent implements OnInit {
     this.focarNomeMateria();
   }
 
-  // abre/fecha a "seleção" da matéria e entra em modo tópico
   toggleMateria(m: Materia): void {
-    // Se clicar na mesma matéria (recolher)
     if (this.materiaExpandida?.id === m.id) {
-      // Se está editando/digitando um tópico, confirma antes de recolher
-      if (!this.podeMudarContextoTopico()) {
-        return;
-      }
+      if (!this.podeMudarContextoTopico()) return;
 
       this.materiaExpandida = null;
       this.materiaSelecionada = undefined;
@@ -295,24 +609,16 @@ export class MateriaCadastroComponent implements OnInit {
       return;
     }
 
-    // Se vai mudar para outra matéria expandida, também pergunta
-    if (!this.podeMudarContextoTopico()) {
-      return;
-    }
+    if (!this.podeMudarContextoTopico()) return;
 
-    // expandir nova matéria e entrar em modo tópico
     this.materiaExpandida = m;
     this.selecionarMateria(m);
     this.modoTopicoGlobal = true;
     this.focarNovoTopico();
   }
 
-  // NÃO carrega o nome no input da matéria; só define contexto e carrega tópicos
   selecionarMateria(m: Materia): void {
-    this.materiaForm.reset({
-      id: null,
-      nome: ''
-    });
+    this.materiaForm.reset({ id: null, nome: '' });
 
     this.materiaSelecionada = m;
     this.topicoSelecionado = undefined;
@@ -334,14 +640,9 @@ export class MateriaCadastroComponent implements OnInit {
     this.materiaExpandida = m;
     this.topicoSelecionado = null;
 
-    // volta pro modo cadastro de matéria
     this.modoTopicoGlobal = false;
 
-    this.materiaForm.reset({
-      id: m.id,
-      nome: m.nome
-    });
-
+    this.materiaForm.reset({ id: m.id, nome: m.nome });
     this.materiaForm.markAsPristine();
     this.materiaForm.markAsUntouched();
 
@@ -349,27 +650,14 @@ export class MateriaCadastroComponent implements OnInit {
     this.focarNomeMateria();
   }
 
-  voltarParaCadastroMateria(): void {
-    if (!this.podeMudarContextoTopico()) {
-      return;
-    }
-
-    this.modoTopicoGlobal = false;
-    this.topicoSelecionado = null;
-    this.novoTopicoDescricao = '';
-    this.modoEdicaoTopico = false;
-    this.topicoEmEdicao = null;
-    this.focarNomeMateria();
+  iniciarEdicaoTopico(topico: any): void {
+    this.modoTopicoGlobal = true;
+    this.modoEdicaoTopico = true;
+    this.topicoEmEdicao = topico;
+    this.topicoSelecionado = topico;
+    this.novoTopicoDescricao = topico.descricao || '';
+    this.focarNovoTopico();
   }
-
-iniciarEdicaoTopico(topico: any): void {
-  this.modoTopicoGlobal = true; // garante que o campo está em modo tópico
-  this.modoEdicaoTopico = true;
-  this.topicoEmEdicao = topico;
-  this.topicoSelecionado = topico;
-  this.novoTopicoDescricao = topico.descricao || '';
-  this.focarNovoTopico();
-}
 
   salvarMateria(): void {
     this.submeteuMateria = true;
@@ -403,22 +691,14 @@ iniciarEdicaoTopico(topico: any): void {
         this.mensagemErro = undefined;
 
         const idx = this.materias.findIndex(m => m.id === salva.id);
-        if (idx >= 0) {
-          this.materias[idx] = salva;
-        } else {
-          this.materias.push(salva);
-        }
+        if (idx >= 0) this.materias[idx] = salva;
+        else this.materias.push(salva);
 
         this.materiaSelecionada = salva;
         this.materiaExpandida = salva;
         this.carregarTopicos(salva);
 
-        // limpa o form de matéria
-        this.materiaForm.reset({
-          id: null,
-          nome: ''
-        });
-
+        this.materiaForm.reset({ id: null, nome: '' });
         this.submeteuMateria = false;
         this.materiaForm.markAsPristine();
         this.materiaForm.markAsUntouched();
@@ -434,9 +714,10 @@ iniciarEdicaoTopico(topico: any): void {
   }
 
   excluirMateria(m: Materia): void {
-    if (!m.id) { return; }
+    if (!m.id) return;
+
     const ok = confirm(`Excluir a matéria "${m.nome}"?`);
-    if (!ok) { return; }
+    if (!ok) return;
 
     this.materiaService.excluirMateria(m.id).subscribe({
       next: () => {
@@ -462,12 +743,8 @@ iniciarEdicaoTopico(topico: any): void {
   }
 
   // ---------- TÓPICOS ----------
-
   private carregarTopicos(m: Materia): void {
-    if (!m.id) {
-      console.warn('[TOPICOS] Matéria sem ID ao tentar carregar tópicos:', m);
-      return;
-    }
+    if (!m.id) return;
 
     this.carregandoTopicos = true;
     this.topicos = [];
@@ -476,26 +753,8 @@ iniciarEdicaoTopico(topico: any): void {
 
     this.materiaService.listarTopicos(m.id).subscribe({
       next: (lista) => {
-        console.log('==============================');
-        console.log('[TOPICOS] Resposta BRUTA do back (lista):', lista);
-        console.log('==============================');
-
         const listaSegura = lista || [];
-
-        this.topicos = listaSegura.map((dto: any, idx: number) => {
-          console.log(`--- DTO #${idx} recebido do back ---`);
-          console.log('DTO completo:', dto);
-          console.log('dto.proximaRevisao:', dto.proximaRevisao);
-          console.log('dto.dataProximaRevisao:', (dto as any).dataProximaRevisao);
-          console.log('-----------------------------------');
-
-          const topicoConvertido = this.converterDtoParaTopico(dto, 0);
-
-          console.log(`>>> Tópico convertido #${idx}:`, topicoConvertido);
-
-          return topicoConvertido;
-        });
-
+        this.topicos = listaSegura.map((dto: any) => this.converterDtoParaTopico(dto, 0));
         this.carregandoTopicos = false;
       },
       error: (err) => {
@@ -507,21 +766,16 @@ iniciarEdicaoTopico(topico: any): void {
   }
 
   selecionarTopico(topico: any): void {
-    // Se clicar no mesmo tópico: isso é o "desclique" permitido
     if (this.topicoSelecionado === topico) {
-      // aqui o usuário conscientemente sai do contexto
       this.limparTopicoSelecionado();
       return;
     }
 
-    // Se já tem um tópico selecionado e clicar em outro, protege o contexto
     if (this.topicoSelecionado && this.topicoSelecionado !== topico) {
-      if (!this.podeMudarContextoTopico()) {
-        return;
-      }
+      if (!this.podeMudarContextoTopico()) return;
     }
 
-    this.modoTopicoGlobal = true; // garante modo tópico
+    this.modoTopicoGlobal = true;
     this.topicoSelecionado = topico;
     this.novoTopicoDescricao = '';
     this.modoEdicaoTopico = false;
@@ -537,83 +791,84 @@ iniciarEdicaoTopico(topico: any): void {
     this.focarNovoTopico();
   }
 
- private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
-  if (!this.materiaSelecionada?.id) {
-    alert('Selecione e salve a matéria antes de adicionar tópicos.');
-    this.focarNomeMateria();
-    return;
-  }
-
-  const payload: any = {
-    id: (topico as any).id ?? null,
-    descricao: topico.descricao,
-    ativo: topico.ativo
-  };
-
-  if (pai && (pai as any).id) {
-    payload.topicoPaiId = (pai as any).id;
-  }
-
-  console.log('[SALVAR-TOPICO] Payload enviado para API:', payload);
-
-  this.salvando = true;
-
-  this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
-    next: (salvo) => {
-      this.salvando = false;
-
-      if (salvo && (salvo as any).id) {
-        (topico as any).id = (salvo as any).id;
-      }
-    },
-    error: (err) => {
-      this.salvando = false;
-      this.mensagemErro = 'Erro ao salvar o tópico.';
-      console.error('[SALVAR-TOPICO] Erro ao salvar tópico:', err);
+  private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
+    if (!this.materiaSelecionada?.id) {
+      alert('Selecione e salve a matéria antes de adicionar tópicos.');
+      this.focarNomeMateria();
+      return;
     }
-  });
-}
 
+    const payload: any = {
+      id: (topico as any).id ?? null,
+      descricao: (topico as any).descricao,
+      ativo: (topico as any).ativo
+    };
+
+    if (pai && (pai as any).id) {
+      payload.topicoPaiId = (pai as any).id;
+    }
+
+    this.salvando = true;
+
+    this.materiaService.salvarTopico(this.materiaSelecionada.id, payload).subscribe({
+      next: (salvo) => {
+        this.salvando = false;
+        if (salvo && (salvo as any).id) {
+          (topico as any).id = (salvo as any).id;
+        }
+      },
+      error: (err) => {
+        this.salvando = false;
+        this.mensagemErro = 'Erro ao salvar o tópico.';
+        console.error('[SALVAR-TOPICO] Erro ao salvar tópico:', err);
+      }
+    });
+  }
 
   adicionarTopico(): void {
     const descricao = (this.novoTopicoDescricao || '').trim();
-    if (!descricao) {
-      return;
-    }
+    if (!descricao) return;
 
     if (!this.materiaSelecionada?.id) {
       alert('Selecione e salve a matéria antes de adicionar tópicos.');
       return;
     }
 
-    // MODO EDIÇÃO
-   if (this.modoEdicaoTopico && this.topicoEmEdicao) {
-    this.topicoEmEdicao.descricao = descricao;
-    this.salvarTopicoAutomatico(this.topicoEmEdicao);
-    this.novoTopicoDescricao = '';
-    this.modoEdicaoTopico = false;
-    this.topicoEmEdicao = null;
-    this.focarNovoTopico();
-    return;
-  }
+    // edição
+    if (this.modoEdicaoTopico && this.topicoEmEdicao) {
+      this.topicoEmEdicao.descricao = descricao;
+      this.salvarTopicoAutomatico(this.topicoEmEdicao);
+      this.novoTopicoDescricao = '';
+      this.modoEdicaoTopico = false;
+      this.topicoEmEdicao = null;
+      this.focarNovoTopico();
+      return;
+    }
 
-    // MODO CRIAÇÃO
+    // ✅ evita duplicado no mesmo pai (manual também)
+    const destino = this.topicoSelecionado
+      ? (((this.topicoSelecionado as any).filhos || ((this.topicoSelecionado as any).filhos = [])) as Topico[])
+      : this.topicos;
+
+    const jaExiste = this.encontrarPorDescricao(destino, descricao);
+    if (jaExiste) {
+      alert('Esse tópico já existe nesse nível.');
+      this.novoTopicoDescricao = '';
+      this.focarNovoTopico();
+      return;
+    }
+
     const novoTopico: any = {
       id: undefined,
-      descricao: descricao,
+      descricao,
       ativo: true,
       filhos: []
     };
 
     if (!this.topicoSelecionado) {
-      // tópico raiz da matéria
       this.topicos.push(novoTopico);
       this.salvarTopicoAutomatico(novoTopico);
     } else {
-      // subtópico do tópico selecionado
-      if (!this.topicoSelecionado.filhos) {
-        this.topicoSelecionado.filhos = [];
-      }
       this.topicoSelecionado.filhos.push(novoTopico);
       this.salvarTopicoAutomatico(novoTopico, this.topicoSelecionado);
     }
@@ -623,17 +878,13 @@ iniciarEdicaoTopico(topico: any): void {
   }
 
   excluirTopico(topico: Topico, parentArray: Topico[]): void {
-    const ok = confirm(`Excluir o tópico "${topico.descricao}" e todos os subtópicos?`);
-    if (!ok) { return; }
+    const ok = confirm(`Excluir o tópico "${(topico as any).descricao}" e todos os subtópicos?`);
+    if (!ok) return;
 
     const idx = parentArray.indexOf(topico);
-    if (idx >= 0) {
-      parentArray.splice(idx, 1);
-    }
+    if (idx >= 0) parentArray.splice(idx, 1);
 
-    if (this.topicoSelecionado === topico) {
-      this.topicoSelecionado = null;
-    }
+    if (this.topicoSelecionado === topico) this.topicoSelecionado = null;
 
     if (this.materiaSelecionada?.id && (topico as any).id) {
       this.materiaService.excluirTopico(this.materiaSelecionada.id, (topico as any).id)
@@ -650,69 +901,30 @@ iniciarEdicaoTopico(topico: any): void {
     }
   }
 
-private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
-  const filhos: Topico[] = (dto.subtopicos || []).map((sub: any) =>
-    this.converterDtoParaTopico(sub, nivel + 1)
-  );
+  private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
+    const filhos: Topico[] = (dto.subtopicos || []).map((sub: any) =>
+      this.converterDtoParaTopico(sub, nivel + 1)
+    );
 
-  const idConvertido =
-    dto.id ??
-    dto.topicoId ??
-    dto.subtopicoId ??
-    dto.idTopico ??
-    dto.idSubtopico ??
-    null;
+    const idConvertido =
+      dto.id ??
+      dto.topicoId ??
+      dto.subtopicoId ??
+      dto.idTopico ??
+      dto.idSubtopico ??
+      null;
 
-  const topico: Topico = {
-    id: idConvertido,
-    descricao: dto.descricao,
-    ativo: dto.ativo ?? true,
-    nivel,
-    filhos,
-    proximaRevisao: dto.proximaRevisao ?? dto.dataProximaRevisao ?? null,
-    statusRevisao: dto.statusRevisao
-  };
+    const topico: Topico = {
+      id: idConvertido,
+      descricao: dto.descricao,
+      ativo: dto.ativo ?? true,
+      nivel,
+      filhos,
+      proximaRevisao: dto.proximaRevisao ?? dto.dataProximaRevisao ?? null,
+      statusRevisao: dto.statusRevisao
+    } as any;
 
-  return topico;
-}
-
-  iniciarCadastroTopico(materia: Materia): void {
-    // se estiver digitando/alterando tópico de outra matéria, pergunta antes
-    if (this.materiaSelecionada && this.materiaSelecionada.id !== materia.id) {
-      if (!this.podeMudarContextoTopico()) {
-        return;
-      }
-    }
-
-    this.modoTopicoGlobal = true;
-
-    // garante que a matéria esteja selecionada/expandida
-    if (!this.materiaExpandida || this.materiaExpandida.id !== materia.id) {
-      this.materiaExpandida = materia;
-      this.selecionarMateria(materia);
-    } else {
-      this.materiaSelecionada = materia;
-    }
-
-    this.topicoSelecionado = null;
-    this.modoEdicaoTopico = false;
-    this.novoTopicoDescricao = '';
-    this.focarNovoTopico();
-  }
-
-  iniciarCadastroSubtopico(topico: Topico): void {
-    // se for outro tópico e já estiver editando/digitando, protege
-    if (this.topicoSelecionado && this.topicoSelecionado !== topico) {
-      if (!this.podeMudarContextoTopico()) {
-        return;
-      }
-    }
-
-    this.modoTopicoGlobal = true;
-    this.topicoSelecionado = topico;
-    this.modoEdicaoTopico = false;
-    this.novoTopicoDescricao = '';
-    this.focarNovoTopico();
+    return topico;
   }
 
   private estaEditandoOuDigitandoTopico(): boolean {
@@ -723,16 +935,11 @@ private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
   }
 
   private podeMudarContextoTopico(): boolean {
-    if (!this.estaEditandoOuDigitandoTopico()) {
-      return true;
-    }
+    if (!this.estaEditandoOuDigitandoTopico()) return true;
 
-    const sair = confirm(
-      'Você está cadastrando um tópico/subtópico. Deseja sair sem salvar?'
-    );
+    const sair = confirm('Você está cadastrando um tópico/subtópico. Deseja sair sem salvar?');
 
     if (sair) {
-      // limpa o estado de edição de tópico
       this.novoTopicoDescricao = '';
       this.modoEdicaoTopico = false;
       this.topicoEmEdicao = null;
@@ -742,20 +949,11 @@ private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
     return sair;
   }
 
-  /**
-   * Calcula o status da revisão do tópico (sem considerar filhos):
-   * - SEM      -> nenhuma revisão cadastrada
-   * - FUTURA   -> próxima revisão > hoje
-   * - HOJE     -> próxima revisão == hoje
-   * - ATRASADA -> próxima revisão < hoje
-   */
   private getStatusRevisaoTopico(topico: Topico): StatusRevisao {
-    // 1) Se vier do mapa do dashboard, prioriza
-    if (topico.id && this.revisoesPorTopico.has(topico.id)) {
-      return this.revisoesPorTopico.get(topico.id)!.status;
+    if ((topico as any).id && this.revisoesPorTopico.has((topico as any).id)) {
+      return this.revisoesPorTopico.get((topico as any).id)!.status;
     }
 
-    // 2) Se o próprio tópico tiver data de revisão, calcula
     if ((topico as any).proximaRevisao) {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -763,51 +961,24 @@ private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
       const proxima = String((topico as any).proximaRevisao);
       const dataRev = this.construirDataLocal(proxima);
 
-      if (dataRev.getTime() < hoje.getTime())   return 'ATRASADA';
+      if (dataRev.getTime() < hoje.getTime()) return 'ATRASADA';
       if (dataRev.getTime() === hoje.getTime()) return 'HOJE';
       return 'FUTURA';
     }
 
-    // 3) Sem nada
     return 'SEM';
   }
 
-  /** Define a "força" de cada status para comparar pai x filhos */
   private prioridadeStatus(status: StatusRevisao): number {
     switch (status) {
-      case 'ATRASADA': return 3; // mais "grave"
-      case 'HOJE':     return 2;
-      case 'FUTURA':   return 1;
+      case 'ATRASADA': return 3;
+      case 'HOJE': return 2;
+      case 'FUTURA': return 1;
       case 'SEM':
-      default:         return 0;
+      default: return 0;
     }
   }
 
-  /**
-   * Constrói uma data local (sem timezone) a partir de 'YYYY-MM-DD',
-   * evitando o bug de o JS interpretar como UTC e mudar o dia.
-   */
-  private construirDataLocal(isoDate: string): Date {
-    const [anoStr, mesStr, diaStr] = isoDate.split('-');
-    const ano = Number(anoStr);
-    const mes = Number(mesStr);   // 1..12
-    const dia = Number(diaStr);   // 1..31
-
-    const data = new Date(ano, mes - 1, dia); // <-- data local
-    data.setHours(0, 0, 0, 0);
-    return data;
-  }
-
-  /**
-   * Calcula o status consolidado do tópico:
-   * considera o próprio status + o de todos os filhos.
-   *
-   * Regra:
-   * - Se QUALQUER filho estiver ATRASADA -> pai ATRASADA
-   * - Senão, se tiver HOJE -> pai HOJE
-   * - Senão, se tiver FUTURA -> pai FUTURA
-   * - Senão -> SEM
-   */
   private getStatusRevisaoTopicoComFilhos(topico: Topico): StatusRevisao {
     let pior: StatusRevisao = this.getStatusRevisaoTopico(topico);
 
@@ -823,12 +994,45 @@ private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
 
   classeSemaforoRevisao(topico: TopicoComRevisao) {
     const status = this.getStatusRevisaoTopicoComFilhos(topico);
-
     return {
       'badge-sem-revisao': status === 'SEM',
       'badge-revisao-futura': status === 'FUTURA',
       'badge-revisao-hoje': status === 'HOJE',
       'badge-revisao-atrasada': status === 'ATRASADA'
     };
+  }
+
+  private construirDataLocal(isoDate: string): Date {
+    const [anoStr, mesStr, diaStr] = isoDate.split('-');
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);
+    const dia = Number(diaStr);
+
+    const data = new Date(ano, mes - 1, dia);
+    data.setHours(0, 0, 0, 0);
+    return data;
+  }
+
+  // (mantive o import do firstValueFrom porque você já tinha e pode usar em outras partes)
+  private async salvarTopicoAutomaticoAsync(topico: Topico, pai?: Topico): Promise<void> {
+    if (!this.materiaSelecionada?.id) throw new Error('Matéria não selecionada.');
+
+    const payload: any = {
+      id: (topico as any).id ?? null,
+      descricao: (topico as any).descricao,
+      ativo: (topico as any).ativo
+    };
+
+    if (pai && (pai as any).id) {
+      payload.topicoPaiId = (pai as any).id;
+    }
+
+    const salvo: any = await firstValueFrom(
+      this.materiaService.salvarTopico(this.materiaSelecionada.id, payload)
+    );
+
+    if (salvo && (salvo as any).id) {
+      (topico as any).id = (salvo as any).id;
+    }
   }
 }

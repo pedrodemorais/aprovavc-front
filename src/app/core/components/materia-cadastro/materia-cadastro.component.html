@@ -1,38 +1,36 @@
 <div class="page-materias">
-  
-    <!-- TOPO DA PÁGINA -->
-    <div class="page-materias-header">
-      
-<div>
-<h1 class="page-title">
-  Biblioteca de matérias
 
-  <i
-    class="pi pi-info-circle info-icon"
-    pTooltip="Primeiro cadastre suas matérias. Depois, organize os tópicos e subtópicos que serão usados nos seus editais."
-    tooltipPosition="right"
-    [showDelay]="150"
-    [hideDelay]="80"
-    tabindex="0"
-    aria-label="Ajuda"
-  ></i>
-</h1>
+  <!-- TOPO DA PÁGINA -->
+  <div class="page-materias-header">
 
-</div>
+    <div>
+      <h1 class="page-title">
+        Biblioteca de matérias
 
+        <i
+          class="pi pi-info-circle info-icon"
+          pTooltip="Primeiro cadastre suas matérias. Depois, organize os tópicos e subtópicos que serão usados nos seus editais."
+          tooltipPosition="right"
+          [showDelay]="150"
+          [hideDelay]="80"
+          tabindex="0"
+          aria-label="Ajuda"
+        ></i>
+      </h1>
+    </div>
 
-      <div class="steps-indicador">
-        <div class="step-item ativo">
-          <span class="step-numero">1</span>
-          <span class="step-texto">Matérias</span>
-        </div>
-        <span class="step-seta">→</span>
-        <div class="step-item" [class.ativo]="!!materiaExpandida">
-          <span class="step-numero">2</span>
-          <span class="step-texto">Tópicos</span>
-        </div>
+    <div class="steps-indicador">
+      <div class="step-item ativo">
+        <span class="step-numero">1</span>
+        <span class="step-texto">Matérias</span>
+      </div>
+      <span class="step-seta">→</span>
+      <div class="step-item" [class.ativo]="!!materiaExpandida">
+        <span class="step-numero">2</span>
+        <span class="step-texto">Tópicos</span>
       </div>
     </div>
+  </div>
 
   <!-- ERRO GLOBAL -->
   <div class="mensagem-erro" *ngIf="mensagemErro">
@@ -50,22 +48,21 @@
       <!-- CARD: CADASTRO DA MATÉRIA -->
       <section class="card bloco-materia-form">
         <div class="card-header">
-        <div>
-<h2 class="card-title">
-  Passo 1 – Cadastrar matéria
+          <div>
+            <h2 class="card-title">
+              Passo 1 – Cadastrar matéria
 
-  <i
-    class="pi pi-info-circle info-icon"
-    pTooltip="Dê um nome claro para cada matéria. Mais tarde você poderá ligar tópicos e revisões a ela."
-    tooltipPosition="right"
-    [showDelay]="150"
-    [hideDelay]="80"
-    tabindex="0"
-    aria-label="Ajuda"
-  ></i>
-</h2>
-
-</div>
+              <i
+                class="pi pi-info-circle info-icon"
+                pTooltip="Dê um nome claro para cada matéria. Mais tarde você poderá ligar tópicos e revisões a ela."
+                tooltipPosition="right"
+                [showDelay]="150"
+                [hideDelay]="80"
+                tabindex="0"
+                aria-label="Ajuda"
+              ></i>
+            </h2>
+          </div>
 
           <span class="pill pill-materia">Passo 1</span>
         </div>
@@ -100,22 +97,21 @@
       <!-- CARD: LISTA DE MATÉRIAS -->
       <section class="card bloco-materias-lista">
         <div class="card-header">
-       <div>
-  <h2 class="card-title">
-    Minhas matérias
+          <div>
+            <h2 class="card-title">
+              Minhas matérias
 
-    <i
-      class="pi pi-info-circle info-icon"
-      pTooltip="Clique em uma matéria para ver e cadastrar tópicos do lado direito."
-      tooltipPosition="right"
-      [showDelay]="150"
-      [hideDelay]="80"
-      tabindex="0"
-      aria-label="Ajuda"
-    ></i>
-  </h2>
-</div>
-
+              <i
+                class="pi pi-info-circle info-icon"
+                pTooltip="Clique em uma matéria para ver e cadastrar tópicos do lado direito."
+                tooltipPosition="right"
+                [showDelay]="150"
+                [hideDelay]="80"
+                tabindex="0"
+                aria-label="Ajuda"
+              ></i>
+            </h2>
+          </div>
         </div>
 
         <div *ngIf="carregandoMaterias" class="loading">
@@ -132,8 +128,7 @@
             (click)="toggleMateria(m)">
 
             <div class="materia-info">
-              <span class="badge-nivel" [ngClass]="classeSemaforoMateria(m)">
-              </span>
+              <span class="badge-nivel" [ngClass]="classeSemaforoMateria(m)"></span>
 
               <div class="materia-textos">
                 <span class="materia-nome">
@@ -149,8 +144,6 @@
                 title="Ir para a sala de estudo da matéria">
                 <img src="assets/icons/book.png" alt="Sala de estudo" class="icone-img" />
               </button>
-
-
 
               <!-- Editar matéria -->
               <button type="button" class="btn-icone" (click)="editarMateria(m)" title="Editar matéria">
@@ -182,7 +175,7 @@
               Selecione uma matéria na coluna da esquerda para começar a cadastrar os tópicos.
             </p>
 
-            <!-- Com matéria selecionada: deixa claro "Tópicos de: X" -->
+            <!-- Com matéria selecionada -->
             <ng-container *ngIf="materiaExpandida">
               <p class="card-subtitle">
                 <span style="color:#6b7280;">Tópicos de:</span>
@@ -203,7 +196,7 @@
           </p>
         </div>
 
-        <!-- MATÉRIA SELECIONADA: CAMPO + ÁRVORE -->
+        <!-- MATÉRIA SELECIONADA -->
         <ng-container *ngIf="materiaExpandida">
 
           <!-- INPUT DE NOVO TÓPICO / SUBTÓPICO -->
@@ -223,6 +216,15 @@
                 [disabled]="!novoTopicoDescricao?.trim()">
                 {{ modoEdicaoTopico ? 'Salvar alteração' : 'Salvar tópico' }}
               </button>
+
+              <!-- ✅ NOVO: ADICIONAR EM LOTE -->
+            <!-- AÇÕES EXTRAS -->
+<div class="novo-topico-acoes">
+  <button type="button" class="btn secundario" (click)="abrirModalLote()">
+    Adicionar por lote
+  </button>
+</div>
+
             </div>
 
             <div class="novo-topico-hint">
@@ -271,6 +273,54 @@
   </div>
 </div>
 
+<!-- MODAL: ADICIONAR POR LOTE (HIERÁRQUICO) -->
+<div class="modal-backdrop" *ngIf="mostrarModalLote" (click)="fecharModalLote()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Adicionar tópicos por lote</h3>
+        <p class="modal-subtitle">
+          Cole um tópico por linha. Use tab ou espaços para criar subtópicos.
+          <br />
+          <span *ngIf="topicoSelecionado">
+            Importando dentro de: <strong>{{ topicoSelecionado?.descricao }}</strong>
+          </span>
+          <span *ngIf="!topicoSelecionado">
+            Importando na raiz da matéria.
+          </span>
+        </p>
+      </div>
+
+      <button type="button" class="btn-icone modal-fechar" (click)="fecharModalLote()" title="Fechar">
+        ✕
+      </button>
+    </div>
+
+    <textarea
+      class="input-text area-lote"
+      [(ngModel)]="textoLoteTopicos"
+      placeholder="Ex:
+Direito Constitucional
+  Poder Constituinte
+  Direitos Fundamentais
+Direito Administrativo
+  Atos Administrativos
+    Elementos do ato
+    Anulação e revogação
+"></textarea>
+
+    <div class="modal-acoes">
+      <button type="button" class="btn secundario" (click)="fecharModalLote()">Cancelar</button>
+      <button type="button" class="btn primario" (click)="importarTopicosEmLote()" [disabled]="!textoLoteTopicos?.trim() || salvandoLote">
+        {{ salvandoLote ? 'Importando...' : 'Importar' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
 <!-- TEMPLATE RECURSIVO PARA ÁRVORE DE TÓPICOS -->
 <ng-template #topicoTemplate let-topico let-nivel="nivel" let-parentArray="parentArray">
   <li>
@@ -278,8 +328,7 @@
       (click)="selecionarTopico(topico)">
 
       <div class="topico-info">
-        <span class="badge-nivel" [ngClass]="classeSemaforoRevisao(topico)">
-        </span>
+        <span class="badge-nivel" [ngClass]="classeSemaforoRevisao(topico)"></span>
 
         <span class="topico-descricao">
           {{ topico.descricao }}
@@ -287,16 +336,10 @@
       </div>
 
       <div class="topico-acoes" (click)="$event.stopPropagation()">
-
-        <!-- Adicionar subtópico -->
-
-
-        <!-- Editar tópico -->
         <button type="button" class="btn-icone" (click)="iniciarEdicaoTopico(topico)" title="Editar tópico">
           <img src="assets/icons/edit.png" alt="Editar tópico" class="icone-img" />
         </button>
 
-        <!-- Excluir tópico -->
         <button type="button" class="btn-icone" (click)="excluirTopico(topico, parentArray)" title="Excluir tópico">
           <img src="assets/icons/delete.png" alt="Excluir tópico" class="icone-img" />
         </button>

@@ -831,3 +831,316 @@ body.theme-dark,
   transform: translateY(0);
   outline: none;
 }
+/* ============================
+   ✅ MODAL (Adicionar em lote)
+   - colar no FINAL do seu CSS
+============================ */
+.btn-lote{
+  white-space: nowrap;
+}
+
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.modal{
+  width: min(720px, 96vw);
+  max-height: min(86vh, 780px);
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: #ffffff;
+  box-shadow: 0 26px 70px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title{
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: #111827;
+}
+
+.modal-subtitle{
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.modal-close{
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  opacity: .55;
+  padding: 2px 6px;
+  border-radius: 10px;
+  transition: opacity 120ms ease, background 120ms ease;
+}
+.modal-close:hover{
+  opacity: .9;
+  background: rgba(0,0,0,0.05);
+}
+
+.modal-body{
+  padding: 12px 16px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-info{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-pill{
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 0.82rem;
+  color: #374151;
+}
+
+.modal-opcoes{
+  margin-top: 2px;
+}
+
+.check{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: #374151;
+  user-select: none;
+}
+
+.textarea-lote{
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  outline: none;
+  background: #ffffff;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 170px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.textarea-lote:focus{
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.25);
+  background: #f9fafb;
+}
+
+.lote-preview{
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 10px 12px;
+}
+
+.lote-preview-head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.lote-preview-hint{
+  color: #6b7280;
+}
+
+.lote-preview-lista{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lote-preview-lista li{
+  font-size: 0.86rem;
+  color: #111827;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(229,231,235,0.85);
+}
+
+.lote-preview-more{
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.modal-footer{
+  padding: 10px 16px 14px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* DARK MODE */
+:host-context(body.theme-dark) .modal{
+  background: rgba(15, 23, 42, 0.96) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .modal-header,
+:host-context(body.theme-dark) .modal-footer{
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .modal-title{
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .modal-subtitle,
+:host-context(body.theme-dark) .modal-pill,
+:host-context(body.theme-dark) .check{
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .modal-pill{
+  border-color: rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.04) !important;
+}
+
+:host-context(body.theme-dark) .textarea-lote{
+  background: rgba(255,255,255,0.06) !important;
+  color: var(--text) !important;
+  border-color: rgba(255,255,255,0.14) !important;
+}
+
+:host-context(body.theme-dark) .textarea-lote:focus{
+  background: rgba(255,255,255,0.08) !important;
+  border-color: rgba(34, 197, 94, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .lote-preview{
+  border-color: rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.04) !important;
+}
+
+:host-context(body.theme-dark) .lote-preview-lista li{
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .modal-close:hover{
+  background: rgba(255,255,255,0.06) !important;
+}
+/* ============================
+   LOTE (MODAL)
+============================ */
+.novo-topico-acoes{
+  display:flex;
+  justify-content:flex-end;
+  margin-top: 6px;
+}
+
+.modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 14px;
+  z-index: 9999;
+}
+
+.modal-card{
+  width: min(780px, 100%);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.35);
+  padding: 14px;
+}
+
+.modal-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.modal-title{
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-subtitle{
+  margin: 0;
+  font-size: .85rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.modal-fechar{
+  font-size: 14px;
+  opacity: .7;
+}
+.modal-fechar:hover{
+  opacity: 1;
+}
+
+.area-lote{
+  min-height: 240px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.modal-acoes{
+  display:flex;
+  justify-content:flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Dark mode */
+:host-context(body.theme-dark) .modal-card{
+  background: rgba(15, 23, 42, 0.92) !important;
+  border-color: rgba(255,255,255,.12) !important;
+}
+:host-context(body.theme-dark) .modal-title{
+  color: var(--text) !important;
+}
+:host-context(body.theme-dark) .modal-subtitle{
+  color: var(--text-2) !important;
+}
