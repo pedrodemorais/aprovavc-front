@@ -7,9 +7,7 @@
    CONTAINER GERAL (LIGHT)
 ============================ */
 .page-materias {
-  width: 100%;
-  min-height: calc(100dvh - 80px);
-  box-sizing: border-box;
+ 
   padding: 20px 16px 28px;
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -18,7 +16,7 @@
    TOPO / HEADER (LIGHT)
 ============================ */
 .page-materias-header {
-  max-width: 1180px;
+ 
   margin: 0 auto 12px;
   display: flex;
   align-items: flex-start;
@@ -112,7 +110,7 @@
    CONTEÚDO 2 COLUNAS (LIGHT)
 ============================ */
 .page-materias-content {
-  max-width: 1180px;
+ 
   margin: 12px auto 0;
   display: flex;
   align-items: flex-start;
@@ -129,17 +127,13 @@
    CARDS (LIGHT)
 ============================ */
 .card {
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
-  padding: 14px 16px;
-  box-sizing: border-box;
+ 
+  margin-left: 10px;
+
+ 
 }
 
-.card + .card {
-  margin-top: 12px;
-}
+
 
 .card-header {
   display: flex;
@@ -299,6 +293,10 @@
   padding: 0;
   max-height: calc(100dvh - 320px);
   overflow-y: auto;
+  border-top: 1px solid rgba(117, 115, 115, 0.281);
+  border-bottom: 1px solid rgba(117, 115, 115, 0.281);
+   
+   transition: background 0.14s, box-shadow 0.14s, border-color 0.14s, transform 0.06s;
 }
 
 .item-materia {
@@ -406,10 +404,10 @@
 }
 
 .novo-topico-card {
-  margin: 10px 0;
+  
   display: flex;
   flex-direction: column;
-  gap: 6px;
+
 }
 
 .novo-topico-linha {
@@ -423,15 +421,21 @@
 }
 
 .novo-topico-hint {
+  display: flex;
+  justify-content: space-between;
   font-size: 0.78rem;
   color: #6b7280;
+   
+ 
 }
 
 /* Card da árvore (LIGHT) */
 .arvore-card {
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+ 
+  border-left: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+ margin-top: 2.5rem;
   padding: 8px;
   box-sizing: border-box;
   max-height: calc(100dvh - 320px);
