@@ -87,6 +87,13 @@ mensagemRevisao?: string;
   flashcardDificuldade: string = 'MEDIA';
   flashcardTags: string = '';
 
+  mensagemFlashcardRevisao?: string;
+
+// “status da sessão” (opcional)
+revisouAnotacoesSessao: boolean = false;
+revisouFlashcardsSessao: boolean = false;
+
+
   // lista de flashcards (usada tanto em estudar quanto revisar)
   flashcards: FlashcardDTO[] = [];
   flashcardIndexAtual: number = 0;
@@ -844,7 +851,9 @@ avaliarFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
    * Marca a revisão das anotações (nível tópico) como ERREI / DIFICIL / BOM / FACIL.
    * O servidor cuida da lógica das "caixinhas" do tópico.
    */
+  avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
 avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+  this.avaliacaoSelecionada = avaliacao;
   if (!this.topicoSelecionado) {
     return;
   }

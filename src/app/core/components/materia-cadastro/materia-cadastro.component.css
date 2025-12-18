@@ -45,9 +45,9 @@ body.theme-dark,
 }
 
 .page-title{
-  font-size: 1.35rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #4c4d50;
   margin: 0 0 4px;
   display: flex;
   align-items: center;
@@ -198,12 +198,14 @@ body.theme-dark,
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+  
 }
 
 .card-title{
+  width: 89.3dvh;
   font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 450;
+  color: #6b6e74;
   margin: 0 0 2px;
   display: flex;
   align-items: center;
@@ -650,16 +652,19 @@ body.theme-dark,
    TOOLBARS (AÇÕES ÚNICAS)
 ============================ */
 .card-toolbar{
-  margin-top: 8px;
+  
+ width: 44.7dvw;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  flex-wrap: wrap;
+  
 }
 
 .toolbar-left{
   display: flex;
+  width: 80%;
+ 
   align-items: center;
   gap: 8px;
   min-width: 0;
@@ -673,7 +678,7 @@ body.theme-dark,
 
 .toolbar-strong{
   font-size: .86rem;
-  color: #111827;
+  color: #11182785;
   font-weight: 600;
   max-width: 520px;
   overflow: hidden;
@@ -690,6 +695,7 @@ body.theme-dark,
   display: inline-flex;
   align-items: center;
   gap: 8px;
+
 }
 
 /* ============================
@@ -1268,3 +1274,133 @@ body.theme-dark,
   background: rgba(255,255,255,0.03) !important;
   border-bottom-color: rgba(255,255,255,0.12) !important;
 }
+/* garante que o modal fique por cima */
+.modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* o card do modal */
+.modal-backdrop .modal-card{
+  width: min(760px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  padding: 14px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+
+/* textarea do lote (não depende do input-text) */
+.modal-backdrop textarea.area-lote{
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+  outline: none;
+}
+
+/* placeholder visível */
+.modal-backdrop textarea.area-lote::placeholder{
+  color: #6b7280;
+  opacity: 1;
+}
+.item-materia{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.btn-kebab{
+  border:0;
+  background:transparent;
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex: 0 0 auto;
+}
+.btn-kebab:hover{ background:#f3f4f6; }
+
+.menu-acoes{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:180px;
+}
+
+.acao{
+  border:0;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  text-align:left;
+}
+.acao:hover{ background:#f3f4f6; }
+
+.acao-perigo{ color:#b91c1c; }
+.acao-perigo:hover{ background:#fee2e2; }
+.item-materia{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.btn-kebab{
+  border:0;
+  background:transparent;
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex: 0 0 auto;
+}
+.btn-kebab:hover{ background:#f3f4f6; }
+
+.menu-acoes{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:180px;
+}
+
+.acao{
+  border:0;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  text-align:left;
+}
+.acao:hover{ background:#f3f4f6; }
+
+.acao-perigo{ color:#b91c1c; }
+.acao-perigo:hover{ background:#fee2e2; }

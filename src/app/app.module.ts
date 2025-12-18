@@ -15,7 +15,6 @@ import { AuthInterceptor } from './site/pages/interceptors/auth.interceptor';
 import { NgChartsModule } from 'ng2-charts';
 import { ContentComponent } from './site/pages/content/content.component';
 import { ConfirmationService } from 'primeng/api';
-import { ServiceWorkerModule } from '@angular/service-worker';
 import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/dashboard-revisao.component';
 
 
@@ -48,13 +47,7 @@ registerLocaleData(localePt, 'pt-BR');
     ReactiveFormsModule,
     
     FormsModule,     
-   
-        ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      // Register the ServiceWorker as soon as the application is stable
-      // or after 30 seconds (whichever comes first).
-      registrationStrategy: 'registerWhenStable:30000'
-    })  
+
 
   ],
   providers: [

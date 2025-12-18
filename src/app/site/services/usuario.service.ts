@@ -28,11 +28,12 @@ export class UsuarioService {
   return this.http.get<UsuarioConsultaDTO>(`${environment.apiUrl}/usuarios/me`);
 }
 
-  cadastrarUsuario(empresaData: any): Observable<any> {
-    
-    
+cadastrarUsuario(usuarioData: any): Observable<{ message: string }> {
+  return this.http.post<{ message: string }>(
+    `${environment.apiUrl}/usuarios/cadastro`,
+    usuarioData
+  );
+}
 
-    console.log('🔄 Enviando requisição HTTP para criar empresa:', empresaData);
-    return this.http.post(environment.apiUrl+'/usuarios/cadastro', empresaData, { responseType: 'text' });
-  }
+
 }

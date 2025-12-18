@@ -72,16 +72,16 @@
               {{
               salvando
               ? 'Salvando...'
-              : (materiaForm.get('id')?.value ? 'Salvar alterações' : 'Salvar matéria')
+              : (materiaForm.get('id')?.value ? 'Alterar' : 'Salvar')
               }}
             </button>
 
             <button type="button" class="btn secundario" (click)="novaMateria()">
-              Nova matéria
+              Novo
             </button>
 
             <button type="button" class="btn secundario" (click)="abrirModalImportarEdital()">
-              Importar edital (matérias + tópicos)
+              Importar
             </button>
           </div>
         </form>
