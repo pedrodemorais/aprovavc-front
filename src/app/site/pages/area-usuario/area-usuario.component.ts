@@ -118,14 +118,27 @@ ngOnInit() {
   // ============ MENU ============
 
 private montarMenu(): void {
-  if (this.assinaturaValida) {
-    // 🔓 ASSINATURA VÁLIDA → tudo funciona normalmente
-    this.items = [
+  const estudoMenu: MenuItem = {
+    label: 'Estudo',
+    icon: 'pi pi-play',
+    items: [
       {
-        label: 'Página inicial',
-        icon: 'pi pi-home',
-        routerLink: ['/area-restrita/dashboard']
+        label: 'Por matéria',
+        icon: 'pi pi-book',
+        command: () => this.navegarProtegido('/area-restrita/estudo-por-materia')
       },
+      {
+        label: 'Por edital',
+        icon: 'pi pi-list',
+        command: () => this.navegarProtegido('/area-restrita/estudo-por-edital')
+      }
+    ]
+  };
+
+  const cadastrosMenu: MenuItem = {
+    label: 'Cadastros',
+    icon: 'pi pi-cog',
+    items: [
       {
         label: 'Matérias',
         icon: 'pi pi-book',
@@ -135,59 +148,44 @@ private montarMenu(): void {
         label: 'Editais/Provas',
         icon: 'pi pi-file-edit',
         routerLink: ['/area-restrita/editais']
-      },
-      {
-        label: 'Meu Cadastro',
-        icon: 'pi pi-id-card',
-        routerLink: ['/area-restrita/meu-cadastro']
-      },
-      {
-        label: 'Assinatura',
-        icon: 'pi pi-credit-card',
-        routerLink: ['/area-restrita/assinatura']
-      },
-      {
-        label: 'Sair',
-        icon: 'pi pi-sign-out',
-        command: () => this.logout()
       }
+    ]
+  };
+
+  if (this.assinaturaValida) {
+    // 🔓 assinatura OK
+    this.items = [
+      { label: 'Página inicial', icon: 'pi pi-home', routerLink: ['/area-restrita/dashboard'] },
+      estudoMenu,
+      cadastrosMenu,
+      { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
+      { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
+      { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
     ];
   } else {
-    // 🔐 ASSINATURA EXPIRADA → só Cadastro e Assinatura clicáveis
+    // 🔐 assinatura expirada
     this.items = [
+      { label: 'Página inicial', icon: 'pi pi-home', disabled: true },
+
+      // Estudo bloqueado
       {
-        label: 'Página inicial',
-        icon: 'pi pi-home',
-        disabled: true
+        ...estudoMenu,
+        items: estudoMenu.items?.map(i => ({ ...i, disabled: true }))
       },
-      {
-        label: 'Matérias',
-        icon: 'pi pi-book',
-        disabled: true
-      },
-      {
-        label: 'Editais/Provas',
-        icon: 'pi pi-file-edit',
-        disabled: true
-      },
-      {
-        label: 'Meu Cadastro',
-        icon: 'pi pi-id-card',
-        routerLink: ['/area-restrita/meu-cadastro']
-      },
-      {
-        label: 'Assinatura',
-        icon: 'pi pi-credit-card',
-        routerLink: ['/area-restrita/assinatura']
-      },
-      {
-        label: 'Sair',
-        icon: 'pi pi-sign-out',
-        command: () => this.logout()
-      }
+
+      // ✅ escolha 1: deixar Cadastros liberado (recomendado)
+      cadastrosMenu,
+
+      // ✅ escolha 2 (se quiser travar cadastros também):
+      // { ...cadastrosMenu, items: cadastrosMenu.items?.map(i => ({ ...i, disabled: true })) },
+
+      { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
+      { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
+      { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
     ];
   }
 }
+
 sonsFoco = [
   {
     id: 'white',
