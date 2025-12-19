@@ -4,7 +4,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 /* =======================================
-   RESET B√ÅSICO
+   RESET B+¸SICO
 ======================================= */
 html, body {
   width: 100%;
@@ -25,36 +25,36 @@ body {
 }
 
 /* =========================
-   FIX: remove scroll fantasma e deixa rolar s√≥ quando precisar
+   FIX: remove scroll fantasma e deixa rolar s+¶ quando precisar
 ========================= */
 html,
 body {
   height: 100%;
   margin: 0;
-  overflow: hidden; /* ‚úÖ n√£o deixa a p√°gina criar scroll √† toa */
+  overflow: hidden; /* ‘£‡ n+˙o deixa a p+Ìgina criar scroll +· toa */
 }
 
 :host {
   display: block;
   height: 100%;
   width: 100%;
-  overflow: hidden; /* ‚úÖ trava scroll no host tamb√©m */
+  overflow: hidden; /* ‘£‡ trava scroll no host tamb+Æm */
 }
 
-/* A dashboard ocupa a viewport e n√£o ‚Äúvaza‚Äù */
+/* A dashboard ocupa a viewport e n+˙o ‘«£vaza‘«ÿ */
 .dashboard {
-  height: 100dvh;     /* ‚úÖ em vez de min-height */
-  min-height: 0;      /* ‚úÖ MUITO importante em flex */
-  overflow: hidden;   /* ‚úÖ evita scroll no wrapper */
+  height: 100dvh;     /* ‘£‡ em vez de min-height */
+  min-height: 0;      /* ‘£‡ MUITO importante em flex */
+  overflow: hidden;   /* ‘£‡ evita scroll no wrapper */
   display: flex;
   flex-direction: column;
 }
 
-/* Container precisa permitir ‚Äúencolher‚Äù dentro do flex */
+/* Container precisa permitir ‘«£encolher‘«ÿ dentro do flex */
 .container {
   flex: 1 1 auto;
-  min-height: 0;      /* ‚úÖ evita overflow vertical fantasma */
-  overflow: hidden;   /* ‚úÖ quem rola √© o .content */
+  min-height: 0;      /* ‘£‡ evita overflow vertical fantasma */
+  overflow: hidden;   /* ‘£‡ quem rola +Æ o .content */
 }
 
 /* Sidebar pode rolar quando for maior que a tela */
@@ -64,11 +64,11 @@ body {
   overflow-x: hidden;
 }
 
-/* ‚úÖ S√≥ o conte√∫do rola quando precisar */
+/* ‘£‡ S+¶ o conte+¶do rola quando precisar */
 .content {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 0;      /* ‚úÖ evita scroll fantasma */
+  min-height: 0;      /* ‘£‡ evita scroll fantasma */
 
 
 }
@@ -88,7 +88,7 @@ body {
   color: #111827;
 }
 
-/* Bot√£o do modo leitura */
+/* Bot+˙o do modo leitura */
 .btn-modo-leitura {
   margin-left: auto;
   border: 1px solid #e5e7eb;
@@ -153,7 +153,7 @@ body {
   display: block;
 }
 
-/* Bot√£o hamb√∫rguer (mobile) */
+/* Bot+˙o hamb+¶rguer (mobile) */
 .menu-toggle {
   display: none;
   background: none;
@@ -191,7 +191,7 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-top: 20px; /* recuo s√≥ do topo */
+  padding-top: 20px; /* recuo s+¶ do topo */
 }
 
 
@@ -237,7 +237,7 @@ body {
 }
 
 /* =======================================
-   √ÅREA DE CONTE√öDO - LIGHT
+   +¸REA DE CONTE+‹DO - LIGHT
 ======================================= */
 .content {
   flex: 1 1 auto;
@@ -249,7 +249,7 @@ body {
 }
 
 /* =======================================
-   AVATAR / BOT√ïES (SE FOR USAR) - LIGHT
+   AVATAR / BOT+ÚES (SE FOR USAR) - LIGHT
 ======================================= */
 .user-initials {
   width: 40px;
@@ -373,14 +373,14 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Bot√£o hamb√∫rguer */
+/* Bot+˙o hamb+¶rguer */
 :host-context(body.theme-dark) .menu-toggle {
   color: #cbd5e1 !important;
 }
 
 /* Sidebar */
 :host-context(body.theme-dark) .sidebar {
-  background: rgba(15, 23, 42, 0.72) !important;
+  background: var(--bg-solid);
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
 }
@@ -420,7 +420,7 @@ body {
   color: #cbd5e1 !important;
 }
 
-/* Bot√£o menu (se usar) */
+/* Bot+˙o menu (se usar) */
 :host-context(body.theme-dark) .botao-menu {
   background: rgba(255, 255, 255, 0.08) !important;
   color: #e5e7eb !important;
@@ -546,8 +546,8 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;          /* espa√ßamento entre os itens */
-  flex-wrap: nowrap;  /* garante que n√£o quebre linha */
+  gap: 12px;          /* espa+∫amento entre os itens */
+  flex-wrap: nowrap;  /* garante que n+˙o quebre linha */
 }
 .volume-vertical {
   background: red;
@@ -559,7 +559,7 @@ body {
   border-left: 1px solid rgba(255,255,255,0.12); /* opcional */
 }
 
-/* abordagem mais compat√≠vel: rotate */
+/* abordagem mais compat+°vel: rotate */
 .volume-slider {
   width: 110px;     /* vira "altura" depois do rotate */
   height: 28px;
@@ -569,7 +569,7 @@ body {
   background: red;
 }
 
-/* opcional: melhora √°rea clic√°vel */
+/* opcional: melhora +Ìrea clic+Ìvel */
 .volume-vertical {
   width: 34px;
   height: 120px;
@@ -578,7 +578,7 @@ body {
 
 
 /* =======================================
-   ANIMA√á√ÉO
+   ANIMA+Á+‚O
 ======================================= */
 @keyframes fadeInTopbar {
   from {
@@ -591,12 +591,12 @@ body {
   }
 }
 /* =======================================
-   PRIME NG PANELMENU ‚Äî DARK MODE
+   PRIME NG PANELMENU ‘«ˆ DARK MODE
    (menu lateral ainda branco)
 ======================================= */
 
 :host-context(body.theme-dark) .sidebar {
-  background: rgba(15, 23, 42, 0.72) !important;
+  background: var(--bg-solid);
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
 }
@@ -606,14 +606,14 @@ body {
   background: transparent !important;
 }
 
-/* headers (itens ‚Äúpai‚Äù) */
+/* headers (itens ‘«£pai‘«ÿ) */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header > a {
   background: transparent !important;
   border: 0 !important;
   color: var(--text) !important;
 }
 
-/* conte√∫do (itens ‚Äúfilho‚Äù) */
+/* conte+¶do (itens ‘«£filho‘«ÿ) */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-content {
   background: transparent !important;
   border: 0 !important;
@@ -639,7 +639,7 @@ body {
   box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25) inset;
 }
 
-/* √≠cones do menu */
+/* +°cones do menu */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-icon,
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-icon {
   color: var(--text-2) !important;
@@ -650,7 +650,7 @@ body {
   color: var(--primary) !important;
 }
 
-/* separadores/bordas que √†s vezes aparecem brancas */
+/* separadores/bordas que +·s vezes aparecem brancas */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header,
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-content,
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header:not(.p-highlight) > a {
@@ -661,7 +661,7 @@ body {
   gap: 10px;
 }
 
-/* bot√£o ‚Äú√≠cone‚Äù que abre/fecha */
+/* bot+˙o ‘«£+°cone‘«ÿ que abre/fecha */
 .sons-foco-toggle{
   border: 1px solid #e7edf4;
   background: #fff;
@@ -682,7 +682,7 @@ body {
   opacity: .9;
 }
 
-/* painel colaps√°vel com anima√ß√£o */
+/* painel colaps+Ìvel com anima+∫+˙o */
 .sons-foco-panel{
   overflow: hidden;
   max-height: 0;
@@ -692,7 +692,7 @@ body {
 }
 
 .sons-foco-panel.is-open{
-  max-height: 800px; /* suficiente pros √≠cones */
+  max-height: 800px; /* suficiente pros +°cones */
   opacity: 1;
   transform: translateY(0);
 }
@@ -705,7 +705,7 @@ body {
   padding: 8px 4px 4px;
 }
 /* =======================================
-   SOM DE FOCO (FLUTUANTE / N√ÉO EMPURRA TOPBAR)
+   SOM DE FOCO (FLUTUANTE / N+‚O EMPURRA TOPBAR)
 ======================================= */
 
 .sons-foco-wrap{
@@ -714,7 +714,7 @@ body {
   align-items: center;
 }
 
-/* bot√£o √≠cone do som */
+/* bot+˙o +°cone do som */
 .btn-som-foco{
   border: 1px solid #e5e7eb;
   background: #ffffff;
@@ -802,7 +802,7 @@ body {
   }
 }
 
-/* dark mode (mant√©m seu padr√£o) */
+/* dark mode (mant+Æm seu padr+˙o) */
 :host-context(body.theme-dark) .btn-som-foco{
   border: 1px solid rgba(255,255,255,0.14) !important;
   background: rgba(255,255,255,0.06) !important;
@@ -815,6 +815,7 @@ body {
 }
 
 :host-context(body.theme-dark) .sons-foco-panel-head{
+  background: var(--bg-solid);
   border-bottom-color: rgba(255,255,255,.10);
 }
 
@@ -824,4 +825,37 @@ body {
 
 :host-context(body.theme-dark) .sons-foco-panel-sub{
   color: #94a3b8;
+}
+
+/* Dark mode override when ViewEncapsulation is None */
+body.theme-dark .sidebar {
+  background: var(--bg-solid) !important;
+}
+
+body.theme-dark .sons-foco-panel-head{
+  background: var(--bg-solid) !important;
+}
+
+
+
+
+/* Dark mode override when ViewEncapsulation is None */
+body.theme-dark .sons-foco-panel {
+  background: var(--bg-solid) !important;
+  border-color: rgba(255,255,255,.12) !important;
+}
+
+body.theme-dark .sons-foco-panel-head{
+  background: var(--bg-solid) !important;
+  border-bottom-color: rgba(255,255,255,.10) !important;
+}
+
+body.theme-dark .sons-foco-panel .som-icone{
+  background: rgba(255,255,255,0.06) !important;
+  color: #e5e7eb !important;
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.theme-dark .sons-foco-panel .som-icone-nome{
+  color: #e5e7eb !important;
 }

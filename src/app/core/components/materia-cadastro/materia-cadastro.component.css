@@ -41,13 +41,13 @@ body.theme-dark,
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
 }
 
 .page-title{
   font-size: 1rem;
   font-weight: 600;
-  color: #4c4d50;
+  color: var(--text);
   margin: 0 0 4px;
   display: flex;
   align-items: center;
@@ -57,10 +57,10 @@ body.theme-dark,
 .page-subtitle{
   margin: 0;
   font-size: 0.88rem;
-  color: #6b7280;
+  color: var(--muted);
 }
 
-/* ícone padrão (prime/tooltip) */
+/* Ã­cone padrÃ£o (prime/tooltip) */
 .info-icon{
   font-size: 14px;
   line-height: 1;
@@ -76,7 +76,7 @@ body.theme-dark,
   outline: none;
 }
 
-/* info-tip (se usar além do prime tooltip) */
+/* info-tip (se usar alÃ©m do prime tooltip) */
 .info-tip{
   width: 22px;
   height: 22px;
@@ -117,8 +117,8 @@ body.theme-dark,
   gap: 6px;
   padding: 4px 11px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
 }
 
 .step-item.ativo{
@@ -136,8 +136,8 @@ body.theme-dark,
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 600;
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--border);
+  color: var(--text-2);
 }
 
 .step-item.ativo .step-numero{
@@ -147,13 +147,13 @@ body.theme-dark,
 
 .step-texto{
   font-size: 0.8rem;
-  color: #374151;
+  color: var(--text-2);
   font-weight: 500;
 }
 
 .step-seta{
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--muted);
 }
 
 /* ============================
@@ -170,7 +170,7 @@ body.theme-dark,
 }
 
 /* ============================
-   CONTEÚDO 2 COLUNAS (LIGHT)
+   CONTEÃšDO 2 COLUNAS (LIGHT)
 ============================ */
 .page-materias-content{
   margin: 12px auto 0;
@@ -205,7 +205,7 @@ body.theme-dark,
   width: 89.3dvh;
   font-size: 1rem;
   font-weight: 450;
-  color: #6b6e74;
+  color: var(--text-2);
   margin: 0 0 2px;
   display: flex;
   align-items: center;
@@ -214,11 +214,11 @@ body.theme-dark,
 
 .card-subtitle{
   font-size: 0.82rem;
-  color: #6b7280;
+  color: var(--muted);
   margin: 0;
 }
 
-/* Pílulas de passo (LIGHT) */
+/* PÃ­lulas de passo (LIGHT) */
 .pill{
   display: inline-flex;
   align-items: center;
@@ -237,7 +237,7 @@ body.theme-dark,
 }
 
 /* ============================
-   FORMULÁRIO (LIGHT)
+   FORMULÃRIO (LIGHT)
 ============================ */
 .form-materia{
   display: flex;
@@ -254,7 +254,7 @@ body.theme-dark,
 
 .label{
   font-size: 0.82rem;
-  color: #374151;
+  color: var(--text-2);
   font-weight: 500;
 }
 
@@ -262,15 +262,15 @@ body.theme-dark,
   color: #ef4444;
 }
 
-/* Input padrão (LIGHT) */
+/* Input padrÃ£o (LIGHT) */
 .input-text{
   width: 100%;
   border-radius: 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   padding: 8px 10px;
   font-size: 0.9rem;
   outline: none;
-  background-color: #ffffff;
+  background-color: var(--surface);
   box-sizing: border-box;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
@@ -278,11 +278,11 @@ body.theme-dark,
 .input-text:focus{
   border-color: #16a34a;
   box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.25);
-  background-color: #f9fafb;
+  background-color: var(--surface-2);
 }
 
 .input-text:disabled{
-  background-color: #f3f4f6;
+  background-color: var(--surface-2);
   cursor: not-allowed;
 }
 
@@ -293,7 +293,7 @@ body.theme-dark,
 }
 
 /* ============================
-   BOTÕES (LIGHT)
+   BOTÃ•ES (LIGHT)
 ============================ */
 .form-acoes{
   display: flex;
@@ -335,13 +335,13 @@ body.theme-dark,
 }
 
 .btn.secundario{
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
 }
 
 .btn.secundario:hover:not(:disabled){
-  background: #e5e7eb;
+  background: var(--border);
 }
 
 .btn-lote{
@@ -354,7 +354,7 @@ body.theme-dark,
   border-radius: 10px;
 }
 
-/* Botão de perigo */
+/* BotÃ£o de perigo */
 .btn.perigo{
   background: #fee2e2;
   color: #991b1b;
@@ -365,7 +365,7 @@ body.theme-dark,
   background: #fecaca;
 }
 
-/* ações empilhadas */
+/* aÃ§Ãµes empilhadas */
 .botoes-acoes-topicos{
   display: flex;
   flex-direction: column;
@@ -374,7 +374,7 @@ body.theme-dark,
 }
 
 /* ============================
-   LISTA DE MATÉRIAS (LIGHT)
+   LISTA DE MATÃ‰RIAS (LIGHT)
 ============================ */
 .lista-materias{
   list-style: none;
@@ -382,14 +382,9 @@ body.theme-dark,
   padding: 0;
   max-height: calc(100dvh - 360px);
   overflow-y: auto;
-  border-top: 1px solid rgba(117, 115, 115, 0.281);
-  border-bottom: 1px solid rgba(117, 115, 115, 0.281);
-  background: linear-gradient(
-    180deg,
-    rgba(248,250,252,0.95) 0%,
-    rgba(241,245,249,0.75) 55%,
-    rgba(226,232,240,0.45) 100%
-  );
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
   transition: background 0.14s, box-shadow 0.14s, border-color 0.14s, transform 0.06s;
 }
 
@@ -407,7 +402,7 @@ body.theme-dark,
 }
 
 .item-materia:hover{
-  background: #f3f4f6;
+  background: var(--surface-2);
 }
 
 .item-materia.ativa{
@@ -442,7 +437,7 @@ body.theme-dark,
 
 .materia-nome{
   font-size: 0.9rem;
-  color: #4d4e50;
+  color: var(--text);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -455,7 +450,7 @@ body.theme-dark,
   flex-shrink: 0;
 }
 
-/* Botões de ícone (LIGHT) */
+/* BotÃµes de Ã­cone (LIGHT) */
 .btn-icone{
   border: none;
   background: transparent;
@@ -487,7 +482,7 @@ body.theme-dark,
 .estado-vazio,
 .estado-vazio-topicos{
   font-size: 0.86rem;
-  color: #6b7280;
+  color: var(--muted);
   margin-top: 6px;
 }
 
@@ -497,12 +492,12 @@ body.theme-dark,
 
 .loading{
   font-size: 0.86rem;
-  color: #4b5563;
+  color: var(--text-2);
   margin-top: 4px;
 }
 
 /* ============================
-   COLUNA DIREITA – TÓPICOS (LIGHT)
+   COLUNA DIREITA â€“ TÃ“PICOS (LIGHT)
 ============================ */
 .bloco-topicos{
   min-height: 260px;
@@ -527,7 +522,7 @@ body.theme-dark,
   display: flex;
   justify-content: space-between;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 /* toolbar */
@@ -549,16 +544,11 @@ body.theme-dark,
   gap: 8px;
 }
 
-/* Card da árvore (LIGHT) */
+/* Card da Ã¡rvore (LIGHT) */
 .arvore-card{
-  border-top: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(
-    180deg,
-    rgba(248,250,252,0.95) 0%,
-    rgba(241,245,249,0.75) 55%,
-    rgba(226,232,240,0.45) 100%
-  );
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
   padding: 8px;
   box-sizing: border-box;
   max-height: calc(100dvh - 360px);
@@ -566,7 +556,7 @@ body.theme-dark,
 }
 
 /* ============================
-   ÁRVORE DE TÓPICOS (LIGHT)
+   ÃRVORE DE TÃ“PICOS (LIGHT)
 ============================ */
 .lista-topicos,
 .lista-topicos-filhos{
@@ -588,7 +578,7 @@ body.theme-dark,
 }
 
 .topico-linha:hover{
-  background: #f3f4f6;
+  background: var(--surface-2);
 }
 
 .topico-linha.selecionado{
@@ -621,7 +611,7 @@ body.theme-dark,
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #d1d5db;
+  background: var(--border);
 }
 
 .badge-sem-revisao{ background: #d1d5db; }
@@ -636,7 +626,7 @@ body.theme-dark,
 
 .topico-descricao{
   font-size: 0.88rem;
-  color: #111827;
+  color: var(--text);
 }
 
 .topico-acoes{
@@ -649,7 +639,7 @@ body.theme-dark,
 }
 
 /* ============================
-   TOOLBARS (AÇÕES ÚNICAS)
+   TOOLBARS (AÃ‡Ã•ES ÃšNICAS)
 ============================ */
 .card-toolbar{
   
@@ -672,13 +662,13 @@ body.theme-dark,
 
 .toolbar-label{
   font-size: .82rem;
-  color: #6b7280;
+  color: var(--muted);
   white-space: nowrap;
 }
 
 .toolbar-strong{
   font-size: .86rem;
-  color: #11182785;
+  color: var(--text-2);
   font-weight: 600;
   max-width: 520px;
   overflow: hidden;
@@ -688,7 +678,7 @@ body.theme-dark,
 
 .toolbar-muted{
   font-size: .82rem;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .toolbar-actions{
@@ -699,7 +689,7 @@ body.theme-dark,
 }
 
 /* ============================
-   MODAL (Adicionar em lote) - versão consolidada
+   MODAL (Adicionar em lote) - versÃ£o consolidada
 ============================ */
 .novo-topico-acoes{
   display:flex;
@@ -707,7 +697,7 @@ body.theme-dark,
   margin-top: 6px;
 }
 
-/* overlay único */
+/* overlay Ãºnico */
 .modal-overlay{
   position: fixed;
   inset: 0;
@@ -719,12 +709,12 @@ body.theme-dark,
   padding: 18px;
 }
 
-/* card do modal (mantém layout) */
+/* card do modal (mantÃ©m layout) */
 .modal-card{
   width: min(920px, 100%);
-  background: #fff;
+  background: var(--surface);
   border-radius: 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.25);
   padding: 14px 16px;
 }
@@ -741,19 +731,19 @@ body.theme-dark,
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
 }
 
 .modal-subtitle{
   margin: 4px 0 0;
   font-size: 0.82rem;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .modal-sub{
   margin: 0 0 10px;
   font-size: .86rem;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .modal-close{
@@ -797,10 +787,10 @@ body.theme-dark,
 .modal-pill{
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   font-size: 0.82rem;
-  color: #374151;
+  color: var(--text-2);
 }
 
 .modal-opcoes{
@@ -812,7 +802,7 @@ body.theme-dark,
   align-items: center;
   gap: 8px;
   font-size: 0.84rem;
-  color: #374151;
+  color: var(--text-2);
   user-select: none;
 }
 
@@ -820,11 +810,11 @@ body.theme-dark,
 .area-lote{
   width: 100%;
   border-radius: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   padding: 10px 12px;
   font-size: 0.9rem;
   outline: none;
-  background: #ffffff;
+  background: var(--surface);
   box-sizing: border-box;
   resize: vertical;
 }
@@ -845,21 +835,21 @@ body.theme-dark,
 .area-lote:focus{
   border-color: #16a34a;
   box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.25);
-  background: #f9fafb;
+  background: var(--surface-2);
 }
 
 .preview-box,
 .lote-preview{
   border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   padding: 10px 12px;
 }
 
 .preview-title{
   font-size: .82rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
   margin-bottom: 6px;
 }
 
@@ -869,7 +859,7 @@ body.theme-dark,
 }
 
 .preview-muted{
-  color:#6b7280;
+  color: var(--muted);
   font-size: .82rem;
 }
 
@@ -883,7 +873,7 @@ body.theme-dark,
 }
 
 /* =========================
-   PRÉVIA DO LOTE
+   PRÃ‰VIA DO LOTE
 ========================= */
 .lote-preview-wrap{
   margin-top: 10px;
@@ -892,7 +882,7 @@ body.theme-dark,
 .lote-preview-titulo{
   font-size: 0.9rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
   margin-bottom: 8px;
 }
 
@@ -901,26 +891,26 @@ body.theme-dark,
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .lote-preview-bullet{
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #111827;
+  background: var(--text);
   opacity: 0.35;
 }
 
 .lote-preview-materia{
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
 }
 
 .lote-preview-meta{
-  color: #6b7280;
+  color: var(--muted);
   font-size: 0.86rem;
 }
 
@@ -933,8 +923,8 @@ body.theme-dark,
   margin-top: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   max-height: 260px;
   overflow: auto;
 }
@@ -956,14 +946,14 @@ body.theme-dark,
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #9ca3af;
+  background: var(--muted);
   margin-top: 7px;
   flex: 0 0 auto;
 }
 
 .preview-txt{
   font-size: 0.88rem;
-  color: #111827;
+  color: var(--text);
   line-height: 1.35;
   word-break: break-word;
 }
@@ -971,9 +961,9 @@ body.theme-dark,
 .lote-preview-vazio{
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px dashed #d1d5db;
-  color: #6b7280;
-  background: #ffffff;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  background: var(--surface);
   font-size: 0.86rem;
 }
 
@@ -1130,7 +1120,7 @@ body.theme-dark,
   opacity: 0.7;
 }
 
-/* lista matérias */
+/* lista matÃ©rias */
 :host-context(body.theme-dark) .item-materia:hover{
   background: rgba(255, 255, 255, 0.05) !important;
 }
@@ -1156,7 +1146,7 @@ body.theme-dark,
   color: var(--muted) !important;
 }
 
-/* árvore */
+/* Ã¡rvore */
 :host-context(body.theme-dark) .arvore-card{
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
@@ -1179,7 +1169,7 @@ body.theme-dark,
   background: rgba(255, 255, 255, 0.18) !important;
 }
 
-/* botões */
+/* botÃµes */
 :host-context(body.theme-dark) .btn.primario{
   background: #16a34a8c !important;
   color: #ffffff !important;
@@ -1216,7 +1206,7 @@ body.theme-dark,
   border: 1px solid rgba(239, 68, 68, 0.26) !important;
 }
 
-/* modal + prévia (dark) */
+/* modal + prÃ©via (dark) */
 :host-context(body.theme-dark) .modal-card{
   background: rgba(15, 23, 42, 0.92) !important;
   border-color: rgba(255,255,255,.12) !important;
@@ -1274,6 +1264,26 @@ body.theme-dark,
   background: rgba(255,255,255,0.03) !important;
   border-bottom-color: rgba(255,255,255,0.12) !important;
 }
+:host-context(body.theme-dark) .btn-kebab:hover{
+  background: rgba(255,255,255,0.06);
+}
+
+:host-context(body.theme-dark) .acao:hover{
+  background: rgba(255,255,255,0.06);
+}
+
+:host-context(body.theme-dark) .acao-perigo{
+  color: #fecaca;
+}
+
+:host-context(body.theme-dark) .acao-perigo:hover{
+  background: rgba(239, 68, 68, 0.16);
+}
+
+:host-context(body.theme-dark) .modal-backdrop .modal-card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
 /* garante que o modal fique por cima */
 .modal-backdrop{
   position: fixed;
@@ -1289,7 +1299,7 @@ body.theme-dark,
 /* o card do modal */
 .modal-backdrop .modal-card{
   width: min(760px, 100%);
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0,0,0,.25);
   padding: 14px;
@@ -1297,25 +1307,25 @@ body.theme-dark,
   overflow: auto;
 }
 
-/* textarea do lote (não depende do input-text) */
+/* textarea do lote (nÃ£o depende do input-text) */
 .modal-backdrop textarea.area-lote{
   display: block;
   width: 100%;
   min-height: 240px;
   padding: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
-  color: #111827;
+  background: var(--surface);
+  color: var(--text);
   font-size: 14px;
   line-height: 1.4;
   resize: vertical;
   outline: none;
 }
 
-/* placeholder visível */
+/* placeholder visÃ­vel */
 .modal-backdrop textarea.area-lote::placeholder{
-  color: #6b7280;
+  color: var(--muted);
   opacity: 1;
 }
 .item-materia{
@@ -1337,7 +1347,7 @@ body.theme-dark,
   cursor:pointer;
   flex: 0 0 auto;
 }
-.btn-kebab:hover{ background:#f3f4f6; }
+.btn-kebab:hover{ background: var(--surface-2); }
 
 .menu-acoes{
   display:flex;
@@ -1357,10 +1367,10 @@ body.theme-dark,
   cursor:pointer;
   text-align:left;
 }
-.acao:hover{ background:#f3f4f6; }
+.acao:hover{ background: var(--surface-2); }
 
-.acao-perigo{ color:#b91c1c; }
-.acao-perigo:hover{ background:#fee2e2; }
+.acao-perigo{ color: #b91c1c; }
+.acao-perigo:hover{ background: #fee2e2; }
 .item-materia{
   display:flex;
   align-items:center;
@@ -1380,7 +1390,7 @@ body.theme-dark,
   cursor:pointer;
   flex: 0 0 auto;
 }
-.btn-kebab:hover{ background:#f3f4f6; }
+.btn-kebab:hover{ background: var(--surface-2); }
 
 .menu-acoes{
   display:flex;
@@ -1400,7 +1410,7 @@ body.theme-dark,
   cursor:pointer;
   text-align:left;
 }
-.acao:hover{ background:#f3f4f6; }
+.acao:hover{ background: var(--surface-2); }
 
-.acao-perigo{ color:#b91c1c; }
-.acao-perigo:hover{ background:#fee2e2; }
+.acao-perigo{ color: #b91c1c; }
+.acao-perigo:hover{ background: #fee2e2; }

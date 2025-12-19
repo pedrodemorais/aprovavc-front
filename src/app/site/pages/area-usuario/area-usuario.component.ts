@@ -157,22 +157,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private montarMenu(): void {
-    const estudoMenu: MenuItem = {
-      label: 'Estudo',
-      icon: 'pi pi-play',
-      items: [
-        {
-          label: 'Por matéria',
-          icon: 'pi pi-book',
-          command: () => this.navegarProtegido('/area-restrita/estudar-materias')
-        },
-        {
-          label: 'Por edital',
-          icon: 'pi pi-list',
-          command: () => this.navegarProtegido('/area-restrita/estudo-por-edital')
-        }
-      ]
-    };
+  
 
     const cadastrosMenu: MenuItem = {
       label: 'Cadastros',
@@ -195,7 +180,8 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       // 🔓 assinatura OK
       this.items = [
         { label: 'Página inicial', icon: 'pi pi-home', routerLink: ['/area-restrita/dashboard'] },
-        estudoMenu,
+        { label: 'Centro de Estudo', icon: 'pi pi-play', routerLink: ['/area-restrita/estudar-materias'] },
+        
         cadastrosMenu,
         { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
         { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
@@ -206,11 +192,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       this.items = [
         { label: 'Página inicial', icon: 'pi pi-home', disabled: true },
 
-        // Estudo bloqueado
-        {
-          ...estudoMenu,
-          items: estudoMenu.items?.map(i => ({ ...i, disabled: true }))
-        },
+       
 
         // ✅ escolha 1: deixar Cadastros liberado (recomendado)
         cadastrosMenu,

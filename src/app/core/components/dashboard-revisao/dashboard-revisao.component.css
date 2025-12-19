@@ -23,7 +23,7 @@
   padding: 16px 16px 24px;
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  color: #0f172a;
+  color: var(--text);
 }
 
 /* =======================================
@@ -47,12 +47,12 @@
   font-size: 1.35rem;
   font-weight: 600;
   margin: 0;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .rev-subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--text-2);
   font-size: 0.9rem;
 }
 
@@ -69,9 +69,9 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: #f9fafb;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e5e7eb;
+  background: var(--surface-2);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
 }
 
 /* cores específicas */
@@ -126,10 +126,10 @@
 ======================================= */
 
 .rev-card {
-  background: #ffffff;
+  background: var(--surface);
   border-radius: 12px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-  border: 1px solid #e5e7eb;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 
@@ -139,12 +139,12 @@
   grid-template-columns: 0.9fr 2.1fr 1.1fr 1.2fr auto;
   gap: 8px;
   padding: 10px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #9ca3af;
+  color: var(--muted);
 }
 
 /* Linhas (desktop) */
@@ -154,13 +154,13 @@
   gap: 8px;
   padding: 10px 16px;
   align-items: center;
-  border-top: 1px solid #f3f4f6;
-  background: #ffffff;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
   transition: background 0.12s ease;
 }
 
 .rev-list-row:nth-child(even) {
-  background: #f9fafb;
+  background: var(--surface-2);
 }
 
 .rev-list-row:hover {
@@ -229,13 +229,13 @@
 
 .materia-nome {
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
   font-size: 0.9rem;
 }
 
 .topico-descricao {
   font-size: 0.82rem;
-  color: #6b7280;
+  color: var(--text-2);
 }
 
 .data-principal {
@@ -245,7 +245,7 @@
 
 .data-secundaria {
   font-size: 0.78rem;
-  color: #9ca3af;
+  color: var(--muted);
 }
 
 /* Botão "Ir para sala de estudo" */
@@ -253,19 +253,19 @@
   align-self: flex-end;
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
+  border: 1px solid var(--border);
+  background: var(--surface);
   font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .btn-ghost:hover {
-  border-color: #0f766e;
-  color: #0f766e;
-  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.18);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.18);
 }
 
 /* =======================================
@@ -356,9 +356,9 @@
 ======================================= */
 
 :host-context(body.theme-dark) .rev-summary-card {
-  background: rgba(15, 23, 42, 0.72) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 /* Vencidas */
@@ -395,26 +395,26 @@
 ======================================= */
 
 :host-context(body.theme-dark) .rev-card {
-  background: rgba(15, 23, 42, 0.72) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 /* Cabeçalho (linha “tabela”) */
 :host-context(body.theme-dark) .rev-list-header {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+  background: var(--surface-2) !important;
+  border-bottom: 1px solid var(--border) !important;
   color: var(--muted) !important;
 }
 
 /* Linhas */
 :host-context(body.theme-dark) .rev-list-row {
   background: transparent !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-top: 1px solid var(--border) !important;
 }
 
 :host-context(body.theme-dark) .rev-list-row:nth-child(even) {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--surface-2) !important;
 }
 
 :host-context(body.theme-dark) .rev-list-row:hover {

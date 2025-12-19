@@ -1,11 +1,11 @@
-:host{ display:block; }
+﻿:host{ display:block; }
 
 .trilhas-page{
-  --bg: #ffffff;
-  --card: #ffffff;
-  --text: #424346bb;
-  --muted:#6b7280;
-  --line: #e7edf4;
+  --bg: var(--bg);
+  --card: var(--surface);
+  --text: var(--text);
+  --muted: var(--muted);
+  --line: var(--border);
 
   --accent:#0b7285;
   --accent2:#0ea5a7;
@@ -39,11 +39,19 @@
   color: var(--text);
   letter-spacing: .2px;
 }
+
+:host-context(body.theme-dark) .topo-titulo{
+  color: #e5e7eb;
+}
 .topo-subtitulo{
   margin: 6px 0 0;
   font-size: 12.5px;
   color: var(--muted);
   line-height: 1.35;
+}
+
+:host-context(body.theme-dark) .topo-subtitulo{
+  color: #cbd5e1;
 }
 
 .topo-right{
@@ -71,10 +79,25 @@
   color: var(--muted);
   white-space: nowrap;
 }
+
+:host-context(body.theme-dark) .topo-escopo label{
+  color: #cbd5e1;
+}
+
+:host-context(body.theme-dark) .topo-escopo select{
+  color: #e5e7eb;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.16);
+}
+
+:host-context(body.theme-dark) .topo-escopo select option{
+  color: #e5e7eb;
+  background: #0b1220;
+}
 .topo-escopo select{
   width: 100%;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   border-radius: 12px;
   padding: 8px 10px;
   font-size: 12.5px;
@@ -95,18 +118,22 @@
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--muted);
   font-size: 12px;
 }
 .topo-busca input{
   width: 100%;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   border-radius: 12px;
   padding: 10px 34px 10px 30px;
   font-size: 13px;
   color: var(--text);
   outline: none;
+}
+
+:host-context(body.theme-dark) .topo-busca input::placeholder{
+  color: #94a3b8;
 }
 .topo-busca input:focus{
   border-color: rgba(11,114,133,.35);
@@ -120,11 +147,11 @@
   border:0;
   background: transparent;
   cursor:pointer;
-  color:#94a3b8;
+  color: var(--muted);
   padding: 6px;
   border-radius: 10px;
 }
-.topo-clear:hover{ background:#f1f5f9; }
+.topo-clear:hover{ background: var(--surface-2); }
 
 /* KPIs topo */
 .topo-kpis{
@@ -142,8 +169,8 @@
   font-size: 11px;
   font-weight: 900;
   border: 1px solid var(--line);
-  background: #fbfcfd;
-  color: #374151;
+  background: var(--card);
+  color: var(--text);
   white-space: nowrap;
 }
 .kpi--bad{ border-color: rgba(239,68,68,.22); background: rgba(239,68,68,.10); color:#991b1b; }
@@ -201,9 +228,9 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: #cbd5e1;
+  background: var(--line);
 }
-.curso-card.badge-sem-revisao::before{ background: #cbd5e1; }
+.curso-card.badge-sem-revisao::before{ background: var(--line); }
 .curso-card.badge-revisao-futura::before{ background: #22c55e; }
 .curso-card.badge-revisao-hoje::before{ background: #f59e0b; }
 .curso-card.badge-revisao-atrasada::before{ background: #ef4444; }
@@ -220,7 +247,7 @@
   cursor: pointer;
   text-align: left;
 }
-.curso-header:hover{ background: #fafbfc; }
+.curso-header:hover{ background: var(--surface-2); }
 
 /* progress (opcional) */
 .curso-progress{
@@ -228,7 +255,7 @@
   height: 34px;
   border-radius: 999px;
   position: relative;
-  background: conic-gradient(var(--ok) calc(var(--p) * 1%), #e6e9ee 0);
+  background: conic-gradient(var(--ok) calc(var(--p) * 1%), var(--line) 0);
   flex: 0 0 auto;
   box-shadow: inset 0 0 0 1px rgba(17,24,39,.05);
 }
@@ -237,7 +264,7 @@
   position:absolute;
   inset: 4px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--card);
 }
 .curso-progress-text{
   position: relative;
@@ -282,7 +309,10 @@
 /* =========================
    CORPO + RESUMO DA MATÉRIA
    ========================= */
-.curso-body{ border-top: 1px solid #edf1f6; background:#fff; }
+.curso-body{
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
 
 .materia-resumo{
   padding: 8px 12px;
@@ -290,8 +320,8 @@
   gap: 8px;
   flex-wrap: wrap;
   align-items:center;
-  border-bottom: 1px solid #edf1f6;
-  background:#fbfcfd;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
 }
 .rk{
   display:inline-flex;
@@ -301,14 +331,14 @@
   font-size: 11px;
   font-weight: 900;
   border: 1px solid var(--line);
-  background:#fff;
-  color:#374151;
+  background: var(--card);
+  color: var(--text);
   white-space: nowrap;
 }
 .rk--bad{ border-color: rgba(239,68,68,.22); background: rgba(239,68,68,.10); color:#991b1b; }
 .rk--hoje{ border-color: rgba(245,158,11,.22); background: rgba(245,158,11,.12); color:#92400e; }
 .rk--ok{ border-color: rgba(34,197,94,.22); background: rgba(34,197,94,.10); color:#166534; }
-.rk--muted{ background:#fff; color:#475569; }
+.rk--muted{ background: var(--card); color: var(--text-2); }
 
 .estado{
   padding: 10px 12px;
@@ -318,7 +348,8 @@
   font-size: 12px;
   color: var(--muted);
 }
-.estado-loading{ background:#fbfcfd; }
+.estado-loading{ background: var(--surface-2); }
+.estado-loading{ background: var(--surface-2); }
 .estado-erro{
   background:#fff1f2;
   border-top:1px solid #fecdd3;
@@ -326,16 +357,22 @@
   font-weight:800;
 }
 .estado-vazio{
-  background:#fbfcfd;
-  border-top:1px solid #edf1f6;
+  background: var(--surface-2);
+  border-top:1px solid var(--line);
 }
 
-.secao{ border-top: 1px solid #edf1f6; }
+:host-context(body.theme-dark) .estado-erro{
+  background: rgba(239,68,68,.12);
+  border-top-color: rgba(239,68,68,.35);
+  color: #fecaca;
+}
+
+.secao{ border-top: 1px solid var(--line); }
 
 .secao-header{
   width: 100%;
   border: 0;
-  background: #fff;
+  background: var(--card);
   padding: 9px 12px;
   cursor:pointer;
   display:flex;
@@ -344,7 +381,7 @@
   gap: 12px;
   text-align:left;
 }
-.secao-header:hover{ background:#fafbfc; }
+.secao-header:hover{ background: var(--surface-2); }
 
 .secao-left{
   display:flex;
@@ -377,7 +414,7 @@
   width: 14px;
   height: 14px;
   border-radius: 999px;
-  background: conic-gradient(var(--ok) calc(var(--p) * 1%), #d1d5db 0);
+  background: conic-gradient(var(--ok) calc(var(--p) * 1%), var(--line) 0);
   position: relative;
 }
 .mini-ring::before{
@@ -385,7 +422,7 @@
   position:absolute;
   inset: 2px;
   border-radius: 999px;
-  background:#fff;
+  background: var(--card);
 }
 .secao-meta{
   font-size: 11.5px;
@@ -402,13 +439,13 @@
   align-items:center;
   gap: 10px;
   padding: 8px 12px;
-  border-top: 1px solid #f0f3f7;
-  background:#fff;
+  border-top: 1px solid var(--line);
+  background: var(--card);
 }
-.topico-linha:hover{ background:#fbfcfd; }
+.topico-linha:hover{ background: var(--surface-2); }
 
 .topico-linha.is-active{
-  background: #eef9f8;
+  background: rgba(14,165,167,.08);
   box-shadow: inset 3px 0 0 rgba(14,165,167,.55);
 }
 
@@ -416,8 +453,8 @@
   width: 18px;
   height: 18px;
   border-radius: 5px;
-  border: 1.8px solid #cfd6df;
-  background:#fff;
+  border: 1.8px solid var(--line);
+  background: var(--card);
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -493,15 +530,15 @@
 .op-concluir{
   border-radius: 14px !important;
   overflow:hidden;
-  border: 1px solid #eef2f7 !important;
-  box-shadow: 0 16px 40px rgba(17,24,39,.12) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--shadow) !important;
 }
 .op-box{
   padding: 10px;
   display:grid;
   gap: 10px;
   min-width: 240px;
-  background:#fff;
+  background: var(--card);
 }
 .op-title{
   font-size: 12px;
@@ -510,9 +547,9 @@
   opacity: .92;
 }
 .op-btn{
-  border: 1px solid #e5e7eb;
-  background: #111827;
-  color:#fff;
+  border: 1px solid var(--line);
+  background: var(--text);
+  color: var(--bg-solid);
   padding: 10px 12px;
   border-radius: 12px;
   font-weight: 900;
@@ -520,8 +557,8 @@
   cursor:pointer;
 }
 .op-btn--ghost{
-  background:#fff;
-  color:#111827;
+  background: transparent;
+  color: var(--text);
 }
 
 /* Mobile */
@@ -549,4 +586,25 @@
   .topo-legenda{
     display:none; /* ƒo. some no mobile pra ficar clean */
   }
+}
+
+:host-context(body.theme-dark) .kpi--bad,
+:host-context(body.theme-dark) .rk--bad {
+  border-color: rgba(239,68,68,.40);
+  background: rgba(239,68,68,.18);
+  color: #fecaca;
+}
+
+:host-context(body.theme-dark) .kpi--hoje,
+:host-context(body.theme-dark) .rk--hoje {
+  border-color: rgba(245,158,11,.40);
+  background: rgba(245,158,11,.18);
+  color: #fde68a;
+}
+
+:host-context(body.theme-dark) .kpi--ok,
+:host-context(body.theme-dark) .rk--ok {
+  border-color: rgba(34,197,94,.40);
+  background: rgba(34,197,94,.18);
+  color: #bbf7d0;
 }
