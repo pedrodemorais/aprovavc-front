@@ -475,3 +475,206 @@
 :host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1) !important;
 }
+
+/* =======================================
+   PERFIL PREMIUM (OVERRIDES CLEAN)
+======================================= */
+.page-perfil{
+  background: radial-gradient(140% 160% at 10% 0%, #f8fafc 0%, #f1f5f9 45%, #eef2ff 100%);
+}
+
+.conteudo{
+  max-width: 1140px;
+}
+
+.card{
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  box-shadow: var(--shadow, 0 18px 45px rgba(15, 23, 42, 0.08));
+}
+
+.perfil-header{
+  gap: 12px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.perfil-titulo{
+  font-size: 1.35rem;
+}
+
+.perfil-sub{
+  max-width: 720px;
+}
+
+.assinatura aside{
+  background: var(--surface-2, #f8fafc);
+  border: 1px solid var(--border, #e5e7eb);
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.linha-assinatura{
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border, #e5e7eb);
+}
+
+.assinatura .linha-assinatura:last-of-type{
+  border-bottom: none;
+}
+
+.perfil-form{
+  background: var(--surface-2, #f8fafc);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.linha-form{
+  gap: 12px;
+}
+
+.campo input{
+  background: var(--surface, #ffffff);
+  border-color: var(--border, #d1d5db);
+}
+
+.campo input:focus{
+  background: var(--surface-2, #f8fafc);
+}
+
+:host-context(body.theme-dark) .page-perfil{
+  background: transparent;
+}
+
+:host-context(body.theme-dark) .assinatura aside,
+:host-context(body.theme-dark) .perfil-form{
+  background: rgba(15,23,42,0.55);
+  border-color: rgba(255,255,255,0.12);
+}
+
+:host-context(body.theme-dark) .linha-assinatura{
+  border-bottom-color: rgba(255,255,255,0.12);
+}
+
+/* =======================================
+   ASSINATURA EMBUTIDA (MEUS DADOS)
+======================================= */
+.assinatura-titulo{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-cancelar{
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+
+.btn-cancelar:hover{
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+:host-context(body.theme-dark) .btn-cancelar{
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fecaca !important;
+  border-color: rgba(239, 68, 68, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .btn-cancelar:hover{
+  background: rgba(239, 68, 68, 0.18) !important;
+  border-color: rgba(239, 68, 68, 0.36) !important;
+}
+
+.assinatura-acoes{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* =======================================
+   RESPONSIVO EXTRA - MEU CADASTRO
+======================================= */
+@media (max-width: 1100px){
+  .conteudo{ max-width: 960px; }
+}
+
+@media (max-width: 900px){
+  .perfil-header{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .nome-botoes{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .assinatura-acoes{
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .linha-assinatura{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px){
+  .page-perfil{
+    padding: 16px 12px 24px;
+  }
+
+  .card{
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .perfil-form{
+    padding: 10px;
+  }
+
+  .assinatura aside{
+    padding: 10px;
+  }
+}
+
+@media (max-width: 600px){
+  .linha-form{
+    flex-direction: column;
+  }
+
+  .campo{
+    width: 100%;
+  }
+
+  .btn,
+  .btn-cancelar{
+    width: 100%;
+    justify-content: center;
+  }
+
+  .assinatura-acoes{
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px){
+  .perfil-titulo{ font-size: 1.2rem; }
+  .perfil-sub{ font-size: 0.82rem; }
+  .subtitulo-secao{ font-size: 0.9rem; }
+}

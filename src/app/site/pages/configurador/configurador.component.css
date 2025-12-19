@@ -305,3 +305,32 @@ select:focus {
     width: 100%;
   }
 }
+
+/* =======================================
+   CONFIGURADOR - LOGO CENTRAL + LINK DISCRETO
+======================================= */
+.topo-login-site{
+  justify-content: center;
+}
+
+.voltar-site-inline{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px auto 0;
+  font-size: 0.86rem;
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.voltar-site-inline::before{
+  content: "?";
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.voltar-site-inline:hover{
+  color: #111827;
+  text-decoration: none;
+}

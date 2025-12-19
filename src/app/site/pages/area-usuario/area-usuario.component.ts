@@ -31,6 +31,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   isHome = true;
 
   sonsFocoAberto = false;
+  userMenuAberto = false;
 
   items: MenuItem[] = [];
   hasMaterias = true;
@@ -89,6 +90,10 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.carregarMateriasMenu();
+    this.materiaService.materiasChanged$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.carregarMateriasMenu());
+
 
     // 1) Já se inscreve pra reagir a MUDANÇAS (login, renovação, expiração, etc.)
     this.authService.assinaturaValida$
@@ -111,16 +116,19 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ✅ CLICK FORA (CAPTURE) — funciona mesmo com stopPropagation do PrimeNG
   private onDocPointerDown = (event: Event) => {
-    if (!this.sonsFocoAberto) return;
-
     const target = event.target as HTMLElement | null;
     if (!target) return;
 
-    const clicouDentro = !!target.closest('.sons-foco-wrap');
-    if (clicouDentro) return;
+    const clicouSons = !!target.closest('.sons-foco-wrap');
+    const clicouUserMenu = !!target.closest('.user-menu-wrap');
 
     this.ngZone.run(() => {
-      this.sonsFocoAberto = false;
+      if (this.sonsFocoAberto && !clicouSons) {
+        this.sonsFocoAberto = false;
+      }
+      if (this.userMenuAberto && !clicouUserMenu) {
+        this.userMenuAberto = false;
+      }
     });
   };
 
@@ -159,6 +167,10 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   toggleSonsFoco(): void {
     this.sonsFocoAberto = !this.sonsFocoAberto;
+  }
+
+  toggleUserMenu(): void {
+    this.userMenuAberto = !this.userMenuAberto;
   }
 
   private carregarMateriasMenu(): void {
@@ -202,8 +214,6 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         { label: 'Centro de Estudo', icon: 'pi pi-play', routerLink: ['/area-restrita/estudar-materias'], disabled: !this.hasMaterias },
         
         cadastrosMenu,
-        { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
-        { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
         { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
       ];
     } else {
@@ -216,8 +226,6 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         // ✅ escolha 1: deixar Cadastros liberado (recomendado)
         cadastrosMenu,
 
-        { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
-        { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
         { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
       ];
     }

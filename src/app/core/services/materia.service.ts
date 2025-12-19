@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
 import { environment } from 'src/environments/environment';
@@ -11,6 +12,8 @@ import { environment } from 'src/environments/environment';
 export class MateriaService {
 
   private apiUrl = `${environment.apiUrl}/materias`;
+  private materiasChangedSubject = new Subject<void>();
+  materiasChanged$ = this.materiasChangedSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
@@ -20,13 +23,16 @@ export class MateriaService {
 
   salvarMateria(materia: Materia): Observable<Materia> {
     if (materia.id) {
-      return this.http.put<Materia>(`${this.apiUrl}/${materia.id}`, materia);
+      return this.http.put<Materia>(`${this.apiUrl}/${materia.id}`, materia)
+        .pipe(tap(() => this.materiasChangedSubject.next()));
     }
-    return this.http.post<Materia>(this.apiUrl, materia);
+    return this.http.post<Materia>(this.apiUrl, materia)
+      .pipe(tap(() => this.materiasChangedSubject.next()));
   }
 
   excluirMateria(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`)
+      .pipe(tap(() => this.materiasChangedSubject.next()));
   }
 
   // ---------- TÓPICOS ----------

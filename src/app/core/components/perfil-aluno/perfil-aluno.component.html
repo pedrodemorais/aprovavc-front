@@ -29,48 +29,57 @@
 
           <aside *ngIf="usuario">
             <div class="nome-botoes">
-              <h2>Minha assinatura</h2>
-
-              <div class="botoes-assinatura">
-                <div>
-                  <button type="button" class="btn primario" (click)="irParaGerenciarAssinatura()">
-                    Gerenciar Assinatura
-                  </button>
-
-                </div>
+              <div class="assinatura-titulo">
+                <h2>Minha assinatura</h2>
+                <span [ngClass]="statusAssinaturaClass">{{ statusAssinaturaLabel }}</span>
               </div>
 
-            </div>
+              <div class="assinatura-acoes">
+                <button
+                  type="button"
+                  class="btn primario"
+                  *ngIf="statusAssinatura === 'TRIAL' || !assinaturaAtiva"
+                  (click)="assinarPlanoPadrao()"
+                >
+                  Assinar plano
+                </button>
 
+                <button
+                  type="button"
+                  class="btn-cancelar"
+                  *ngIf="assinaturaAtiva && statusAssinatura === 'ATIVA'"
+                  (click)="cancelarAssinatura()"
+                >
+                  Cancelar assinatura
+                </button>
+              </div>
+            </div>
 
             <div class="linha-assinatura">
               <span class="label">Plano atual</span>
-              <p><strong>{{ planoAtualLabel }}</strong></p>
-
+              <span class="valor"><strong>{{ planoAtualLabel }}</strong></span>
             </div>
 
-            <div class="linha-assinatura">
-              <span class="label">Status</span>
+            <div class="linha-assinatura" *ngIf="statusAssinatura === 'TRIAL' && dataExpiracaoLicenca">
+              <span class="label">Periodo de teste</span>
               <span class="valor">
-                <span [ngClass]="statusAssinaturaClass">
-                  {{ statusAssinaturaLabel }}
-                </span>
-              </span>
-            </div>
-
-            <div class="linha-assinatura" *ngIf="dataExpiracaoLicenca">
-              <span class="label">Válido até</span>
-              <span class="valor">
-                {{ dataExpiracaoLicenca | date:'dd/MM/yyyy' }}
+                ate {{ dataExpiracaoLicenca | date:'dd/MM/yyyy' }}
                 <ng-container *ngIf="diasRestantes !== null">
-                  ({{ diasRestantes }} dia{{ diasRestantes === 1 ? '' : 's' }} restante{{ diasRestantes === 1 ? '' :
-                  's' }})
+                  ({{ diasRestantes }} dia{{ diasRestantes === 1 ? '' : 's' }} restante{{ diasRestantes === 1 ? '' : 's' }})
                 </ng-container>
               </span>
             </div>
+
+            <div class="linha-assinatura" *ngIf="statusAssinatura === 'ATIVA' && dataExpiracaoLicenca">
+              <span class="label">Validade</span>
+              <span class="valor">{{ dataExpiracaoLicenca | date:'dd/MM/yyyy' }}</span>
+            </div>
+
+            <p class="texto-ajuda" *ngIf="statusAssinatura === 'EXPIRADA'">
+              Sua assinatura expirou. Fale com o suporte para reativar o plano.
+            </p>
             <p class="texto-ajuda">
-              Sua assinatura é processada com segurança via Stripe. Você será redirecionado
-              para a página de pagamento ao escolher um plano.
+              Sua assinatura e processada com seguranca via Stripe.
             </p>
             <div class="separador"></div>
 

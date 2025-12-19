@@ -577,3 +577,62 @@
 :host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1) !important;
 }
+
+/* =======================================
+   ASSINATURA PREMIUM (OVERRIDES CLEAN)
+======================================= */
+.page-materias{
+  background: radial-gradient(140% 160% at 10% 0%, #f8fafc 0%, #f1f5f9 45%, #eef2ff 100%);
+}
+
+.page-assinatura{
+  max-width: 1040px;
+}
+
+.painel-assinatura,
+.plano-card{
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+.painel-assinatura{
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+.resumo-assinatura{
+  background: var(--surface-2, #f8fafc);
+  border: 1px solid var(--border, #e5e7eb);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.planos-wrapper{
+  margin-top: 28px;
+}
+
+.planos-container{
+  gap: 18px;
+}
+
+.plano-card{
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+.plano-card.plano-destaque{
+  border-color: rgba(22, 163, 74, 0.55);
+  box-shadow: 0 18px 44px rgba(22, 163, 74, 0.18);
+}
+
+.btn-link{
+  text-decoration: none;
+  border-bottom: 1px dashed #93c5fd;
+}
+
+:host-context(body.theme-dark) .page-materias{
+  background: transparent;
+}
+
+:host-context(body.theme-dark) .resumo-assinatura{
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.12);
+}

@@ -8,9 +8,9 @@ import {
 } from 'src/app/core/models/AlunoParametroDTO';
 
 import { PerfilAlunoService } from 'src/app/services/perfil-aluno.service';
-import { Router } from '@angular/router';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { UsuarioService } from 'src/app/site/services/usuario.service';
+import { AssinaturaService } from 'src/app/core/services/assinatura.service';
 @Component({
   selector: 'app-perfil-aluno',
   templateUrl: './perfil-aluno.component.html',
@@ -37,8 +37,8 @@ export class PerfilAlunoComponent implements OnInit {
     private perfilAlunoService: PerfilAlunoService,
     private usuarioService: UsuarioService,
     private fb: FormBuilder,
-     private router: Router,
-      private authService: AuthService 
+    private authService: AuthService,
+    private assinaturaService: AssinaturaService
   ) {}
 
   ngOnInit(): void {
@@ -147,23 +147,19 @@ private calcularDiasRestantes(dataExpiracao?: string): number | null {
   return diffDias;
 }
 
-  // 🔹 Rótulo do plano atual (usa status TRIAL para mostrar "Período de teste")
+  // Rotulo do plano atual (plano unico)
   get planoAtualLabel(): string {
-    console.log('🎯 [Getter] planoAtualLabel -> status:', this.statusAssinatura, 'plano:', this.planoAtual);
+    console.log('[Getter] planoAtualLabel -> status:', this.statusAssinatura, 'plano:', this.planoAtual);
 
     if (this.statusAssinatura === 'TRIAL') {
-      return 'Período de teste (Premium liberado)';
+      return 'Periodo de teste';
     }
 
-    if (this.planoAtual === 'BASIC') {
-      return 'Essencial';
+    if (this.assinaturaAtiva) {
+      return 'Plano padrao';
     }
 
-    if (this.planoAtual === 'PREMIUM') {
-      return 'Premium';
-    }
-
-    return 'Nenhum plano';
+    return 'Sem plano ativo';
   }
 
   get statusAssinaturaLabel(): string {
@@ -275,7 +271,28 @@ salvar(): void {
     });
   }
 
-  irParaGerenciarAssinatura(): void {
-    this.router.navigate(['/area-restrita/assinatura']);
+  cancelarAssinatura(): void {
+    if (!confirm('Tem certeza que deseja cancelar sua assinatura?')) {
+      return;
+    }
+
+    this.carregando = true;
+    this.erro = undefined;
+
+    this.assinaturaService.cancelarAssinatura().subscribe({
+      next: () => {
+        this.carregarDados();
+      },
+      error: (err) => {
+        console.error('[PerfilAluno] Erro ao cancelar assinatura:', err);
+        this.erro = 'Erro ao cancelar assinatura. Tente novamente.';
+        this.carregando = false;
+      }
+    });
+  }
+
+  assinarPlanoPadrao(): void {
+    const plano = this.planoAtual === 'BASIC' ? 'BASIC' : 'PREMIUM';
+    this.abrirCheckout(plano);
   }
 }

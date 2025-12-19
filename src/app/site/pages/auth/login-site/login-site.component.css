@@ -32,7 +32,7 @@
 .login-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -40,6 +40,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: center;
+  width: 100%;
 }
 
 .login-logo {
@@ -64,6 +66,29 @@
   border: 1px solid rgba(226, 232, 240, 0.95);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   white-space: nowrap;
+}
+
+/* Voltar para o site (discreto, abaixo do botao) */
+.login-back-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px auto 0;
+  font-size: 0.86rem;
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.login-back-inline::before {
+  content: "←";
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.login-back-inline:hover {
+  color: #111827;
+  text-decoration: none;
 }
 
 .login-back:hover {

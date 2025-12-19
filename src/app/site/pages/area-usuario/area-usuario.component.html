@@ -83,6 +83,36 @@
         </div>
       </div>
 
+      <!-- MEU CADASTRO -->
+      <div class="user-menu-wrap" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="btn-user-menu"
+          (click)="toggleUserMenu(); $event.stopPropagation()"
+          [attr.aria-expanded]="userMenuAberto"
+          aria-label="Meu Cadastro"
+          title="Meu Cadastro"
+        >
+          <i class="pi pi-user" aria-hidden="true"></i>
+        </button>
+
+        <div
+          class="user-menu-panel"
+          [class.is-open]="userMenuAberto"
+          (click)="$event.stopPropagation()"
+          role="menu"
+          aria-label="Meu Cadastro"
+        >
+          <a
+            class="user-menu-item"
+            routerLink="/area-restrita/meu-cadastro"
+            (click)="userMenuAberto = false"
+          >
+            Meu Cadastro
+          </a>
+        </div>
+      </div>
+
     </div>
   </div>
 
