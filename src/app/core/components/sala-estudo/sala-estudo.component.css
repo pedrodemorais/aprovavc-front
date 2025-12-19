@@ -958,8 +958,15 @@
    RESPONSIVO
    ============================ */
 @media (max-width: 1024px) {
+  .sala-container {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .sala-body {
     flex-direction: column;
+    min-height: 0;
   }
 
   .coluna-esquerda {
@@ -971,16 +978,56 @@
     margin-right: 0;
     margin-bottom: 8px;
   }
+
+  .lista-de-topicos {
+    max-height: 40vh;
+    overflow: auto;
+  }
+
+  .coluna-direita,
+  .modo-conteudo {
+    min-height: 0;
+  }
 }
 
 @media (max-width: 768px) {
-  .acoes-estudo {
+  .sala-container {
+    padding: 8px 10px 20px;
+  }
+
+  .timer-botoes {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
+  }
+
+  .tipo-estudo {
+    justify-content: flex-start;
+  }
+
+  .timer-bar {
+    flex-wrap: wrap;
+  }
+
+  .timer-modos {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .btn-modo-timer {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .acoes-estudo {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
   }
 
   .acoes-estudo .btn {
-    width: 100%;
+    width: auto;
     justify-content: center;
   }
 
@@ -999,11 +1046,38 @@
   }
 
   .btn-acao {
-    width: 44px;
-    height: 44px;
-    padding: 0;
+    width: auto;
+    height: 36px;
+    padding: 0 12px;
     justify-content: center;
     border-radius: 12px;
+  }
+
+  .bloco-anotacoes {
+    height: auto;
+    min-height: 60vh;
+  }
+
+  .editor-wrapper {
+    min-height: 45vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .titulo-section {
+    font-size: 0.95rem;
+  }
+
+  .descricao-topico {
+    font-size: 0.85rem;
+  }
+
+  .lista-de-topicos {
+    max-height: 35vh;
+  }
+
+  .flashcard-footer {
+    gap: 6px;
   }
 }
 
@@ -1079,6 +1153,67 @@
   background: #54BA67 !important;
   border-color: rgba(84, 186, 103, 0.55) !important;
   box-shadow: 0 14px 30px rgba(84, 186, 103, 0.18) !important;
+}
+
+/* ============================
+   SCROLLBAR (clean, like dashboard)
+   ============================ */
+.sala-container,
+.lista-de-topicos,
+.editor-wrapper,
+.anotacoes-renderizadas {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
+}
+
+.sala-container::-webkit-scrollbar,
+.lista-de-topicos::-webkit-scrollbar,
+.editor-wrapper::-webkit-scrollbar,
+.anotacoes-renderizadas::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sala-container::-webkit-scrollbar-track,
+.lista-de-topicos::-webkit-scrollbar-track,
+.editor-wrapper::-webkit-scrollbar-track,
+.anotacoes-renderizadas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sala-container::-webkit-scrollbar-thumb,
+.lista-de-topicos::-webkit-scrollbar-thumb,
+.editor-wrapper::-webkit-scrollbar-thumb,
+.anotacoes-renderizadas::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.22);
+  border-radius: 999px;
+}
+
+.sala-container::-webkit-scrollbar-thumb:hover,
+.lista-de-topicos::-webkit-scrollbar-thumb:hover,
+.editor-wrapper::-webkit-scrollbar-thumb:hover,
+.anotacoes-renderizadas::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 24, 39, 0.35);
+}
+
+:host-context(body.theme-dark) .sala-container,
+:host-context(body.theme-dark) .lista-de-topicos,
+:host-context(body.theme-dark) .editor-wrapper,
+:host-context(body.theme-dark) .anotacoes-renderizadas {
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+}
+
+:host-context(body.theme-dark) .sala-container::-webkit-scrollbar-thumb,
+:host-context(body.theme-dark) .lista-de-topicos::-webkit-scrollbar-thumb,
+:host-context(body.theme-dark) .editor-wrapper::-webkit-scrollbar-thumb,
+:host-context(body.theme-dark) .anotacoes-renderizadas::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+:host-context(body.theme-dark) .sala-container::-webkit-scrollbar-thumb:hover,
+:host-context(body.theme-dark) .lista-de-topicos::-webkit-scrollbar-thumb:hover,
+:host-context(body.theme-dark) .editor-wrapper::-webkit-scrollbar-thumb:hover,
+:host-context(body.theme-dark) .anotacoes-renderizadas::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.65);
 }
 
 /* editor no dark (toolbar + content) */
@@ -1268,7 +1403,12 @@
     min-height: 0;
   }
 
+  .coluna-esquerda{
+    height: auto;
+  }
+
   .lista-de-topicos{
+    flex: 0 0 auto;
     max-height: 40vh;   /* scroll ainda existe, mas sem quebrar o mobile */
   }
 }

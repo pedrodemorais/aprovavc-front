@@ -9,6 +9,7 @@ import { SalaEstudoService } from 'src/app/core/services/sala-estudo.service';
 import { RevisaoDashboardItem } from 'src/app/core/models/RevisaoDashboardItem';
 import { Edital } from 'src/app/core/models/Edital';
 import { EditalService } from 'src/app/core/services/edital.service';
+import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 
@@ -46,6 +47,7 @@ export class MateriaEstudoComponent implements OnInit {
   editais: Edital[] = [];
   carregandoEditais = false;
   escopoValor = 'todas';
+  private readonly escopoParametroChave = 'centro_estudo_filtro_pro_prova';
 
   secaoAbertaId: number | null = null;
   topicoAtivoId: number | null = null;
@@ -72,10 +74,12 @@ export class MateriaEstudoComponent implements OnInit {
     private materiaService: MateriaService,
     private salaEstudoService: SalaEstudoService,
     private editalService: EditalService,
+    private empresaParametroService: EmpresaParametroService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.carregarParametroEscopo();
     this.carregarMaterias();
     this.carregarEditais();
     this.carregarRevisoesDashboard();
@@ -152,6 +156,7 @@ export class MateriaEstudoComponent implements OnInit {
       const editalId = Number(this.escopoValor.replace('edital-', ''));
       if (!this.materiasPorEdital.has(editalId)) {
         this.escopoValor = 'todas';
+        this.persistirEscopo();
       }
     }
   }
@@ -164,6 +169,70 @@ export class MateriaEstudoComponent implements OnInit {
     this.secaoAbertaId = null;
     this.topicoAtivoId = null;
     this.resumoExpandida = null;
+    this.persistirEscopo();
+  }
+
+  get editalSelecionado(): Edital | null {
+    if (!this.escopoValor.startsWith('edital-')) {
+      return null;
+    }
+    const editalId = Number(this.escopoValor.replace('edital-', ''));
+    if (!Number.isFinite(editalId)) {
+      return null;
+    }
+    return this.editais.find(e => e.id === editalId) || null;
+  }
+
+  formatPercent(v?: number | null): string {
+    if (v == null) {
+      return '-';
+    }
+    return `${v.toFixed(0)}%`;
+  }
+
+  formatData(iso?: string | null): string {
+    if (!iso) {
+      return '-';
+    }
+
+    const partes = iso.split('-');
+    if (partes.length !== 3) {
+      return iso;
+    }
+
+    const ano = partes[0];
+    const mes = partes[1];
+    const dia = partes[2];
+
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  private carregarParametroEscopo(): void {
+    this.empresaParametroService.getParametroPorChave(this.escopoParametroChave).subscribe({
+      next: (valor) => {
+        if (valor) {
+          this.escopoValor = valor;
+        }
+      },
+      error: (err) => {
+        console.error('[PARAMETRO] Erro ao carregar filtro do centro de estudo:', err);
+      }
+    });
+  }
+
+  private persistirEscopo(): void {
+    const valor = this.escopoValor || 'todas';
+    const payload = { chave: this.escopoParametroChave, valor };
+
+    this.empresaParametroService.atualizarParametro(payload).subscribe({
+      error: () => {
+        this.empresaParametroService.salvarParametro(payload).subscribe({
+          error: (err: any) => {
+            console.error('[PARAMETRO] Erro ao salvar filtro do centro de estudo:', err);
+          }
+        });
+      }
+    });
   }
 
   selecionarMateria(m: Materia): void {

@@ -37,6 +37,16 @@ export class EmpresaParametroService {
     );
   }
 
+  /** Cria um parametro no backend */
+  salvarParametro(parametro: EmpresaParametroDTO): Observable<any> {
+    return this.http.post(this.apiUrl, parametro, {
+      withCredentials: true,
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    });
+  }
+
    /** 🔥 Atualiza um parâmetro no backend */
 /** 🔥 Atualiza um parâmetro no backend enviando o token automaticamente via cookie */
 atualizarParametro(parametro: EmpresaParametroDTO): Observable<any> {

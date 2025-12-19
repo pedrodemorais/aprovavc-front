@@ -80,6 +80,133 @@
   align-items: stretch;
 }
 
+.edital-selecionado{
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.edital-card-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.edital-header-col-esq{
+  flex: 1;
+  min-width: 0;
+}
+
+.edital-header-linha{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.edital-nome{
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.edital-desc{
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 28%;
+}
+
+.edital-meta{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.meta-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.meta-label{ color: var(--muted); }
+.meta-valor{ color: var(--text); font-weight: 600; }
+
+.meta-pill{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(34,197,94,.12);
+  color: #15803d;
+}
+
+.pill-progresso,
+.pill-dominio{
+  background: rgba(34,197,94,.12);
+  color: #15803d;
+}
+
+.edital-semaforo{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.semaforo-dot{
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.06);
+}
+
+.semaforo-dot--ok{ background: var(--ok); }
+.semaforo-dot--hoje{ background: var(--hoje); }
+.semaforo-dot--bad{ background: var(--bad); }
+
+:host-context(body.theme-dark) .edital-selecionado{
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:host-context(body.theme-dark) .edital-nome{
+  color: #e5e7eb;
+}
+
+:host-context(body.theme-dark) .edital-desc{
+  color: #94a3b8;
+}
+
+:host-context(body.theme-dark) .meta-chip{
+  color: #94a3b8;
+}
+
+:host-context(body.theme-dark) .meta-valor{
+  color: #e5e7eb;
+}
+
+:host-context(body.theme-dark) .pill-progresso,
+:host-context(body.theme-dark) .pill-dominio{
+  background: rgba(34,197,94,.18);
+  color: #bbf7d0;
+}
+
 .topo-controls{
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -626,4 +753,23 @@
   border-color: rgba(34,197,94,.40);
   background: rgba(34,197,94,.18);
   color: #bbf7d0;
+}
+
+@media (max-width: 640px){
+  .edital-card-header{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .edital-header-linha{
+    flex-wrap: wrap;
+  }
+  .edital-meta{
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+  .edital-semaforo{
+    width: 100%;
+    justify-content: flex-start;
+  }
 }

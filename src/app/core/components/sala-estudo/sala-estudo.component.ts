@@ -18,7 +18,7 @@ type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
   styleUrls: ['./sala-estudo.component.css']
 })
 export class SalaEstudoComponent implements OnInit {
-mensagemRevisao?: string;
+  mensagemRevisao?: string;
   materiaId!: number;
   materia?: Materia;
 
@@ -30,6 +30,7 @@ mensagemRevisao?: string;
 
   topicos: any[] = [];
   topicoSelecionado?: any | null;
+  private topicoIdPreferido: number | null = null;
 
   arvoreTopicos: any[] = [];
 
@@ -39,17 +40,17 @@ mensagemRevisao?: string;
   // modo da sala: estudar ou revisar
   modo: 'estudar' | 'revisar' = 'estudar';
 
-  // modo de revisão (anotações x flashcards)
+  // modo de revisao (anotacoes x flashcards)
   modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
 
   // ======================= TIMER / POMODORO =======================
 
   modoTemporizador: 'livre' | 'pomodoro' = 'livre';
 
-  // total decorrido no cronômetro (modo livre)
+  // total decorrido no cronometro (modo livre)
   tempoTotalSegundos: number = 0;
 
-  // quanto tempo já foi efetivamente salvo no backend para o tópico atual (em segundos)
+  // quanto tempo ja foi efetivamente salvo no backend para o topico atual (em segundos)
   private segundosEstudoJaSalvosTopicoAtual: number = 0;
 
   timerAtivo: boolean = false;
@@ -64,7 +65,7 @@ mensagemRevisao?: string;
   pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos: number = 0;
 
-  // modo foco na revisão (tela cheia)
+  // modo foco na revisao (tela cheia)
   modoRevisaoFocoAtivo: boolean = false;
 
   ativarModoFocoRevisao(): void {
@@ -89,17 +90,16 @@ mensagemRevisao?: string;
 
   mensagemFlashcardRevisao?: string;
 
-// “status da sessão” (opcional)
-revisouAnotacoesSessao: boolean = false;
-revisouFlashcardsSessao: boolean = false;
-
+  // status da sessao (opcional)
+  revisouAnotacoesSessao: boolean = false;
+  revisouFlashcardsSessao: boolean = false;
 
   // lista de flashcards (usada tanto em estudar quanto revisar)
   flashcards: FlashcardDTO[] = [];
   flashcardIndexAtual: number = 0;
   mostrarVersoAtual: boolean = false;
 
-  // ESTADO DA REVISÃO (carregando flashcards de revisão)
+  // estado da revisao (carregando flashcards de revisao)
   carregandoFlashcardsRevisao: boolean = false;
   erroFlashcardsRevisao?: string;
 
@@ -118,54 +118,53 @@ revisouFlashcardsSessao: boolean = false;
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('materiaId') ?? params.get('id');
       this.materiaId = idParam ? Number(idParam) : 0;
+      this.topicoIdPreferido = this.getTopicoIdFromQuery();
 
       console.log('[SALA-ESTUDO] materiaId =', this.materiaId);
 
       if (!this.materiaId) {
-        this.erro = 'Matéria não informada na rota.';
+        this.erro = 'Materia nao informada na rota.';
         return;
       }
 
       this.carregarMateria();
       this.carregarTopicos();
-      this.carregarRevisoesDashboard(); // 👈 trás o semáforo
+      this.carregarRevisoesDashboard();
     });
   }
 
-onEditorInit(event: any) {
-  const quill = event?.editor || event; // PrimeNG pode mandar direto ou dentro de .editor
+  onEditorInit(event: any) {
+    const quill = event?.editor || event;
 
-  // Remove qualquer IMG que venha do clipboard (inclui base64)
-  quill.clipboard.addMatcher('IMG', () => {
-    return { ops: [] };
-  });
+    // Remove qualquer IMG que venha do clipboard (inclui base64)
+    quill.clipboard.addMatcher('IMG', () => {
+      return { ops: [] };
+    });
 
-  // Bloqueia drop de imagem
-  quill.root.addEventListener('drop', (e: DragEvent) => {
-    const files = e.dataTransfer?.files;
-    if (!files?.length) return;
+    // Bloqueia drop de imagem
+    quill.root.addEventListener('drop', (e: DragEvent) => {
+      const files = e.dataTransfer?.files;
+      if (!files?.length) return;
 
-    const hasImage = Array.from(files).some(f => f.type.startsWith('image/'));
-    if (hasImage) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
+      const hasImage = Array.from(files).some(f => f.type.startsWith('image/'));
+      if (hasImage) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
 
-  // Bloqueia paste de imagem (binário)
-  quill.root.addEventListener('paste', (e: ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items?.length) return;
+    // Bloqueia paste de imagem (binario)
+    quill.root.addEventListener('paste', (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items?.length) return;
 
-    const hasImage = Array.from(items).some(i => i.type.startsWith('image/'));
-    if (hasImage) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-}
-
-
+      const hasImage = Array.from(items).some(i => i.type.startsWith('image/'));
+      if (hasImage) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+  }
 
   // ================================================================
   // CARREGAMENTO DE DADOS
@@ -179,13 +178,13 @@ onEditorInit(event: any) {
         this.carregando = false;
 
         if (!this.materia) {
-          this.erro = 'Matéria não encontrada para este aluno.';
+          this.erro = 'Materia nao encontrada para este aluno.';
         }
       },
       error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao carregar matéria:', err);
+        console.error('[SALA-ESTUDO] Erro ao carregar materia:', err);
         this.carregando = false;
-        this.erro = 'Erro ao carregar dados da matéria.';
+        this.erro = 'Erro ao carregar dados da materia.';
       }
     });
   }
@@ -217,46 +216,61 @@ onEditorInit(event: any) {
     return !!(this.topicoSelecionado && !this.topicoSelecionado.hasFilhos);
   }
 
-private carregarTopicos(): void {
-  console.log('[SALA-ESTUDO] Carregando tópicos da matériaId =', this.materiaId);
+  private carregarTopicos(): void {
+    console.log('[SALA-ESTUDO] Carregando topicos da materiaId =', this.materiaId);
 
-  this.materiaService.listarTopicos(this.materiaId).subscribe({
-    next: (lista) => {
-      const listaSegura = lista || [];
-      console.log('[SALA-ESTUDO] DTO bruto de tópicos (árvore):', listaSegura);
+    this.materiaService.listarTopicos(this.materiaId).subscribe({
+      next: (lista) => {
+        const listaSegura = lista || [];
+        console.log('[SALA-ESTUDO] DTO bruto de topicos (arvore):', listaSegura);
 
-      this.arvoreTopicos = listaSegura;
-      this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
+        this.arvoreTopicos = listaSegura;
+        this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
-      console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
+        console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
 
-      // 👉 ao abrir a sala (ou dar F5), se ainda não tiver tópico selecionado,
-      // escolhe o PRIMEIRO tópico "estudável":
-      // - não tem filhos (leaf)
-      // - está ativo (se você quiser considerar isso)
-      if (!this.topicoSelecionado && this.topicos.length) {
+        // Ao abrir a sala: se vier topicoId pela query, usa ele.
+        if (!this.topicoSelecionado && this.topicos.length) {
+          let alvo: any | undefined;
+          if (this.topicoIdPreferido) {
+            const candidato = this.topicos.find(t => t.id === this.topicoIdPreferido);
+            if (candidato && !candidato.hasFilhos) {
+              alvo = candidato;
+            }
+          }
 
-        // primeiro leaf ativo
-        let primeiroEstudavel = this.topicos.find(t => !t.hasFilhos && t.ativo !== false);
+          if (!alvo) {
+            // primeiro leaf ativo
+            alvo = this.topicos.find(t => !t.hasFilhos && t.ativo !== false);
+          }
 
-        // se por acaso não tiver leaf, cai no primeiro mesmo
-        if (!primeiroEstudavel) {
-          primeiroEstudavel = this.topicos[0];
+          // se por acaso nao tiver leaf, cai no primeiro mesmo
+          if (!alvo) {
+            alvo = this.topicos[0];
+          }
+
+          if (alvo) {
+            this.selecionarTopico(alvo);
+          }
         }
-
-        if (primeiroEstudavel) {
-          this.selecionarTopico(primeiroEstudavel);
-        }
+      },
+      error: (err) => {
+        console.error('[SALA-ESTUDO] Erro ao carregar topicos:', err);
+        this.erro = 'Erro ao carregar topicos da materia.';
       }
-    },
-    error: (err) => {
-      console.error('[SALA-ESTUDO] Erro ao carregar tópicos:', err);
-      this.erro = 'Erro ao carregar tópicos da matéria.';
-    }
-  });
-}
+    });
+  }
 
-ativarRevisaoAnotacoes(): void {
+  private getTopicoIdFromQuery(): number | null {
+    const raw = this.route.snapshot.queryParamMap.get('topicoId');
+    if (!raw) {
+      return null;
+    }
+    const id = Number(raw);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+
+  ativarRevisaoAnotacoes(): void {
   this.modoRevisao = 'anotacoes';
 
   if (this.topicoSelecionado && this.topicoPermiteEstudo) {
