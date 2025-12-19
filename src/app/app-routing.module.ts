@@ -23,6 +23,7 @@ import { AssinaturaCanceladaComponent } from './core/components/assinatura/assin
 import { AssinaturaPlanosComponent } from './core/components/assinatura-planos/assinatura-planos.component';
 import { PerfilAlunoComponent } from './core/components/perfil-aluno/perfil-aluno.component';
 import { PlanoAtivoGuard } from './site/pages/guards/plano-ativo.guard';
+import { MateriaEstudoComponent } from './core/components/estudo-por-materia/estudo-por-materia.component';
 
 
 
@@ -62,6 +63,11 @@ const routes: Routes = [
       {
         path: 'cad-materias',
         component: MateriaCadastroComponent,
+        canActivate: [PlanoAtivoGuard]
+      },
+      {
+        path: 'estudar-materias',
+        component: MateriaEstudoComponent,
         canActivate: [PlanoAtivoGuard]
       },
       {

@@ -23,6 +23,7 @@ import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/d
 
 
 
+
 registerLocaleData(localePt, 'pt-BR'); 
 
 @NgModule({
@@ -32,6 +33,7 @@ registerLocaleData(localePt, 'pt-BR');
     RecuperarSenhaComponent,
     ContentComponent,
     DashboardRevisaoComponent,
+   
 
 
     

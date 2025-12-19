@@ -51,8 +51,9 @@ import { AssinaturaCanceladaComponent } from './components/assinatura/assinatura
 import { AssinaturaPlanosComponent } from './components/assinatura-planos/assinatura-planos.component';
 import { PerfilAlunoComponent } from './components/perfil-aluno/perfil-aluno.component';
 import { TooltipModule } from 'primeng/tooltip';
+import { MateriaEstudoComponent } from './components/estudo-por-materia/estudo-por-materia.component';
 
-
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 
 
@@ -68,7 +69,9 @@ import { TooltipModule } from 'primeng/tooltip';
          EditaisComponent, 
          AssinaturaCanceladaComponent,
          AssinaturaPlanosComponent,
-         PerfilAlunoComponent
+         PerfilAlunoComponent,
+         MateriaEstudoComponent
+        
        
     
   
@@ -113,6 +116,7 @@ import { TooltipModule } from 'primeng/tooltip';
     BrowserAnimationsModule,
     RichTextEditorModule,
     TooltipModule,
+     OverlayPanelModule,
   BrowserAnimationsModule,   // PRECISA estar aqui
     NgxMaskModule.forChild()
   ],

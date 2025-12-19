@@ -4,82 +4,103 @@
   <!-- 🔹 Topo da Dashboard -->
   <div class="topbar">
 
-    <div div="nome-site-area-usuario">
-
+    <!-- ESQUERDA: logo + menu -->
+    <div class="nome-site-area-usuario">
       <div class="logo">
         <img src="assets/img/logo/dynamo.png" alt="Logo" />
-
       </div>
 
       <!-- 🔹 Botão de menu hambúrguer -->
-      <button #menuToggle class="menu-toggle" (click)="toggleMenu()">
-        <i class="fas fa-bars"></i>
+      <button #menuToggle class="menu-toggle" type="button" (click)="toggleMenu()" aria-label="Abrir menu">
+        <i class="fas fa-bars" aria-hidden="true"></i>
       </button>
-
     </div>
 
-    <div>
-      <div class="son-e-modo-escuro">
-        <!-- SONS DE FOCO -->
-          <button class="btn-modo-leitura" type="button" (click)="modoLeituraService.toggle()">
-        <i class="pi" [ngClass]="modoLeituraService.isDark() ? 'pi-sun' : 'pi-moon'"></i>
-      </button>
-        <div class="sons-foco-header">
-          <div class="sons-foco-info">
-            <span class="sons-foco-label">
-              Som de foco (Melhor com Fone)
+    <!-- DIREITA: modo escuro + som foco -->
+    <div class="son-e-modo-escuro">
 
+      <!-- MODO ESCURO / CLARO -->
+      <button class="btn-modo-leitura"
+              type="button"
+              (click)="modoLeituraService.toggle()"
+              aria-label="Alternar tema">
+        <i class="pi" [ngClass]="modoLeituraService.isDark() ? 'pi-sun' : 'pi-moon'" aria-hidden="true"></i>
+      </button>
+
+      <!-- SOM DE FOCO (BOTÃO ÍCONE + PAINEL FLUTUANTE) -->
+      <div class="sons-foco-wrap" (click)="$event.stopPropagation()">
+
+        <!-- botão ícone -->
+        <button type="button"
+                class="btn-som-foco"
+                (click)="toggleSonsFoco(); $event.stopPropagation()"
+                [attr.aria-expanded]="sonsFocoAberto"
+                aria-label="Som de foco"
+                title="Som de foco">
+          <i class="pi pi-volume-up" aria-hidden="true"></i>
+        </button>
+
+        <!-- painel flutuante (não empurra layout) -->
+        <div class="sons-foco-panel"
+             [class.is-open]="sonsFocoAberto"
+             (click)="$event.stopPropagation()"
+             role="dialog"
+             aria-label="Sons de foco">
+
+          <div class="sons-foco-panel-head">
+            <div class="sons-foco-panel-title">
+              Som de foco
               <i class="pi pi-info-circle info-icon info-icon--inline"
-                pTooltip="Ative um som ambiente para manter a concentração." tooltipPosition="top" [showDelay]="150"
-                [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
-            </span>
-
-
-
-            <div class="icones-sons">
-              <button type="button" class="som-icone" *ngFor="let som of sonsFoco" [class.ativo]="somAtivoId === som.id"
-                (click)="onClickSomIcone(som.id)" [title]="som.nome">
-                <div class="som-icone-avatar-wrapper">
-                  <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
-                  <span class="som-icone-badge" *ngIf="somAtivoId === som.id">
-                    ▶
-                  </span>
-                </div>
-
-                <div class="som-icone-textos">
-                  <span class="som-icone-nome">{{ som.nome }}</span>
-                </div>
-              </button>
-               <!-- CONTROLE DE VOLUME (vertical) -->
-              </div>
+                 pTooltip="Ative um som ambiente para manter a concentração."
+                 tooltipPosition="top"
+                 [showDelay]="150"
+                 [hideDelay]="80"
+                 tabindex="0"
+                 aria-label="Ajuda"></i>
+            </div>
+            <div class="sons-foco-panel-sub">Melhor com fone 🎧</div>
           </div>
+
+          <div class="icones-sons">
+            <button type="button"
+                    class="som-icone"
+                    *ngFor="let som of sonsFoco"
+                    [class.ativo]="somAtivoId === som.id"
+                    (click)="onClickSomIcone(som.id); $event.stopPropagation()"
+                    [title]="som.nome">
+
+              <div class="som-icone-avatar-wrapper">
+                <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
+                <span class="som-icone-badge" *ngIf="somAtivoId === som.id">▶</span>
+              </div>
+
+              <div class="som-icone-textos">
+                <span class="som-icone-nome">{{ som.nome }}</span>
+              </div>
+            </button>
+          </div>
+
         </div>
-       
       </div>
-     
 
     </div>
-
-
-
-
-
-
   </div>
+
+  <!-- CONTEÚDO -->
   <div class="container">
     <div class="menu">
-
-
-      <nav #sidebar class="sidebar" [ngClass]="{ 'menu-mobile': menuAberto }" role="navigation"
-        aria-label="Menu principal" (click)="$event.stopPropagation()">
+      <nav #sidebar
+           class="sidebar"
+           [ngClass]="{ 'menu-mobile': menuAberto }"
+           role="navigation"
+           aria-label="Menu principal"
+           (click)="$event.stopPropagation()">
         <p-panelMenu [model]="items" [multiple]="true" styleClass="menu-flat"></p-panelMenu>
       </nav>
-
     </div>
 
     <div class="content">
-
-      <router-outlet> </router-outlet>
+      <router-outlet></router-outlet>
     </div>
   </div>
 

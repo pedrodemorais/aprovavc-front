@@ -2,10 +2,12 @@ import {
   Component,
   OnInit,
   OnDestroy,
+  AfterViewInit,
   HostListener,
   ViewChild,
   ElementRef,
-  ViewEncapsulation
+  ViewEncapsulation,
+  NgZone
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { AuthService } from 'src/app/site/services/auth.service';
@@ -14,20 +16,20 @@ import { MenuItem } from 'primeng/api';
 import { Subject } from 'rxjs';
 import { ModoLeituraService } from 'src/app/core/services/modo-leitura.service';
 
-
 @Component({
   selector: 'app-area-usuario',
   templateUrl: './area-usuario.component.html',
   styleUrls: ['./area-usuario.component.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class AreaUsuarioComponent implements OnInit, OnDestroy {
-
+export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   user: any;
   menuAberto = false;
   userInitials = '';
   isHome = true;
+
+  sonsFocoAberto = false;
 
   items: MenuItem[] = [];
 
@@ -49,7 +51,8 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
-    public modoLeituraService: ModoLeituraService
+    public modoLeituraService: ModoLeituraService,
+    private ngZone: NgZone
   ) {
     this.user = this.authService.getUser();
     if (!this.user) {
@@ -68,237 +71,268 @@ export class AreaUsuarioComponent implements OnInit, OnDestroy {
       });
   }
 
-ngOnInit() {
-  this.modoLeituraService.init();
-  this.user = this.authService.getUser();
+  ngOnInit() {
+    this.modoLeituraService.init();
+    this.user = this.authService.getUser();
 
-  const userName = this.authService.getUserNameFromToken();
-  if (userName) {
-    this.getUserInitials(userName);
+    const userName = this.authService.getUserNameFromToken();
+    if (userName) {
+      this.getUserInitials(userName);
+    }
+
+    if (!this.user) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // 1) Já se inscreve pra reagir a MUDANÇAS (login, renovação, expiração, etc.)
+    this.authService.assinaturaValida$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(valida => {
+        console.log('📡 [MENU] assinaturaValida mudou para:', valida);
+        this.assinaturaValida = valida;
+        this.montarMenu();
+      });
+
+    // 2) Checa no backend como está a assinatura AGORA
+    this.authService.checarAssinaturaNoBack()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((valida) => {
+        console.log('📡 [MENU] Resultado checagem no back:', valida);
+        this.assinaturaValida = valida;
+        this.montarMenu();
+      });
   }
 
-  if (!this.user) {
-    this.router.navigate(['/login']);
-    return;
+  // ✅ CLICK FORA (CAPTURE) — funciona mesmo com stopPropagation do PrimeNG
+  private onDocPointerDown = (event: Event) => {
+    if (!this.sonsFocoAberto) return;
+
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    const clicouDentro = !!target.closest('.sons-foco-wrap');
+    if (clicouDentro) return;
+
+    this.ngZone.run(() => {
+      this.sonsFocoAberto = false;
+    });
+  };
+
+  ngAfterViewInit(): void {
+    this.ngZone.runOutsideAngular(() => {
+      document.addEventListener('pointerdown', this.onDocPointerDown, true); // capture = true
+      document.addEventListener('touchstart', this.onDocPointerDown, true); // fallback mobile
+    });
   }
-
-  // 1) Já se inscreve pra reagir a MUDANÇAS (login, renovação, expiração, etc.)
-  this.authService.assinaturaValida$
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(valida => {
-      console.log('📡 [MENU] assinaturaValida mudou para:', valida);
-      this.assinaturaValida = valida;
-      this.montarMenu();
-    });
-
-  // 2) Checa no backend como está a assinatura AGORA
-  this.authService.checarAssinaturaNoBack()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe((valida) => {
-      console.log('📡 [MENU] Resultado checagem no back:', valida);
-      this.assinaturaValida = valida;
-      this.montarMenu();
-    });
-}
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-     document.body.classList.remove('modo-leitura');
-     
-      if (this.audioFoco) {
-    this.audioFoco.pause();
-    this.audioFoco.src = '';
-    this.audioFoco = null;
-  }
+
+    document.body.classList.remove('modo-leitura');
+
+    document.removeEventListener('pointerdown', this.onDocPointerDown, true);
+    document.removeEventListener('touchstart', this.onDocPointerDown, true);
+
+    if (this.audioFoco) {
+      this.audioFoco.pause();
+      this.audioFoco.src = '';
+      this.audioFoco = null;
+    }
   }
 
-
+  // ✅ ESC fecha o painel do som (mantém o que você já tinha funcionando)
+  @HostListener('document:keydown.escape')
+  onEsc(): void {
+    if (this.sonsFocoAberto) {
+      this.sonsFocoAberto = false;
+    }
+  }
 
   // ============ MENU ============
 
-private montarMenu(): void {
-  const estudoMenu: MenuItem = {
-    label: 'Estudo',
-    icon: 'pi pi-play',
-    items: [
-      {
-        label: 'Por matéria',
-        icon: 'pi pi-book',
-        command: () => this.navegarProtegido('/area-restrita/estudo-por-materia')
-      },
-      {
-        label: 'Por edital',
-        icon: 'pi pi-list',
-        command: () => this.navegarProtegido('/area-restrita/estudo-por-edital')
-      }
-    ]
-  };
-
-  const cadastrosMenu: MenuItem = {
-    label: 'Cadastros',
-    icon: 'pi pi-cog',
-    items: [
-      {
-        label: 'Matérias',
-        icon: 'pi pi-book',
-        routerLink: ['/area-restrita/cad-materias']
-      },
-      {
-        label: 'Editais/Provas',
-        icon: 'pi pi-file-edit',
-        routerLink: ['/area-restrita/editais']
-      }
-    ]
-  };
-
-  if (this.assinaturaValida) {
-    // 🔓 assinatura OK
-    this.items = [
-      { label: 'Página inicial', icon: 'pi pi-home', routerLink: ['/area-restrita/dashboard'] },
-      estudoMenu,
-      cadastrosMenu,
-      { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
-      { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
-      { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
-    ];
-  } else {
-    // 🔐 assinatura expirada
-    this.items = [
-      { label: 'Página inicial', icon: 'pi pi-home', disabled: true },
-
-      // Estudo bloqueado
-      {
-        ...estudoMenu,
-        items: estudoMenu.items?.map(i => ({ ...i, disabled: true }))
-      },
-
-      // ✅ escolha 1: deixar Cadastros liberado (recomendado)
-      cadastrosMenu,
-
-      // ✅ escolha 2 (se quiser travar cadastros também):
-      // { ...cadastrosMenu, items: cadastrosMenu.items?.map(i => ({ ...i, disabled: true })) },
-
-      { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
-      { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
-      { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
-    ];
-  }
-}
-
-sonsFoco = [
-  {
-    id: 'white',
-    nome: '',
-    arquivo: 'assets/sons/mixkit-water-flowing-in-the-river.wav',
-    icone: 'assets/img/icon/aceno.png'
-  },
-  {
-    id: 'brown',
-    nome: '',
-    arquivo: 'assets/sons/10-minute-rain-and-thunder.mp3',
-    icone: 'assets/img/icon/chuva.png'
-  },
-  {
-    id: 'pink',
-    nome: '',
-    arquivo: 'assets/sons/mixkit-sea-waves-ambience.wav',
-    icone: 'assets/img/icon/onda.png'
-  },
-  {
-    id: 'fan',
-    nome: '',
-    arquivo: 'assets/sons/mixkit-river-in-the-forest-with-birds.wav',
-    icone: 'assets/img/icon/floresta.png'
-  },
-  {
-    id: 'rain',
-    nome: '',
-    arquivo: 'assets/sons/relaxing-layered-brown-noise-304725.mp3',
-    icone: 'assets/img/icon/barulho.png'
-  }
-];
-
-private audioFoco: HTMLAudioElement | null = null;
-somAtivoId: string | null = null;   // qual ícone/som está ativo
-volumeSomFoco: number = 0.5;        // se quiser depois pode expor um slider
-
-private inicializarAudioFoco(): void {
-  if (!this.audioFoco) {
-    this.audioFoco = new Audio();
-    this.audioFoco.loop = true;
-    this.audioFoco.volume = this.volumeSomFoco;
-  }
-}
-
-private tocarSom(somId: string): void {
-  this.inicializarAudioFoco();
-  if (!this.audioFoco) {
-    return;
+  toggleSonsFoco(): void {
+    this.sonsFocoAberto = !this.sonsFocoAberto;
   }
 
-  const som = this.sonsFoco.find(s => s.id === somId);
-  if (!som) {
-    return;
-  }
+  private montarMenu(): void {
+    const estudoMenu: MenuItem = {
+      label: 'Estudo',
+      icon: 'pi pi-play',
+      items: [
+        {
+          label: 'Por matéria',
+          icon: 'pi pi-book',
+          command: () => this.navegarProtegido('/area-restrita/estudar-materias')
+        },
+        {
+          label: 'Por edital',
+          icon: 'pi pi-list',
+          command: () => this.navegarProtegido('/area-restrita/estudo-por-edital')
+        }
+      ]
+    };
 
-  // se já está tocando esse mesmo som, parar
-  if (this.somAtivoId === somId) {
-    this.audioFoco.pause();
-    this.somAtivoId = null;
-    return;
-  }
+    const cadastrosMenu: MenuItem = {
+      label: 'Cadastros',
+      icon: 'pi pi-cog',
+      items: [
+        {
+          label: 'Matérias',
+          icon: 'pi pi-book',
+          routerLink: ['/area-restrita/cad-materias']
+        },
+        {
+          label: 'Editais/Provas',
+          icon: 'pi pi-file-edit',
+          routerLink: ['/area-restrita/editais']
+        }
+      ]
+    };
 
-  // troca a fonte, garante loop e reseta o tempo
-  this.audioFoco.src = som.arquivo;
-  this.audioFoco.currentTime = 0;
-  this.audioFoco.loop = true; // 👈 reforça o loop sempre que troca o som
+    if (this.assinaturaValida) {
+      // 🔓 assinatura OK
+      this.items = [
+        { label: 'Página inicial', icon: 'pi pi-home', routerLink: ['/area-restrita/dashboard'] },
+        estudoMenu,
+        cadastrosMenu,
+        { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
+        { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
+        { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
+      ];
+    } else {
+      // 🔐 assinatura expirada
+      this.items = [
+        { label: 'Página inicial', icon: 'pi pi-home', disabled: true },
 
-  // fallback manual pro caso de algum navegador ignorar o loop
-  this.audioFoco.onended = () => {
-    if (this.somAtivoId === somId && this.audioFoco) {
-      this.audioFoco.currentTime = 0;
-      this.audioFoco.play().catch(err => {
-        console.error('Erro ao reiniciar áudio de foco:', err);
-      });
+        // Estudo bloqueado
+        {
+          ...estudoMenu,
+          items: estudoMenu.items?.map(i => ({ ...i, disabled: true }))
+        },
+
+        // ✅ escolha 1: deixar Cadastros liberado (recomendado)
+        cadastrosMenu,
+
+        { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
+        { label: 'Assinatura', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
+        { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
+      ];
     }
-  };
+  }
 
-  this.audioFoco
-    .play()
-    .then(() => {
-      this.somAtivoId = somId;
-    })
-    .catch(err => {
-      console.error('Erro ao tocar áudio de foco:', err);
+  sonsFoco = [
+    {
+      id: 'white',
+      nome: '',
+      arquivo: 'assets/sons/mixkit-water-flowing-in-the-river.wav',
+      icone: 'assets/img/icon/aceno.png'
+    },
+    {
+      id: 'brown',
+      nome: '',
+      arquivo: 'assets/sons/10-minute-rain-and-thunder.mp3',
+      icone: 'assets/img/icon/chuva.png'
+    },
+    {
+      id: 'pink',
+      nome: '',
+      arquivo: 'assets/sons/mixkit-sea-waves-ambience.wav',
+      icone: 'assets/img/icon/onda.png'
+    },
+    {
+      id: 'fan',
+      nome: '',
+      arquivo: 'assets/sons/mixkit-river-in-the-forest-with-birds.wav',
+      icone: 'assets/img/icon/floresta.png'
+    },
+    {
+      id: 'rain',
+      nome: '',
+      arquivo: 'assets/sons/relaxing-layered-brown-noise-304725.mp3',
+      icone: 'assets/img/icon/barulho.png'
+    }
+  ];
+
+  private audioFoco: HTMLAudioElement | null = null;
+  somAtivoId: string | null = null;   // qual ícone/som está ativo
+  volumeSomFoco: number = 0.5;        // se quiser depois pode expor um slider
+
+  private inicializarAudioFoco(): void {
+    if (!this.audioFoco) {
+      this.audioFoco = new Audio();
+      this.audioFoco.loop = true;
+      this.audioFoco.volume = this.volumeSomFoco;
+    }
+  }
+
+  private tocarSom(somId: string): void {
+    this.inicializarAudioFoco();
+    if (!this.audioFoco) {
+      return;
+    }
+
+    const som = this.sonsFoco.find(s => s.id === somId);
+    if (!som) {
+      return;
+    }
+
+    // se já está tocando esse mesmo som, parar
+    if (this.somAtivoId === somId) {
+      this.audioFoco.pause();
       this.somAtivoId = null;
-    });
-}
+      return;
+    }
 
+    // troca a fonte, garante loop e reseta o tempo
+    this.audioFoco.src = som.arquivo;
+    this.audioFoco.currentTime = 0;
+    this.audioFoco.loop = true; // reforça o loop sempre que troca o som
 
-// chamado ao clicar no ícone
-onClickSomIcone(somId: string): void {
-  this.tocarSom(somId);
-}
+    // fallback manual pro caso de algum navegador ignorar o loop
+    this.audioFoco.onended = () => {
+      if (this.somAtivoId === somId && this.audioFoco) {
+        this.audioFoco.currentTime = 0;
+        this.audioFoco.play().catch(err => {
+          console.error('Erro ao reiniciar áudio de foco:', err);
+        });
+      }
+    };
 
-// se quiser controlar volume depois:
-mudarVolumeSomFoco(novoVolume: number): void {
-  this.volumeSomFoco = novoVolume;
-  if (this.audioFoco) {
-    this.audioFoco.volume = this.volumeSomFoco;
+    this.audioFoco
+      .play()
+      .then(() => {
+        this.somAtivoId = somId;
+      })
+      .catch(err => {
+        console.error('Erro ao tocar áudio de foco:', err);
+        this.somAtivoId = null;
+      });
   }
-}
 
-
-
-onVolumeSomFocoChange(event: any): void {
-  const novoVolume = Number(event.target.value);
-  this.volumeSomFoco = novoVolume;
-
-  if (this.audioFoco) {
-    this.audioFoco.volume = this.volumeSomFoco;
+  // chamado ao clicar no ícone
+  onClickSomIcone(somId: string): void {
+    this.tocarSom(somId);
   }
-}
+
+  // se quiser controlar volume depois:
+  mudarVolumeSomFoco(novoVolume: number): void {
+    this.volumeSomFoco = novoVolume;
+    if (this.audioFoco) {
+      this.audioFoco.volume = this.volumeSomFoco;
+    }
+  }
+
+  onVolumeSomFocoChange(event: any): void {
+    const novoVolume = Number(event.target.value);
+    this.volumeSomFoco = novoVolume;
+
+    if (this.audioFoco) {
+      this.audioFoco.volume = this.volumeSomFoco;
+    }
+  }
+
   /**
    * Navegação protegida por assinatura:
    * - Se assinatura válida → navega normalmente
@@ -306,7 +340,6 @@ onVolumeSomFocoChange(event: any): void {
    */
   private navegarProtegido(url: string): void {
     if (!this.assinaturaValida) {
-      // opcional: mensagem amigável no front
       localStorage.setItem(
         'notificationMessage',
         'Sua assinatura expirou. Renove o plano para continuar usando as funcionalidades de estudo.'
