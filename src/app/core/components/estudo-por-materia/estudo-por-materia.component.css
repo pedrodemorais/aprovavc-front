@@ -32,12 +32,31 @@
 }
 
 .topo-left{ min-width: 0; }
+.topo-title-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .topo-titulo{
   margin:0;
   font-size: 18px;
   font-weight: 500;
   color: var(--text);
   letter-spacing: .2px;
+}
+
+.info-icon{
+  font-size: 14px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: help;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.info-icon:hover,
+.info-icon:focus{
+  opacity: .9;
+  transform: translateY(-1px);
 }
 
 :host-context(body.theme-dark) .topo-titulo{
