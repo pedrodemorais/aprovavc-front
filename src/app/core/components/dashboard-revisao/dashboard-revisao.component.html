@@ -38,7 +38,39 @@
     {{ erro }}
   </div>
 
-  <div class="rev-state ok" *ngIf="!carregando && !revisoes.length && !erro">
+  <div class="rev-state onboarding" *ngIf="!carregando && !erro && !materias.length">
+  <div class="onboarding-card">
+    <div class="onboarding-badge">Primeiro acesso</div>
+    <h2 class="onboarding-title">Sua trilha de estudo em 2 passos</h2>
+    <p class="onboarding-subtitle">
+      Comece cadastrando as materias e depois crie um edital para organizar o ritmo das revisoes.
+    </p>
+
+    <div class="onboarding-steps">
+      <div class="onboarding-step">
+        <div class="step-index">1</div>
+        <div class="step-content">
+          <div class="step-title">Cadastre suas materias</div>
+          <div class="step-text">Crie as disciplinas que voce estuda e deixe o painel pronto.</div>
+        </div>
+        <a class="step-action" routerLink="/area-restrita/cad-materias">Cadastrar materias</a>
+      </div>
+
+        <div class="onboarding-step">
+          <div class="step-index">2</div>
+          <div class="step-content">
+            <div class="step-title">Crie um edital</div>
+            <div class="step-text">Vincule as materias ao concurso e acompanhe o progresso.</div>
+          </div>
+          <button type="button" class="step-action ghost" disabled>Criar edital</button>
+        </div>
+      </div>
+
+    <div class="onboarding-note">Depois disso, as revisoes aparecem aqui automaticamente.</div>
+  </div>
+</div>
+
+<div class="rev-state ok" *ngIf="!carregando && !erro && materias.length && !revisoes.length">
     Nenhuma revisão pendente por enquanto. 🎉
   </div>
 
@@ -122,3 +154,4 @@
   </div>
 </section>
 </div>
+

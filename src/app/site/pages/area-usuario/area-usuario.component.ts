@@ -15,6 +15,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { MenuItem } from 'primeng/api';
 import { Subject } from 'rxjs';
 import { ModoLeituraService } from 'src/app/core/services/modo-leitura.service';
+import { MateriaService } from 'src/app/core/services/materia.service';
 
 @Component({
   selector: 'app-area-usuario',
@@ -32,6 +33,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   sonsFocoAberto = false;
 
   items: MenuItem[] = [];
+  hasMaterias = true;
 
   // 🔥 Controle de assinatura
   assinaturaValida = true;
@@ -52,6 +54,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     public modoLeituraService: ModoLeituraService,
+    private materiaService: MateriaService,
     private ngZone: NgZone
   ) {
     this.user = this.authService.getUser();
@@ -84,6 +87,8 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       this.router.navigate(['/login']);
       return;
     }
+
+    this.carregarMateriasMenu();
 
     // 1) Já se inscreve pra reagir a MUDANÇAS (login, renovação, expiração, etc.)
     this.authService.assinaturaValida$
@@ -156,6 +161,20 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sonsFocoAberto = !this.sonsFocoAberto;
   }
 
+  private carregarMateriasMenu(): void {
+    this.materiaService.listarMaterias().subscribe({
+      next: (lista) => {
+        this.hasMaterias = (lista || []).length > 0;
+        this.montarMenu();
+      },
+      error: (err) => {
+        console.error('[MENU] Erro ao carregar materias:', err);
+        this.hasMaterias = true;
+        this.montarMenu();
+      }
+    });
+  }
+
   private montarMenu(): void {
   
 
@@ -180,7 +199,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       // 🔓 assinatura OK
       this.items = [
         { label: 'Página inicial', icon: 'pi pi-home', routerLink: ['/area-restrita/dashboard'] },
-        { label: 'Centro de Estudo', icon: 'pi pi-play', routerLink: ['/area-restrita/estudar-materias'] },
+        { label: 'Centro de Estudo', icon: 'pi pi-play', routerLink: ['/area-restrita/estudar-materias'], disabled: !this.hasMaterias },
         
         cadastrosMenu,
         { label: 'Meu Cadastro', icon: 'pi pi-id-card', routerLink: ['/area-restrita/meu-cadastro'] },
