@@ -8,47 +8,64 @@
 ======================================= */
 .page-edital {
   width: 100%;
-  min-height: calc(100dvh - 80px);
+  height: 100%;
+  min-height: 0;
   box-sizing: border-box;
-  padding: 20px 16px 32px;
+  padding: 16px 16px 24px;
+  color: var(--text);
 
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-edital .layout {
   max-width: 1180px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  flex: 1 1 auto;
+  width: 100%;
 }
 
 /* Linha separadora entre form e lista */
 .separador {
   width: 100%;
   height: 1px;
-  background: #d1d5db;
-  margin: 10px 0;
+  background: var(--border);
+  margin: 8px 0 10px;
 }
 
 /* =======================================
    CARDS GENÉRICOS (LIGHT)
 ======================================= */
 .card {
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
-  padding: 16px 18px 18px;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: 0;
   box-sizing: border-box;
 }
 
 /* Form em cima, lista embaixo */
 .painel-form {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+  flex: 0 0 auto;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .painel-lista {
-  max-height: calc(100dvh - 220px);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1 1 auto;
+  padding-top: 6px;
 }
 
 /* =======================================
@@ -213,55 +230,43 @@
 }
 
 .btn {
-  border-radius: 999px;
-  border: none;
-  padding: 8px 16px;
+  border-radius: 10px;
+  padding: 7px 13px;
   font-size: 0.86rem;
+  border: none;
   cursor: pointer;
+  transition: background 0.16s, transform 0.08s, box-shadow 0.12s;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   font-family: inherit;
   white-space: nowrap;
-  transition: background 0.14s ease, color 0.14s ease, box-shadow 0.12s ease,
-    transform 0.08s ease;
 }
 
 .btn:active {
   transform: translateY(1px);
+  box-shadow: none;
 }
 
 .btn.primario {
   background: #16a34a;
   color: #ffffff;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.4);
-}
-
-.btn.primario:hover:not(:disabled) {
-  background: #15803d;
 }
 
 .btn.primario:disabled {
   opacity: 0.6;
   cursor: default;
-  box-shadow: none;
 }
 
 .btn.secundario {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-}
-
-.btn.secundario:hover:not(:disabled) {
   background: #e5e7eb;
+  color: #111827;
 }
 
 .btn.texto {
   background: transparent;
   color: #16a34a;
-  padding: 4px 6px;
-  box-shadow: none;
+  padding: 7px 13px;
 }
 
 /* =======================================
@@ -272,10 +277,10 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 6px;
-  background: #f9fafb;
+  background: var(--surface-2);
   padding: 8px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  border: 1px solid var(--border);
 }
 
 .chip-materia {
@@ -322,7 +327,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   gap: 10px;
 }
 
@@ -369,17 +374,40 @@
 .lista-editais {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 6px;
+  gap: 0;
+  margin-top: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
+  border-top: 1px solid var(--border);
+}
+
+.lista-editais::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lista-editais::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lista-editais::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.22);
+  border-radius: 999px;
+}
+
+.lista-editais::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 24, 39, 0.35);
 }
 
 /* =======================================
    CARD DE EDITAL (LIGHT)
 ======================================= */
 .edital-card {
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: linear-gradient(to bottom, #ffffff, #f9fafb);
+  border-bottom: 1px solid var(--border);
+  background: transparent;
   overflow: hidden;
 }
 
@@ -389,18 +417,18 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 12px 6px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .edital-card-header:hover {
-  background: #f0fdf4;
+  background: var(--surface-2);
 }
 
 .edital-card-header.aberto {
-  background: #e8f8ee;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
 }
 
 /* Coluna esquerda */
@@ -518,7 +546,7 @@
    CORPO DO CARD (MATÉRIAS) (LIGHT)
 ======================================= */
 .edital-card-body {
-  padding: 8px 12px 12px;
+  padding: 8px 6px 12px;
 }
 
 .lista-materias {
@@ -537,16 +565,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 6px 8px;
-  border-radius: 10px;
-  background: #f9fafb;
+  border-radius: 8px;
+  background: transparent;
   cursor: pointer;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   transition: background 0.1s ease, border-color 0.1s ease;
 }
 
 .materia-header:hover {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 
 .materia-info {
@@ -582,6 +610,27 @@
   margin-top: 4px;
   padding-left: 12px;
   border-left: 2px solid #e5e7eb;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
+}
+
+.materia-topicos-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.materia-topicos-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.materia-topicos-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.22);
+  border-radius: 999px;
+}
+
+.materia-topicos-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 24, 39, 0.35);
 }
 
 /* Estados de tópicos */
@@ -668,8 +717,9 @@
     white-space: normal;
   }
 
-  .painel-lista {
+  .lista-editais {
     max-height: none;
+    padding-right: 0;
   }
 }
 
@@ -888,6 +938,18 @@
   border-left-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+:host-context(body.theme-dark) .materia-topicos-wrapper {
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+}
+
+:host-context(body.theme-dark) .materia-topicos-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+:host-context(body.theme-dark) .materia-topicos-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.65);
+}
+
 /* Tópicos */
 :host-context(body.theme-dark) .topico-bullet {
   background: var(--primary) !important;
@@ -895,6 +957,19 @@
 
 :host-context(body.theme-dark) .topico-descricao {
   color: var(--text-2) !important;
+}
+
+/* Scrollbar da lista de editais (dark) */
+:host-context(body.theme-dark) .lista-editais {
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+}
+
+:host-context(body.theme-dark) .lista-editais::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+:host-context(body.theme-dark) .lista-editais::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.65);
 }
 /* =======================================
    BOTÕES – PADRÃO GLOBAL (LIGHT + DARK)
@@ -1060,4 +1135,129 @@ body.theme-dark,
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* clean layout overrides */
+:host-context(body.theme-dark) .card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .edital-card {
+  background: transparent !important;
+}
+
+:host-context(body.theme-dark) .edital-card-header.aberto {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* buttons aligned with sala-de-estudo */
+.btn {
+  border-radius: 10px !important;
+  padding: 7px 13px !important;
+  font-size: 0.86rem !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 0.16s, transform 0.08s, box-shadow 0.12s !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  box-shadow: none !important;
+}
+
+.btn:active {
+  transform: translateY(1px) !important;
+  box-shadow: none !important;
+}
+
+.btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+.btn.primario:disabled {
+  opacity: 0.6 !important;
+  cursor: default !important;
+  box-shadow: none !important;
+}
+
+.btn.secundario {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+.btn.texto {
+  background: transparent !important;
+  color: #16a34a !important;
+  padding: 7px 13px !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #e5e7eb !important;
+}
+
+/* button style aligned with sala-de-estudo pills */
+.btn {
+  border-radius: 999px !important;
+  padding: 6px 12px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+}
+
+.btn:active {
+  transform: translateY(1px) !important;
+  box-shadow: none !important;
+}
+
+.btn.primario,
+.btn.secundario {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn.primario:disabled,
+.btn.secundario:disabled {
+  opacity: 0.6 !important;
+  cursor: default !important;
+  box-shadow: none !important;
+}
+
+.btn.texto {
+  background: transparent !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .btn.primario,
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .btn.texto {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #e5e7eb !important;
 }

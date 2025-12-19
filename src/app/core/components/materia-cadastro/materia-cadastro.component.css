@@ -386,6 +386,25 @@ body.theme-dark,
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
   transition: background 0.14s, box-shadow 0.14s, border-color 0.14s, transform 0.06s;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
+}
+
+.lista-materias::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lista-materias::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lista-materias::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.22);
+  border-radius: 999px;
+}
+
+.lista-materias::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 24, 39, 0.35);
 }
 
 .item-materia{
@@ -553,6 +572,25 @@ body.theme-dark,
   box-sizing: border-box;
   max-height: calc(100dvh - 360px);
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
+}
+
+.arvore-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.arvore-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.arvore-card::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.22);
+  border-radius: 999px;
+}
+
+.arvore-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 24, 39, 0.35);
 }
 
 /* ============================
