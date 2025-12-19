@@ -11,30 +11,32 @@
 
     <div class="topo-right">
 
-      <div class="topo-escopo">
-        <label for="escopoSelect">Filtrar por</label>
-        <select id="escopoSelect"
-                [(ngModel)]="escopoValor"
-                [disabled]="carregandoEditais"
-                (ngModelChange)="onEscopoChange($event)">
-          <option value="todas">Tudo</option>
-          <option value="avulsas">Avulsas</option>
-          <option *ngFor="let e of editais" [value]="'edital-' + e.id">
-            {{ e.nome }}
-          </option>
-        </select>
-      </div>
+      <div class="topo-controls">
+        <div class="topo-escopo">
+          <label for="escopoSelect">Filtrar por</label>
+          <select id="escopoSelect"
+                  [(ngModel)]="escopoValor"
+                  [disabled]="carregandoEditais"
+                  (ngModelChange)="onEscopoChange($event)">
+            <option value="todas">Tudo</option>
+            <option value="avulsas">Avulsas</option>
+            <option *ngFor="let e of editais" [value]="'edital-' + e.id">
+              {{ e.nome }}
+            </option>
+          </select>
+        </div>
 
-      <div class="topo-busca">
-        <i class="pi pi-search" aria-hidden="true"></i>
-        <input
-          type="text"
-          [(ngModel)]="termoBusca"
-          placeholder="Buscar matéria..."
-          aria-label="Buscar matéria" />
-        <button type="button" class="topo-clear" *ngIf="termoBusca" (click)="termoBusca=''">
-          <i class="pi pi-times" aria-hidden="true"></i>
-        </button>
+        <div class="topo-busca">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input
+            type="text"
+            [(ngModel)]="termoBusca"
+            placeholder="Buscar matéria..."
+            aria-label="Buscar matéria" />
+          <button type="button" class="topo-clear" *ngIf="termoBusca" (click)="termoBusca=''">
+            <i class="pi pi-times" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
 
       <!-- ✅ KPIs (ação imediata) -->
