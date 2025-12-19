@@ -13,6 +13,7 @@ import { RedefinirSenhaSiteComponent } from './site/pages/redefinir-senha-site/r
 import { AssineComponent } from './site/pages/assine/assine.component';
 import { AtivacaoComponent } from './site/ativacao/ativacao.component';
 import { InicioComponent } from './site/pages/inicio/inicio.component';
+import { SuporteComponent } from './site/pages/suporte/suporte.component';
 
 import { MateriaCadastroComponent } from './core/components/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './core/components/sala-estudo/sala-estudo.component';
@@ -85,6 +86,10 @@ const routes: Routes = [
       {
         path: 'meu-cadastro',
         component: PerfilAlunoComponent
+      },
+      {
+        path: 'suporte',
+        component: SuporteComponent
       },
 
       // redefinir senha dentro da área logada

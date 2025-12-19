@@ -678,3 +678,8 @@
   color: var(--text);
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
+
+/* onboarding disabled CTA */
+.onboarding-step .step-action[disabled] {
+  opacity: 0.45;
+}

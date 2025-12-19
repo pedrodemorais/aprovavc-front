@@ -24,6 +24,7 @@ import { NgxMaskModule } from 'ngx-mask';
 import { NotificationService } from './services/notification.service';
 import { InicioComponent } from './pages/inicio/inicio.component';
 import { PanelMenuModule } from 'primeng/panelmenu';
+import { SuporteComponent } from './pages/suporte/suporte.component';
 
 
 @NgModule({
@@ -41,6 +42,7 @@ import { PanelMenuModule } from 'primeng/panelmenu';
      RedefinirSenhaComponent,
      RedefinirSenhaSiteComponent,
      AssineComponent,
+     SuporteComponent,
     
     
   

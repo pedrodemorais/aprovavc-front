@@ -1,0 +1,57 @@
+<div class="page-suporte">
+  <div class="card-suporte">
+    <div class="header">
+      <h1>Suporte ao aluno</h1>
+      <p>Fale com a equipe para duvidas, acesso ou cobranca.</p>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="contact-title">E-mail</div>
+        <button class="contact-value link-button" type="button" (click)="abrirFormularioEmail()">
+          contato@aprovavc.com.br
+        </button>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-title">WhatsApp</div>
+        <a class="contact-value" href="https://wa.me/5562992546406" target="_blank" rel="noopener">(62) 99254-6406</a>
+      </div>
+    </div>
+
+    <div class="note">Horario de atendimento: segunda a sexta, 9h as 18h.</div>
+
+    <div class="form-wrap" *ngIf="mostrarFormulario">
+      <h2>Enviar mensagem</h2>
+      <form [formGroup]="suporteForm" (ngSubmit)="enviarEmail()" class="form">
+        <div class="form-group">
+          <label for="emailRemetente">Seu e-mail</label>
+          <input id="emailRemetente" type="email" [value]="emailRemetente" readonly />
+        </div>
+
+        <div class="form-group">
+          <label for="assunto">Assunto</label>
+          <input id="assunto" type="text" formControlName="assunto" placeholder="Digite o assunto" />
+          <div class="field-error" *ngIf="suporteForm.get('assunto')?.touched && suporteForm.get('assunto')?.invalid">
+            Informe um assunto valido.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="mensagem">Mensagem</label>
+          <textarea id="mensagem" formControlName="mensagem" rows="5" placeholder="Escreva sua mensagem"></textarea>
+          <div class="field-error" *ngIf="suporteForm.get('mensagem')?.touched && suporteForm.get('mensagem')?.invalid">
+            Escreva uma mensagem com pelo menos 10 caracteres.
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="suporteForm.invalid || enviando">
+          {{ enviando ? 'Enviando...' : 'Enviar mensagem' }}
+        </button>
+      </form>
+
+      <p *ngIf="mensagem" class="mensagem">{{ mensagem }}</p>
+      <p *ngIf="erro" class="erro">{{ erro }}</p>
+    </div>
+  </div>
+</div>
