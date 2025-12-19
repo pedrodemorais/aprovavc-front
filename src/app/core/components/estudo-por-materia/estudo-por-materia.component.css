@@ -1,8 +1,5 @@
 :host{ display:block; }
 
-/* =========================
-   PÁGINA
-   ========================= */
 .trilhas-page{
   --bg: #ffffff;
   --card: #ffffff;
@@ -19,17 +16,17 @@
   --sem:#cbd5e1;
 
   background: var(--bg);
-  padding: 14px 12px 18px;
+  padding: 12px 12px 16px;
 }
 
 /* =========================
-   TOPO (TÍTULO + BUSCA)
+   TOPO
    ========================= */
 .trilhas-topo{
   max-width: 980px;
-  margin: 0 auto 12px;
+  margin: 0 auto 10px;
   display:flex;
-  align-items:flex-end;
+  align-items:flex-start;
   justify-content: space-between;
   gap: 14px;
 }
@@ -54,6 +51,32 @@
   flex-direction: column;
   gap: 8px;
   align-items: flex-end;
+}
+
+.topo-escopo{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+.topo-escopo label{
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--muted);
+}
+.topo-escopo select{
+  width: 340px;
+  max-width: 58vw;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--text);
+  outline: none;
+}
+.topo-escopo select:focus{
+  border-color: rgba(11,114,133,.35);
+  box-shadow: 0 0 0 3px rgba(11,114,133,.10);
 }
 
 .topo-busca{
@@ -97,19 +120,40 @@
 }
 .topo-clear:hover{ background:#f1f5f9; }
 
+/* KPIs topo */
+.topo-kpis{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap: wrap;
+}
+.kpi{
+  display:inline-flex;
+  align-items:center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid var(--line);
+  background: #fbfcfd;
+  color: #374151;
+  white-space: nowrap;
+}
+.kpi--bad{ border-color: rgba(239,68,68,.22); background: rgba(239,68,68,.10); color:#991b1b; }
+.kpi--hoje{ border-color: rgba(245,158,11,.22); background: rgba(245,158,11,.12); color:#92400e; }
+.kpi--ok{ border-color: rgba(34,197,94,.22); background: rgba(34,197,94,.10); color:#166534; }
+
+/* legenda compacta (só bolinhas) */
 .topo-legenda{
   display:flex;
   gap: 10px;
-  flex-wrap: wrap;
   justify-content:flex-end;
-  color: var(--muted);
-  font-size: 11px;
 }
-.leg-item{
+.topo-legenda--compact .leg-item{
   display:inline-flex;
   align-items:center;
-  gap: 6px;
-  white-space: nowrap;
+  gap: 0;
 }
 .leg-dot{
   width: 8px;
@@ -132,7 +176,7 @@
 }
 
 /* =========================
-   CARD MATÉRIA (mais compacto)
+   CARD MATÉRIA
    ========================= */
 .curso-card{
   background: var(--card);
@@ -140,7 +184,23 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 0 rgba(17,24,39,.03);
+  position: relative;
 }
+
+/* barra base */
+.curso-card::before{
+  content:"";
+  position:absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #cbd5e1;
+}
+.curso-card.badge-sem-revisao::before{ background: #cbd5e1; }
+.curso-card.badge-revisao-futura::before{ background: #22c55e; }
+.curso-card.badge-revisao-hoje::before{ background: #f59e0b; }
+.curso-card.badge-revisao-atrasada::before{ background: #ef4444; }
 
 .curso-header{
   width: 100%;
@@ -149,15 +209,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 12px;
+  padding: 10px 12px;
+  padding-left: 14px; /* respiro da barra */
   cursor: pointer;
   text-align: left;
 }
 .curso-header:hover{ background: #fafbfc; }
 
+/* progress (opcional) */
 .curso-progress{
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   position: relative;
   background: conic-gradient(var(--ok) calc(var(--p) * 1%), #e6e9ee 0);
@@ -177,15 +239,16 @@
   display: grid;
   place-items: center;
   height: 100%;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
   color: var(--text);
+  opacity: .9;
 }
 
 .curso-info{
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 .curso-title-row{
   display:flex;
@@ -202,10 +265,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.curso-meta{
-  font-size: 12px;
-  color: var(--muted);
-}
 
 .curso-chevron{
   margin-left: auto;
@@ -215,57 +274,35 @@
 }
 
 /* =========================
-   CHIP STATUS (matéria)
+   CORPO + RESUMO DA MATÉRIA
    ========================= */
-.status-chip{
-  flex: 0 0 auto;
+.curso-body{ border-top: 1px solid #edf1f6; background:#fff; }
+
+.materia-resumo{
+  padding: 8px 12px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items:center;
+  border-bottom: 1px solid #edf1f6;
+  background:#fbfcfd;
+}
+.rk{
   display:inline-flex;
   align-items:center;
-  gap: 6px;
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 900;
   border: 1px solid var(--line);
-  background: #f8fafc;
-  color: #374151;
+  background:#fff;
+  color:#374151;
+  white-space: nowrap;
 }
-.status-chip::before{
-  content:"";
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  box-shadow: inset 0 0 0 2px rgba(0,0,0,.06);
-  background: var(--sem);
-}
-.status-chip.badge-sem-revisao{ background:#f8fafc; color:#475569; }
-.status-chip.badge-sem-revisao::before{ background: var(--sem); }
-
-.status-chip.badge-revisao-futura{
-  background: rgba(34,197,94,.10);
-  border-color: rgba(34,197,94,.22);
-  color:#166534;
-}
-.status-chip.badge-revisao-futura::before{ background: var(--ok); }
-
-.status-chip.badge-revisao-hoje{
-  background: rgba(245,158,11,.14);
-  border-color: rgba(245,158,11,.26);
-  color:#92400e;
-}
-.status-chip.badge-revisao-hoje::before{ background: var(--hoje); }
-
-.status-chip.badge-revisao-atrasada{
-  background: rgba(239,68,68,.12);
-  border-color: rgba(239,68,68,.24);
-  color:#991b1b;
-}
-.status-chip.badge-revisao-atrasada::before{ background: var(--bad); }
-
-/* =========================
-   CORPO / SEÇÕES / TÓPICOS
-   ========================= */
-.curso-body{ border-top: 1px solid #edf1f6; }
+.rk--bad{ border-color: rgba(239,68,68,.22); background: rgba(239,68,68,.10); color:#991b1b; }
+.rk--hoje{ border-color: rgba(245,158,11,.22); background: rgba(245,158,11,.12); color:#92400e; }
+.rk--ok{ border-color: rgba(34,197,94,.22); background: rgba(34,197,94,.10); color:#166534; }
+.rk--muted{ background:#fff; color:#475569; }
 
 .estado{
   padding: 10px 12px;
@@ -293,7 +330,7 @@
   width: 100%;
   border: 0;
   background: #fff;
-  padding: 10px 12px;
+  padding: 9px 12px;
   cursor:pointer;
   display:flex;
   align-items:center;
@@ -358,7 +395,7 @@
   display:flex;
   align-items:center;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 8px 12px;
   border-top: 1px solid #f0f3f7;
   background:#fff;
 }
@@ -385,7 +422,6 @@
 .topico-check.is-done{ border-color: var(--accent2); background: var(--accent2); }
 .topico-check.is-done .pi{ opacity: 1; }
 
-/* ✅ quadrado -> bolinha -> texto */
 .topico-text-btn{
   border:0;
   background:transparent;
@@ -481,60 +517,28 @@
   background:#fff;
   color:#111827;
 }
-/* ✅ BARRA DE STATUS NA BORDA ESQUERDA DO CARD */
-.curso-card{
-  position: relative;
-}
-
-/* barra base (neutra) */
-.curso-card::before{
-  content:"";
-  position:absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;                 /* fininha e premium */
-  background: #cbd5e1;        /* default (SEM) */
-}
-
-/* SEM revisão (cinza) */
-.curso-card.badge-sem-revisao::before{
-  background: #cbd5e1;
-}
-
-/* Em dia (verde) */
-.curso-card.badge-revisao-futura::before{
-  background: #22c55e;
-}
-
-/* Vence hoje (laranja) */
-.curso-card.badge-revisao-hoje::before{
-  background: #f59e0b;
-}
-
-/* Atrasada (vermelho) */
-.curso-card.badge-revisao-atrasada::before{
-  background: #ef4444;
-}
-
-/* dá um “respiro” pra barra não colar no conteúdo */
-.curso-header{
-  padding-left: 14px;  /* se estiver 12px, deixa 14px */
-}
-
 
 /* Mobile */
 @media (max-width: 640px){
   .trilhas-topo{
-    align-items:flex-start;
     flex-direction: column;
   }
   .topo-right{
     width: 100%;
     align-items: stretch;
   }
+  .topo-escopo{
+    width: 100%;
+  }
+  .topo-escopo select{
+    width: 100%;
+    max-width: 100%;
+  }
   .topo-busca{
     width: 100%;
     max-width: 100%;
+  }
+  .topo-legenda{
+    display:none; /* ✅ some no mobile pra ficar clean */
   }
 }
