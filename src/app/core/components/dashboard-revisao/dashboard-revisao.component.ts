@@ -3,8 +3,10 @@ import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { SalaEstudoService } from 'src/app/core/services/sala-estudo.service';
 import { MateriaService } from 'src/app/core/services/materia.service';
+import { EditalService } from 'src/app/core/services/edital.service';
 import { RevisaoDashboardItem } from 'src/app/core/models/RevisaoDashboardItem';
 import { Materia } from 'src/app/core/models/materia.model';
+import { Edital } from 'src/app/core/models/Edital';
 
 @Component({
   selector: 'app-dashboard-revisao',
@@ -18,6 +20,8 @@ export class DashboardRevisaoComponent implements OnInit {
 
   revisoes: RevisaoDashboardItem[] = [];
   materias: Materia[] = [];
+  editais: Edital[] = [];
+  mostrarGuia = false;
 
   // totais para o resumo superior
   totalVencidas = 0;
@@ -27,6 +31,7 @@ export class DashboardRevisaoComponent implements OnInit {
   constructor(
     private salaEstudoService: SalaEstudoService,
     private materiaService: MateriaService,
+    private editalService: EditalService,
     private router: Router
   ) {}
 
@@ -40,11 +45,13 @@ export class DashboardRevisaoComponent implements OnInit {
 
     forkJoin({
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
-      materias: this.materiaService.listarMaterias()
+      materias: this.materiaService.listarMaterias(),
+      editais: this.editalService.listar()
     }).subscribe({
-      next: ({ revisoes, materias }) => {
+      next: ({ revisoes, materias, editais }) => {
         this.revisoes = revisoes || [];
         this.materias = materias || [];
+        this.editais = editais || [];
         this.atualizarTotais();
         this.carregando = false;
       },
@@ -67,6 +74,14 @@ export class DashboardRevisaoComponent implements OnInit {
       ['/area-restrita/sala-estudo', item.materiaId],
       { queryParams: { topicoId: item.topicoId } } // se quiser ja mandar o topico
     );
+  }
+
+  abrirGuia(): void {
+    this.mostrarGuia = true;
+  }
+
+  fecharGuia(): void {
+    this.mostrarGuia = false;
   }
 
 }

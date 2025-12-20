@@ -211,7 +211,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       // 🔓 assinatura OK
       this.items = [
         { label: 'Página inicial', icon: 'pi pi-home', routerLink: ['/area-restrita/dashboard'] },
-        { label: 'Centro de Estudo', icon: 'pi pi-play', routerLink: ['/area-restrita/estudar-materias'], disabled: !this.hasMaterias },
+        { label: 'Centro de Estudo', icon: 'pi pi-play', routerLink: ['/area-restrita/estudar-materias'], disabled: !this.hasMaterias, title: 'Cadastre materias primeiro' },
         
         cadastrosMenu,
         { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }

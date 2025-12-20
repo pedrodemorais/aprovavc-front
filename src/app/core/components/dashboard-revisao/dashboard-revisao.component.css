@@ -147,9 +147,9 @@
 /* Cabeçalho tipo tabela (desktop) */
 .rev-list-header {
   display: grid;
-  grid-template-columns: 0.9fr 2.1fr 1.1fr 1.2fr auto;
-  gap: 8px;
-  padding: 10px 16px;
+  grid-template-columns: 1fr 3fr 1.3fr 1.8fr 1.3fr;
+  column-gap: 24px;
+  padding: 12px 22px;
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
   font-size: 0.72rem;
@@ -187,13 +187,31 @@
 /* Linhas (desktop) */
 .rev-list-row {
   display: grid;
-  grid-template-columns: 0.9fr 2.1fr 1.1fr 1.2fr auto;
-  gap: 8px;
-  padding: 10px 16px;
+  grid-template-columns: 1fr 3fr 1.3fr 1.8fr 1.3fr;
+  column-gap: 24px;
+  padding: 14px 22px;
   align-items: center;
   border-top: 1px solid var(--border);
   background: var(--surface);
   transition: background 0.12s ease;
+}
+
+.rev-list-row > * {
+  justify-self: stretch;
+  text-align: left;
+}
+
+.rev-list-row .col-materia {
+  align-items: flex-start;
+}
+
+.rev-list-row .col-tipo,
+.rev-list-row .col-data {
+  align-items: flex-start;
+}
+
+.rev-list-row .col-acoes {
+  align-items: flex-end;
 }
 
 .rev-list-row:nth-child(even) {
@@ -208,11 +226,11 @@
 .col-status,
 .col-materia,
 .col-tipo,
-.col-data,
-.col-acoes {
+.col-data {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  align-items: flex-start;
 }
 
 /* =======================================
@@ -682,4 +700,155 @@
 /* onboarding disabled CTA */
 .onboarding-step .step-action[disabled] {
   opacity: 0.45;
+}
+
+/* =======================================
+   ONBOARDING V2 (DASHBOARD)
+======================================= */
+.onboarding-step.done .step-index {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.step-status {
+  margin-left: 8px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+.onboarding-benefit {
+  margin-top: 12px;
+  font-size: 0.84rem;
+  color: var(--text-2);
+}
+
+.onboarding-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.preview-card {
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0.6;
+}
+
+.preview-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #475569;
+}
+
+.preview-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.btn-ghost.info {
+  margin-top: 12px;
+}
+
+.onboarding-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.onboarding-modal .modal-card {
+  width: min(520px, 100%);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+}
+
+.onboarding-modal .modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.onboarding-modal .modal-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.onboarding-modal .btn-close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.onboarding-modal .modal-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .onboarding-preview {
+    grid-template-columns: 1fr;
+  }
+}
+
+:host-context(body.theme-dark) .preview-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+:host-context(body.theme-dark) .preview-label {
+  color: var(--text-2);
+}
+
+:host-context(body.theme-dark) .preview-value {
+  color: var(--muted);
+}
+
+:host-context(body.theme-dark) .step-status {
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+}
+
+:host-context(body.theme-dark) .onboarding-modal .modal-card {
+  background: #0b1220;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:host-context(body.theme-dark) .onboarding-modal .modal-head h3 {
+  color: var(--text);
+}
+
+:host-context(body.theme-dark) .onboarding-modal .modal-list {
+  color: var(--text-2);
+}
+
+.btn-ghost.info {
+  align-self: flex-start;
 }

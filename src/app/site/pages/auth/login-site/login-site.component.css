@@ -267,3 +267,62 @@
     padding: 9px 10px;
   }
 }
+
+@media (max-width: 420px) {
+  .login-page {
+    padding: 24px 12px;
+  }
+
+  .login-card {
+    max-width: 360px;
+    padding: 18px 14px 16px;
+    border-radius: 16px;
+    gap: 12px;
+  }
+
+  .login-logo {
+    height: 30px;
+  }
+
+  .login-welcome h1 {
+    font-size: 1.2rem;
+  }
+
+  .login-welcome p {
+    font-size: 0.82rem;
+  }
+
+  .form-group input {
+    padding: 9px 10px;
+    font-size: 0.86rem;
+  }
+
+  .btn-login {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-page {
+    padding: 18px 8px;
+  }
+
+  .login-card {
+    max-width: 330px;
+    padding: 16px 12px 14px;
+  }
+
+  .btn-login {
+    padding: 9px 12px;
+    font-size: 0.86rem;
+  }
+
+  .login-welcome h1 {
+    font-size: 1.12rem;
+  }
+
+  .login-welcome p {
+    font-size: 0.8rem;
+  }
+}

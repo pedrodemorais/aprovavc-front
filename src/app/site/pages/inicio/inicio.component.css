@@ -9,6 +9,32 @@ html {
   display: block;
 }
 
+/* Scrollbar clean e fina (apenas na home) */
+:host ::ng-deep body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.2) transparent;
+}
+
+:host ::ng-deep body::-webkit-scrollbar {
+  width: 8px;
+}
+
+:host ::ng-deep body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:host ::ng-deep body::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.2);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+:host ::ng-deep body::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.3);
+  background-clip: content-box;
+}
+
 /* Evita a quebra por CSS global da dashboard (container virando flex) */
 .home-page .container,
 .home-page .site-container {
@@ -148,7 +174,7 @@ html {
    HERO – NAVEGAÇÃO DE PASSOS
 ========================= */
 .home-page .hero {
-  background: rgba(235, 232, 232, 0.932);
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
   color: #0f172a;
  
 }
@@ -174,20 +200,20 @@ html {
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: #097217;
+  color: #0f172a;
   font-size: 0.9rem;
   padding: 10px 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   backdrop-filter: blur(8px);
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
 }
 
 .home-page .hero-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.45);
-  border-color: #22c55e;
+  box-shadow: 0 14px 26px rgba(15, 23, 42, 0.12);
+  border-color: #16a34a;
 }
 
 .home-page .hero-item span {
@@ -198,22 +224,22 @@ html {
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  border: 2px solid #22c55e;
+  border: 2px solid #16a34a;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #bbf7d0;
-  background: rgba(15, 23, 42, 0.9);
+  color: #ffffff;
+  background: #16a34a;
 }
 
 /* =========================
    SEÇÃO – SOBRE NÓS
 ========================= */
 .home-page .sobre-nos {
-  background: #f9fafb;
-  padding: 56px 0 40px;
+  background: #f8fafc;
+  padding: 64px 0 48px;
 }
 
 .home-page .sobre-nos .container {
@@ -230,6 +256,8 @@ html {
 .home-page .conteudo-sobre .texto {
   flex: 1 1 360px;
   text-align: left;
+  max-width: 780px;
+  margin: 0 auto;
 }
 
 .home-page .conteudo-sobre .texto h2 {
@@ -239,8 +267,8 @@ html {
 }
 
 .home-page .sobre-nos p {
-  font-size: 0.95rem;
-  line-height: 1.8;
+  font-size: 0.96rem;
+  line-height: 1.75;
   color: #4b5563;
   margin-bottom: 12px;
 }
@@ -264,19 +292,20 @@ html {
 ========================= */
 .home-page .services {
   background: #f3f4f6;
-  padding: 56px 0;
+  padding: 64px 0;
 }
 
 .home-page .services-title {
   font-size: 1.7rem;
   margin-bottom: 24px;
   color: #111827;
+  text-align: center;
 }
 
 .home-page .service-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 22px;
+  gap: 20px;
 }
 
 .home-page .service-item {
@@ -285,15 +314,15 @@ html {
   background: #ffffff;
   border-radius: 18px;
   text-align: left;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
   transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
 }
 
 .home-page .service-item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
-  border-color: #c4e5cf;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
+  border-color: #bbf7d0;
 }
 
 .home-page .logo-aprovavc-diferente {
@@ -337,7 +366,7 @@ html {
 ========================= */
 .home-page .plans {
   background: #f9fafb;
-  padding: 56px 0 40px;
+  padding: 64px 0 48px;
 }
 
 /* =========================
@@ -345,7 +374,7 @@ html {
 ========================= */
 .home-page .blog {
   background: #f3f4f6;
-  padding: 56px 0 60px;
+  padding: 64px 0 64px;
   text-align: center;
 }
 
@@ -365,15 +394,15 @@ html {
 .home-page .blog-posts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 22px;
+  gap: 20px;
 }
 
 .home-page .blog-post {
   background: #ffffff;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -382,8 +411,8 @@ html {
 
 .home-page .blog-post:hover {
   transform: translateY(-4px);
-  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
-  border-color: #cbd5f5;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
+  border-color: #dbeafe;
 }
 
 .home-page .blog-post img {
@@ -565,4 +594,49 @@ html {
   .home-page .blog-post {
     border-radius: 16px;
   }
+}
+
+/* Menu hover fix */
+:host ::ng-deep .custom-menubar .p-menuitem {
+  background: transparent !important;
+}
+
+:host ::ng-deep .custom-menubar .p-menuitem-link {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+}
+
+:host ::ng-deep .custom-menubar .p-menuitem-link:hover,
+:host ::ng-deep .custom-menubar .p-menuitem-link:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-bottom: 2px solid #16a34a !important;
+}
+
+/* Menu hover fix (PrimeNG content wrapper) */
+:host ::ng-deep .custom-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content {
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .custom-menubar .p-menuitem:hover > .p-menuitem-content {
+  background: transparent !important;
+  border-bottom: 2px solid #16a34a !important;
+}
+
+/* menu underline straight */
+:host ::ng-deep .custom-menubar .p-menuitem-link {
+  border-radius: 0 !important;
+}
+
+:host ::ng-deep .custom-menubar .p-menuitem-link:hover,
+:host ::ng-deep .custom-menubar .p-menuitem-link:focus {
+  border-bottom: none !important;
+  box-shadow: inset 0 -2px 0 #16a34a !important;
+}
+
+:host ::ng-deep .custom-menubar .p-menuitem:hover > .p-menuitem-content {
+  border-bottom: none !important;
 }

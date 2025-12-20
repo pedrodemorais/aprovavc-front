@@ -30,26 +30,19 @@
 
   /* crossfade */
   opacity: 0;
-  transition: opacity 900ms ease-in-out;
+  transform: scale(1.02);
+  transition: opacity 1200ms ease-in-out, transform 8000ms linear;
 
   /* performance */
   will-change: opacity, transform;
-  transform: translateZ(0);
+  transform: translateZ(0) scale(1.02);
 }
 
 /* slide visível */
 .full-width-image .slide.active {
   opacity: 1;
   z-index: 1;
-
-  /* leve movimento (Ken Burns) */
-  animation: kenburns 8000ms linear both;
-}
-
-/* Ken Burns sutil */
-@keyframes kenburns {
-  from { transform: scale(1.03); }
-  to   { transform: scale(1.08); }
+  transform: translateZ(0) scale(1.07);
 }
 
 /* GRADIENTE POR CIMA DA IMAGEM */

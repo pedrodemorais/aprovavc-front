@@ -40,8 +40,8 @@ export class FullWidthSliderComponent implements OnInit, OnDestroy {
   private readonly slideIntervalMs = 8000;
 
   // sincronize com o CSS (opacity transition)
-  private readonly fadeMs = 900;
-  private readonly textSwapDelayMs = 220;
+  private readonly fadeMs = 1200;
+  private readonly textSwapDelayMs = 400;
 
   ngOnInit(): void {
     if (this.slides.length <= 1) return;

@@ -19,7 +19,6 @@ export class InicioComponent implements OnInit {
       { label: 'Soluções',  url: '#services' },
       { label: 'Planos',  url: '#plans' },
       { label: 'Blog',  url: '#blog' },
-      { label: 'Contato', url: '#contact' },
       { label: 'Entrar', routerLink: '/login' },
     ];
   }

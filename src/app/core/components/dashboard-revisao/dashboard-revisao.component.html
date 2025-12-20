@@ -38,42 +38,81 @@
     {{ erro }}
   </div>
 
-  <div class="rev-state onboarding" *ngIf="!carregando && !erro && !materias.length">
-  <div class="onboarding-card">
-    <div class="onboarding-badge">Primeiro acesso</div>
-    <h2 class="onboarding-title">Sua trilha de estudo em 2 passos</h2>
-    <p class="onboarding-subtitle">
-      Comece cadastrando as materias e depois crie um edital para organizar o ritmo das revisoes.
-    </p>
+  <div class="rev-state onboarding" *ngIf="!carregando && !erro && !revisoes.length">
+    <div class="onboarding-card">
+      <div class="onboarding-badge">Primeiro acesso</div>
+      <h2 class="onboarding-title">Sua trilha de estudo em 2 passos</h2>
+      <p class="onboarding-subtitle">
+        Cadastre suas materias e, se quiser, organize por prova/editais.
+      </p>
 
-    <div class="onboarding-steps">
-      <div class="onboarding-step">
-        <div class="step-index">1</div>
-        <div class="step-content">
-          <div class="step-title">Cadastre suas materias</div>
-          <div class="step-text">Crie as disciplinas que voce estuda e deixe o painel pronto.</div>
+      <div class="onboarding-steps">
+        <div class="onboarding-step" [class.done]="materias.length">
+          <div class="step-index">1</div>
+          <div class="step-content">
+            <div class="step-title">
+              {{ materias.length ? 'Materias cadastradas' : 'Cadastre suas materias' }}
+              <span class="step-status" *ngIf="materias.length">OK</span>
+            </div>
+            <div class="step-text">Crie as disciplinas que voce estuda e deixe o painel pronto.</div>
+          </div>
+          <a class="step-action" *ngIf="!materias.length" routerLink="/area-restrita/cad-materias">Cadastrar materias</a>
+          <button type="button" class="step-action ghost" *ngIf="materias.length" disabled>Concluido</button>
         </div>
-        <a class="step-action" routerLink="/area-restrita/cad-materias">Cadastrar materias</a>
-      </div>
 
-        <div class="onboarding-step">
+        <div class="onboarding-step" [class.done]="editais.length">
           <div class="step-index">2</div>
           <div class="step-content">
-            <div class="step-title">Crie um edital</div>
-            <div class="step-text">Vincule as materias ao concurso e acompanhe o progresso.</div>
+            <div class="step-title">
+              {{ editais.length ? 'Edital criado' : 'Crie um edital (opcional)' }}
+              <span class="step-status" *ngIf="editais.length">OK</span>
+            </div>
+            <div class="step-text">Organize por concurso/prova e acompanhe progresso.</div>
           </div>
-          <button type="button" class="step-action ghost" disabled>Criar edital</button>
+          <a class="step-action ghost" *ngIf="materias.length && !editais.length" routerLink="/area-restrita/editais">Criar edital</a>
+          <button type="button" class="step-action ghost" *ngIf="!materias.length" disabled>Criar edital</button>
+          <button type="button" class="step-action ghost" *ngIf="editais.length" disabled>Concluido</button>
         </div>
       </div>
 
-    <div class="onboarding-note">Depois disso, as revisoes aparecem aqui automaticamente.</div>
-  </div>
-</div>
+      <div class="onboarding-benefit">
+        Depois disso, o sistema agenda revisoes automaticamente e mostra seu semaforo por topico.
+      </div>
 
-<div class="rev-state ok" *ngIf="!carregando && !erro && materias.length && !revisoes.length">
-    Nenhuma revisão pendente por enquanto. 🎉
-  </div>
+      <div class="onboarding-preview">
+        <div class="preview-card">
+          <span class="preview-label">Vencidas</span>
+          <span class="preview-value">--</span>
+        </div>
+        <div class="preview-card">
+          <span class="preview-label">Para hoje</span>
+          <span class="preview-value">--</span>
+        </div>
+        <div class="preview-card">
+          <span class="preview-label">Agendadas</span>
+          <span class="preview-value">--</span>
+        </div>
+      </div>
 
+      <button type="button" class="btn-ghost info" (click)="abrirGuia()">Entender como funciona</button>
+
+      <div class="onboarding-note">Seu painel sera atualizado assim que houver revisoes.</div>
+    </div>
+
+    <div class="onboarding-modal" *ngIf="mostrarGuia" (click)="fecharGuia()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <h3>Como funciona</h3>
+          <button type="button" class="btn-close" (click)="fecharGuia()">x</button>
+        </div>
+        <ul class="modal-list">
+          <li>Cadastre materias e topicos para criar seu conteudo.</li>
+          <li>O sistema cria revisoes automaticas e prioriza o que importa.</li>
+          <li>O Centro de Estudo mostra o proximo passo a seguir.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
   <!-- LISTA PRINCIPAL -->
   <div class="rev-card" *ngIf="revisoes.length">
 
