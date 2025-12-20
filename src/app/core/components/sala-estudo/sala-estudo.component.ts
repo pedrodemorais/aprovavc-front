@@ -87,6 +87,7 @@ export class SalaEstudoComponent implements OnInit {
   flashcardTipo: string = 'PERGUNTA_RESPOSTA';
   flashcardDificuldade: string = 'MEDIA';
   flashcardTags: string = '';
+  flashcardVerdadeiroFalso: 'VERDADEIRO' | 'FALSO' | null = null;
 
   mensagemFlashcardRevisao?: string;
 
@@ -98,6 +99,7 @@ export class SalaEstudoComponent implements OnInit {
   flashcards: FlashcardDTO[] = [];
   flashcardIndexAtual: number = 0;
   mostrarVersoAtual: boolean = false;
+  flashcardFeedback: 'acerto' | 'erro' | null = null;
 
   // estado da revisao (carregando flashcards de revisao)
   carregandoFlashcardsRevisao: boolean = false;
@@ -401,6 +403,7 @@ ativarRevisaoFlashcards(): void {
           this.flashcardIndexAtual = 0;
           this.mostrarVersoAtual = false;
           this.avaliacaoFlashcardSelecionada = null;
+          this.resetFlashcardFeedback();
         },
         error: (err) => {
           console.error('[SALA-ESTUDO] Erro ao carregar flashcards:', err);
@@ -678,6 +681,7 @@ this.mensagemRevisao = undefined;
     }
 
     this.mostrarModalFlashcard = true;
+    this.onFlashcardTipoChange(this.flashcardTipo);
 
     if (!this.flashcardTags && this.materia && this.topicoSelecionado) {
       this.flashcardTags =
@@ -689,10 +693,37 @@ this.mensagemRevisao = undefined;
     this.mostrarModalFlashcard = false;
   }
 
+  onFlashcardTipoChange(tipo: string): void {
+    this.flashcardTipo = tipo;
+    if (tipo === 'VERDADEIRO_FALSO') {
+      if (!this.flashcardVerdadeiroFalso) {
+        this.flashcardVerdadeiroFalso = 'VERDADEIRO';
+      }
+      this.flashcardVerso = this.flashcardVerdadeiroFalso;
+      return;
+    }
+    this.flashcardVerdadeiroFalso = null;
+  }
+
+  onFlashcardVerdadeiroFalsoChange(valor: 'VERDADEIRO' | 'FALSO'): void {
+    this.flashcardVerdadeiroFalso = valor;
+    if (this.flashcardTipo === 'VERDADEIRO_FALSO') {
+      this.flashcardVerso = valor;
+    }
+  }
+
   salvarFlashcard(): void {
     if (!this.topicoSelecionado) {
       alert('Selecione um t├│pico antes de criar o flashcard.');
       return;
+    }
+
+    if (this.flashcardTipo === 'VERDADEIRO_FALSO') {
+      if (!this.flashcardVerdadeiroFalso) {
+        alert('Selecione se a resposta é verdadeira ou falsa.');
+        return;
+      }
+      this.flashcardVerso = this.flashcardVerdadeiroFalso;
     }
 
     if (!this.flashcardFrente || !this.flashcardVerso) {
@@ -722,6 +753,7 @@ this.mensagemRevisao = undefined;
         // limpa frente e verso pra j├í digitar o pr├│ximo, mant├®m tags e tipo/dificuldade
         this.flashcardFrente = '';
         this.flashcardVerso = '';
+        this.flashcardVerdadeiroFalso = null;
 
         // recarrega a lista de flashcards do t├│pico
         if (this.topicoSelecionado) {
@@ -756,8 +788,59 @@ this.mensagemRevisao = undefined;
     return this.flashcards[this.flashcardIndexAtual];
   }
 
+  private resetFlashcardFeedback(): void {
+    this.flashcardFeedback = null;
+  }
+
+  private parseRespostaVerdadeiroFalso(valor: string | undefined | null): boolean | null {
+    if (!valor) {
+      return null;
+    }
+    const normalizado = valor.trim().toLowerCase();
+    if (!normalizado) {
+      return null;
+    }
+    if (normalizado.startsWith('v') || normalizado.startsWith('t')) {
+      return true;
+    }
+    if (normalizado.startsWith('f')) {
+      return false;
+    }
+    return null;
+  }
+
+  isVerdadeiroFalso(card: FlashcardDTO | null): boolean {
+    return (card as any)?.tipo === 'VERDADEIRO_FALSO';
+  }
+
+  responderVerdadeiroFalso(resposta: boolean, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    const atual = this.flashcardAtual;
+    if (!atual || !this.isVerdadeiroFalso(atual)) {
+      return;
+    }
+
+    const esperado = this.parseRespostaVerdadeiroFalso(atual.verso || '');
+    if (esperado === null) {
+      return;
+    }
+
+    const acertou = resposta === esperado;
+    this.flashcardFeedback = acertou ? 'acerto' : 'erro';
+    this.avaliacaoFlashcardSelecionada = acertou ? 'BOM' : 'ERREI';
+  }
+
   virarFlashcard(): void {
     this.mostrarVersoAtual = !this.mostrarVersoAtual;
+    if (!this.mostrarVersoAtual) {
+      this.resetFlashcardFeedback();
+      if (this.isVerdadeiroFalso(this.flashcardAtual)) {
+        this.avaliacaoFlashcardSelecionada = null;
+      }
+    }
   }
 
   proximoFlashcard(): void {
@@ -767,6 +850,7 @@ this.mensagemRevisao = undefined;
     this.flashcardIndexAtual = (this.flashcardIndexAtual + 1) % this.flashcards.length;
     this.mostrarVersoAtual = false;
     this.avaliacaoFlashcardSelecionada = null;
+    this.resetFlashcardFeedback();
   }
 
   anteriorFlashcard(): void {
@@ -777,6 +861,7 @@ this.mensagemRevisao = undefined;
       (this.flashcardIndexAtual - 1 + this.flashcards.length) % this.flashcards.length;
     this.mostrarVersoAtual = false;
     this.avaliacaoFlashcardSelecionada = null;
+    this.resetFlashcardFeedback();
   }
 
   removerFlashcardAtual(): void {
@@ -824,6 +909,7 @@ this.mensagemRevisao = undefined;
           this.mostrarVersoAtual = false;
           this.avaliacaoFlashcardSelecionada = null;
           this.carregandoFlashcardsRevisao = false;
+          this.resetFlashcardFeedback();
         },
         error: (err) => {
           console.error('[REVIS├âO] Erro ao carregar flashcards de revis├úo:', err);

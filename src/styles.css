@@ -339,6 +339,11 @@ body.theme-dark .p-panelmenu .p-menuitem {
   border: 0 !important;
 }
 
+/* PRIME NG Tooltip - garantir acima de modais */
+.p-tooltip {
+  z-index: 99999 !important;
+}
+
 /* header “pai” (quando existir) também sem borda extra */
 body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content {
   box-shadow: none !important;

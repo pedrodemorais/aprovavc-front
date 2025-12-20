@@ -328,6 +328,8 @@
                            [class.frente]="!mostrarVersoAtual"
                            [class.verso]="mostrarVersoAtual"
                            [class.flipped]="mostrarVersoAtual"
+                           [class.flashcard-correto]="flashcardFeedback === 'acerto'"
+                           [class.flashcard-errado]="flashcardFeedback === 'erro'"
                            (click)="virarFlashcard()">
 
                         <div class="flashcard-card-inner">
@@ -379,9 +381,31 @@
                         
 
                             <div class="flashcard-card-corpo">
-                              <div class="flashcard-conteudo-review">
+                              <div class="flashcard-conteudo-review"
+                                   *ngIf="!isVerdadeiroFalso(flashcardAtual) || flashcardFeedback">
                                 {{ flashcardAtual?.verso }}
                               </div>
+                              <div class="flashcard-conteudo-review flashcard-vf-placeholder"
+                                   *ngIf="isVerdadeiroFalso(flashcardAtual) && !flashcardFeedback">
+                                Responda para revelar a resposta.
+                              </div>
+                            </div>
+
+                            <div class="flashcard-vf-actions"
+                                 *ngIf="isVerdadeiroFalso(flashcardAtual)">
+                              <button type="button" class="flashcard-vf-btn verdadeiro"
+                                      (click)="responderVerdadeiroFalso(true, $event)">
+                                Verdadeiro
+                              </button>
+                              <button type="button" class="flashcard-vf-btn falso"
+                                      (click)="responderVerdadeiroFalso(false, $event)">
+                                Falso
+                              </button>
+                            </div>
+
+                            <div class="flashcard-vf-feedback" *ngIf="flashcardFeedback">
+                              <span *ngIf="flashcardFeedback === 'acerto'">Resposta correta!</span>
+                              <span *ngIf="flashcardFeedback === 'erro'">Resposta incorreta.</span>
                             </div>
 
                             <div class="flashcard-card-footer-linha">
@@ -402,7 +426,7 @@
                       </div>
 
                       <!-- ACOES (so quando estiver no verso) -->
-                      <div class="flashcard-acoes-review" *ngIf="mostrarVersoAtual">
+                      <div class="flashcard-acoes-review" *ngIf="mostrarVersoAtual && !isVerdadeiroFalso(flashcardAtual)">
                         <div class="timer-modos separado" role="tablist" aria-label="Avaliação do flashcard">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'ERREI'"
                             (click)="selecionarAvaliacaoFlashcard('ERREI')">
@@ -504,12 +528,12 @@
   <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard">
     <div class="flashcard-modal">
       <header class="flashcard-header">
-        <div>
+        <div class="flashcard-header-titulo">
           <h2 class="flashcard-titulo">Criar Flashcard</h2>
-          <p>
-            Transforme o que voc&ecirc; acabou de estudar em perguntas r&aacute;pidas para revisar
-            depois.
-          </p>
+          <i class="pi pi-info-circle info-icon"
+             pTooltip="Transforme o que voc&ecirc; acabou de estudar em perguntas r&aacute;pidas para revisar depois."
+             tooltipPosition="right" [showDelay]="150" [hideDelay]="80" appendTo="body" tabindex="0"
+             aria-label="Dica"></i>
         </div>
 
         <button type="button" class="flashcard-fechar" (click)="fecharModalFlashcard()">
@@ -531,26 +555,12 @@
         </div>
       </div>
 
-      <!-- Frente / Verso -->
-      <div class="flashcard-campos">
-        <label class="flashcard-label">
-          Frente (pergunta)
-          <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardFrente" name="flashcardFrente"
-            placeholder="Digite a pergunta..."></textarea>
-        </label>
-
-        <label class="flashcard-label">
-          Verso (resposta)
-          <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardVerso" name="flashcardVerso"
-            placeholder="Digite a resposta..."></textarea>
-        </label>
-      </div>
-
       <!-- Tipo / Dificuldade -->
       <div class="flashcard-linha-dupla">
         <label class="flashcard-label">
           Tipo
-          <select class="flashcard-select" [(ngModel)]="flashcardTipo" name="flashcardTipo">
+          <select class="flashcard-select" [(ngModel)]="flashcardTipo" name="flashcardTipo"
+            (ngModelChange)="onFlashcardTipoChange($event)">
             <option value="PERGUNTA_RESPOSTA">Pergunta e resposta</option>
             <option value="VERDADEIRO_FALSO">Verdadeiro ou falso</option>
             <option value="CLOZE">Cloze (preencher lacuna)</option>
@@ -564,6 +574,37 @@
             <option value="MEDIA">M&eacute;dia</option>
             <option value="DIFICIL">Dif&iacute;cil</option>
           </select>
+        </label>
+      </div>
+
+      <!-- Frente / Verso -->
+      <div class="flashcard-campos">
+        <label class="flashcard-label">
+          Frente (pergunta)
+          <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardFrente" name="flashcardFrente"
+            placeholder="Digite a pergunta..."></textarea>
+        </label>
+
+        <div class="flashcard-vf-selector" *ngIf="flashcardTipo === 'VERDADEIRO_FALSO'">
+          <span class="flashcard-vf-label">Resposta correta</span>
+          <label class="flashcard-vf-option">
+            <input type="radio" name="flashcardVf" [value]="'VERDADEIRO'"
+              [(ngModel)]="flashcardVerdadeiroFalso"
+              (ngModelChange)="onFlashcardVerdadeiroFalsoChange($event)" />
+            Verdadeiro
+          </label>
+          <label class="flashcard-vf-option">
+            <input type="radio" name="flashcardVf" [value]="'FALSO'"
+              [(ngModel)]="flashcardVerdadeiroFalso"
+              (ngModelChange)="onFlashcardVerdadeiroFalsoChange($event)" />
+            Falso
+          </label>
+        </div>
+
+        <label class="flashcard-label">
+          Verso (resposta)
+          <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardVerso" name="flashcardVerso"
+            placeholder="Digite a resposta..." [disabled]="flashcardTipo === 'VERDADEIRO_FALSO'"></textarea>
         </label>
       </div>
 
