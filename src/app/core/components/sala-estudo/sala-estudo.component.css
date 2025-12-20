@@ -671,6 +671,8 @@
 .flashcard-card-review {
   width: 100%;
   max-width: 320px;
+  aspect-ratio: 3 / 4.6;
+  height: auto;
   min-height: 420px;
   border-radius: 26px;
   padding: 0;
@@ -749,7 +751,7 @@
   flex-direction: column;
   gap: 0.9rem;
   background: #ffffff;
-  color: #0f172a;
+  color: #0b1324;
   background-clip: padding-box;
   will-change: transform, opacity;
 }
@@ -763,12 +765,13 @@
 
 .flashcard-card-back {
   transform: rotateY(180deg) translateZ(1px);
-  background: #8ee0aead;
-  color: #f8fafc;
+  background: #ffffff;
+  color: #075c28;
   z-index: 1;
   opacity: 0;
   transition: opacity 0.2s ease;
-  height: 45dvh;
+  width: 100%;
+  height: 100%;
 }
 
 .flashcard-card-hero {
@@ -802,11 +805,11 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #64748b;
+  color: #475569;
 }
 
 .flashcard-card-back .flashcard-title {
-  color: #cbd5f5;
+  color: #0f3d2e;
 }
 
 .flashcard-card-header-linha {
@@ -829,9 +832,9 @@
 }
 
 .flashcard-card-back .face-pill {
-  border-color: rgba(34, 197, 94, 0.7);
-  color: #bbf7d0;
-  background: rgba(22, 163, 74, 0.2);
+  border-color: #0f766e;
+  color: #0f3d2e;
+  background: #bbf7d0;
 }
 
 .meta-contagem {
@@ -848,8 +851,8 @@
 
 .flashcard-conteudo-review {
   width: 100%;
-  font-size: 1.02rem;
-  line-height: 1.65;
+  font-size: 1.08rem;
+  line-height: 1.7;
   color: inherit;
   white-space: pre-wrap;
 }
@@ -860,14 +863,15 @@
   gap: 0.35rem 0.75rem;
   align-items: center;
   font-size: 0.78rem;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .meta-dificuldade {
   padding: 0.18rem 0.65rem;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.45);
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(148, 163, 184, 0.2);
+  color: #334155;
 }
 
 .meta-tags {
@@ -880,18 +884,19 @@
 .meta-hint {
   margin-left: auto;
   font-style: italic;
-  color: rgba(100, 116, 139, 0.9);
+  color: rgba(71, 85, 105, 0.95);
 }
 
 .flashcard-card-back .meta-contagem,
 .flashcard-card-back .flashcard-card-footer-linha,
 .flashcard-card-back .meta-hint {
-  color: rgba(226, 232, 240, 0.75);
+  color: #1f2937;
 }
 
 .flashcard-card-back .meta-dificuldade {
-  border-color: rgba(148, 163, 184, 0.35);
-  background: rgba(148, 163, 184, 0.12);
+  border-color: #0f766e;
+  background: #c7f5d9;
+  color: #0f3d2e;
 }
 
 .flashcard-acoes-review {
