@@ -6,16 +6,30 @@
     </div>
 
     <div class="contact-grid">
-      <div class="contact-card">
-        <div class="contact-title">E-mail</div>
+      <div class="contact-card contact-card--email">
+        <div class="contact-head">
+          <span class="contact-icon pi pi-envelope" aria-hidden="true"></span>
+          <div class="contact-text">
+            <div class="contact-title">E-mail</div>
+            <div class="contact-subtitle">Resposta detalhada em horario comercial</div>
+          </div>
+        </div>
         <button class="contact-value link-button" type="button" (click)="abrirFormularioEmail()">
           contato@aprovavc.com.br
         </button>
+        <div class="contact-hint">Clique para abrir o formulario de atendimento.</div>
       </div>
 
-      <div class="contact-card">
-        <div class="contact-title">WhatsApp</div>
+      <div class="contact-card contact-card--whatsapp">
+        <div class="contact-head">
+          <span class="contact-icon pi pi-whatsapp" aria-hidden="true"></span>
+          <div class="contact-text">
+            <div class="contact-title">WhatsApp</div>
+            <div class="contact-subtitle">Canal rapido para resolver duvidas</div>
+          </div>
+        </div>
         <a class="contact-value" href="https://wa.me/5562992546406" target="_blank" rel="noopener">(62) 99254-6406</a>
+        <div class="contact-hint">Atendimento direto com a equipe.</div>
       </div>
     </div>
 

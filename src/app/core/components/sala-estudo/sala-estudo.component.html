@@ -130,15 +130,24 @@
                       </button>
                     </div>
 
-                    <div class="timer-modos" role="tablist">
-                      <button type="button" class="btn-icon btn-player" (click)="toggleTimer()"
-                        [disabled]="!topicoSelecionado || !topicoPermiteEstudo">
-                        <span class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></span>
+                    <div class="timer-modos" role="tablist" aria-label="Controle do cronometro">
+                      <button type="button" class="btn-modo-timer"
+                        [class.ativo]="!timerAtivo && topicoSelecionado && topicoPermiteEstudo"
+                        (click)="toggleTimer()" [disabled]="timerAtivo || !topicoSelecionado || !topicoPermiteEstudo">
+                        <i class="pi pi-play"></i>
+                        <span>Iniciar</span>
                       </button>
 
-                      <button type="button" class="btn-icon btn-reset" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre') ||
+                      <button type="button" class="btn-modo-timer" [class.ativo]="timerAtivo" (click)="toggleTimer()"
+                        [disabled]="!timerAtivo || !topicoSelecionado || !topicoPermiteEstudo">
+                        <i class="pi pi-pause"></i>
+                        <span>Pausar</span>
+                      </button>
+
+                      <button type="button" class="btn-modo-timer" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre') ||
                               (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
                         <i class="pi pi-refresh"></i>
+                        <span>Zerar</span>
                       </button>
                     </div>
                   </div>
@@ -247,10 +256,13 @@
                         Inicie o cronômetro para liberar as anotações.
                       </span>
 
-                      <button type="button" class="btn-icon btn-player" (click)="toggleTimer()"
-                        [disabled]="!topicoSelecionado || !topicoPermiteEstudo">
-                        <span class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></span>
-                      </button>
+                      <div class="editor-aviso-acao">
+                        <button type="button" class="btn-start-estudo" (click)="toggleTimer()"
+                          [disabled]="!topicoSelecionado || !topicoPermiteEstudo">
+                          <span class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></span>
+                          <span>Iniciar estudos</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
