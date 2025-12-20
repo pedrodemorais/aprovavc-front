@@ -207,6 +207,11 @@ body.theme-dark,
   
 }
 
+.card-header > div{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .card-title{
   font-size: 1rem;
   font-weight: 450;
@@ -370,6 +375,64 @@ body.theme-dark,
   background: #fecaca;
 }
 
+/* ============================
+   BOTAO SEGMENTADO (estilo sala de estudo)
+============================ */
+.timer-modos{
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.055);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+.btn-modo-timer{
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.btn-modo-timer:hover{
+  transform: translateY(-1px);
+}
+
+.btn-modo-timer:disabled{
+  opacity: 0.6;
+  cursor: default;
+}
+
+.timer-modos .btn-modo-timer:hover{
+  transform: none;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.timer-modos .btn-modo-timer + .btn-modo-timer{
+  position: relative;
+  padding-left: 14px;
+}
+
+.timer-modos .btn-modo-timer + .btn-modo-timer::before{
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  height: 14px;
+  transform: translateY(-50%);
+  width: 1px;
+  background: rgba(0, 0, 0, 0.18);
+}
 /* aÃ§Ãµes empilhadas */
 .botoes-acoes-topicos{
   display: flex;
@@ -692,6 +755,7 @@ body.theme-dark,
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .toolbar-left{
@@ -727,6 +791,9 @@ body.theme-dark,
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
+  justify-content: flex-end;
+  flex: 0 0 auto;
 
 }
 
@@ -1244,6 +1311,24 @@ body.theme-dark,
 
 :host-context(body.theme-dark) .btn.perigo:hover:not(:disabled){
   background: rgba(239, 68, 68, 0.22) !important;
+}
+
+/* botao segmentado (dark) */
+:host-context(body.theme-dark) .timer-modos{
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn-modo-timer{
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+:host-context(body.theme-dark) .timer-modos .btn-modo-timer:hover{
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+:host-context(body.theme-dark) .timer-modos .btn-modo-timer + .btn-modo-timer::before{
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
 /* erro global */

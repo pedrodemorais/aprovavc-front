@@ -68,21 +68,25 @@
           </div>
 
           <div class="form-acoes">
-            <button type="submit" class="btn primario" [disabled]="salvando">
-              {{
-              salvando
-              ? 'Salvando...'
-              : (materiaForm.get('id')?.value ? 'Alterar' : 'Salvar')
-              }}
-            </button>
+            <div class="timer-modos">
+              <button type="submit" class="btn-modo-timer" [disabled]="salvando">
+                {{
+                salvando
+                ? 'Salvando...'
+                : (materiaForm.get('id')?.value ? 'Alterar' : 'Salvar')
+                }}
+              </button>
 
-            <button type="button" class="btn secundario" (click)="novaMateria()">
-              Novo
-            </button>
+              <button type="button" class="btn-modo-timer" (click)="novaMateria()">
+                Novo
+              </button>
+            </div>
 
-            <button type="button" class="btn secundario" (click)="abrirModalImportarEdital()">
-              Importar
-            </button>
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()">
+                Importar
+              </button>
+            </div>
           </div>
         </form>
       </section>
@@ -114,15 +118,17 @@
               </ng-template>
 
               <div class="toolbar-actions">
-                <button type="button" class="btn secundario btn-sm"
-                  (click)="materiaExpandida && editarMateria(materiaExpandida)" [disabled]="!materiaExpandida">
-                  Editar
-                </button>
+                <div class="timer-modos">
+                  <button type="button" class="btn-modo-timer"
+                    (click)="materiaExpandida && editarMateria(materiaExpandida)" [disabled]="!materiaExpandida">
+                    Editar
+                  </button>
 
-                <button type="button" class="btn perigo btn-sm"
-                  (click)="materiaExpandida && excluirMateria(materiaExpandida)" [disabled]="!materiaExpandida">
-                  Excluir
-                </button>
+                  <button type="button" class="btn-modo-timer"
+                    (click)="materiaExpandida && excluirMateria(materiaExpandida)" [disabled]="!materiaExpandida">
+                    Excluir
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -256,10 +262,12 @@
               </ng-template>
 
               <div class="tree-actions">
-                <button type="button" class="btn secundario btn-sm" (click)="limparTopicoSelecionado()"
-                  [disabled]="!topicoSelecionado">
-                  Limpar
-                </button>
+                <div class="timer-modos">
+                  <button type="button" class="btn-modo-timer" (click)="limparTopicoSelecionado()"
+                    [disabled]="!topicoSelecionado">
+                    Limpar
+                  </button>
+                </div>
 
                 <button type="button" class="btn secundario btn-sm" (click)="editarTopicoSelecionado()"
                   [disabled]="!topicoSelecionado">

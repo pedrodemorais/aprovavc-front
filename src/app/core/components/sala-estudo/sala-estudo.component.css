@@ -303,6 +303,23 @@
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.timer-modos.separado .btn-modo-timer + .btn-modo-timer{
+  position: relative;
+  padding-left: 14px;
+}
+
+.timer-modos.separado .btn-modo-timer + .btn-modo-timer::before{
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  height: 14px;
+  transform: translateY(-50%);
+  width: 1px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+
 /* ============================
    BOTÕES ÍCONE (play/reset)
    ============================ */
@@ -369,82 +386,32 @@
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.10);
 }
 /* Grupo estilo "pílula" (igual ao Estudar/Revisar) */
-.botoes-avaliacao{
-  display: inline-flex;
+.revisao-anotacoes-feedback {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 0.7rem;
+  text-align: center;
+}
+
+.botoes-avaliacao{
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  
-  border-radius: 999px;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
 }
 
-/* Botões dentro do grupo (sem quebrar teu padrão global) */
-.botoes-avaliacao .btn.secundario{
-  border: 0 !important;
-  background: transparent !important;
-  color: #374151 !important;
-  border-radius: 999px !important;
-  padding: 8px 12px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  line-height: 1 !important;
-  box-shadow: none !important;
-  min-height: 32px;
-  cursor: pointer;
-  transition: background .15s ease, transform .05s ease;
+.botoes-avaliacao .timer-modos{
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.botoes-avaliacao .btn.secundario:hover{
-  background: #e5e7eb !important;
-}
-
-/* Se quiser estado "selecionado" (opcional) */
-.botoes-avaliacao .btn.secundario.is-ativo{
-  background: #ffffff !important;
-  border: 1px solid #d1d5db !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,.06) !important;
-}
-
-/* Mobile: encaixa em 2 colunas */
 @media (max-width: 480px){
-  .botoes-avaliacao{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  .botoes-avaliacao .timer-modos{
     width: 100%;
   }
-
-  .botoes-avaliacao .btn.secundario{
-    width: 100%;
-    justify-content: center;
-  }
 }
-
-.botoes-avaliacao .btn.secundario{
-  transition:
-    transform .12s ease,
-    box-shadow .12s ease;
-}
-
-/* Hover: leve levantada */
-.botoes-avaliacao .btn.secundario:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-  background: transparent !important;
-}
-
-/* Clique (feedback tátil) */
-.botoes-avaliacao .btn.secundario:active{
-  transform: translateY(0);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-}
-
-/* Estado selecionado continua sólido, sem "pular" */
-.botoes-avaliacao .btn.secundario.is-ativo{
-  transform: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-
 
 /* ============================
    EDITOR (PrimeNG p-editor / Quill)
@@ -514,41 +481,51 @@
 
 .editor-aviso {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
   padding: 10px 12px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #fff7cc 0%, #fff2a8 100%);
-  border: 1px solid #f6d88a;
-  color: #8a3e09;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+  border: 1px solid #e2e8f0;
+  color: #334155;
   font-size: 0.85rem;
   max-width: 460px;
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.22);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.18);
 }
 
 .editor-aviso-icon {
-  font-size: 1.3rem;
-  margin-top: 2px;
+  font-size: 1.1rem;
   background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 6px;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
 .editor-aviso-texto {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  width: 100%;
+}
+
+.editor-aviso-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
 }
 
 .editor-aviso-texto strong {
-  display: block;
+  display: inline-block;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin: 0;
 }
 
 .editor-aviso-acao {
   margin-top: 8px;
+  display: flex;
+  justify-content: center;
 }
 
 .btn-start-estudo {
@@ -557,14 +534,14 @@
   gap: 8px;
   padding: 10px 16px;
   border-radius: 999px;
-  border: none;
-  background: linear-gradient(135deg, #16a34a 0%, #22c55e 60%, #4ade80 100%);
-  color: #ffffff;
+  border: 1px solid rgba(22, 163, 74, 0.35);
+  background: #f0fdf4;
+  color: #166534;
   font-size: 0.88rem;
   font-weight: 650;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 14px 28px rgba(22, 163, 74, 0.32);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
   transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
 }
 
@@ -574,7 +551,8 @@
 
 .btn-start-estudo:hover {
   transform: translateY(-1px);
-  box-shadow: 0 18px 34px rgba(22, 163, 74, 0.38);
+  box-shadow: 0 12px 20px rgba(15, 23, 42, 0.12);
+  background: #dcfce7;
 }
 
 .btn-start-estudo:disabled {
@@ -962,7 +940,7 @@
    MODO FOCO (revisão)
    ============================ */
 .sala-container.revisao-foco {
-  background: #020617;
+  background: transparent;
 }
 
 .sala-container.revisao-foco .coluna-esquerda {
@@ -970,16 +948,21 @@
 }
 
 .sala-container.revisao-foco .card.sala-body {
-  max-width: 900px;
-  margin-top: 24px;
-  border-radius: 24px;
-  background: #020617;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
 }
 
 .sala-container.revisao-foco .modo-conteudo {
-  height: calc(100vh - 3rem);
-  padding: 0;
+  height: calc(100vh - 2.5rem);
+  padding: 0 4px;
+}
+
+.sala-container.revisao-foco .bloco {
+  border-left: 0;
 }
 
 /* ============================
@@ -1186,21 +1169,10 @@
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* botões ícone no dark */
-:host-context(body.theme-dark) .btn-icon {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+:host-context(body.theme-dark) .timer-modos.separado .btn-modo-timer + .btn-modo-timer::before{
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
-:host-context(body.theme-dark) .btn-reset:hover {
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.45) !important;
-}
-
-:host-context(body.theme-dark) .btn-play {
-  background: #54BA67 !important;
-  border-color: rgba(84, 186, 103, 0.55) !important;
-  box-shadow: 0 14px 30px rgba(84, 186, 103, 0.18) !important;
-}
 
 /* ============================
    SCROLLBAR (clean, like dashboard)
@@ -1292,21 +1264,24 @@
 }
 
 :host-context(body.theme-dark) .editor-aviso {
-  background: linear-gradient(135deg, rgba(59, 44, 14, 0.9), rgba(76, 54, 12, 0.9)) !important;
-  border-color: rgba(251, 191, 36, 0.35) !important;
-  color: #fde68a !important;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85)) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  color: #e2e8f0 !important;
   box-shadow: 0 22px 55px rgba(0, 0, 0, 0.65) !important;
 }
 
 :host-context(body.theme-dark) .editor-aviso-icon {
   background: rgba(15, 23, 42, 0.8) !important;
-  color: #fde68a !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
   box-shadow: none !important;
 }
 
 :host-context(body.theme-dark) .btn-start-estudo {
-  background: linear-gradient(135deg, #16a34a 0%, #22c55e 70%) !important;
-  box-shadow: 0 18px 38px rgba(22, 163, 74, 0.3) !important;
+  background: rgba(34, 197, 94, 0.16) !important;
+  border: 1px solid rgba(34, 197, 94, 0.35) !important;
+  color: #bbf7d0 !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* modal flashcard (dark sólido, sem transparência) */
@@ -1505,4 +1480,7 @@
 .editor-wrapper{
   min-height: 0;
 }
+
+
+
 

@@ -1,4 +1,4 @@
-import { FlashcardDTO } from 'src/app/core/models/FlashcardDTO';
+﻿import { FlashcardDTO } from 'src/app/core/models/FlashcardDTO';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MateriaService } from 'src/app/core/services/materia.service';
@@ -274,7 +274,7 @@ export class SalaEstudoComponent implements OnInit {
   this.modoRevisao = 'anotacoes';
 
   if (this.topicoSelecionado && this.topicoPermiteEstudo) {
-    // se quiser, pode forçar recarregar anotações aqui também
+    // se quiser, pode for├ºar recarregar anota├º├Áes aqui tamb├®m
     this.salaEstudoService.buscarAnotacoes(this.topicoSelecionado.id).subscribe({
       next: (resp) => {
         this.anotacoes = resp.anotacoes || '';
@@ -290,7 +290,7 @@ export class SalaEstudoComponent implements OnInit {
 ativarRevisaoFlashcards(): void {
   this.modoRevisao = 'flashcards';
 
-  // se já tiver um tópico selecionado, garante que os flashcards dele sejam carregados
+  // se j├í tiver um t├│pico selecionado, garante que os flashcards dele sejam carregados
   if (this.topicoSelecionado && this.topicoPermiteEstudo) {
     this.carregarFlashcards();
   }
@@ -298,13 +298,13 @@ ativarRevisaoFlashcards(): void {
 
 
   // ================================================================
-  // INTERAÇÃO COM TÓPICOS
+  // INTERA├ç├âO COM T├ôPICOS
   // ================================================================
 
   /**
-   * Tempo TOTAL que o cronômetro já contou nesta sessão (em segundos).
+   * Tempo TOTAL que o cron├┤metro j├í contou nesta sess├úo (em segundos).
    * - Livre: tempoTotalSegundos
-   * - Pomodoro: duração da fase - segundosRestantes
+   * - Pomodoro: dura├º├úo da fase - segundosRestantes
    */
   private calcularTempoEstudoAtual(): number {
     if (this.modoTemporizador === 'livre') {
@@ -318,7 +318,7 @@ ativarRevisaoFlashcards(): void {
     this.silenciarAlarme();
     this.timerAtivo = false;
 
-    // ao trocar de tópico, zera o acumulado já salvo para o novo tópico
+    // ao trocar de t├│pico, zera o acumulado j├í salvo para o novo t├│pico
     this.segundosEstudoJaSalvosTopicoAtual = 0;
 
     if (this.modoTemporizador === 'livre') {
@@ -344,7 +344,7 @@ ativarRevisaoFlashcards(): void {
 
       if (temAlgoParaSalvar) {
         const desejaSalvar = window.confirm(
-          'Você já possui tempo de estudo neste tópico. Deseja salvar antes de mudar para outro tópico?'
+          'Voc├¬ j├í possui tempo de estudo neste t├│pico. Deseja salvar antes de mudar para outro t├│pico?'
         );
 
         if (desejaSalvar) {
@@ -357,7 +357,7 @@ ativarRevisaoFlashcards(): void {
 
     this.topicoSelecionado = t;
 
-    // ao selecionar tópico, carrega flashcards (modo estudar)
+    // ao selecionar t├│pico, carrega flashcards (modo estudar)
     if (this.topicoPermiteEstudo) {
       this.carregarFlashcards();
     } else {
@@ -382,7 +382,7 @@ ativarRevisaoFlashcards(): void {
       }
     });
 
-    // se já estiver no modo revisar, ao trocar de tópico recarrega os flashcards para revisão
+    // se j├í estiver no modo revisar, ao trocar de t├│pico recarrega os flashcards para revis├úo
     if (this.modo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
@@ -400,6 +400,7 @@ ativarRevisaoFlashcards(): void {
           this.flashcards = lista || [];
           this.flashcardIndexAtual = 0;
           this.mostrarVersoAtual = false;
+          this.avaliacaoFlashcardSelecionada = null;
         },
         error: (err) => {
           console.error('[SALA-ESTUDO] Erro ao carregar flashcards:', err);
@@ -460,7 +461,7 @@ ativarRevisaoFlashcards(): void {
     this.silenciarAlarme();
     this.timerAtivo = false;
 
-    // quando muda de modo, reinicia o acumulado do tópico no contexto do timer
+    // quando muda de modo, reinicia o acumulado do t├│pico no contexto do timer
     this.segundosEstudoJaSalvosTopicoAtual = 0;
 
     this.modoTemporizador = modo;
@@ -504,7 +505,7 @@ ativarRevisaoFlashcards(): void {
     }
 
     const confirmou = window.confirm(
-      'Se você zerar o cronômetro agora, o tempo estudado até este momento NÃO será contabilizado para este tópico/matéria. Deseja realmente zerar?'
+      'Se voc├¬ zerar o cron├┤metro agora, o tempo estudado at├® este momento N├âO ser├í contabilizado para este t├│pico/mat├®ria. Deseja realmente zerar?'
     );
 
     if (!confirmou) {
@@ -515,7 +516,7 @@ ativarRevisaoFlashcards(): void {
     this.silenciarAlarme();
     this.timerAtivo = false;
 
-    // o que já foi salvo no backend continua valendo
+    // o que j├í foi salvo no backend continua valendo
 
     if (this.modoTemporizador === 'livre') {
       this.tempoTotalSegundos = 0;
@@ -589,7 +590,7 @@ ativarRevisaoFlashcards(): void {
           this.alarmeAtivo = true;
         })
         .catch(err => {
-          console.warn('[POMODORO] Não foi possível tocar o som de alarme:', err);
+          console.warn('[POMODORO] N├úo foi poss├¡vel tocar o som de alarme:', err);
         });
     } catch (e) {
       console.warn('[POMODORO] Erro ao tentar tocar o som de alarme:', e);
@@ -611,7 +612,7 @@ ativarRevisaoFlashcards(): void {
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
 this.mensagemRevisao = undefined;
-    // quando entrar no modo revisar, se tiver tópico válido, carrega flashcards de revisão
+    // quando entrar no modo revisar, se tiver t├│pico v├ílido, carrega flashcards de revis├úo
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
@@ -623,16 +624,16 @@ this.mensagemRevisao = undefined;
 
   salvarEstudo(): void {
     if (!this.topicoSelecionado) {
-      this.erro = 'Selecione um tópico antes de salvar o estudo.';
+      this.erro = 'Selecione um t├│pico antes de salvar o estudo.';
       return;
     }
 
     const modoBack = this.modoTemporizador;
 
-    // tempo TOTAL decorrido no cronômetro para este tópico / sessão
+    // tempo TOTAL decorrido no cron├┤metro para este t├│pico / sess├úo
     const tempoAtualTotal = this.calcularTempoEstudoAtual();
 
-    // apenas o DELTA desde o último salvamento
+    // apenas o DELTA desde o ├║ltimo salvamento
     let tempoParaSalvar = tempoAtualTotal - this.segundosEstudoJaSalvosTopicoAtual;
     if (tempoParaSalvar < 0) {
       tempoParaSalvar = 0;
@@ -654,7 +655,7 @@ this.mensagemRevisao = undefined;
       next: (resp) => {
         console.log('[SALA-ESTUDO] Estudo salvo:', resp);
 
-        // após salvar com sucesso, acumula o que foi enviado
+        // ap├│s salvar com sucesso, acumula o que foi enviado
         this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
 
         this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
@@ -668,7 +669,7 @@ this.mensagemRevisao = undefined;
   }
 
   // ================================================================
-  // FLASHCARD – MODAL (CRIAR)
+  // FLASHCARD ÔÇô MODAL (CRIAR)
   // ================================================================
 
   abrirModalFlashcard(): void {
@@ -690,7 +691,7 @@ this.mensagemRevisao = undefined;
 
   salvarFlashcard(): void {
     if (!this.topicoSelecionado) {
-      alert('Selecione um tópico antes de criar o flashcard.');
+      alert('Selecione um t├│pico antes de criar o flashcard.');
       return;
     }
 
@@ -715,14 +716,14 @@ this.mensagemRevisao = undefined;
       next: (resp) => {
         console.log('[FLASHCARD] Criado com sucesso:', resp);
 
-        // confirmação visual
+        // confirma├º├úo visual
         this.mensagemFlashcardSucesso = 'Flashcard salvo com sucesso.';
 
-        // limpa frente e verso pra já digitar o próximo, mantém tags e tipo/dificuldade
+        // limpa frente e verso pra j├í digitar o pr├│ximo, mant├®m tags e tipo/dificuldade
         this.flashcardFrente = '';
         this.flashcardVerso = '';
 
-        // recarrega a lista de flashcards do tópico
+        // recarrega a lista de flashcards do t├│pico
         if (this.topicoSelecionado) {
           this.carregarFlashcards();
         }
@@ -739,7 +740,7 @@ this.mensagemRevisao = undefined;
   }
 
   // ================================================================
-  // FLASHCARDS – NAVEGAÇÃO E EXCLUSÃO
+  // FLASHCARDS ÔÇô NAVEGA├ç├âO E EXCLUS├âO
   // ================================================================
 
   get existeFlashcardAtual(): boolean {
@@ -765,6 +766,7 @@ this.mensagemRevisao = undefined;
     }
     this.flashcardIndexAtual = (this.flashcardIndexAtual + 1) % this.flashcards.length;
     this.mostrarVersoAtual = false;
+    this.avaliacaoFlashcardSelecionada = null;
   }
 
   anteriorFlashcard(): void {
@@ -774,6 +776,7 @@ this.mensagemRevisao = undefined;
     this.flashcardIndexAtual =
       (this.flashcardIndexAtual - 1 + this.flashcards.length) % this.flashcards.length;
     this.mostrarVersoAtual = false;
+    this.avaliacaoFlashcardSelecionada = null;
   }
 
   removerFlashcardAtual(): void {
@@ -798,11 +801,11 @@ this.mensagemRevisao = undefined;
   }
 
   // ================================================================
-  // REVISÃO ESPAÇADA (FLASHCARDS + ANOTAÇÕES)
+  // REVIS├âO ESPA├çADA (FLASHCARDS + ANOTA├ç├òES)
   // ================================================================
 
   /**
-   * Carrega apenas os flashcards vencidos / para hoje para o tópico atual.
+   * Carrega apenas os flashcards vencidos / para hoje para o t├│pico atual.
    */
   private carregarFlashcardsParaRevisao(): void {
     if (!this.topicoSelecionado) {
@@ -819,51 +822,61 @@ this.mensagemRevisao = undefined;
           this.flashcards = lista || [];
           this.flashcardIndexAtual = 0;
           this.mostrarVersoAtual = false;
+          this.avaliacaoFlashcardSelecionada = null;
           this.carregandoFlashcardsRevisao = false;
         },
         error: (err) => {
-          console.error('[REVISÃO] Erro ao carregar flashcards de revisão:', err);
-          this.erroFlashcardsRevisao = 'Erro ao carregar flashcards para revisão.';
+          console.error('[REVIS├âO] Erro ao carregar flashcards de revis├úo:', err);
+          this.erroFlashcardsRevisao = 'Erro ao carregar flashcards para revis├úo.';
           this.carregandoFlashcardsRevisao = false;
           this.flashcards = [];
         }
       });
   }
 
+  avaliacaoFlashcardSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
+  enviandoAvaliacaoFlashcard: boolean = false;
+
+  selecionarAvaliacaoFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+    this.avaliacaoFlashcardSelecionada = avaliacao;
+  }
+
   /**
    * Marca o flashcard atual como ERREI / DIFICIL / BOM / FACIL
    * e deixa o back recalcular a próxima revisão.
    */
-avaliarFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
-  const atual = this.flashcardAtual;
-  if (!atual || !atual.id) {
-    return;
-  }
-
-  const req: FlashcardRevisaoRespostaRequest = {
-    flashcardId: atual.id,
-    avaliacao
-  };
-
-  this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
-    next: () => {
-      this.proximoFlashcard();
-      this.recarregarTopicosAposRevisao();
-
-      // 👇 feedback visual
-      this.mostrarMensagemRevisao('Revisão do flashcard registrada!');
-    },
-    error: (err) => {
-      console.error('[REVISÃO] Erro ao registrar resposta do flashcard:', err);
-      alert('Erro ao registrar resposta da revisão. Tente novamente.');
+  confirmarAvaliacaoFlashcard(): void {
+    const atual = this.flashcardAtual;
+    const avaliacao = this.avaliacaoFlashcardSelecionada;
+    if (this.enviandoAvaliacaoFlashcard || !avaliacao || !atual || !atual.id) {
+      return;
     }
-  });
-}
 
+    const req: FlashcardRevisaoRespostaRequest = {
+      flashcardId: atual.id,
+      avaliacao
+    };
 
+    this.enviandoAvaliacaoFlashcard = true;
+    this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
+      next: () => {
+        this.proximoFlashcard();
+        this.recarregarTopicosAposRevisao();
+        this.avaliacaoFlashcardSelecionada = null;
+        this.enviandoAvaliacaoFlashcard = false;
+
+        this.mostrarMensagemRevisao('Revisao do flashcard registrada!');
+      },
+      error: (err) => {
+        console.error('[REVISAO] Erro ao registrar resposta do flashcard:', err);
+        alert('Erro ao registrar resposta da revisao. Tente novamente.');
+        this.enviandoAvaliacaoFlashcard = false;
+      }
+    });
+  }
   /**
-   * Marca a revisão das anotações (nível tópico) como ERREI / DIFICIL / BOM / FACIL.
-   * O servidor cuida da lógica das "caixinhas" do tópico.
+   * Marca a revis├úo das anota├º├Áes (n├¡vel t├│pico) como ERREI / DIFICIL / BOM / FACIL.
+   * O servidor cuida da l├│gica das "caixinhas" do t├│pico.
    */
   avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
 avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
@@ -879,36 +892,36 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
 
   this.salaEstudoService.responderRevisaoTopico(req).subscribe({
     next: () => {
-      console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
+      console.log('[REVIS├âO] Revis├úo de anota├º├Áes registrada com sucesso');
       this.recarregarTopicosAposRevisao();
 
-      // 👇 feedback visual
-      this.mostrarMensagemRevisao('Revisão das anotações registrada!');
+      // ­ƒæç feedback visual
+      this.mostrarMensagemRevisao('Revis├úo das anota├º├Áes registrada!');
     },
     error: (err) => {
-      console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
-      alert('Erro ao registrar revisão das anotações. Tente novamente.');
+      console.error('[REVIS├âO] Erro ao registrar revis├úo de anota├º├Áes:', err);
+      alert('Erro ao registrar revis├úo das anota├º├Áes. Tente novamente.');
     }
   });
 }
 
 
 
-// --- INÍCIO BLOCO: SONS DE FOCO POR ÍCONE ---
+// --- IN├ìCIO BLOCO: SONS DE FOCO POR ├ìCONE ---
 
 
 
 
-// --- FIM BLOCO: SONS DE FOCO POR ÍCONE ---
+// --- FIM BLOCO: SONS DE FOCO POR ├ìCONE ---
 
-  /** Mapa: topicoId -> info de revisão (status + próxima data) */
+  /** Mapa: topicoId -> info de revis├úo (status + pr├│xima data) */
   private revisoesPorTopico = new Map<number, {
     status: StatusRevisao;
     proximaRevisao?: string | null;
   }>();
 
     /**
-   * Constrói uma data local (sem problema de UTC) a partir de 'YYYY-MM-DD'.
+   * Constr├│i uma data local (sem problema de UTC) a partir de 'YYYY-MM-DD'.
    */
   private construirDataLocal(isoDate: string): Date {
     const [anoStr, mesStr, diaStr] = isoDate.split('-');
@@ -922,8 +935,8 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
   }
 
   /**
-   * Carrega o dashboard geral de revisões e monta o mapa por tópico.
-   * Reutiliza a mesma lógica da tela de matérias.
+   * Carrega o dashboard geral de revis├Áes e monta o mapa por t├│pico.
+   * Reutiliza a mesma l├│gica da tela de mat├®rias.
    */
   private carregarRevisoesDashboard(): void {
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
@@ -968,15 +981,15 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
         console.log('[SALA-ESTUDO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
       },
       error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao carregar revisões dashboard:', err);
+        console.error('[SALA-ESTUDO] Erro ao carregar revis├Áes dashboard:', err);
       }
     });
   }
 
-    /** Define a "força" de cada status para comparar pai x filhos */
+    /** Define a "for├ºa" de cada status para comparar pai x filhos */
   private prioridadeStatus(status: StatusRevisao): number {
     switch (status) {
-      case 'ATRASADA': return 3; // mais crítico
+      case 'ATRASADA': return 3; // mais cr├¡tico
       case 'HOJE':     return 2;
       case 'FUTURA':   return 1;
       case 'SEM':
@@ -984,7 +997,7 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
     }
   }
 
-  /** Busca um DTO de tópico na árvore original pelo id */
+  /** Busca um DTO de t├│pico na ├írvore original pelo id */
   private encontrarDtoPorId(lista: any[], id: number): any | null {
     for (const dto of lista) {
       if (dto.id === id) {
@@ -1001,8 +1014,8 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
   }
 
   /**
-   * Status "simples" de um tópico, olhando só o próprio id no mapa de revisões.
-   * (Dashboard já calculou o status com base na data).
+   * Status "simples" de um t├│pico, olhando s├│ o pr├│prio id no mapa de revis├Áes.
+   * (Dashboard j├í calculou o status com base na data).
    */
   private getStatusSimplesTopico(topicoId: number | undefined): StatusRevisao {
     if (!topicoId) {
@@ -1016,8 +1029,8 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
   }
 
   /**
-   * Status consolidado do tópico na ÁRVORE:
-   * considera o próprio id + todos os subtopicos.
+   * Status consolidado do t├│pico na ├üRVORE:
+   * considera o pr├│prio id + todos os subtopicos.
    */
   private getStatusRevisaoTopicoNaArvore(dto: any): StatusRevisao {
     let pior: StatusRevisao = this.getStatusSimplesTopico(dto.id);
@@ -1034,8 +1047,8 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
   }
 
   /**
-   * Dado o nó achatado (t da lista da esquerda),
-   * devolve o status consolidado (ele + filhos), usando a árvore original.
+   * Dado o n├│ achatado (t da lista da esquerda),
+   * devolve o status consolidado (ele + filhos), usando a ├írvore original.
    */
   private getStatusRevisaoTopicoView(t: any): StatusRevisao {
     if (!t || !t.id) {
@@ -1044,7 +1057,7 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
 
     const dto = this.encontrarDtoPorId(this.arvoreTopicos, t.id);
     if (!dto) {
-      // fallback: só o próprio
+      // fallback: s├│ o pr├│prio
       return this.getStatusSimplesTopico(t.id);
     }
 
@@ -1063,11 +1076,11 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
     };
   }
 
-  /** Recarrega a árvore de tópicos para atualizar o semáforo
- *  preservando o tópico selecionado.
+  /** Recarrega a ├írvore de t├│picos para atualizar o sem├íforo
+ *  preservando o t├│pico selecionado.
  */
-/** Recarrega revisões + árvore de tópicos para atualizar o semáforo,
- *  preservando o tópico selecionado.
+/** Recarrega revis├Áes + ├írvore de t├│picos para atualizar o sem├íforo,
+ *  preservando o t├│pico selecionado.
  */
 private recarregarTopicosAposRevisao(): void {
   if (!this.materiaId) {
@@ -1076,19 +1089,19 @@ private recarregarTopicosAposRevisao(): void {
 
   const idSelecionado = this.topicoSelecionado?.id;
 
-  // 1) Atualiza o mapa de revisões (é daqui que vem o semáforo)
+  // 1) Atualiza o mapa de revis├Áes (├® daqui que vem o sem├íforo)
   this.carregarRevisoesDashboard();
 
-  // 2) Recarrega a árvore de tópicos (efeito "F5" na coluna esquerda)
+  // 2) Recarrega a ├írvore de t├│picos (efeito "F5" na coluna esquerda)
   this.materiaService.listarTopicos(this.materiaId).subscribe({
     next: (lista) => {
       const listaSegura = lista || [];
-      console.log('[SALA-ESTUDO] Recarregando tópicos após revisão:', listaSegura);
+      console.log('[SALA-ESTUDO] Recarregando t├│picos ap├│s revis├úo:', listaSegura);
 
       this.arvoreTopicos = listaSegura;
       this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
-      // tenta manter o mesmo tópico selecionado
+      // tenta manter o mesmo t├│pico selecionado
       if (idSelecionado) {
         const encontrado = this.topicos.find(t => t.id === idSelecionado);
         if (encontrado) {
@@ -1097,7 +1110,7 @@ private recarregarTopicosAposRevisao(): void {
       }
     },
     error: (err) => {
-      console.error('[SALA-ESTUDO] Erro ao recarregar tópicos após revisão:', err);
+      console.error('[SALA-ESTUDO] Erro ao recarregar t├│picos ap├│s revis├úo:', err);
     }
   });
 }

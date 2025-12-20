@@ -1,20 +1,20 @@
-<div class="sala-container" *ngIf="!carregando; else loadingTpl"
+﻿<div class="sala-container" *ngIf="!carregando; else loadingTpl"
   [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }">
 
 
 
   <!-- CORPO DA SALA -->
   <section class="card sala-body">
-    <!-- COLUNA ESQUERDA: LISTA DE TÓPICOS -->
+    <!-- COLUNA ESQUERDA: LISTA DE TOPICOS -->
     <aside class="coluna-esquerda">
       <div class="nome-botoes">
         <div class="coluna-header">
 
           <span class="titulo-materia">
-            {{ materia?.nome || 'Matéria' }}
+            {{ materia?.nome || 'Mat&eacute;ria' }}
           </span>
 
-          <i class="pi pi-info-circle info-icon" pTooltip="Clique em um tópico para focar o estudo."
+          <i class="pi pi-info-circle info-icon" pTooltip="Clique em um t&oacute;pico para focar o estudo."
             tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
 
           <div class="titulo-com-info">
@@ -42,7 +42,7 @@
 
       </div>
 
-      <!-- LISTA HIERÁRQUICA -->
+      <!-- LISTA HIERARQUICA -->
       <div class="lista-de-topicos">
         <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
           <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
@@ -59,24 +59,24 @@
       </div>
       <ng-template #semTopicos>
         <p class="muted">
-          Esta matéria ainda não possui tópicos cadastrados.
+          Esta mat&eacute;ria ainda n&atilde;o possui t&oacute;picos cadastrados.
           <br />
-          Volte ao cadastro de matérias para criar sua árvore de tópicos.
+          Volte ao cadastro de mat&eacute;rias para criar sua &aacute;rvore de t&oacute;picos.
         </p>
       </ng-template>
     </aside>
 
-    <!-- COLUNA DIREITA: CONTEÚDO DA SALA -->
+    <!-- COLUNA DIREITA: CONTEUDO DA SALA -->
     <main class="coluna-direita">
       <!-- Abas do modo -->
 
 
-      <!-- CONTEÚDO DA SALA (frame único) -->
+      <!-- CONTEUDO DA SALA (frame unico) -->
       <section class="modo-conteudo">
 
         <div class="bloco bloco-anotacoes">
 
-          <!-- HEADER ÚNICO (igual visualmente sempre) -->
+          <!-- HEADER UNICO (igual visualmente sempre) -->
           <div class="timer-botoes">
             <div>
               <ng-container [ngSwitch]="modo">
@@ -96,7 +96,7 @@
                       Revisando: <span>{{ topicoSelecionado.descricao }}</span>
                     </h2>
                     <p class="muted pequeno">
-                      Matéria: <strong>{{ materia?.nome || '-' }}</strong>
+                      Mat&eacute;ria: <strong>{{ materia?.nome || '-' }}</strong>
                     </p>
                   </ng-container>
                 </ng-container>
@@ -104,12 +104,12 @@
 
               <ng-template #selecioneTopicoTpl>
                 <h2 class="titulo-section">
-                  Selecione um tópico ao lado para começar.
+                  Selecione um t&oacute;pico ao lado para come&ccedil;ar.
                 </h2>
               </ng-template>
             </div>
 
-            <!-- CONTROLES À DIREITA (ocupam o mesmo lugar sempre) -->
+            <!-- CONTROLES A DIREITA (ocupam o mesmo lugar sempre) -->
             <div class="tipo-estudo">
               <ng-container [ngSwitch]="modo">
 
@@ -125,12 +125,12 @@
 
                       <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
                         (click)="setModoTemporizador('pomodoro')">
-                        <span class="emoji">🍅</span>
+
                         <span>Pomodoro</span>
                       </button>
                     </div>
 
-                    <div class="timer-modos" role="tablist" aria-label="Controle do cronometro">
+                    <div class="timer-modos" role="tablist" aria-label="Controle do cron&ocirc;metro">
                       <button type="button" class="btn-modo-timer"
                         [class.ativo]="!timerAtivo && topicoSelecionado && topicoPermiteEstudo"
                         (click)="toggleTimer()" [disabled]="timerAtivo || !topicoSelecionado || !topicoPermiteEstudo">
@@ -156,27 +156,27 @@
                 <!-- Controles do REVISAR (encaixados no MESMO header/right) -->
                 <ng-container *ngSwitchCase="'revisar'">
                   <div class="timer-bar">
-                    <div class="timer-modos" role="tablist" aria-label="Tipo de revisão">
+                    <div class="timer-modos" role="tablist" aria-label="Tipo de revis&atilde;o">
                       <button type="button" class="btn-modo-timer" [class.ativo]="modoRevisao === 'anotacoes'"
                         (click)="modoRevisao = 'anotacoes'">
-                        📝 <span>Anotações</span>
+                        <span>Anota&ccedil;&otilde;es</span>
                       </button>
 
                       <button type="button" class="btn-modo-timer" [class.ativo]="modoRevisao === 'flashcards'"
                         (click)="ativarRevisaoFlashcards()">
-                        🃏 <span>Flashcards</span>
+                        <span>Flashcards</span>
                       </button>
                     </div>
 
                     <div class="timer-modos" role="tablist" aria-label="Modo foco">
                       <button type="button" class="btn-modo-timer" *ngIf="!modoRevisaoFocoAtivo"
                         (click)="ativarModoFocoRevisao()">
-                        🧘 <span>Foco</span>
+                        <span>Foco</span>
                       </button>
 
                       <button type="button" class="btn-modo-timer" *ngIf="modoRevisaoFocoAtivo"
                         (click)="sairModoFocoRevisao()">
-                        ← <span>Sair</span>
+                        <span>Sair</span>
                       </button>
                     </div>
                   </div>
@@ -186,7 +186,7 @@
             </div>
           </div>
 
-          <!-- CORPO ÚNICO (mesma área grande sempre) -->
+          <!-- CORPO UNICO (mesma area grande sempre) -->
           <div class="editor-wrapper">
 
             <ng-container [ngSwitch]="modo">
@@ -198,7 +198,7 @@
                   [readonly]="!topicoPermiteEstudo || !timerAtivo" (onInit)="onEditorInit($event)">
 
                   <ng-template pTemplate="header">
-                    <!-- (mantém seu toolbar atual) -->
+                    <!-- (mantem seu toolbar atual) -->
                     <span class="ql-formats">
                       <button class="ql-bold"></button>
                       <button class="ql-italic"></button>
@@ -229,31 +229,33 @@
                       <span class="timer-label">
                         {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
                         <ng-container *ngIf="modoTemporizador === 'pomodoro'">
-                          – <span class="timer-fase-inline">{{ labelFasePomodoro }}</span>
+                          - <span class="timer-fase-inline">{{ labelFasePomodoro }}</span>
                         </ng-container>
-                        · {{ tempoFormatado }}
+                        | {{ tempoFormatado }}
                       </span>
                     </span>
                   </ng-template>
                 </p-editor>
 
-                <!-- overlay bloqueio do estudar (mantém) -->
+                <!-- overlay bloqueio do estudar (mantem) -->
                 <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
                   <div class="editor-aviso">
-                    <span class="editor-aviso-icon">🔒</span>
                     <div class="editor-aviso-texto">
-                      <strong>Editor bloqueado</strong>
+                      <div class="editor-aviso-titulo">
+                        <i class="pi pi-lock editor-aviso-icon" aria-hidden="true"></i>
+                        <strong>Editor bloqueado</strong>
+                      </div>
 
                       <span *ngIf="!topicoSelecionado">
-                        Selecione um tópico na coluna à esquerda para começar.
+                        Selecione um t&oacute;pico na coluna &agrave; esquerda para come&ccedil;ar.
                       </span>
 
                       <span *ngIf="topicoSelecionado && topicoSelecionado.hasFilhos">
-                        Este tópico possui subtópicos. Selecione um subtópico específico.
+                        Este t&oacute;pico possui subt&oacute;picos. Selecione um subt&oacute;pico espec&iacute;fico.
                       </span>
 
                       <span *ngIf="topicoPermiteEstudo && !timerAtivo">
-                        Inicie o cronômetro para liberar as anotações.
+                        Inicie o cron&ocirc;metro para liberar as anota&ccedil;&otilde;es.
                       </span>
 
                       <div class="editor-aviso-acao">
@@ -269,37 +271,38 @@
 
               </ng-container>
 
-              <!-- MIOLO REVISAR (entra na MESMA área grande) -->
+              <!-- MIOLO REVISAR (entra na MESMA area grande) -->
               <ng-container *ngSwitchCase="'revisar'">
 
 
 
-                <!-- Anotações -->
+                <!-- Anotacoes -->
                 <ng-container *ngIf="modoRevisao === 'anotacoes'">
                   <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
 
-                    <div class="subtitulo-section">Anotações deste tópico</div>
+                    <div class="subtitulo-section">Anota&ccedil;&otilde;es deste t&oacute;pico</div>
                     <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras"></div>
 
                     <div class="revisao-anotacoes-feedback">
-                      <div class="muted pequeno">Como foi revisar essas anotações?
+                      <div class="muted pequeno">Como foi revisar essas anota&ccedil;&otilde;es?
                         <div class="alerta-revisao" *ngIf="mensagemRevisao">
-                          <span class="alerta-revisao-icone">✔</span>
+                          <span class="alerta-revisao-icone">!</span>
                           <span class="alerta-revisao-texto">{{ mensagemRevisao }}</span>
                         </div>
 
 
                       </div>
                       <div class="botoes-avaliacao">
-                        <button type="button" class="btn secundario" [class.is-ativo]="avaliacaoSelecionada === 'ERREI'"
-                          (click)="avaliarRevisaoAnotacao('ERREI')">Errei / Não lembrei</button>
-                        <button type="button" class="btn secundario"
-                          [class.is-ativo]="avaliacaoSelecionada === 'DIFICIL'"
-                          (click)="avaliarRevisaoAnotacao('DIFICIL')">Lembrei com dificuldade</button>
-                        <button type="button" class="btn secundario" [class.is-ativo]="avaliacaoSelecionada === 'BOM'"
-                          (click)="avaliarRevisaoAnotacao('BOM')">Lembrei bem</button>
-                        <button type="button" class="btn secundario" [class.is-ativo]="avaliacaoSelecionada === 'FACIL'"
-                          (click)="avaliarRevisaoAnotacao('FACIL')">Muito fácil</button>
+                        <div class="timer-modos separado" role="tablist" aria-label="Avaliação da revisão">
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'ERREI'"
+                            (click)="avaliarRevisaoAnotacao('ERREI')">Errei / N&atilde;o lembrei</button>
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'DIFICIL'"
+                            (click)="avaliarRevisaoAnotacao('DIFICIL')">Lembrei com dificuldade</button>
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'BOM'"
+                            (click)="avaliarRevisaoAnotacao('BOM')">Lembrei bem</button>
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'FACIL'"
+                            (click)="avaliarRevisaoAnotacao('FACIL')">Muito f&aacute;cil</button>
+                        </div>
                       </div>
                     </div>
 
@@ -308,160 +311,118 @@
                   <ng-template #semAnotacoesTpl>
                     <div class="painel-revisao-placeholder">
                       <p>
-                        Não há anotações salvas para este tópico ainda.<br />
+                        N&atilde;o h&aacute; anota&ccedil;&otilde;es salvas para este t&oacute;pico ainda.<br />
                         Use o modo <strong>Estudar</strong> para registrar um resumo.
                       </p>
                     </div>
                   </ng-template>
                 </ng-container>
 
-                <!-- Flashcards (mantém seu bloco atual aqui dentro) -->
+                <!-- Flashcards (mantem seu bloco atual aqui dentro) -->
                 <ng-container *ngIf="modoRevisao === 'flashcards'">
-                  <div class="revisao-anotacoes-feedback">
-<ng-container *ngIf="modoRevisao === 'flashcards'">
+                  <ng-container *ngIf="flashcards?.length; else semFlashcardsTpl">
+                    <div class="flashcard-review-container">
+                      <!-- (opcional) status da sessao -->
+                      <!-- CARTAO -->
+                      <div class="flashcard-card-review"
+                           [class.frente]="!mostrarVersoAtual"
+                           [class.verso]="mostrarVersoAtual"
+                           (click)="virarFlashcard()">
 
- <!-- Flashcards -->
-<ng-container *ngIf="modoRevisao === 'flashcards'">
+                        <div class="flashcard-card-header-linha">
+                          <span class="face-pill">
+                            {{ mostrarVersoAtual ? 'VERSO' : 'FRENTE' }}
+                          </span>
 
-  <ng-container *ngIf="flashcards?.length; else semFlashcardsTpl">
+                          <span class="meta-contagem">
+                            {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
+                          </span>
+                        </div>
 
-    <div class="flashcard-review-container">
+                        <div class="flashcard-card-corpo">
+                          <div class="flashcard-conteudo-review">
+                            {{ mostrarVersoAtual ? flashcardAtual?.verso : flashcardAtual?.frente }}
+                          </div>
+                        </div>
 
-      <!-- (opcional) status da sessão -->
-      <div class="muted pequeno" style="margin-bottom: 8px;">
-        Sessão: 
-        <strong>Anotações</strong> <span>{{ revisouAnotacoesSessao ? '✅' : '⏳' }}</span> ·
-        <strong>Flashcards</strong> <span>{{ revisouFlashcardsSessao ? '✅' : '⏳' }}</span>
-      </div>
+                        <div class="flashcard-card-footer-linha">
+                          <span class="meta-dificuldade" *ngIf="flashcardAtual?.dificuldade">
+                            {{ flashcardAtual?.dificuldade }}
+                          </span>
 
-      <!-- CARTÃO -->
-      <div class="flashcard-card-review"
-           [class.frente]="!mostrarVersoAtual"
-           [class.verso]="mostrarVersoAtual"
-           (click)="virarFlashcard()">
+                          <span class="meta-tags" *ngIf="flashcardAtual?.tags">
+                            {{ flashcardAtual?.tags }}
+                          </span>
 
-        <div class="flashcard-card-header-linha">
-          <span class="face-pill">
-            {{ mostrarVersoAtual ? 'VERSO' : 'FRENTE' }}
-          </span>
+                          <span class="meta-hint">
+                            Clique no cart&atilde;o para virar
+                          </span>
+                        </div>
+                      </div>
 
-          <span class="meta-contagem">
-            {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
-          </span>
-        </div>
+                      <!-- ACOES (so quando estiver no verso) -->
+                      <div class="flashcard-acoes-review" *ngIf="mostrarVersoAtual">
+                        <div class="timer-modos separado" role="tablist" aria-label="Avaliação do flashcard">
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'ERREI'"
+                            (click)="selecionarAvaliacaoFlashcard('ERREI')">
+                            Errei
+                          </button>
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'DIFICIL'"
+                            (click)="selecionarAvaliacaoFlashcard('DIFICIL')">
+                            Dif&iacute;cil
+                          </button>
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'BOM'"
+                            (click)="selecionarAvaliacaoFlashcard('BOM')">
+                            Bom
+                          </button>
+                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'FACIL'"
+                            (click)="selecionarAvaliacaoFlashcard('FACIL')">
+                            F&aacute;cil
+                          </button>
+                        </div>
+                      </div>
 
-        <div class="flashcard-card-corpo">
-          <div class="flashcard-conteudo-review">
-            {{ mostrarVersoAtual ? flashcardAtual?.verso : flashcardAtual?.frente }}
-          </div>
-        </div>
+                      <div class="flashcard-feedback-review" *ngIf="mensagemFlashcardRevisao">
+                        {{ mensagemFlashcardRevisao }}
+                      </div>
 
-        <div class="flashcard-card-footer-linha">
-          <span class="meta-dificuldade" *ngIf="flashcardAtual?.dificuldade">
-            {{ flashcardAtual?.dificuldade }}
-          </span>
+                      <!-- NAVEGACAO -->
+                      <div class="flashcard-acoes-review">
+                        <div class="timer-modos separado" role="tablist" aria-label="Navegação dos flashcards">
+                          <button type="button" class="btn-modo-timer" (click)="anteriorFlashcard()"
+                                  [disabled]="flashcardIndexAtual <= 0">
+                            Anterior
+                          </button>
 
-          <span class="meta-tags" *ngIf="flashcardAtual?.tags">
-            {{ flashcardAtual?.tags }}
-          </span>
+                          <button type="button" class="btn-modo-timer" (click)="confirmarAvaliacaoFlashcard()"
+                                  [disabled]="!avaliacaoFlashcardSelecionada || enviandoAvaliacaoFlashcard">
+                            Pr&oacute;ximo
+                          </button>
+                        </div>
+                      </div>
 
-          <span class="meta-hint">
-            Clique no cartão para virar
-          </span>
-        </div>
-      </div>
-
-      <!-- AÇÕES (só quando estiver no verso) -->
-      <div class="flashcard-acoes-review" *ngIf="mostrarVersoAtual">
-        <button type="button" class="btn secundario" (click)="avaliarFlashcard('ERREI')">
-          Errei
-        </button>
-        <button type="button" class="btn secundario" (click)="avaliarFlashcard('DIFICIL')">
-          Difícil
-        </button>
-        <button type="button" class="btn secundario" (click)="avaliarFlashcard('BOM')">
-          Bom
-        </button>
-        <button type="button" class="btn secundario" (click)="avaliarFlashcard('FACIL')">
-          Fácil
-        </button>
-      </div>
-
-      <div class="flashcard-feedback-review" *ngIf="mensagemFlashcardRevisao">
-        {{ mensagemFlashcardRevisao }}
-      </div>
-
-      <!-- NAVEGAÇÃO -->
-      <div class="flashcard-acoes-review">
-        <button type="button" class="btn secundario" (click)="anteriorFlashcard()"
-                [disabled]="flashcardIndexAtual <= 0">
-          ← Anterior
-        </button>
-
-        <button type="button" class="btn secundario" (click)="proximoFlashcard()"
-                [disabled]="flashcardIndexAtual >= flashcards.length - 1">
-          Próximo →
-        </button>
-      </div>
-
-    </div>
-  </ng-container>
-
-  <ng-template #semFlashcardsTpl>
-    <div class="painel-revisao-placeholder">
-      <p>
-        Não há flashcards para este tópico ainda.<br />
-        Crie flashcards no modo <strong>Estudar</strong>.
-      </p>
-    </div>
-  </ng-template>
-
-</ng-container>
-
-
-  <ng-template #semFlashcardsTpl>
-    <div class="painel-revisao-placeholder">
-      <p>
-        Não há flashcards para este tópico ainda.<br />
-        Crie flashcards no modo <strong>Estudar</strong>.
-      </p>
-    </div>
-  </ng-template>
-
-</ng-container>
-
-
-                    <div class="muted pequeno">Como foi revisar essas anotações?</div>
-
-                    <div class="alerta-revisao" *ngIf="mensagemRevisao">
-                      <span class="alerta-revisao-icone">✔</span>
-                      <span class="alerta-revisao-texto">{{ mensagemRevisao }}</span>
                     </div>
+                  </ng-container>
 
-                    <div class="botoes-avaliacao">
-                      <button type="button" class="btn secundario" [class.is-ativo]="avaliacaoSelecionada === 'ERREI'"
-                        (click)="avaliarRevisaoAnotacao('ERREI')">Errei / Não lembrei</button>
-
-                      <button type="button" class="btn secundario" [class.is-ativo]="avaliacaoSelecionada === 'DIFICIL'"
-                        (click)="avaliarRevisaoAnotacao('DIFICIL')">Lembrei com dificuldade</button>
-
-                      <button type="button" class="btn secundario" [class.is-ativo]="avaliacaoSelecionada === 'BOM'"
-                        (click)="avaliarRevisaoAnotacao('BOM')">Lembrei bem</button>
-
-                      <button type="button" class="btn secundario" [class.is-ativo]="avaliacaoSelecionada === 'FACIL'"
-                        (click)="avaliarRevisaoAnotacao('FACIL')">Muito fácil</button>
+                  <ng-template #semFlashcardsTpl>
+                    <div class="painel-revisao-placeholder">
+                      <p>
+                        N&atilde;o h&aacute; flashcards para este t&oacute;pico ainda.<br />
+                        Crie flashcards no modo <strong>Estudar</strong>.
+                      </p>
                     </div>
-                  </div>
-
+                  </ng-template>
                 </ng-container>
 
-                <!-- overlay do revisar (opcional, pra ficar idêntico no comportamento) -->
+                <!-- overlay do revisar (opcional, pra ficar identico no comportamento) -->
                 <div class="editor-overlay" *ngIf="!topicoSelecionado">
                   <div class="editor-aviso">
-                    <span class="editor-aviso-icon">👈</span>
                     <div class="editor-aviso-texto">
-                      <strong>Selecione um tópico</strong>
-                      Escolha um tópico na coluna à esquerda para revisar.
+                      <div class="editor-aviso-titulo">
+                        <i class="pi pi-lock editor-aviso-icon" aria-hidden="true"></i>
+                        <strong>Selecione um t&oacute;pico</strong>
+                      </div>
+                      Escolha um t&oacute;pico na coluna &agrave; esquerda para revisar.
                     </div>
                   </div>
                 </div>
@@ -471,20 +432,22 @@
             </ng-container>
           </div>
 
-          <!-- RODAPÉ ÚNICO (se quiser) -->
+          <!-- RODAPE UNICO (se quiser) -->
           <div class="timer-header-linha" *ngIf="modo === 'estudar'">
             <div class="acoes-estudo">
-              <button type="button" class="btn secundario btn-acao" (click)="abrirModalFlashcard()"
-                [disabled]="!topicoPermiteEstudo">
-                <i class="pi pi-clone"></i>
-                <span class="btn-text">Flashcard</span>
-              </button>
+              <div class="timer-modos" role="tablist" aria-label="A&ccedil;&otilde;es do estudo">
+                <button type="button" class="btn-modo-timer" (click)="abrirModalFlashcard()"
+                  [disabled]="!topicoPermiteEstudo" pTooltip="Crie seus Flashcards" tooltipPosition="top">
+                  <i class="pi pi-clone"></i>
+                  <span>Flashcard</span>
+                </button>
 
-              <button type="button" class="btn primario btn-acao" [disabled]="!topicoPermiteEstudo"
-                (click)="salvarEstudo()">
-                <i class="pi pi-check"></i>
-                <span class="btn-text">Salvar</span>
-              </button>
+                <button type="button" class="btn-modo-timer" [class.ativo]="topicoPermiteEstudo && timerAtivo"
+                  [disabled]="!topicoPermiteEstudo || !timerAtivo" (click)="salvarEstudo()">
+                  <i class="pi pi-check"></i>
+                  <span>Salvar</span>
+                </button>
+              </div>
 
               <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
             </div>
@@ -502,25 +465,25 @@
       <header class="flashcard-header">
         <div>
           <h2 class="flashcard-titulo">Criar Flashcard</h2>
-          <p class="flashcard-subtitulo">
-            Transforme o que você acabou de estudar em perguntas rápidas para revisar
+          <p>
+            Transforme o que voc&ecirc; acabou de estudar em perguntas r&aacute;pidas para revisar
             depois.
           </p>
         </div>
 
         <button type="button" class="flashcard-fechar" (click)="fecharModalFlashcard()">
-          ✕
+          x
         </button>
       </header>
 
-      <!-- Bloco com contexto (Matéria / Tópico) -->
+      <!-- Bloco com contexto (Materia / Topico) -->
       <div class="flashcard-contexto">
         <div class="flashcard-contexto-linha">
-          <span class="contexto-label">Matéria:</span>
+          <span class="contexto-label">Mat&eacute;ria:</span>
           <span class="contexto-valor">{{ materia?.nome || '-' }}</span>
         </div>
         <div class="flashcard-contexto-linha">
-          <span class="contexto-label">Tópico:</span>
+          <span class="contexto-label">T&oacute;pico:</span>
           <span class="contexto-valor">
             {{ topicoSelecionado?.descricao || '-' }}
           </span>
@@ -556,9 +519,9 @@
         <label class="flashcard-label">
           Dificuldade
           <select class="flashcard-select" [(ngModel)]="flashcardDificuldade" name="flashcardDificuldade">
-            <option value="FACIL">Fácil</option>
-            <option value="MEDIA">Média</option>
-            <option value="DIFICIL">Difícil</option>
+            <option value="FACIL">F&aacute;cil</option>
+            <option value="MEDIA">M&eacute;dia</option>
+            <option value="DIFICIL">Dif&iacute;cil</option>
           </select>
         </label>
       </div>
@@ -568,7 +531,7 @@
         <label class="flashcard-label">
           Tags (opcional)
           <input type="text" class="flashcard-input" [(ngModel)]="flashcardTags" name="flashcardTags"
-            placeholder="Ex.: português, morfologia, substantivo" />
+            placeholder="Ex.: portugu&ecirc;s, morfologia, substantivo" />
         </label>
         <small class="flashcard-dica">
           Dica: use tags para encontrar depois todos os flashcards relacionados a um
@@ -580,7 +543,7 @@
         {{ mensagemFlashcardSucesso }}
       </div>
 
-      <!-- Rodapé -->
+          <!-- RODAPE UNICO (se quiser) -->
       <footer class="flashcard-footer">
         <button type="button" class="btn secundario" (click)="fecharModalFlashcard()">
           Cancelar
@@ -588,7 +551,7 @@
 
         <button type="button" class="btn primario" (click)="salvarFlashcard()"
           [disabled]="!flashcardFrente.trim() || !flashcardVerso.trim()">
-          💾 Salvar Flashcard
+          Salvar Flashcard
         </button>
       </footer>
     </div>
@@ -605,3 +568,8 @@
 <div *ngIf="erro" class="mensagem-erro">
   {{ erro }}
 </div>
+
+
+
+
+
