@@ -327,36 +327,83 @@
                       <div class="flashcard-card-review"
                            [class.frente]="!mostrarVersoAtual"
                            [class.verso]="mostrarVersoAtual"
+                           [class.flipped]="mostrarVersoAtual"
                            (click)="virarFlashcard()">
 
-                        <div class="flashcard-card-header-linha">
-                          <span class="face-pill">
-                            {{ mostrarVersoAtual ? 'VERSO' : 'FRENTE' }}
-                          </span>
+                        <div class="flashcard-card-inner">
+                          <div class="flashcard-card-face flashcard-card-front">
+                            <div class="flashcard-card-header-linha">
+                              <span class="face-pill">
+                                FRENTE
+                              </span>
 
-                          <span class="meta-contagem">
-                            {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
-                          </span>
-                        </div>
+                              <span class="meta-contagem">
+                                {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
+                              </span>
+                            </div>
 
-                        <div class="flashcard-card-corpo">
-                          <div class="flashcard-conteudo-review">
-                            {{ mostrarVersoAtual ? flashcardAtual?.verso : flashcardAtual?.frente }}
+                            <div class="flashcard-card-hero">
+                              <div class="flashcard-icon">?</div>
+                              <div class="flashcard-title">Verso</div>
+                            </div>
+
+                            <div class="flashcard-card-corpo">
+                              <div class="flashcard-conteudo-review">
+                                {{ flashcardAtual?.frente }}
+                              </div>
+                            </div>
+
+                            <div class="flashcard-card-footer-linha">
+                              <span class="meta-dificuldade" *ngIf="flashcardAtual?.dificuldade">
+                                {{ flashcardAtual?.dificuldade }}
+                              </span>
+
+                              <span class="meta-tags" *ngIf="flashcardAtual?.tags">
+                                {{ flashcardAtual?.tags }}
+                              </span>
+
+                              <span class="meta-hint">
+                                Clique no cart&atilde;o para virar
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        <div class="flashcard-card-footer-linha">
-                          <span class="meta-dificuldade" *ngIf="flashcardAtual?.dificuldade">
-                            {{ flashcardAtual?.dificuldade }}
-                          </span>
+                          <div class="flashcard-card-face flashcard-card-back">
+                            <div class="flashcard-card-header-linha">
+                              <span class="face-pill">
+                                VERSO
+                              </span>
 
-                          <span class="meta-tags" *ngIf="flashcardAtual?.tags">
-                            {{ flashcardAtual?.tags }}
-                          </span>
+                              <span class="meta-contagem">
+                                {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
+                              </span>
+                            </div>
 
-                          <span class="meta-hint">
-                            Clique no cart&atilde;o para virar
-                          </span>
+                            <div class="flashcard-card-hero">
+                              <div class="flashcard-icon">!</div>
+                              <div class="flashcard-title">Verso</div>
+                            </div>
+
+                            <div class="flashcard-card-corpo">
+                              <div class="flashcard-conteudo-review">
+                                {{ flashcardAtual?.verso }}
+                              </div>
+                            </div>
+
+                            <div class="flashcard-card-footer-linha">
+                              <span class="meta-dificuldade" *ngIf="flashcardAtual?.dificuldade">
+                                {{ flashcardAtual?.dificuldade }}
+                              </span>
+
+                              <span class="meta-tags" *ngIf="flashcardAtual?.tags">
+                                {{ flashcardAtual?.tags }}
+                              </span>
+
+                              <span class="meta-hint">
+                                Clique no cart&atilde;o para virar
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
