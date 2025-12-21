@@ -1,5 +1,6 @@
-ï»¿<div class="sala-container" *ngIf="!carregando; else loadingTpl"
-  [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }">
+<div class="sala-container" *ngIf="!carregando; else loadingTpl"
+  [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }"
+  [class.coluna-esquerda-oculta]="colunaEsquerdaOculta">
 
 
 
@@ -16,6 +17,13 @@
 
           <i class="pi pi-info-circle info-icon" pTooltip="Clique em um t&oacute;pico para focar o estudo."
             tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+
+          <button type="button" class="btn-toggle-coluna" (click)="toggleColunaEsquerda()"
+            [attr.aria-label]="colunaEsquerdaOculta ? 'Mostrar coluna esquerda' : 'Esconder coluna esquerda'"
+            [attr.aria-pressed]="!colunaEsquerdaOculta">
+            <i class="pi" [ngClass]="colunaEsquerdaOculta ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
+            <span>{{ colunaEsquerdaOculta ? 'Mostrar' : 'Esconder' }}</span>
+          </button>
 
           <div class="titulo-com-info">
 
@@ -68,6 +76,11 @@
 
     <!-- COLUNA DIREITA: CONTEUDO DA SALA -->
     <main class="coluna-direita">
+      <button type="button" class="btn-toggle-coluna btn-toggle-coluna-show" *ngIf="colunaEsquerdaOculta"
+        (click)="toggleColunaEsquerda()" aria-label="Mostrar coluna esquerda">
+        <i class="pi pi-angle-double-right"></i>
+        <span>Mostrar t&oacute;picos</span>
+      </button>
       <!-- Abas do modo -->
 
 
@@ -293,7 +306,7 @@
 
                       </div>
                       <div class="botoes-avaliacao">
-                        <div class="timer-modos separado" role="tablist" aria-label="AvaliaÃ§Ã£o da revisÃ£o">
+                        <div class="timer-modos separado" role="tablist" aria-label="Avaliação da revisão">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'ERREI'"
                             (click)="avaliarRevisaoAnotacao('ERREI')">Errei / N&atilde;o lembrei</button>
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'DIFICIL'"
@@ -427,7 +440,7 @@
 
                       <!-- ACOES (so quando estiver no verso) -->
                       <div class="flashcard-acoes-review" *ngIf="mostrarVersoAtual && !isVerdadeiroFalso(flashcardAtual)">
-                        <div class="timer-modos separado" role="tablist" aria-label="AvaliaÃ§Ã£o do flashcard">
+                        <div class="timer-modos separado" role="tablist" aria-label="Avaliação do flashcard">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'ERREI'"
                             (click)="selecionarAvaliacaoFlashcard('ERREI')">
                             Errei
@@ -453,7 +466,7 @@
 
                       <!-- NAVEGACAO -->
                       <div class="flashcard-acoes-review">
-                        <div class="timer-modos separado" role="tablist" aria-label="NavegaÃ§Ã£o dos flashcards">
+                        <div class="timer-modos separado" role="tablist" aria-label="Navegação dos flashcards">
                           <button type="button" class="btn-modo-timer" (click)="anteriorFlashcard()"
                                   [disabled]="flashcardIndexAtual <= 0">
                             Anterior

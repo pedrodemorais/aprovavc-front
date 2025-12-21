@@ -43,6 +43,9 @@ export class SalaEstudoComponent implements OnInit {
   // modo de revisao (anotacoes x flashcards)
   modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
 
+  // controle da coluna esquerda (topicos)
+  colunaEsquerdaOculta: boolean = false;
+
   // ======================= TIMER / POMODORO =======================
 
   modoTemporizador: 'livre' | 'pomodoro' = 'livre';
@@ -74,6 +77,10 @@ export class SalaEstudoComponent implements OnInit {
 
   sairModoFocoRevisao(): void {
     this.modoRevisaoFocoAtivo = false;
+  }
+
+  toggleColunaEsquerda(): void {
+    this.colunaEsquerdaOculta = !this.colunaEsquerdaOculta;
   }
 
   private audioAlarme?: HTMLAudioElement;
