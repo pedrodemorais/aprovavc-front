@@ -11,11 +11,14 @@
 
   <!-- Conteúdo -->
   <div class="hero-content" [class.content-fade]="isTextAnimating">
+    <div class="hero-text-card">
     <h1 class="hero-title" [innerHTML]="slides[currentIndex].titleHtml"></h1>
 
     <p class="hero-subtitle">
       {{ slides[currentIndex].description }}
     </p>
+
+    </div>
 
     <button
       type="button"

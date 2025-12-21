@@ -158,3 +158,31 @@
     align-self: center;
   }
 }
+
+/* TEXTO AGRUPADO */
+.hero-text-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 420px) {
+  .hero-text-card {
+    background: rgba(255, 255, 255, 0.644);
+    padding: 12px 14px;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .hero-title {
+    font-size: 1.1rem;
+    color: #111827;
+  }
+
+   
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+    color: #14532d;
+  }
+}

@@ -4,7 +4,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 /* =======================================
-   RESET B+üSICO
+   RESET B+ï¿½SICO
 ======================================= */
 html, body {
   width: 100%;
@@ -25,36 +25,36 @@ body {
 }
 
 /* =========================
-   FIX: remove scroll fantasma e deixa rolar s+¦ quando precisar
+   FIX: remove scroll fantasma e deixa rolar s+ï¿½ quando precisar
 ========================= */
 html,
 body {
   height: 100%;
   margin: 0;
-  overflow: hidden; /* Ô£à n+úo deixa a p+ígina criar scroll +á toa */
+  overflow: hidden; /* Ô£ï¿½ n+ï¿½o deixa a p+ï¿½gina criar scroll +ï¿½ toa */
 }
 
 :host {
   display: block;
   height: 100%;
   width: 100%;
-  overflow: hidden; /* Ô£à trava scroll no host tamb+®m */
+  overflow: hidden; /* Ô£ï¿½ trava scroll no host tamb+ï¿½m */
 }
 
-/* A dashboard ocupa a viewport e n+úo ÔÇ£vazaÔÇØ */
+/* A dashboard ocupa a viewport e n+ï¿½o ï¿½Ç£vazaï¿½ï¿½ï¿½ */
 .dashboard {
-  height: 100dvh;     /* Ô£à em vez de min-height */
-  min-height: 0;      /* Ô£à MUITO importante em flex */
-  overflow: hidden;   /* Ô£à evita scroll no wrapper */
+  height: 100dvh;     /* Ô£ï¿½ em vez de min-height */
+  min-height: 0;      /* Ô£ï¿½ MUITO importante em flex */
+  overflow: hidden;   /* Ô£ï¿½ evita scroll no wrapper */
   display: flex;
   flex-direction: column;
 }
 
-/* Container precisa permitir ÔÇ£encolherÔÇØ dentro do flex */
+/* Container precisa permitir ï¿½Ç£encolherï¿½ï¿½ï¿½ dentro do flex */
 .container {
   flex: 1 1 auto;
-  min-height: 0;      /* Ô£à evita overflow vertical fantasma */
-  overflow: hidden;   /* Ô£à quem rola +® o .content */
+  min-height: 0;      /* Ô£ï¿½ evita overflow vertical fantasma */
+  overflow: hidden;   /* Ô£ï¿½ quem rola +ï¿½ o .content */
 }
 
 /* Sidebar pode rolar quando for maior que a tela */
@@ -62,13 +62,14 @@ body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  background: white;
 }
 
-/* Ô£à S+¦ o conte+¦do rola quando precisar */
+/* Ô£ï¿½ S+ï¿½ o conte+ï¿½do rola quando precisar */
 .content {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 0;      /* Ô£à evita scroll fantasma */
+  min-height: 0;      /* Ô£ï¿½ evita scroll fantasma */
 
 
 }
@@ -88,7 +89,7 @@ body {
   color: #111827;
 }
 
-/* Bot+úo do modo leitura */
+/* Bot+ï¿½o do modo leitura */
 .btn-modo-leitura {
   margin-left: auto;
   border: 1px solid #e5e7eb;
@@ -153,7 +154,7 @@ body {
   display: block;
 }
 
-/* Bot+úo hamb+¦rguer (mobile) */
+/* Bot+ï¿½o hamb+ï¿½rguer (mobile) */
 .menu-toggle {
   display: none;
   background: none;
@@ -191,7 +192,7 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-top: 20px; /* recuo s+¦ do topo */
+  padding-top: 20px; /* recuo s+ï¿½ do topo */
 }
 
 
@@ -237,7 +238,7 @@ body {
 }
 
 /* =======================================
-   +üREA DE CONTE+ÜDO - LIGHT
+   +ï¿½REA DE CONTE+ï¿½DO - LIGHT
 ======================================= */
 .content {
   flex: 1 1 auto;
@@ -249,7 +250,7 @@ body {
 }
 
 /* =======================================
-   AVATAR / BOT+òES (SE FOR USAR) - LIGHT
+   AVATAR / BOT+ï¿½ES (SE FOR USAR) - LIGHT
 ======================================= */
 .user-initials {
   width: 40px;
@@ -373,7 +374,7 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Bot+úo hamb+¦rguer */
+/* Bot+ï¿½o hamb+ï¿½rguer */
 :host-context(body.theme-dark) .menu-toggle {
   color: #cbd5e1 !important;
 }
@@ -420,7 +421,7 @@ body {
   color: #cbd5e1 !important;
 }
 
-/* Bot+úo menu (se usar) */
+/* Bot+ï¿½o menu (se usar) */
 :host-context(body.theme-dark) .botao-menu {
   background: rgba(255, 255, 255, 0.08) !important;
   color: #e5e7eb !important;
@@ -546,8 +547,8 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;          /* espa+ºamento entre os itens */
-  flex-wrap: nowrap;  /* garante que n+úo quebre linha */
+  gap: 12px;          /* espa+ï¿½amento entre os itens */
+  flex-wrap: nowrap;  /* garante que n+ï¿½o quebre linha */
 }
 .volume-vertical {
   background: red;
@@ -559,7 +560,7 @@ body {
   border-left: 1px solid rgba(255,255,255,0.12); /* opcional */
 }
 
-/* abordagem mais compat+¡vel: rotate */
+/* abordagem mais compat+ï¿½vel: rotate */
 .volume-slider {
   width: 110px;     /* vira "altura" depois do rotate */
   height: 28px;
@@ -569,7 +570,7 @@ body {
   background: red;
 }
 
-/* opcional: melhora +írea clic+ível */
+/* opcional: melhora +ï¿½rea clic+ï¿½vel */
 .volume-vertical {
   width: 34px;
   height: 120px;
@@ -578,7 +579,7 @@ body {
 
 
 /* =======================================
-   ANIMA+ç+âO
+   ANIMA+ï¿½+ï¿½O
 ======================================= */
 @keyframes fadeInTopbar {
   from {
@@ -591,7 +592,7 @@ body {
   }
 }
 /* =======================================
-   PRIME NG PANELMENU ÔÇö DARK MODE
+   PRIME NG PANELMENU ï¿½ï¿½ï¿½ DARK MODE
    (menu lateral ainda branco)
 ======================================= */
 
@@ -606,14 +607,14 @@ body {
   background: transparent !important;
 }
 
-/* headers (itens ÔÇ£paiÔÇØ) */
+/* headers (itens ï¿½Ç£paiï¿½ï¿½ï¿½) */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header > a {
   background: transparent !important;
   border: 0 !important;
   color: var(--text) !important;
 }
 
-/* conte+¦do (itens ÔÇ£filhoÔÇØ) */
+/* conte+ï¿½do (itens ï¿½Ç£filhoï¿½ï¿½ï¿½) */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-content {
   background: transparent !important;
   border: 0 !important;
@@ -639,7 +640,7 @@ body {
   box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25) inset;
 }
 
-/* +¡cones do menu */
+/* +ï¿½cones do menu */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-menuitem-icon,
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-icon {
   color: var(--text-2) !important;
@@ -650,7 +651,7 @@ body {
   color: var(--primary) !important;
 }
 
-/* separadores/bordas que +ás vezes aparecem brancas */
+/* separadores/bordas que +ï¿½s vezes aparecem brancas */
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header,
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-content,
 :host-context(body.theme-dark) .menu .p-panelmenu .p-panelmenu-header:not(.p-highlight) > a {
@@ -661,7 +662,7 @@ body {
   gap: 10px;
 }
 
-/* bot+úo ÔÇ£+¡coneÔÇØ que abre/fecha */
+/* bot+ï¿½o ï¿½Ç£+ï¿½coneï¿½ï¿½ï¿½ que abre/fecha */
 .sons-foco-toggle{
   border: 1px solid #e7edf4;
   background: #fff;
@@ -682,7 +683,7 @@ body {
   opacity: .9;
 }
 
-/* painel colaps+ível com anima+º+úo */
+/* painel colaps+ï¿½vel com anima+ï¿½+ï¿½o */
 .sons-foco-panel{
   overflow: hidden;
   max-height: 0;
@@ -692,7 +693,7 @@ body {
 }
 
 .sons-foco-panel.is-open{
-  max-height: 800px; /* suficiente pros +¡cones */
+  max-height: 800px; /* suficiente pros +ï¿½cones */
   opacity: 1;
   transform: translateY(0);
 }
@@ -705,7 +706,7 @@ body {
   padding: 8px 4px 4px;
 }
 /* =======================================
-   SOM DE FOCO (FLUTUANTE / N+âO EMPURRA TOPBAR)
+   SOM DE FOCO (FLUTUANTE / N+ï¿½O EMPURRA TOPBAR)
 ======================================= */
 
 .sons-foco-wrap{
@@ -714,7 +715,7 @@ body {
   align-items: center;
 }
 
-/* bot+úo +¡cone do som */
+/* bot+ï¿½o +ï¿½cone do som */
 .btn-som-foco{
   border: 1px solid #e5e7eb;
   background: #ffffff;
@@ -802,7 +803,7 @@ body {
   }
 }
 
-/* dark mode (mant+®m seu padr+úo) */
+/* dark mode (mant+ï¿½m seu padr+ï¿½o) */
 :host-context(body.theme-dark) .btn-som-foco{
   border: 1px solid rgba(255,255,255,0.14) !important;
   background: rgba(255,255,255,0.06) !important;
