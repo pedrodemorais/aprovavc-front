@@ -10,6 +10,9 @@
   padding: 5px 16px 32px;
   box-sizing: border-box;
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* tiramos o “risquinho” entre header e body (caso exista) */
@@ -21,8 +24,10 @@
    LAYOUT (corpo / colunas)
    ============================ */
 .sala-body {
-  margin: 0.75rem auto 0;
+  
   display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .coluna-esquerda {
@@ -31,10 +36,12 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+ 
 }
 
 .lista-de-topicos {
   border-top: 1px solid #4f535136;
+
 }
 
 .coluna-direita {
@@ -50,6 +57,10 @@
 
 .sala-container.coluna-esquerda-oculta .coluna-direita {
   width: 100%;
+}
+
+.sala-container.coluna-esquerda-oculta {
+  min-height: calc(100dvh - 64px);
 }
 
 
@@ -1827,21 +1838,7 @@
 .lista-topicos{
   margin: 8px 0 0;
 }
-@media (max-width: 1024px){
-  .sala-body{
-    height: auto;
-    min-height: 0;
-  }
 
-  .coluna-esquerda{
-    height: auto;
-  }
-
-  .lista-de-topicos{
-    flex: 0 0 auto;
-    max-height: 40vh;   /* scroll ainda existe, mas sem quebrar o mobile */
-  }
-}
 /* revisão dentro do mesmo frame */
 .anotacoes-renderizadas{
   width: 100%;
@@ -1878,3 +1875,47 @@
 
 
 
+
+@media (max-width: 950px){
+/* coluna esquerda herda a altura e vira âcolunaâ de verdade */
+.coluna-esquerda{
+  width:100%;
+  padding-right: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  height: 88vh;
+  min-height: 0;     /* essencial */
+}
+.conteudo{
+  flex: 1 1 auto;
+  min-height: 0;     /* essencial */
+  overflow-y: auto;
+  overflow-x: hidden;
+width: 100%;
+height: 100%;
+  padding-top: 8px;}
+}
+@media (max-width: 1024px){
+  .sala-body{
+    height: auto;
+    min-height: 0;
+  }
+
+  .coluna-esquerda{
+    height: auto;
+  }
+
+  .lista-de-topicos{
+    flex: 0 0 auto;
+    max-height: 40vh;   /* scroll ainda existe, mas sem quebrar o mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .sala-container.coluna-esquerda-oculta {
+    min-height: calc(100dvh - 56px);
+  }
+}
