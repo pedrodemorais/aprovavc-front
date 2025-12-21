@@ -5068,8 +5068,28 @@
       display: flex;
       flex-direction: column;
       top: 100%;
-      left: 0;
+      right: 0;
+      left: auto;
+      margin-right: 0;
       z-index: 1;
+      width: 260px;
+      max-width: calc(100vw - 1rem);
+      min-width: 200px;
+      padding: 0.5rem 0;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+      box-sizing: border-box;
+    }
+    .p-menubar.p-menubar-mobile-active .p-menubar-root-list .p-menuitem > .p-menuitem-content {
+      padding: 0.6rem 1rem;
+    }
+    .p-menubar.p-menubar-mobile-active .p-menubar-root-list .p-menuitem-link {
+      color: #374151;
+    }
+    .p-menubar.p-menubar-mobile-active .p-menubar-root-list .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover {
+      background: #f3f4f6;
     }
   }
   .p-panelmenu .p-panelmenu-header {

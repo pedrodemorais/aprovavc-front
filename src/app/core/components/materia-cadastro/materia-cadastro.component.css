@@ -608,6 +608,7 @@ body.theme-dark,
 .novo-topico-hint{
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   font-size: 0.78rem;
   color: var(--muted);
 }
@@ -804,6 +805,12 @@ body.theme-dark,
   display:flex;
   justify-content:flex-end;
   margin-top: 6px;
+  align-self: flex-start;
+}
+
+.novo-topico-acoes .btn{
+  height: 32px;
+  padding: 0 12px;
 }
 
 /* overlay Ãºnico */

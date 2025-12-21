@@ -997,11 +997,25 @@ if (desc.length > 255) {
               this.carregarTopicos(this.materiaSelecionada);
             }
           },
-          error: () => {
-            this.mensagemErro = 'Erro ao excluir o tópico.';
+          error: (err) => {
+            this.mensagemErro = this.getMensagemErroExcluirTopico(err);
           }
         });
     }
+  }
+
+  private getMensagemErroExcluirTopico(err: any): string {
+    const detalhe =
+      err?.error?.message ||
+      err?.error?.erro ||
+      err?.error?.detail ||
+      '';
+
+    if (err?.status === 409 || /revisao_topico|chave estrangeira|foreign key/i.test(detalhe)) {
+      return 'Não é possível excluir este tópico porque há revisões registradas para ele. Remova as revisões antes de excluir.';
+    }
+
+    return 'Erro ao excluir o tópico.';
   }
 
   private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
