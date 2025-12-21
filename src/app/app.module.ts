@@ -16,6 +16,7 @@ import { NgChartsModule } from 'ng2-charts';
 import { ContentComponent } from './site/pages/content/content.component';
 import { ConfirmationService } from 'primeng/api';
 import { DashboardRevisaoComponent } from './core/components/dashboard-revisao/dashboard-revisao.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 
 
@@ -47,6 +48,7 @@ registerLocaleData(localePt, 'pt-BR');
     SiteModule,
     NgChartsModule,
     ReactiveFormsModule,
+    TooltipModule,
     
     FormsModule,     
 

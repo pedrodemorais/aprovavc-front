@@ -50,11 +50,31 @@
   gap: 4px;
 }
 
+.rev-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .rev-title {
   font-size: 1.35rem;
   font-weight: 600;
   margin: 0;
   color: var(--text);
+}
+
+.rev-info-icon {
+  font-size: 0.95rem;
+  color: var(--muted);
+  opacity: 0.8;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.rev-info-icon:hover,
+.rev-info-icon:focus {
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .rev-subtitle {
@@ -142,6 +162,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  --rev-scrollbar: 8px;
 }
 
 /* Cabeçalho tipo tabela (desktop) */
@@ -150,12 +171,14 @@
   grid-template-columns: 1fr 3fr 1.3fr 1.8fr 1.3fr;
   column-gap: 24px;
   padding: 12px 22px;
+  padding-right: calc(22px + var(--rev-scrollbar));
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
+  align-items: center;
 }
 
 /* corpo rolavel da lista */
@@ -163,6 +186,7 @@
   overflow-y: auto;
   flex: 1 1 auto;
   min-height: 0;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
 }
@@ -333,6 +357,10 @@
     padding: 12px;
   }
 
+  .rev-title {
+    font-size: 1.15rem;
+  }
+
   .rev-summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -364,6 +392,26 @@
 @media (max-width: 600px) {
   .rev-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .rev-summary-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+
+  .rev-summary-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+
+  .rev-summary-value {
+    font-size: 1rem;
+  }
+
+  .rev-title {
+    font-size: 1.05rem;
   }
 
   .rev-card {

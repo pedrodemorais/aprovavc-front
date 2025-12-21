@@ -5,10 +5,14 @@
   <!-- CABEÇALHO / RESUMO -->
   <div class="rev-header">
     <div class="rev-header-main">
-      <h1 class="rev-title">Controle de revisões</h1>
-      <p class="rev-subtitle">
-        Acompanhe o que está vencido, o que é para hoje e o que já está agendado.
-      </p>
+      <div class="rev-title-row">
+        <h1 class="rev-title">Controle de revis&otilde;es</h1>
+        <i class="pi pi-info-circle rev-info-icon"
+           pTooltip="Acompanhe o que est&aacute; vencido, o que &eacute; para hoje e o que j&aacute; est&aacute; agendado."
+           tooltipPosition="top" [showDelay]="150" [hideDelay]="80"
+           tabindex="0" aria-label="Ajuda"></i>
+      </div>
+      
     </div>
 
     <div class="rev-summary-grid" *ngIf="revisoes.length">
