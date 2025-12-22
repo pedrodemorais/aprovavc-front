@@ -191,11 +191,11 @@ body.theme-dark,
    CARDS (LIGHT)
 ============================ */
 .card{
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: var(--shadow);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 14px 0;
+  box-shadow: none;
 }
 
 .card-header{
@@ -204,6 +204,8 @@ body.theme-dark,
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
   
 }
 
@@ -452,7 +454,7 @@ body.theme-dark,
   overflow-y: auto;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  background: var(--surface-2);
+  background: transparent;
   transition: background 0.14s, box-shadow 0.14s, border-color 0.14s, transform 0.06s;
   scrollbar-width: thin;
   scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
@@ -638,8 +640,8 @@ body.theme-dark,
 .arvore-card{
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  background: var(--surface-2);
-  padding: 8px;
+  background: transparent;
+  padding: 8px 0;
   box-sizing: border-box;
   max-height: calc(100dvh - 360px);
   overflow: auto;
@@ -1198,9 +1200,9 @@ body.theme-dark,
 
 /* cards */
 :host-context(body.theme-dark) .card{
-  background: rgba(15, 23, 42, 0.72) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 :host-context(body.theme-dark) .card-title{
@@ -1269,7 +1271,7 @@ body.theme-dark,
 
 /* Ã¡rvore */
 :host-context(body.theme-dark) .arvore-card{
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: transparent !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
