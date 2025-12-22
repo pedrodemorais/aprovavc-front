@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { ConfiguradorComponent } from './site/pages/configurador/configurador.component';
 import { PoliticaPrivacidadeComponent } from './site/pages/politica-privacidade/politica-privacidade.component';
 import { TermosDeUsoComponent } from './site/pages/termos-de-uso/termos-de-uso.component';
@@ -26,73 +27,34 @@ import { PerfilAlunoComponent } from './core/components/perfil-aluno/perfil-alun
 import { PlanoAtivoGuard } from './site/pages/guards/plano-ativo.guard';
 import { MateriaEstudoComponent } from './core/components/estudo-por-materia/estudo-por-materia.component';
 
-
-
-
-
 const routes: Routes = [
   { path: 'ativacao', component: AtivacaoComponent },
 
-  // rotas de assinatura públicas (sem login obrigatório)
-  
   { path: 'assinatura/sucesso', component: AssinaturaSucessoComponent },
   { path: 'assinatura/cancelada', component: AssinaturaCanceladaComponent },
 
   { path: 'configurador', component: ConfiguradorComponent },
   { path: 'politica-privacidade', component: PoliticaPrivacidadeComponent },
   { path: 'termos-de-uso', component: TermosDeUsoComponent },
-  { path: 'home', component: InicioComponent },
 
-  // essa versão de Editais aqui parece ser pública (fora da área restrita)
-  { path: 'Editais', component: EditaisComponent },
+  // ✅ /home vira alias da raiz (sem loop!)
+  { path: 'home', redirectTo: '', pathMatch: 'full' },
 
   { path: 'login', component: LoginSiteComponent },
 
   {
     path: 'area-restrita',
     component: AreaUsuarioComponent,
-    canActivate: [AuthGuard], // 🔒 precisa estar logado
+    canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-
-      // 🔥 Telas que exigem PLANO ATIVO:
-      {
-        path: 'dashboard',
-        component: DashboardRevisaoComponent,
-        canActivate: [PlanoAtivoGuard]
-      },
-      {
-        path: 'cad-materias',
-        component: MateriaCadastroComponent,
-        canActivate: [PlanoAtivoGuard]
-      },
-      {
-        path: 'estudar-materias',
-        component: MateriaEstudoComponent,
-        canActivate: [PlanoAtivoGuard]
-      },
-      {
-        path: 'editais',
-        component: EditaisComponent,
-        canActivate: [PlanoAtivoGuard]
-      },
-      {
-        path: 'sala-estudo/:materiaId',
-        component: SalaEstudoComponent,
-        canActivate: [PlanoAtivoGuard]
-      },
-
-      // ✅ Tela SEM exigência de plano ativo (só precisa estar logado)
-      {
-        path: 'meu-cadastro',
-        component: PerfilAlunoComponent
-      },
-      {
-        path: 'suporte',
-        component: SuporteComponent
-      },
-
-      // redefinir senha dentro da área logada
+      { path: 'dashboard', component: DashboardRevisaoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'meu-cadastro', component: PerfilAlunoComponent },
+      { path: 'suporte', component: SuporteComponent },
       { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
       { path: 'assinatura', component: AssinaturaPlanosComponent },
     ]
@@ -103,11 +65,18 @@ const routes: Routes = [
   { path: 'redefinir-senha', component: RedefinirSenhaComponent },
   { path: 'assine', component: AssineComponent },
 
-  { path: '**', redirectTo: 'home', pathMatch: 'full' }
+  // ✅ HOME na raiz (sem redirect)
+  { path: '', component: InicioComponent },
+
+  { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, {
+    // deixa o browser lidar com scroll no F5 (evita “pulo pro topo” forçado)
+    scrollPositionRestoration: 'disabled',
+    anchorScrolling: 'disabled'
+  })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

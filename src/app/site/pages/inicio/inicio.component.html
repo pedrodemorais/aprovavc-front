@@ -1,443 +1,445 @@
 <div class="home-page">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;500;700&display=swap"
-    rel="stylesheet"
-  />
 
-  <a href="https://wa.me/5562992546406" target="_blank" class="whatsapp-btn">
-    <img src="assets/img/whatsapp-icon.png" alt="WhatsApp" />
+  <!-- Acessibilidade: pular direto para o conteúdo -->
+  <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo</a>
+
+  <a href="https://wa.me/5562992546406"
+     target="_blank"
+     rel="noopener noreferrer"
+     class="whatsapp-btn"
+     aria-label="Falar no WhatsApp">
+    <img src="assets/img/whatsapp-icon.png" alt="WhatsApp" loading="lazy" />
   </a>
 
-  <div>
-    <div class="topo">
-      <div class="menu-topo">
-        <div>
+  <!-- TOPO -->
+  <header class="topo" role="banner">
+    <div class="menu-topo">
+      <div>
+        <a routerLink="/" aria-label="Ir para a página inicial">
           <img
-            src="assets/img/logo/dynamo.png"
-            alt="Aprovavc Logo"
+            src="assets/img/logo/aprovavc.png"
+            alt="Logo AprovaVC"
             class="logo-img"
           />
-        </div>
-
-        <div class="menu">
-          <p-menubar [model]="menuItems" class="custom-menubar">
-            <ng-template pTemplate="start"></ng-template>
-          </p-menubar>
-        </div>
+        </a>
       </div>
+
+      <nav class="menu" aria-label="Menu principal">
+        <p-menubar [model]="menuItems" class="custom-menubar">
+          <ng-template pTemplate="start"></ng-template>
+        </p-menubar>
+      </nav>
     </div>
-  </div>
+  </header>
 
-  <div>
-    <app-full-width-slider></app-full-width-slider>
-  </div>
+  <!-- CONTEÚDO -->
+  <main id="conteudo-principal" role="main">
 
-  <div class="hero">
-    <div class="site-container">
-      <div class="hero-content">
-        <nav class="hero-nav">
-          <a href="#services" class="hero-item">
-            <div class="circle">1</div>
-            <span>Nossas Soluções</span>
-          </a>
-          <a href="#plans" class="hero-item">
-            <div class="circle">2</div>
-            <span>Planos e Acesso</span>
-          </a>
-          <a href="#blog" class="hero-item">
-            <div class="circle">3</div>
-            <span>Conteúdos para Estudar Melhor</span>
-          </a>
-        </nav>
-      </div>
+    <!-- H1 SEO (não altera layout) -->
+    <h1 class="visually-hidden">AprovaVC — Plataforma de estudos para concursos públicos</h1>
+    <p class="visually-hidden">
+      Organize matérias e tópicos, acompanhe revisões espaçadas e estude com clareza para evoluir rumo à aprovação.
+    </p>
+
+    <div>
+      <app-full-width-slider></app-full-width-slider>
     </div>
 
-    <section id="sobre-nos" class="sobre-nos">
-      <div class="container">
-        <div class="conteudo-sobre">
-          <div class="texto">
-            <p>
-              O <strong>Aprovavc</strong> é uma plataforma para quem estuda com seriedade e
-              precisa de estrutura no dia a dia.
-            </p>
-
-            <p>
-              Aqui, você não apenas marca tarefas: você constrói seu material
-              (<strong>resumos e flashcards</strong>) e mantém o conteúdo vivo com
-              <strong>revisões guiadas</strong>.
-            </p>
-
-            <p>
-              Feito para concursos, vestibulares e certificações — especialmente para quem
-              concilia trabalho, rotina e pouco tempo contínuo.
-            </p>
-
-            <p>
-              <strong>Estude com direção. Revise no tempo certo. Enxergue evolução.</strong>
-            </p>
-
-            <p>No Aprovavc, você encontra:</p>
-
-            <ul>
-              <li>Biblioteca organizada de matérias, tópicos e subtópicos;</li>
-              <li>Resumos escritos por você, salvos e vinculados ao seu estudo;</li>
-              <li>Flashcards gerados a partir do seu próprio conteúdo;</li>
-              <li>Sistema de revisões espaçadas com visão clara do que revisar;</li>
-              <li>Dashboard com tempo líquido e evolução por matéria e prova.</li>
-            </ul>
-
-            <p>
-              Acreditamos que aprovação é resultado de constância com direção. O Aprovavc existe
-              para sustentar essa constância com clareza, sobriedade e respeito ao seu esforço.
-            </p>
-
-            <p>
-              <strong>Aprovavc – estrutura para quem transforma estudo em projeto de vida.</strong>
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="services" id="diferenciais">
-      <div class="container">
-        <h2 class="services-title">Por que o Aprovavc é diferente?</h2>
-
-        <div class="service-list">
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/cerebro.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Estudo ativo, não só agenda</h3>
-            <p>
-              Você não apenas registra o que fez: cada sessão gera material (resumo e prática de memória)
-              que volta para você em forma de revisão.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/book.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Material próprio, do seu jeito</h3>
-            <p>
-              Seus resumos ficam organizados por matéria, tópico e subtópico, criando um histórico
-              consistente e fácil de retomar quando bater a dúvida.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/card.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Revisão guiada por aquilo que você escreveu</h3>
-            <p>
-              Em vez de depender de materiais genéricos, você revisa o que entendeu e registrou.
-              O Aprovavc te mostra quando revisar e o que priorizar.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/cloud.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Leve na rotina, forte no longo prazo</h3>
-            <p>
-              Acesse resumos e flashcards no computador, tablet ou celular. Revise em intervalos curtos,
-              mantenha a constância e evolua sem depender de controles manuais.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="services" id="services">
-      <div class="container">
-        <h2 class="services-title">Soluções do Aprovavc</h2>
-
-        <div class="service-list">
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/books.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Biblioteca de Matérias</h3>
-            <p>
-              Estruture matérias, tópicos e subtópicos em um único ambiente, com a visão do seu conteúdo
-              organizada para estudo e revisão.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/work-space.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Sala de Estudo</h3>
-            <p>
-              Estude no modo livre ou Pomodoro e registre seu resumo no pr&oacute;prio sistema.
-              Seu material fica ligado ao seu tempo l&iacute;quido de estudo.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/cycle.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Revisões Espaçadas</h3>
-            <p>
-              Revise resumos e flashcards em ciclos inteligentes, com sinalização clara do que está em dia,
-              do que vence hoje e do que já ficou para trás.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/flash-cards.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Flashcards</h3>
-            <p>
-              Transforme seus resumos em flashcards e revise conceitos-chave com rapidez,
-              objetividade e total alinhamento ao seu conteúdo.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/paper.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Provas</h3>
-            <p>
-              Organize o estudo por prova, agrupe matérias e acompanhe indicadores por objetivo,
-              com visão estratégica da preparação.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/progress.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Dashboard de Progresso</h3>
-            <p>
-              Veja tempo líquido, revisões realizadas e evolução por matéria em um painel que ajuda
-              a tomar decisões diárias com clareza.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="badge">Em breve (em evolução contínua)</div>
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/improvement.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Plano de Estudos Inteligente</h3>
-            <p>
-              Distribuição automática das matérias nas horas disponíveis, com ajustes conforme o seu ritmo real
-              e a prioridade do seu objetivo.
-            </p>
-          </div>
-
-          <div class="service-item">
-            <div class="badge">Em breve (em evolução contínua)</div>
-            <div class="logo-aprovavc-diferente">
-              <img src="assets/img/icon/test.png" alt="Ícone" class="logo-img" />
-            </div>
-            <h3>Banco de Questões</h3>
-            <p>
-              Questões por matéria e tópico, com acompanhamento de desempenho para identificar pontos fortes
-              e pontos de atenção.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-
-    <section class="blog" id="blog">
-      <div class="container">
-        <h2>Conteúdo para quem estuda com seriedade</h2>
-        <p class="blog-intro">
-          Reflexões, técnicas e boas práticas sobre organização, disciplina e estudo estratégico para longo prazo.
-        </p>
-
-        <div class="blog-posts">
-          <div class="blog-post">
-            <img src="assets/img/blog/financas.jpg" alt="Gestão de rotina" />
-            <h3>Como proteger o seu tempo de estudo no dia a dia</h3>
-            <p>
-              Ideias práticas para preservar blocos de foco e manter a constância, mesmo com uma rotina cheia.
-            </p>
-            <a href="#post1" class="read-more">Leia mais</a>
-          </div>
-
-          <div class="blog-post">
-            <img src="assets/img/blog/organizacao.jpg" alt="Organização" />
-            <h3>Transformando a lista de conteúdo em um plano concreto</h3>
-            <p>
-              Um passo a passo para sair da lista de matérias e chegar a um plano de estudo realmente executável.
-            </p>
-            <a href="#post2" class="read-more">Leia mais</a>
-          </div>
-
-          <div class="blog-post">
-            <img src="assets/img/blog/tecnologia.jpg" alt="Tecnologia nos estudos" />
-            <h3>Como a tecnologia pode apoiar, e não distrair</h3>
-            <p>
-              Critérios para escolher ferramentas que somam na preparação, em vez de disputar atenção com o estudo.
-            </p>
-            <a href="#post3" class="read-more">Leia mais</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ (curto) -->
-    <section class="blog" id="faq">
-      <div class="container">
-        <h2>Perguntas frequentes</h2>
-        <p class="blog-intro">
-          Respostas diretas para dúvidas comuns antes de começar.
-        </p>
-
-        <div class="blog-posts">
-          <div class="blog-post">
-            <h3>Isso substitui caderno/Notion/Anki?</h3>
-            <p>
-              Ele substitui o “vai e volta” entre ferramentas: você organiza, estuda, escreve resumos e revisa no mesmo lugar.
-              Se você já usa caderno/Notion/Anki, o Aprovavc funciona como um fluxo único e mais prático para o dia a dia.
-            </p>
-            <a href="#plans" class="read-more">Ver planos</a>
-          </div>
-
-          <div class="blog-post">
-            <h3>Funciona no celular?</h3>
-            <p>
-              Sim. Você consegue acessar seus resumos e flashcards no celular e revisar em qualquer intervalo do dia,
-              mantendo a constância sem depender de longas sessões.
-            </p>
-            <a href="#plans" class="read-more">Começar agora</a>
-          </div>
-
-          <div class="blog-post">
-            <h3>Como as revisões são definidas?</h3>
-            <p>
-              As revisões seguem ciclos espaçados e são exibidas com prioridade clara (em dia, vence hoje ou atrasada).
-              Você revisa com base no que produziu, e o sistema mantém o ritmo visível para você.
-            </p>
-            <a href="#services" class="read-more">Ver como funciona</a>
-          </div>
-
-          <div class="blog-post">
-            <h3>Preciso seguir Pomodoro?</h3>
-            <p>
-              Não. O Pomodoro é opcional. Você pode estudar no modo livre ou com ciclos de foco, conforme sua rotina.
-              O importante é registrar o material e manter o ritmo de revisão.
-            </p>
-            <a href="#services" class="read-more">Ver soluções</a>
-          </div>
-
-          <div class="blog-post">
-            <h3>Tem banco de questões?</h3>
-            <p>
-              Ainda não. O banco de questões está <strong>em breve (em evolução contínua)</strong>.
-              Enquanto isso, o Aprovavc já entrega organização, material próprio e revisões guiadas.
-            </p>
-            <a href="#plans" class="read-more">Testar o Aprovavc</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Chamada final forte (antes do rodapé) -->
-    <section class="plans" id="comece-agora">
-      <div class="container">
-        <app-assine></app-assine>
-
-        <div style="margin-top: 18px;">
-          <h2 style="margin: 0;">Comece agora</h2>
-          <p style="margin: 8px 0 0;">
-            Teste por <strong>30 dias</strong> e veja o Aprovavc caber na sua rotina com clareza e consistência.
-          </p>
-          <p style="margin: 6px 0 0;">
-            Sem compromisso: você pode cancelar quando quiser durante o período de teste.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      <div class="rodape">
-        <div class="esquerda">
-          <div class="logo-nome">
-            <img src="assets/img/logo/aprova.png" alt="Logo" class="logo-img" />
-          </div>
-
-          <div class="social-icons" style="display: flex; justify-content: center; gap: 15px; margin-top: 5px;">
-            <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
-              <i class="pi pi-instagram"></i>
+    <div class="hero">
+      <div class="site-container">
+        <div class="hero-content">
+          <nav class="hero-nav" aria-label="Atalhos da página">
+            <a href="#services" class="hero-item">
+              <div class="circle">1</div>
+              <span>Nossas Soluções</span>
             </a>
-            <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
-              <i class="pi pi-facebook"></i>
+
+            <!-- ✅ aponta para a âncora correta (mais abaixo) -->
+            <a href="#plans" class="hero-item">
+              <div class="circle">2</div>
+              <span>Planos e Acesso</span>
             </a>
-            <a href="https://www.youtube.com" target="_blank" aria-label="YouTube">
-              <i class="pi pi-youtube"></i>
+
+            <a href="#blog" class="hero-item">
+              <div class="circle">3</div>
+              <span>Conteúdos para Estudar Melhor</span>
             </a>
-            <a href="https://www.linkedin.com" target="_blank" aria-label="LinkedIn">
-              <i class="pi pi-linkedin"></i>
-            </a>
-          </div>
-        </div>
-
-        <div class="meio"></div>
-      </div>
-
-      <div class="separador-rodape"></div>
-
-      <div class="politicas">
-        <div class="direitos">
-          <p>&copy; 2025 Aprovavc. Todos os direitos reservados.</p>
-        </div>
-
-        <div class="link-politicas">
-          <nav>
-            <ul>
-              <li><a routerLink="/politica-privacidade">Política de Privacidade |</a></li>
-              <li><a routerLink="/termos-de-uso">Termos de Uso | </a></li>
-            </ul>
           </nav>
         </div>
       </div>
 
-      <div class="desenvolvido-por">
-        <p>Desenvolvido por <strong>DynamoSoft</strong>.</p>
-        <p>
-          Icons made by
-          <a href="https://www.flaticon.com/authors/freepik" target="_blank" rel="noopener noreferrer" title="Freepik">
-            Freepik
-          </a>
-          from
-          <a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer" title="Flaticon">
-            www.flaticon.com
-          </a>
-        </p>
-      </div>
-    </footer>
+      <section id="sobre-nos" class="sobre-nos" aria-label="Sobre o AprovaVC">
+        <div class="container">
+          <div class="conteudo-sobre">
+            <div class="texto">
+              <p>
+                O <strong>Aprovavc</strong> é uma plataforma para quem estuda com seriedade e
+                precisa de estrutura no dia a dia.
+              </p>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        let slides = document.querySelectorAll(".slide");
-        let currentIndex = 0;
+              <p>
+                Aqui, você não apenas marca tarefas: você constrói seu material
+                (<strong>resumos e flashcards</strong>) e mantém o conteúdo vivo com
+                <strong>revisões guiadas</strong>.
+              </p>
 
-        slides.forEach(slide => slide.classList.remove("active"));
-        if (slides.length) slides[currentIndex].classList.add("active");
+              <p>
+                Feito para concursos, vestibulares e certificações — especialmente para quem
+                concilia trabalho, rotina e pouco tempo contínuo.
+              </p>
 
-        function showNextSlide() {
-          if (!slides.length) return;
-          slides[currentIndex].classList.remove("active");
-          currentIndex = (currentIndex + 1) % slides.length;
-          slides[currentIndex].classList.add("active");
-        }
+              <p>
+                <strong>Estude com direção. Revise no tempo certo. Enxergue evolução.</strong>
+              </p>
 
-        setInterval(showNextSlide, 5000);
-      });
-    </script>
-  </div>
+              <p>No Aprovavc, você encontra:</p>
+
+              <ul>
+                <li>Biblioteca organizada de matérias, tópicos e subtópicos;</li>
+                <li>Resumos escritos por você, salvos e vinculados ao seu estudo;</li>
+                <li>Flashcards gerados a partir do seu próprio conteúdo;</li>
+                <li>Sistema de revisões espaçadas com visão clara do que revisar;</li>
+                <li>Dashboard com tempo líquido e evolução por matéria e prova.</li>
+              </ul>
+
+              <p>
+                Acreditamos que aprovação é resultado de constância com direção. O Aprovavc existe
+                para sustentar essa constância com clareza, sobriedade e respeito ao seu esforço.
+              </p>
+
+              <p>
+                <strong>Aprovavc – estrutura para quem transforma estudo em projeto de vida.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="services" id="diferenciais" aria-label="Diferenciais do AprovaVC">
+        <div class="container">
+          <h2 class="services-title">Por que o Aprovavc é diferente?</h2>
+
+          <div class="service-list">
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/cerebro.png" alt="Ícone cérebro" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Estudo ativo, não só agenda</h3>
+              <p>
+                Você não apenas registra o que fez: cada sessão gera material (resumo e prática de memória)
+                que volta para você em forma de revisão.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/book.png" alt="Ícone livro" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Material próprio, do seu jeito</h3>
+              <p>
+                Seus resumos ficam organizados por matéria, tópico e subtópico, criando um histórico
+                consistente e fácil de retomar quando bater a dúvida.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/card.png" alt="Ícone cartões" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Revisão guiada por aquilo que você escreveu</h3>
+              <p>
+                Em vez de depender de materiais genéricos, você revisa o que entendeu e registrou.
+                O Aprovavc te mostra quando revisar e o que priorizar.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/cloud.png" alt="Ícone nuvem" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Leve na rotina, forte no longo prazo</h3>
+              <p>
+                Acesse resumos e flashcards no computador, tablet ou celular. Revise em intervalos curtos,
+                mantenha a constância e evolua sem depender de controles manuais.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="services" id="services" aria-label="Soluções do AprovaVC">
+        <div class="container">
+          <h2 class="services-title">Soluções do Aprovavc</h2>
+
+          <div class="service-list">
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/books.png" alt="Ícone livros" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Biblioteca de Matérias</h3>
+              <p>
+                Estruture matérias, tópicos e subtópicos em um único ambiente, com a visão do seu conteúdo
+                organizada para estudo e revisão.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/work-space.png" alt="Ícone espaço de estudo" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Sala de Estudo</h3>
+              <p>
+                Estude no modo livre ou Pomodoro e registre seu resumo no pr&oacute;prio sistema.
+                Seu material fica ligado ao seu tempo l&iacute;quido de estudo.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/cycle.png" alt="Ícone ciclos" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Revisões Espaçadas</h3>
+              <p>
+                Revise resumos e flashcards em ciclos inteligentes, com sinalização clara do que está em dia,
+                do que vence hoje e do que já ficou para trás.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/flash-cards.png" alt="Ícone flashcards" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Flashcards</h3>
+              <p>
+                Transforme seus resumos em flashcards e revise conceitos-chave com rapidez,
+                objetividade e total alinhamento ao seu conteúdo.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/paper.png" alt="Ícone provas" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Provas</h3>
+              <p>
+                Organize o estudo por prova, agrupe matérias e acompanhe indicadores por objetivo,
+                com visão estratégica da preparação.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/progress.png" alt="Ícone progresso" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Dashboard de Progresso</h3>
+              <p>
+                Veja tempo líquido, revisões realizadas e evolução por matéria em um painel que ajuda
+                a tomar decisões diárias com clareza.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="badge">Em breve (em evolução contínua)</div>
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/improvement.png" alt="Ícone melhorias" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Plano de Estudos Inteligente</h3>
+              <p>
+                Distribuição automática das matérias nas horas disponíveis, com ajustes conforme o seu ritmo real
+                e a prioridade do seu objetivo.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="badge">Em breve (em evolução contínua)</div>
+              <div class="logo-aprovavc-diferente">
+                <img src="assets/img/icon/test.png" alt="Ícone testes" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Banco de Questões</h3>
+              <p>
+                Questões por matéria e tópico, com acompanhamento de desempenho para identificar pontos fortes
+                e pontos de atenção.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="blog" id="blog" aria-label="Conteúdos do blog">
+        <div class="container">
+          <h2>Conteúdo para quem estuda com seriedade</h2>
+          <p class="blog-intro">
+            Reflexões, técnicas e boas práticas sobre organização, disciplina e estudo estratégico para longo prazo.
+          </p>
+
+          <span id="post1" class="anchor-offset" aria-hidden="true"></span>
+          <span id="post2" class="anchor-offset" aria-hidden="true"></span>
+          <span id="post3" class="anchor-offset" aria-hidden="true"></span>
+
+          <div class="blog-posts">
+            <div class="blog-post">
+              <img src="assets/img/blog/financas.jpg" alt="Gestão de rotina" loading="lazy" />
+              <h3>Como proteger o seu tempo de estudo no dia a dia</h3>
+              <p>
+                Ideias práticas para preservar blocos de foco e manter a constância, mesmo com uma rotina cheia.
+              </p>
+              <a href="#post1" class="read-more">Leia mais</a>
+            </div>
+
+            <div class="blog-post">
+              <img src="assets/img/blog/organizacao.jpg" alt="Organização" loading="lazy" />
+              <h3>Transformando a lista de conteúdo em um plano concreto</h3>
+              <p>
+                Um passo a passo para sair da lista de matérias e chegar a um plano de estudo realmente executável.
+              </p>
+              <a href="#post2" class="read-more">Leia mais</a>
+            </div>
+
+            <div class="blog-post">
+              <img src="assets/img/blog/tecnologia.jpg" alt="Tecnologia nos estudos" loading="lazy" />
+              <h3>Como a tecnologia pode apoiar, e não distrair</h3>
+              <p>
+                Critérios para escolher ferramentas que somam na preparação, em vez de disputar atenção com o estudo.
+              </p>
+              <a href="#post3" class="read-more">Leia mais</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="blog" id="faq" aria-label="Perguntas frequentes">
+        <div class="container">
+          <h2>Perguntas frequentes</h2>
+          <p class="blog-intro">
+            Respostas diretas para dúvidas comuns antes de começar.
+          </p>
+
+          <div class="blog-posts">
+            <div class="blog-post">
+              <h3>Isso substitui caderno/Notion/Anki?</h3>
+              <p>
+                Ele substitui o “vai e volta” entre ferramentas: você organiza, estuda, escreve resumos e revisa no mesmo lugar.
+                Se você já usa caderno/Notion/Anki, o Aprovavc funciona como um fluxo único e mais prático para o dia a dia.
+              </p>
+              <a href="#plans" class="read-more">Ver planos</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Funciona no celular?</h3>
+              <p>
+                Sim. Você consegue acessar seus resumos e flashcards no celular e revisar em qualquer intervalo do dia,
+                mantendo a constância sem depender de longas sessões.
+              </p>
+              <a href="#plans" class="read-more">Começar agora</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Como as revisões são definidas?</h3>
+              <p>
+                As revisões seguem ciclos espaçados e são exibidas com prioridade clara (em dia, vence hoje ou atrasada).
+                Você revisa com base no que produziu, e o sistema mantém o ritmo visível para você.
+              </p>
+              <a href="#services" class="read-more">Ver como funciona</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Preciso seguir Pomodoro?</h3>
+              <p>
+                Não. O Pomodoro é opcional. Você pode estudar no modo livre ou com ciclos de foco, conforme sua rotina.
+                O importante é registrar o material e manter o ritmo de revisão.
+              </p>
+              <a href="#services" class="read-more">Ver soluções</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Tem banco de questões?</h3>
+              <p>
+                Ainda não. O banco de questões está <strong>em breve (em evolução contínua)</strong>.
+                Enquanto isso, o Aprovavc já entrega organização, material próprio e revisões guiadas.
+              </p>
+              <a href="#plans" class="read-more">Testar o Aprovavc</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ✅ ÂNCORA DE PLANOS NO LUGAR CERTO -->
+      <span id="plans" class="anchor-offset" aria-hidden="true"></span>
+
+      <section class="plans" id="comece-agora" aria-label="Planos e acesso">
+        <div class="container">
+          <app-assine></app-assine>
+
+          <div style="margin-top: 18px;">
+            <h2 style="margin: 0;">Comece agora</h2>
+            <p style="margin: 8px 0 0;">
+              Teste por <strong>30 dias</strong> e veja o Aprovavc caber na sua rotina com clareza e consistência.
+            </p>
+            <p style="margin: 6px 0 0;">
+              Sem compromisso: você pode cancelar quando quiser durante o período de teste.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer aria-label="Rodapé">
+        <div class="rodape">
+          <div class="esquerda">
+            <div class="logo-nome">
+              <img src="assets/img/logo/aprova.png" alt="Logo AprovaVC" class="logo-img" loading="lazy" />
+            </div>
+
+            <div class="social-icons" style="display: flex; justify-content: center; gap: 15px; margin-top: 5px;">
+              <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <i class="pi pi-instagram"></i>
+              </a>
+              <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <i class="pi pi-facebook"></i>
+              </a>
+              <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                <i class="pi pi-youtube"></i>
+              </a>
+              <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                <i class="pi pi-linkedin"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="meio"></div>
+        </div>
+
+        <div class="separador-rodape"></div>
+
+        <div class="politicas">
+          <div class="direitos">
+            <p>&copy; 2025 Aprovavc. Todos os direitos reservados.</p>
+          </div>
+
+          <div class="link-politicas">
+            <nav aria-label="Links legais">
+              <ul>
+                <li><a routerLink="/politica-privacidade">Política de Privacidade |</a></li>
+                <li><a routerLink="/termos-de-uso">Termos de Uso | </a></li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+
+        <div class="desenvolvido-por">
+          <p>Desenvolvido por <strong>DynamoSoft</strong>.</p>
+          <p>
+            Icons made by
+            <a href="https://www.flaticon.com/authors/freepik" target="_blank" rel="noopener noreferrer" title="Freepik">
+              Freepik
+            </a>
+            from
+            <a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer" title="Flaticon">
+              www.flaticon.com
+            </a>
+          </p>
+        </div>
+      </footer>
+
+    </div>
+  </main>
 </div>

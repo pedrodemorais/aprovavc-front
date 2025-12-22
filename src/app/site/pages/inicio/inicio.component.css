@@ -1,12 +1,54 @@
 /* =========================
    BASE / RESET (somente HOME)
 ========================= */
-html {
+:host {
+  display: block;
+}
+
+/* ✅ scroll suave global (com encapsulamento) */
+:host ::ng-deep html {
   scroll-behavior: smooth;
 }
 
-:host {
+/* ✅ SEO/A11y: H1 invisível, mas existente */
+.home-page .visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ✅ skip link (não altera layout) */
+.home-page .skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 10px 12px;
+  background: #111827;
+  color: #ffffff;
+  border-radius: 10px;
+  text-decoration: none;
+  z-index: 999999;
+  transform: translateY(-140%);
+  transition: transform 0.12s ease;
+  font-size: 0.9rem;
+}
+.home-page .skip-link:focus {
+  transform: translateY(0);
+}
+
+/* ✅ âncoras com topo fixo (evita “cair por baixo” do menu) */
+.home-page .anchor-offset {
   display: block;
+  position: relative;
+  top: calc(var(--topo-h) * -1);
+  height: 0;
+  visibility: hidden;
 }
 
 /* Scrollbar clean e fina (apenas na home) */
@@ -44,9 +86,9 @@ html {
 
 /* Estilo geral da HOME */
 .home-page {
-  --topo-h: 80px;               /* ✅ NOVO: altura do topo (desktop) */
+  --topo-h: 80px;
   margin: 0;
-  padding-top: var(--topo-h);    /* ✅ antes: 80px fixo */
+  padding-top: var(--topo-h);
   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #111827;
   background: #f3f4f6;
@@ -74,10 +116,10 @@ html {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0; /* garante 100% */
+  right: 0;
   width: 100%;
-  height: var(--topo-h);         /* ✅ NOVO: fixa a altura do topo */
-  padding: 8px 0;                /* ✅ NOVO: respiro sem virar “buraco” */
+  height: var(--topo-h);
+  padding: 8px 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -90,7 +132,7 @@ html {
 .home-page .menu-topo {
   width: 100%;
   max-width: 1250px;
-  margin: 0 auto;                /* ✅ antes: 8px auto (isso criava espaço extra) */
+  margin: 0 auto;
   padding: 10px 18px;
   border-radius: 999px;
   display: flex;
@@ -121,7 +163,7 @@ html {
 :host ::ng-deep .custom-menubar .p-menuitem-link {
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  color: #374151;           /* ✅ estava branco (sumia no topo branco) */
+  color: #374151;
   font-size: 0.85rem;
   font-weight: 400;
   transition: background 0.15s ease, color 0.15s ease;
@@ -176,7 +218,6 @@ html {
 .home-page .hero {
   background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
   color: #0f172a;
- 
 }
 
 .home-page .hero-content {
@@ -543,7 +584,7 @@ html {
    RESPONSIVO
 ========================= */
 .home-page {
-  overflow-x: hidden; /* remove o scroll horizontal e o "espaço" do fim */
+  overflow-x: hidden;
 }
 
 @media (max-width: 900px) {
@@ -567,7 +608,7 @@ html {
 
 @media (max-width: 640px) {
   .home-page {
-    --topo-h: 72px; /* ✅ antes: padding-top: 72px */
+    --topo-h: 72px;
   }
 
   .home-page .menu-topo {
@@ -639,4 +680,42 @@ html {
 
 :host ::ng-deep .custom-menubar .p-menuitem:hover > .p-menuitem-content {
   border-bottom: none !important;
+}
+/* Esconde visualmente, mas mantém para SEO/leitor de tela */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Skip link só aparece ao focar (Tab) */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 12px;
+  z-index: 999999;
+  background: #fff;
+  color: #111827;
+  padding: 10px 14px;
+  border-radius: 999px;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: 12px;
+}
+
+/* Âncora sem ocupar espaço e compensando topo fixo */
+.anchor-offset {
+  display: block;
+  position: relative;
+  top: calc(-1 * var(--topo-h, 80px));
+  height: 0;
+  overflow: hidden;
 }

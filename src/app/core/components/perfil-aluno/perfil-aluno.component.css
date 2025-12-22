@@ -1,34 +1,30 @@
 /* =======================================
    FONTE / BASE
 ======================================= */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
-
 /* =======================================
    CONTAINER GERAL DA PÁGINA
 ======================================= */
 .page-perfil {
   width: 100%;
   min-height: calc(100dvh - 80px);
-  padding: 20px 16px 32px;
+  padding: 12px 12px 16px;
   box-sizing: border-box;
   display: flex;
   justify-content: center;
-  
-  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+ 
 }
 
 .conteudo {
   width: 100%;
-  max-width: 1180px;
+  max-width: 980px;
 }
 
 /* Linha separadora dentro do card */
 .separador {
   width: 100%;
   height: 1px;
-  background: #d1d5db;
-  margin: 12px 0;
+  background: var(--border);
+  margin: 10px 0;
 }
 
 /* =======================================
@@ -38,20 +34,45 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.perfil-title-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-icon{
+  font-size: 14px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: help;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.info-icon:hover,
+.info-icon:focus{
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .perfil-titulo {
   margin: 0;
-  font-size: 1.45rem;
-  font-weight: 600;
-  color: #0f172a;
+  font-size: 18px;
+  font-weight: 500;
+  color: #2b2b2c9c;
+  letter-spacing: 0.2px;
 }
 
 .perfil-sub {
   margin: 4px 0 0;
-  font-size: 0.9rem;
+  font-size: 12.5px;
   color: #6b7280;
+  display: none;
 }
 
 /* =======================================
@@ -67,7 +88,7 @@
 .msg {
   padding: 8px 12px;
   border-radius: 10px;
-  font-size: 0.86rem;
+  font-size: 12.5px;
 }
 
 .msg-erro {
@@ -80,24 +101,36 @@
   color: #166534;
 }
 
+.msg-inline{
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.acoes-form .segmented-group{
+  margin-left: auto;
+}
+
 /* =======================================
    LAYOUT PRINCIPAL
 ======================================= */
 .perfil-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr);
-  gap: 16px;
+  gap: 10px;
 }
 
 /* =======================================
    CARD PRINCIPAL
 ======================================= */
 .card {
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
-  padding: 16px 18px 18px;
+  background: transparent;
+  border-radius: 12px;
+  
+  box-shadow: none;
+  padding: 12px;
   box-sizing: border-box;
 }
 
@@ -114,6 +147,13 @@
   width: 100%;
 }
 
+.assinatura aside{
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: transparent;
+}
+
 .nome-botoes {
   display: flex;
   align-items: center;
@@ -125,9 +165,9 @@
 
 .nome-botoes h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: #2b2b2c9c;
 }
 
 .botoes-assinatura {
@@ -142,23 +182,29 @@
   align-items: center;
   margin-bottom: 6px;
   gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.assinatura .linha-assinatura:last-of-type{
+  border-bottom: none;
 }
 
 .linha-assinatura .label {
-  font-size: 0.82rem;
+  font-size: 11.5px;
   color: #6b7280;
 }
 
 .linha-assinatura .valor,
 .linha-assinatura p {
   margin: 0;
-  font-size: 0.9rem;
-  color: #111827;
+  font-size: 12.5px;
+  color: #2b2b2c9c;
 }
 
 .texto-ajuda {
   margin-top: 4px;
-  font-size: 0.8rem;
+  font-size: 12px;
   color: #6b7280;
 }
 
@@ -195,6 +241,10 @@
   flex-direction: column;
   gap: 16px;
   margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: transparent;
 }
 
 /* Linha de campos */
@@ -213,26 +263,26 @@
 }
 
 .campo label {
-  font-size: 0.82rem;
-  color: #374151;
-  font-weight: 500;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
 }
 
 .campo input {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  font-size: 0.9rem;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-size: 13px;
   outline: none;
-  background: #ffffff;
+  background: transparent;
   transition: border-color 0.15s ease, box-shadow 0.15s ease,
     background 0.15s ease;
 }
 
 .campo input:focus {
-  border-color: #16a34a;
-  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2);
-  background: #f9fafb;
+  border-color: rgba(11, 114, 133, 0.35);
+  box-shadow: 0 0 0 3px rgba(11, 114, 133, 0.1);
+  background: transparent;
 }
 
 .campo input[disabled] {
@@ -248,9 +298,9 @@
 /* Subtítulo de seção */
 .subtitulo-secao {
   margin: 4px 0 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #111827;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2b2b2c9c;
 }
 
 /* =======================================
@@ -259,7 +309,10 @@
 .acoes-form {
   margin-top: 6px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 /* Botões genéricos */
@@ -303,6 +356,64 @@
   background: #e5e7eb;
 }
 
+/* Botao segmentado (padrao Biblioteca de materias) */
+.segmented-group{
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.055);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+.segmented-btn{
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
+
+.segmented-btn:disabled{
+  opacity: 0.6;
+  cursor: default;
+}
+
+.segmented-group .segmented-btn:hover:not(:disabled){
+  transform: none;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.segmented-group .segmented-btn + .segmented-btn{
+  position: relative;
+  padding-left: 14px;
+}
+
+.segmented-group .segmented-btn + .segmented-btn::before{
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  height: 14px;
+  transform: translateY(-50%);
+  width: 1px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.segmented-btn--danger{
+  color: #b91c1c;
+}
+
 /* =======================================
    LOADING
 ======================================= */
@@ -315,7 +426,7 @@
 /* PERFIL - DARK MODE (mais forte e visível) */
 :host-context(body.theme-dark) .page-perfil{
   color: #e5e7eb !important;
-  background: transparent !important; /* deixa aparecer o fundo dark do body */
+  background: var(--bg) !important;
 }
 
 :host-context(body.theme-dark) .conteudo{
@@ -323,9 +434,9 @@
 }
 
 :host-context(body.theme-dark) .card{
-  background: rgba(15,23,42,0.72) !important; /* <-- antes era branco 0.06 */
+  background: transparent !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
-  box-shadow: 0 18px 45px rgba(0,0,0,0.55) !important;
+  box-shadow: none !important;
 }
 
 :host-context(body.theme-dark) .perfil-titulo,
@@ -350,6 +461,16 @@
   background: rgba(255,255,255,0.12) !important;
 }
 
+:host-context(body.theme-dark) .assinatura aside,
+:host-context(body.theme-dark) .perfil-form{
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .linha-assinatura{
+  border-bottom-color: rgba(255,255,255,0.12) !important;
+}
+
 :host-context(body.theme-dark) .campo input{
   background: rgba(255,255,255,0.06) !important;
   border: 1px solid rgba(255,255,255,0.14) !important;
@@ -357,8 +478,8 @@
 }
 
 :host-context(body.theme-dark) .campo input:focus{
-  border-color: rgba(22,163,74,0.65) !important;
-  box-shadow: 0 0 0 2px rgba(22,163,74,0.18) !important;
+  border-color: rgba(11,114,133,0.45) !important;
+  box-shadow: 0 0 0 3px rgba(11,114,133,0.16) !important;
   background: rgba(255,255,255,0.08) !important;
 }
 
@@ -369,6 +490,27 @@
 }
 :host-context(body.theme-dark) .btn.secundario:hover:not(:disabled){
   background: rgba(255,255,255,0.10) !important;
+}
+
+:host-context(body.theme-dark) .segmented-group{
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .segmented-btn{
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+:host-context(body.theme-dark) .segmented-group .segmented-btn:hover:not(:disabled){
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+:host-context(body.theme-dark) .segmented-group .segmented-btn + .segmented-btn::before{
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .segmented-btn--danger{
+  color: #fecaca !important;
 }
 
 /* =======================================
@@ -382,16 +524,16 @@
 
 @media (max-width: 640px) {
   .perfil-titulo {
-    font-size: 1.25rem;
+    font-size: 16px;
   }
 
   .perfil-sub {
-    font-size: 0.85rem;
+    font-size: 12px;
   }
 
   .card {
-    padding: 14px 14px 16px;
-    border-radius: 18px;
+    padding: 12px;
+    border-radius: 12px;
   }
 
   .linha-form {
@@ -400,11 +542,6 @@
 
   .acoes-form {
     justify-content: flex-start;
-  }
-
-  .btn {
-    font-size: 0.85rem;
-    padding: 7px 14px;
   }
 }
 /* =======================================
@@ -477,88 +614,6 @@
 }
 
 /* =======================================
-   PERFIL PREMIUM (OVERRIDES CLEAN)
-======================================= */
-.page-perfil{
-  background: radial-gradient(140% 160% at 10% 0%, #f8fafc 0%, #f1f5f9 45%, #eef2ff 100%);
-}
-
-.conteudo{
-  max-width: 1140px;
-}
-
-.card{
-  background: var(--surface, #ffffff);
-  border: 1px solid var(--border, #e5e7eb);
-  box-shadow: var(--shadow, 0 18px 45px rgba(15, 23, 42, 0.08));
-}
-
-.perfil-header{
-  gap: 12px;
-  border-bottom: 1px solid var(--border, #e5e7eb);
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-}
-
-.perfil-titulo{
-  font-size: 1.35rem;
-}
-
-.perfil-sub{
-  max-width: 720px;
-}
-
-.assinatura aside{
-  background: var(--surface-2, #f8fafc);
-  border: 1px solid var(--border, #e5e7eb);
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.linha-assinatura{
-  padding: 6px 0;
-  border-bottom: 1px dashed var(--border, #e5e7eb);
-}
-
-.assinatura .linha-assinatura:last-of-type{
-  border-bottom: none;
-}
-
-.perfil-form{
-  background: var(--surface-2, #f8fafc);
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: 14px;
-  padding: 12px;
-}
-
-.linha-form{
-  gap: 12px;
-}
-
-.campo input{
-  background: var(--surface, #ffffff);
-  border-color: var(--border, #d1d5db);
-}
-
-.campo input:focus{
-  background: var(--surface-2, #f8fafc);
-}
-
-:host-context(body.theme-dark) .page-perfil{
-  background: transparent;
-}
-
-:host-context(body.theme-dark) .assinatura aside,
-:host-context(body.theme-dark) .perfil-form{
-  background: rgba(15,23,42,0.55);
-  border-color: rgba(255,255,255,0.12);
-}
-
-:host-context(body.theme-dark) .linha-assinatura{
-  border-bottom-color: rgba(255,255,255,0.12);
-}
-
-/* =======================================
    ASSINATURA EMBUTIDA (MEUS DADOS)
 ======================================= */
 .assinatura-titulo{
@@ -599,8 +654,6 @@
 .assinatura-acoes{
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 /* =======================================
@@ -636,7 +689,7 @@
 
 @media (max-width: 720px){
   .page-perfil{
-    padding: 16px 12px 24px;
+    padding: 12px 12px 16px;
   }
 
   .card{
@@ -662,9 +715,13 @@
     width: 100%;
   }
 
-  .btn,
-  .btn-cancelar{
+  .segmented-group{
     width: 100%;
+    justify-content: center;
+  }
+
+  .segmented-btn{
+    flex: 1;
     justify-content: center;
   }
 
@@ -674,7 +731,7 @@
 }
 
 @media (max-width: 420px){
-  .perfil-titulo{ font-size: 1.2rem; }
-  .perfil-sub{ font-size: 0.82rem; }
-  .subtitulo-secao{ font-size: 0.9rem; }
+  .perfil-titulo{ font-size: 16px; }
+  .perfil-sub{ font-size: 12px; }
+  .subtitulo-secao{ font-size: 12.5px; }
 }

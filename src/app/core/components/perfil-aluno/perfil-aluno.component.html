@@ -12,19 +12,25 @@
         <!-- CARTÃO DE ASSINATURA -->
  <div class="perfil-header">
       <div>
-        <h1 class="perfil-titulo">Meus dados</h1>
+        <div class="perfil-title-row">
+          <h1 class="perfil-titulo">Meus dados</h1>
+          <i
+            class="pi pi-info-circle info-icon"
+            pTooltip="Veja e atualize suas informaÇõÇæes de cadastro e acompanhe o status da sua assinatura."
+            tooltipPosition="right"
+            [showDelay]="150"
+            [hideDelay]="80"
+            tabindex="0"
+            aria-label="Ajuda"
+          ></i>
+        </div>
         <p class="perfil-sub">
           Veja e atualize suas informações de cadastro e acompanhe o status da sua assinatura.
         </p>
       </div>
     </div>
-
-    <!-- MENSAGENS -->
-    <section class="mensagens">
-      <p *ngIf="erro" class="msg msg-erro">{{ erro }}</p>
-      <p *ngIf="mensagemSucesso" class="msg msg-sucesso">{{ mensagemSucesso }}</p>
-    </section>
-        <div class="separador"></div>
+   <!-- MENSAGENS -->
+        
         <div class="assinatura">
 
           <aside *ngIf="usuario">
@@ -34,10 +40,10 @@
                 <span [ngClass]="statusAssinaturaClass">{{ statusAssinaturaLabel }}</span>
               </div>
 
-              <div class="assinatura-acoes">
+              <div class="assinatura-acoes segmented-group">
                 <button
                   type="button"
-                  class="btn primario"
+                  class="segmented-btn"
                   *ngIf="statusAssinatura === 'TRIAL' || !assinaturaAtiva"
                   (click)="assinarPlanoPadrao()"
                 >
@@ -46,7 +52,7 @@
 
                 <button
                   type="button"
-                  class="btn-cancelar"
+                  class="segmented-btn segmented-btn--danger"
                   *ngIf="assinaturaAtiva && statusAssinatura === 'ATIVA'"
                   (click)="cancelarAssinatura()"
                 >
@@ -154,9 +160,17 @@
           </div>
           <div class="separador"></div>
           <div class="acoes-form">
-            <button type="submit" class="btn primario">
-              Salvar alterações
-            </button>
+            <span *ngIf="erro" class="msg msg-erro msg-inline">
+              {{ erro }}
+            </span>
+            <span *ngIf="mensagemSucesso" class="msg msg-sucesso msg-inline">
+              {{ mensagemSucesso }}
+            </span>
+            <div class="segmented-group">
+              <button type="submit" class="segmented-btn">
+                Salvar alterações
+              </button>
+            </div>
           </div>
 
         </form>

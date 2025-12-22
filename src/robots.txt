@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://aprovavc.com.br/sitemap.xml
