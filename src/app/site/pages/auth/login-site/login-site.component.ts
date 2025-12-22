@@ -14,6 +14,7 @@ export class LoginSiteComponent implements OnInit {
   message: string | null = null;
   email = '';
   password = '';
+  showPassword = false;
   errorMessage = '';
   successMessage = '';
   mensagem: string = '';
@@ -123,5 +124,9 @@ export class LoginSiteComponent implements OnInit {
         console.warn('⚠️ Mensagem final tratada:', this.errorMessage);
       },
     });
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
   }
 }

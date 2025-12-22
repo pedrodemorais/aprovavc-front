@@ -7,10 +7,7 @@
       </div>
     </div>
 
-    <div class="login-welcome">
-      <h1>Entre na sua conta</h1>
-      <p>Estude com foco, acompanhe seu progresso e retome de onde parou.</p>
-    </div>
+ 
 
     <form class="login-form" (ngSubmit)="login()">
       <div class="form-group">
@@ -28,15 +25,25 @@
 
       <div class="form-group">
         <label for="password">Senha</label>
-        <input
-          id="password"
-          type="password"
-          placeholder="Digite sua senha"
-          [(ngModel)]="password"
-          name="password"
-          required
-          autocomplete="current-password"
-        />
+        <div class="password-field">
+          <input
+            id="password"
+            class="password-input"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Digite sua senha"
+            [(ngModel)]="password"
+            name="password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" class="password-toggle" (click)="togglePassword()"
+            [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+            <i class="pi" [ngClass]="showPassword ? 'pi-eye-slash' : 'pi-eye'"></i>
+          </button>
+        </div>
+        <a routerLink="/recuperar-senha" class="link-inline">
+          Esqueceu a senha?
+        </a>
       </div>
 
       <!-- Mensagem de sucesso -->
@@ -57,9 +64,7 @@
     <a href="/" class="login-back-inline">Voltar para o site</a>
 
     <div class="login-links">
-      <a routerLink="/recuperar-senha" class="link-inline">
-        Esqueceu a senha?
-      </a>
+     
 
       <div class="divider"></div>
 
