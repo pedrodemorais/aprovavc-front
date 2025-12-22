@@ -60,12 +60,12 @@
   font-size: 1.35rem;
   font-weight: 600;
   margin: 0;
-  color: var(--text);
+  color: #2b2b2c9c;
 }
 
 .rev-info-icon {
   font-size: 0.95rem;
-  color: var(--muted);
+  color: #6b7280;
   opacity: 0.8;
   cursor: pointer;
   transition: opacity 0.15s ease, transform 0.15s ease;
@@ -79,7 +79,7 @@
 
 .rev-subtitle {
   margin: 0;
-  color: var(--text-2);
+  color: #6b7280;
   font-size: 0.9rem;
 }
 
@@ -97,7 +97,6 @@
   flex-direction: column;
   gap: 2px;
   background: var(--surface-2);
-  box-shadow: var(--shadow);
   border: 1px solid var(--border);
 }
 
@@ -153,10 +152,10 @@
 ======================================= */
 
 .rev-card {
-  background: var(--surface);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -172,12 +171,12 @@
   column-gap: 24px;
   padding: 12px 22px;
   padding-right: calc(22px + var(--rev-scrollbar));
-  background: var(--surface-2);
+  background: transparent;
   border-bottom: 1px solid var(--border);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--muted);
+  color: #6b7280;
   align-items: center;
 }
 
@@ -216,7 +215,7 @@
   padding: 14px 22px;
   align-items: center;
   border-top: 1px solid var(--border);
-  background: var(--surface);
+  background: transparent;
   transition: background 0.12s ease;
 }
 
@@ -239,11 +238,11 @@
 }
 
 .rev-list-row:nth-child(even) {
-  background: var(--surface-2);
+  background: transparent;
 }
 
 .rev-list-row:hover {
-  background: #f0fdf4;
+  background: rgba(34, 197, 94, 0.08);
 }
 
 /* Colunas */
@@ -308,23 +307,24 @@
 
 .materia-nome {
   font-weight: 600;
-  color: var(--text);
+  color: #2b2b2c9c;
   font-size: 0.9rem;
 }
 
 .topico-descricao {
   font-size: 0.82rem;
-  color: var(--text-2);
+  color: #6b7280;
 }
 
 .data-principal {
   font-weight: 500;
   font-size: 0.85rem;
+  color: #2b2b2c9c;
 }
 
 .data-secundaria {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: #6b7280;
 }
 
 /* Botão "Ir para sala de estudo" */
@@ -332,19 +332,18 @@
   align-self: flex-end;
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid #e5e7eb;
+  background: transparent;
   font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
-  color: var(--text);
+  color: #374151;
 }
 
 .btn-ghost:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.18);
+  border-color: #16a34a;
+  color: #16a34a;
 }
 
 /* =======================================
@@ -459,9 +458,9 @@
 ======================================= */
 
 :host-context(body.theme-dark) .rev-summary-card {
-  background: var(--surface) !important;
+  background: transparent !important;
   border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow) !important;
+  box-shadow: none !important;
 }
 
 /* Vencidas */
@@ -498,14 +497,14 @@
 ======================================= */
 
 :host-context(body.theme-dark) .rev-card {
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Cabeçalho (linha “tabela”) */
 :host-context(body.theme-dark) .rev-list-header {
-  background: var(--surface-2) !important;
+  background: transparent !important;
   border-bottom: 1px solid var(--border) !important;
   color: var(--muted) !important;
 }
@@ -517,11 +516,11 @@
 }
 
 :host-context(body.theme-dark) .rev-list-row:nth-child(even) {
-  background: var(--surface-2) !important;
+  background: transparent !important;
 }
 
 :host-context(body.theme-dark) .rev-list-row:hover {
-  background: rgba(34, 197, 94, 0.08) !important;
+  background: rgba(34, 197, 94, 0.12) !important;
 }
 
 /* Textos das colunas */
@@ -605,7 +604,7 @@
 .dashboard-revisao-page {
   --onboard-bg: radial-gradient(120% 140% at 10% 0%, #fff7ed 0%, #f0fdf4 45%, #eef2ff 100%);
   --onboard-border: rgba(15, 23, 42, 0.08);
-  --onboard-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  --onboard-shadow: none;
   --onboard-chip: rgba(15, 23, 42, 0.06);
 }
 
@@ -617,8 +616,8 @@
   border-radius: 18px;
   padding: 18px;
   border: 1px solid var(--onboard-border);
-  background: var(--onboard-bg);
-  box-shadow: var(--onboard-shadow);
+  background: transparent;
+  box-shadow: none;
 }
 
 .onboarding-badge {
@@ -637,7 +636,7 @@
 .onboarding-title {
   margin: 12px 0 6px;
   font-size: 1.2rem;
-  color: var(--text);
+  color: #374151;
 }
 
 .onboarding-subtitle {
@@ -678,7 +677,7 @@
 
 .step-title {
   font-weight: 600;
-  color: var(--text);
+  color: #374151;
 }
 
 .step-text {
@@ -728,6 +727,11 @@
   --onboard-border: rgba(255, 255, 255, 0.08);
   --onboard-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
   --onboard-chip: rgba(15, 23, 42, 0.6);
+}
+
+:host-context(body.theme-dark) .onboarding-card {
+  background: transparent;
+  box-shadow: none;
 }
 
 :host-context(body.theme-dark) .onboarding-step {
@@ -841,7 +845,7 @@
 .onboarding-modal .modal-head h3 {
   margin: 0;
   font-size: 1rem;
-  color: #0f172a;
+  color: #374151;
 }
 
 .onboarding-modal .btn-close {
