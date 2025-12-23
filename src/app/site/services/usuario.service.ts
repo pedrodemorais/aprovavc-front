@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { UsuarioConsultaDTO } from 'src/app/core/models/AlunoParametroDTO';
+import { UsuarioConsultaDTO } from 'src/app/core/components/area-aluno/models/AlunoParametroDTO';
 
 
 @Injectable({

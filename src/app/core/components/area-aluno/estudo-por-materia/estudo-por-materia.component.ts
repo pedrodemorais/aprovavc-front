@@ -2,13 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { OverlayPanel } from 'primeng/overlaypanel';
 
-import { Materia } from 'src/app/core/models/materia.model';
-import { Topico } from 'src/app/core/models/topico.model';
-import { MateriaService } from 'src/app/core/services/materia.service';
-import { SalaEstudoService } from 'src/app/core/services/sala-estudo.service';
-import { RevisaoDashboardItem } from 'src/app/core/models/RevisaoDashboardItem';
-import { Edital } from 'src/app/core/models/Edital';
-import { EditalService } from 'src/app/core/services/edital.service';
+import { Materia } from '../models/materia.model';
+import { Topico } from '../models/topico.model';
+import { MateriaService } from '../services/materia.service';
+import { SalaEstudoService  } from '../services/sala-estudo.service';
+import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
+import { Edital } from '../models/Edital';
+import { EditalService } from '../services/edital.service';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';

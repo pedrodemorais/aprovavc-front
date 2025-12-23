@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from './site/services/auth.service';
-import { ModoLeituraService } from './core/services/modo-leitura.service';
+import { ModoLeituraService } from './core/components/area-aluno/services/modo-leitura.service';
 
 @Component({
   selector: 'app-root',

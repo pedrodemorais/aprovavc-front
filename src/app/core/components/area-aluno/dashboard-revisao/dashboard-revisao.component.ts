@@ -1,13 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { SalaEstudoService } from 'src/app/core/services/sala-estudo.service';
-import { MateriaService } from 'src/app/core/services/materia.service';
-import { EditalService } from 'src/app/core/services/edital.service';
-import { RevisaoDashboardItem } from 'src/app/core/models/RevisaoDashboardItem';
-import { Materia } from 'src/app/core/models/materia.model';
-import { Edital } from 'src/app/core/models/Edital';
-
+import { SalaEstudoService } from '../services/sala-estudo.service';
+import { MateriaService } from '../services/materia.service';
+import { EditalService  } from '../services/edital.service';
+import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
+import { Materia } from '../models/materia.model';
+import { Edital } from '../models/Edital';
 @Component({
   selector: 'app-dashboard-revisao',
   templateUrl: './dashboard-revisao.component.html',

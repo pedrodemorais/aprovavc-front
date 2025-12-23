@@ -14,8 +14,8 @@ import { AuthService } from 'src/app/site/services/auth.service';
 import { filter, takeUntil } from 'rxjs/operators';
 import { MenuItem } from 'primeng/api';
 import { Subject } from 'rxjs';
-import { ModoLeituraService } from 'src/app/core/services/modo-leitura.service';
-import { MateriaService } from 'src/app/core/services/materia.service';
+import { ModoLeituraService } from 'src/app/core/components/area-aluno/services/modo-leitura.service';
+import { MateriaService } from 'src/app/core/components/area-aluno/services/materia.service';
 
 @Component({
   selector: 'app-area-usuario',
@@ -35,6 +35,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   items: MenuItem[] = [];
   hasMaterias = true;
+  isAdmin = false;
 
   // 🔥 Controle de assinatura
   assinaturaValida = true;
@@ -78,6 +79,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.modoLeituraService.init();
     this.user = this.authService.getUser();
+    this.atualizarAdminDoToken();
 
     const userName = this.authService.getUserNameFromToken();
     if (userName) {
@@ -93,6 +95,14 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.materiaService.materiasChanged$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.carregarMateriasMenu());
+
+    this.authService.tokenAtualizado
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.user = this.authService.getUser();
+        this.atualizarAdminDoToken();
+        this.montarMenu();
+      });
 
 
     // 1) Já se inscreve pra reagir a MUDANÇAS (login, renovação, expiração, etc.)
@@ -189,6 +199,13 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private montarMenu(): void {
   
+    const adminItem: MenuItem = {
+      label: 'Painel Adm',
+      icon: 'pi pi-shield',
+      routerLink: ['/admin/painel']
+    };
+
+  
 
     const cadastrosMenu: MenuItem = {
       label: 'Cadastros',
@@ -228,6 +245,43 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
         { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
       ];
+    }
+    if (this.isAdmin) {
+      const sairIndex = this.items.findIndex(i => i.label === 'Sair');
+      const insertIndex = sairIndex >= 0 ? sairIndex : this.items.length;
+      this.items.splice(insertIndex, 0, adminItem);
+    }
+  }
+
+  private atualizarAdminDoToken(): void {
+    const token = this.authService.getAccessToken();
+    this.isAdmin = this.isAdminFromToken(token);
+  }
+
+  private isAdminFromToken(token: string | null): boolean {
+    if (!token) return false;
+
+    try {
+      const base64Url = token.split('.')[1];
+      if (!base64Url) return false;
+
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+      const payload = JSON.parse(atob(padded));
+
+      const role = payload?.role || payload?.roles || payload?.authorities;
+
+      if (typeof role === 'string') {
+        return role === 'ROLE_ADMIN';
+      }
+
+      if (Array.isArray(role)) {
+        return role.includes('ROLE_ADMIN') || role.some((r: any) => r?.authority === 'ROLE_ADMIN');
+      }
+
+      return false;
+    } catch {
+      return false;
     }
   }
 

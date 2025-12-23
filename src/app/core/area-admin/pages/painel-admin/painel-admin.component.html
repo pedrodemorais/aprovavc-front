@@ -1,0 +1,145 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <h1>Painel Administrativo</h1>
+      <p>Teste de permissão (ROLE_ADMIN) e endpoints de Templates de Edital.</p>
+    </div>
+
+    <div class="admin-badges">
+      <span class="badge">Token: <b>{{ tokenPresente ? 'OK' : 'NÃO' }}</b></span>
+      <span class="badge">Role detectada: <b>{{ roleDetectada || 'desconhecida' }}</b></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ações rápidas</div>
+
+    <div class="row">
+      <button class="btn" (click)="recarregar()">🔄 Recarregar Templates</button>
+      <button class="btn danger" (click)="limparMensagens()">🧹 Limpar Mensagens</button>
+    </div>
+
+    <div class="messages">
+      <div class="ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
+      <div class="err" *ngIf="mensagemErro">{{ mensagemErro }}</div>
+      <div class="warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- CRIAR -->
+    <div class="card">
+      <div class="card-title">Criar Template</div>
+
+      <label>Nome do template</label>
+      <input class="input" [(ngModel)]="novoNome" placeholder="Ex: PF - Agente - 2026 (v1)" />
+
+      <div class="row">
+        <button class="btn primary" (click)="criarTemplate()">➕ Criar</button>
+      </div>
+
+      <small class="hint">
+        Endpoint: <b>POST /api/admin/editais-template</b>
+      </small>
+    </div>
+
+    <!-- CLONE -->
+    <div class="card">
+      <div class="card-title">Clonar Template para o Aluno</div>
+
+      <label>Template ID</label>
+      <input class="input" type="number" [(ngModel)]="cloneTemplateId" placeholder="Ex: 1" />
+
+      <label>Nome do edital do aluno (opcional)</label>
+      <input class="input" [(ngModel)]="cloneNomeEdital" placeholder="Ex: Meu Edital PF (personalizado)" />
+
+      <div class="row">
+        <button class="btn primary" (click)="clonar()">📌 Clonar</button>
+      </div>
+
+      <small class="hint">
+        Endpoint usado no service:
+        <b>POST /api/editais/clonar-template/&#123;templateId&#125;</b><br/>
+        Se o seu backend for outro caminho, eu ajusto a rota do service em 1 linha.
+      </small>
+
+      <div class="box" *ngIf="resultadoClone">
+        <div><b>✅ Clone OK</b></div>
+        <pre>{{ resultadoClone | json }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="card">
+    <div class="card-title">Templates</div>
+
+    <div class="table-wrap" *ngIf="templates?.length; else vazio">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Versão</th>
+          <th>Publicado</th>
+          <th>Criação</th>
+          <th>Publicação</th>
+          <th style="width: 320px;">Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let t of templates" [class.row-selected]="t.id === selecionadoId">
+          <td>{{ t.id }}</td>
+          <td>
+            <div class="name">{{ t.nome }}</div>
+            <small class="sub">Clique em “Selecionar” pra editar/publicar/excluir</small>
+          </td>
+          <td>{{ t.versao }}</td>
+          <td>
+            <span class="pill" [class.ok]="t.publicado" [class.no]="!t.publicado">
+              {{ t.publicado ? 'SIM' : 'NÃO' }}
+            </span>
+          </td>
+          <td>{{ t.dataCriacao }}</td>
+          <td>{{ t.dataPublicacao || '-' }}</td>
+          <td>
+            <div class="row">
+              <button class="btn" (click)="selecionar(t.id)">Selecionar</button>
+              <button class="btn" (click)="preencherClone(t.id)">Usar no Clone</button>
+              <button class="btn primary" (click)="publicar(t.id)" [disabled]="t.publicado">Publicar</button>
+              <button class="btn danger" (click)="excluir(t.id)" [disabled]="t.publicado">Excluir</button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #vazio>
+      <div class="empty">
+        Nenhum template carregado (ou você está como USER e recebeu 403).
+      </div>
+    </ng-template>
+
+    <!-- EDITAR -->
+    <div class="card inner" *ngIf="selecionadoId">
+      <div class="card-title">Editar Template Selecionado (ID {{ selecionadoId }})</div>
+
+      <label>Novo nome</label>
+      <input class="input" [(ngModel)]="editarNome" placeholder="Novo nome..." />
+
+      <div class="row">
+        <button class="btn primary" (click)="atualizar()">💾 Atualizar</button>
+        <button class="btn" (click)="buscarSelecionado()">🔍 Buscar por ID</button>
+      </div>
+
+      <small class="hint">
+        Endpoints:
+        <b>GET /api/admin/editais-template/&#123;id&#125;</b> |
+        <b>PUT /api/admin/editais-template/&#123;id&#125;</b> |
+        <b>POST /api/admin/editais-template/&#123;id&#125;/publicar</b> |
+        <b>DELETE /api/admin/editais-template/&#123;id&#125;</b>
+      </small>
+    </div>
+  </div>
+</div>

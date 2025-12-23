@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { SuporteService } from '../../../core/services/suporte.service';
+import { SuporteService } from 'src/app/core/components/area-aluno/services/suporte.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({

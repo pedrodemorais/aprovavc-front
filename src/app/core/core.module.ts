@@ -44,17 +44,17 @@ registerLocaleData(localePt);
 import { BrowserModule } from '@angular/platform-browser';
 import { EditorModule } from 'primeng/editor';
 import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
-import { MateriaCadastroComponent } from './components/materia-cadastro/materia-cadastro.component';
-import { SalaEstudoComponent } from './components/sala-estudo/sala-estudo.component';
-import { EditaisComponent } from './components/editais/editais.component';
-import { AssinaturaCanceladaComponent } from './components/assinatura/assinatura-cancelada/assinatura-cancelada.component';
-import { AssinaturaPlanosComponent } from './components/assinatura-planos/assinatura-planos.component';
-import { PerfilAlunoComponent } from './components/perfil-aluno/perfil-aluno.component';
+import { MateriaCadastroComponent } from './components/area-aluno/materia-cadastro/materia-cadastro.component';
+import { SalaEstudoComponent } from './components/area-aluno/sala-estudo/sala-estudo.component';
+import { EditaisComponent   } from './components/area-aluno/editais/editais.component';
+import { AssinaturaCanceladaComponent } from './components/area-aluno/assinatura-cancelada/assinatura-cancelada.component';
+import { AssinaturaPlanosComponent } from './components/area-aluno/assinatura-planos/assinatura-planos.component';
+import { PerfilAlunoComponent } from './components/area-aluno/perfil-aluno/perfil-aluno.component';
 import { TooltipModule } from 'primeng/tooltip';
-import { MateriaEstudoComponent } from './components/estudo-por-materia/estudo-por-materia.component';
-
+import { MateriaEstudoComponent } from './components/area-aluno/estudo-por-materia/estudo-por-materia.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
-
+import { DashboardRevisaoComponent } from './components/area-aluno/dashboard-revisao/dashboard-revisao.component';
+import { PainelAdminComponent } from './area-admin/pages/painel-admin/painel-admin.component';
 
 
 
@@ -70,7 +70,9 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
          AssinaturaCanceladaComponent,
          AssinaturaPlanosComponent,
          PerfilAlunoComponent,
-         MateriaEstudoComponent
+         MateriaEstudoComponent,
+         DashboardRevisaoComponent,
+         PainelAdminComponent
         
        
     

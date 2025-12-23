@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { EditalService, EditalFormPayload } from 'src/app/core/services/edital.service';
-import { Edital } from '../../models/Edital';
-import { Materia } from 'src/app/core/models/materia.model';
-import { MateriaService } from 'src/app/core/services/materia.service';
+import { EditalService } from '../services/edital.service';
+import { EditalFormPayload } from '../services/edital.service';
+import { Edital } from '../models/Edital';
+import { Materia } from '../models/materia.model';
+import { MateriaService } from '../services/materia.service';
 
 @Component({
   selector: 'app-editais',

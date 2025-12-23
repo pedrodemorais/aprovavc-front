@@ -1,14 +1,10 @@
-﻿import { FlashcardDTO } from 'src/app/core/models/FlashcardDTO';
+﻿import { FlashcardDTO } from '../models/FlashcardDTO';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MateriaService } from 'src/app/core/services/materia.service';
-import { Materia } from 'src/app/core/models/materia.model';
-import {
-  SalaEstudoService,
-  EstudoTopicoRequest,
-  FlashcardRevisaoRespostaRequest,
-  TopicoRevisaoRespostaRequest
-} from '../../services/sala-estudo.service';
+import { MateriaService } from '../services/materia.service';
+import { Materia } from '../models/materia.model';
+import {SalaEstudoService,  EstudoTopicoRequest,  FlashcardRevisaoRespostaRequest, TopicoRevisaoRespostaRequest
+} from '../services/sala-estudo.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 

@@ -1,16 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import {
-  AlunoDTO,
-  UsuarioConsultaDTO,
-  AlunoParametroDTO,
-  UsuarioUpdateDTO
-} from 'src/app/core/models/AlunoParametroDTO';
+import { AlunoDTO } from '../models/AlunoParametroDTO';
+import { UsuarioConsultaDTO } from '../models/AlunoParametroDTO';
+ import { AlunoParametroDTO } from '../models/AlunoParametroDTO';
+import { UsuarioUpdateDTO } from '../models/AlunoParametroDTO';
 
-import { PerfilAlunoService } from 'src/app/services/perfil-aluno.service';
+import { PerfilAlunoService } from 'src/app/core/components/area-aluno/services/perfil-aluno.service';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { UsuarioService } from 'src/app/site/services/usuario.service';
-import { AssinaturaService } from 'src/app/core/services/assinatura.service';
+import { AssinaturaService } from '../services/assinatura.service';
 @Component({
   selector: 'app-perfil-aluno',
   templateUrl: './perfil-aluno.component.html',

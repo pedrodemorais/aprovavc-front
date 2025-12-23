@@ -1,6 +1,6 @@
 // src/app/pages/assinatura/assinatura-planos/assinatura-planos.component.ts
 import { Component, OnInit } from '@angular/core';
-import { AssinaturaService, TipoPlano } from 'src/app/core/services/assinatura.service';
+import { AssinaturaService, TipoPlano } from '../services/assinatura.service';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
 
