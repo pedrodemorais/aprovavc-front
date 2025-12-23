@@ -1534,6 +1534,16 @@
   color: #ecececbb !important;
 }
 
+:host-context(body.theme-dark) .btn-toggle-coluna {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .btn-toggle-coluna:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
 :host-context(body.theme-dark) .muted,
 :host-context(body.theme-dark) .pequeno,
 :host-context(body.theme-dark) .subtitulo-section,

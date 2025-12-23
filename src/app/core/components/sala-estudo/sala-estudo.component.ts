@@ -59,9 +59,9 @@ export class SalaEstudoComponent implements OnInit {
   timerAtivo: boolean = false;
   private timerRef: any;
 
-  pomodoroDuracaoFoco: number = 30;        // testes
-  pomodoroDuracaoPausaCurta: number = 5;   // testes
-  pomodoroDuracaoPausaLonga: number = 15;  // testes
+  pomodoroDuracaoFoco: number = 1500;      // 25 min
+  pomodoroDuracaoPausaCurta: number = 300; // 5 min
+  pomodoroDuracaoPausaLonga: number = 900; // 15 min
   pomodoroCiclosParaLonga: number = 4;
 
   pomodoroFase: 'foco' | 'pausa-curta' | 'pausa-longa' = 'foco';
@@ -515,7 +515,7 @@ ativarRevisaoFlashcards(): void {
     }
 
     const confirmou = window.confirm(
-      'Se voc├¬ zerar o cron├┤metro agora, o tempo estudado at├® este momento N├âO ser├í contabilizado para este t├│pico/mat├®ria. Deseja realmente zerar?'
+      'Se voce zerar o cronometro agora, o tempo estudado ate este momento NAO sera contabilizado para este topico/materia. Deseja realmente zerar?'
     );
 
     if (!confirmou) {
