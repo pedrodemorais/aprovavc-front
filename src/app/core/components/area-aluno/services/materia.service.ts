@@ -35,6 +35,10 @@ export class MateriaService {
       .pipe(tap(() => this.materiasChangedSubject.next()));
   }
 
+  notificarMateriasAlteradas(): void {
+    this.materiasChangedSubject.next();
+  }
+
   // ---------- TÓPICOS ----------
 
 // materia.service.ts (parte de tópicos)

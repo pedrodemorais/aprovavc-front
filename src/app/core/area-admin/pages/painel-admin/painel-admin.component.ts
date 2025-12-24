@@ -208,8 +208,20 @@ export class PainelAdminComponent implements OnInit {
     });
   }
 
+  despublicar(id: number): void {
+    this.limparMensagens();
+    this.editalAdminService.despublicarTemplate(id).subscribe({
+      next: (res) => {
+        this.mensagemOk = `Despublicado: ID ${res.id}`;
+        if (this.selecionadoId === res.id) this.templateSelecionado = res;
+        this.recarregar();
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao despublicar template.')
+    });
+  }
+
   excluir(id: number): void {
-    const ok = confirm(`Confirma excluir o template ${id}? (se publicado, deve bloquear)`);
+    const ok = confirm(`Confirma excluir o template ${id}? (isso pode impactar alunos que clonaram)`);
     if (!ok) return;
 
     this.limparMensagens();
@@ -669,15 +681,16 @@ export class PainelAdminComponent implements OnInit {
   }
 
   private async salvarArvoreTopicos(nodos: TopicoNode[], pai?: TopicoNode): Promise<void> {
+    let ordem = 1;
     for (const n of nodos) {
-      await this.salvarTopicoAutomaticoPromise(n, pai);
+      await this.salvarTopicoAutomaticoPromise(n, pai, ordem++);
       if ((n.filhos || []).length) {
         await this.salvarArvoreTopicos(n.filhos || [], n);
       }
     }
   }
 
-  private salvarTopicoAutomaticoPromise(topico: TopicoNode, pai?: TopicoNode): Promise<void> {
+  private salvarTopicoAutomaticoPromise(topico: TopicoNode, pai?: TopicoNode, ordemOverride?: number): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.selecionadoId || !this.materiaSelecionadaId) {
         reject('Materia nao selecionada.');
@@ -686,8 +699,15 @@ export class PainelAdminComponent implements OnInit {
 
       const payload: any = {
         descricao: topico.descricao || topico.nome,
-        ordem: topico.ordem ?? 1
+        ordem: ordemOverride ?? topico.ordem ?? 1
       };
+      console.log('[IMPORT-EDITAL] POST topico', {
+        templateId: this.selecionadoId,
+        materiaId: this.materiaSelecionadaId,
+        descricao: payload.descricao,
+        ordem: payload.ordem,
+        topicoPaiId: pai?.id ?? null
+      });
 
       if (pai && pai.id) {
         payload.topicoPaiId = pai.id;
@@ -918,6 +938,10 @@ export class PainelAdminComponent implements OnInit {
     }
 
     const materiasImport = this.parseEditalParaMaterias(this.textoEdital);
+    console.log('[IMPORT-EDITAL] materias identificadas:', materiasImport.length);
+    if (materiasImport[0]) {
+      console.log('[IMPORT-EDITAL] primeira materia:', materiasImport[0].nome, 'topicos:', materiasImport[0].topicos?.length || 0);
+    }
     if (!materiasImport.length) {
       alert('Nao consegui identificar materias no texto. Verifique se os titulos estao como "NOME DA MATERIA:".');
       return;
@@ -959,6 +983,7 @@ export class PainelAdminComponent implements OnInit {
 
           okCount++;
         } catch (err) {
+          console.error('[IMPORT-EDITAL] Falha ao salvar materia/topicos:', nomeMateria, err);
           falhas.push({ materia: nomeMateria, erro: err });
           continue;
         }

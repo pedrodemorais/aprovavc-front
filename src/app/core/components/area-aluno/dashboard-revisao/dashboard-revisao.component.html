@@ -79,6 +79,61 @@
         </div>
       </div>
 
+      <div class="template-onboard" *ngIf="!editais.length || !materias.length">
+        <div class="template-head">
+          <div>
+            <div class="template-title">Use um template pronto</div>
+            <div class="template-subtitle">Escolha um edital publicado e crie automaticamente.</div>
+          </div>
+          <button type="button" class="btn-ghost" *ngIf="!templatesCarregando && !templates.length" (click)="carregarTemplates()">
+            Carregar templates
+          </button>
+        </div>
+
+        <div class="template-state" *ngIf="templatesCarregando">Carregando templates...</div>
+        <div class="template-state erro" *ngIf="templatesErro">{{ templatesErro }}</div>
+        <div class="template-state aviso" *ngIf="usandoTemplatesNaoPublicados">
+          Nenhum template publicado encontrado. Exibindo todos.
+        </div>
+
+        <div class="template-grid" *ngIf="templates.length">
+          <button
+            type="button"
+            class="template-card"
+            *ngFor="let t of templates"
+            [class.selected]="templateSelecionadoId === t.id"
+            (click)="selecionarTemplate(t)"
+          >
+            <div class="template-name">{{ t.nome }}</div>
+            <div class="template-meta">
+              <span class="pill-publicado" *ngIf="t.publicado">Publicado</span>
+              <span class="pill-rascunho" *ngIf="!t.publicado">Rascunho</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="template-form" *ngIf="templates.length">
+          <label class="template-label" for="nomeEditalTemplate">Nome do edital</label>
+          <input
+            id="nomeEditalTemplate"
+            type="text"
+            class="template-input"
+            [(ngModel)]="nomeEditalTemplate"
+            (ngModelChange)="onNomeEditalTemplateChange()"
+            placeholder="Ex: Edital PM 2025"
+          />
+          <button
+            type="button"
+            class="step-action"
+            [disabled]="clonandoTemplate || !templateSelecionadoId"
+            (click)="clonarTemplateSelecionado()"
+          >
+            {{ clonandoTemplate ? 'Criando...' : 'Criar edital pelo template' }}
+          </button>
+          <div class="template-ok" *ngIf="mensagemTemplateOk">{{ mensagemTemplateOk }}</div>
+        </div>
+      </div>
+
       <div class="onboarding-benefit">
         Depois disso, o sistema agenda revisoes automaticamente e mostra seu semaforo por topico.
       </div>
@@ -197,4 +252,5 @@
   </div>
 </section>
 </div>
+
 

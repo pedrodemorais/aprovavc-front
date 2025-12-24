@@ -7,6 +7,17 @@
   margin-top: 6px;
 }
 
+.page-materias-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-materias-header .steps-indicador {
+  margin-left: auto;
+}
+
 .admin-badges .badge {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -70,6 +81,17 @@
   border-radius: 12px;
   padding: 10px 12px;
   background: var(--surface);
+}
+
+.header-acoes-rapidas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-acoes-rapidas .form-acoes {
+  margin-left: auto;
 }
 
 .bloco-estrutura pre {

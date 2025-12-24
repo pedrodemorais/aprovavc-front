@@ -69,6 +69,10 @@ export class EditalAdminService {
     return this.http.post<EditalTemplateDTO>(`${this.adminTemplateBase}/${id}/publicar`, {}, this.options());
   }
 
+  despublicarTemplate(id: number): Observable<EditalTemplateDTO> {
+    return this.http.post<EditalTemplateDTO>(`${this.adminTemplateBase}/${id}/despublicar`, {}, this.options());
+  }
+
   excluirTemplate(id: number): Observable<void> {
     return this.http.delete<void>(`${this.adminTemplateBase}/${id}`, this.options());
   }

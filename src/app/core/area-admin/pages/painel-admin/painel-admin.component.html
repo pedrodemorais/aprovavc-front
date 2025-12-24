@@ -3,33 +3,30 @@
     <div>
       <h1 class="page-title">
         Painel administrativo
-        <i class="pi pi-info-circle info-icon"
-          pTooltip="Gerencie templates, materias e topicos do sistema."
+        <i class="pi pi-info-circle info-icon" pTooltip="Gerencie templates, materias e topicos do sistema."
           tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
       </h1>
-      <p class="page-subtitle">Gerencie templates, materias e topicos.</p>
 
-      <div class="admin-badges">
-        <span class="badge">Token: <b>{{ tokenPresente ? 'OK' : 'NAO' }}</b></span>
-        <span class="badge">Role detectada: <b>{{ roleDetectada || 'desconhecida' }}</b></span>
-      </div>
+
+
     </div>
 
     <div class="steps-indicador">
-      <div class="step-item ativo">
-        <span class="step-numero">0</span>
-        <span class="step-texto">Templates</span>
-      </div>
-      <span class="step-seta">-></span>
-      <div class="step-item" [class.ativo]="!!selecionadoId">
-        <span class="step-numero">1</span>
-        <span class="step-texto">Materias</span>
-      </div>
-      <span class="step-seta">-></span>
-      <div class="step-item" [class.ativo]="!!materiaExpandida">
-        <span class="step-numero">2</span>
-        <span class="step-texto">Topicos</span>
-      </div>
+      <section >
+        <div class="">
+
+
+          <div class="timer-modos">
+            <button type="button" class="btn-modo-timer" (click)="recarregar()">
+              Recarregar templates
+            </button>
+            <button type="button" class="btn-modo-timer" (click)="limparMensagens()">
+              Limpar mensagens
+            </button>
+          </div>
+
+        </div>
+      </section>
     </div>
   </div>
 
@@ -39,101 +36,44 @@
 
   <div class="page-materias-content">
     <section class="col-esquerda">
-      <section class="card bloco-acoes-rapidas">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Acoes rapidas</h2>
-          </div>
-        </div>
 
-        <div class="form-acoes">
-          <div class="timer-modos">
-            <button type="button" class="btn-modo-timer" (click)="recarregar()">
-              Recarregar templates
-            </button>
-            <button type="button" class="btn-modo-timer" (click)="limparMensagens()">
-              Limpar mensagens
-            </button>
-          </div>
-        </div>
-      </section>
 
       <section class="card bloco-template-form">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Passo 0 - Templates</h2>
-            <p class="card-subtitle">Crie e clone templates para alunos.</p>
+            <h2 class="card-title">Cadastrar Edital</h2>
+            
           </div>
-          <span class="pill pill-template">Passo 0</span>
-        </div>
-
-        <div class="form-materia">
-          <div class="form-campo">
-            <label class="label">Nome do template</label>
-            <input class="input-text" [(ngModel)]="novoNome" placeholder="Ex: PF - Agente - 2026 (v1)" />
-          </div>
-
-          <div class="form-acoes">
+         <div class="form-acoes">
             <div class="timer-modos">
               <button type="button" class="btn-modo-timer" (click)="criarTemplate()" [disabled]="!novoNome?.trim()">
                 Criar template
               </button>
             </div>
           </div>
+        </div>
+
+        <div class="form-materia">
+          <div class="form-campo">
+           
+            <input class="input-text" [(ngModel)]="novoNome" placeholder="Ex: PF - Agente - 2026 (v1)" />
+          </div>
+
+         
 
           <div class="form-divider"></div>
 
-          <div class="form-campo">
-            <label class="label">Template ID</label>
-            <input class="input-text" type="number" [(ngModel)]="cloneTemplateId" placeholder="Ex: 1" />
-          </div>
 
-          <div class="form-campo">
-            <label class="label">Nome do edital do aluno (opcional)</label>
-            <input class="input-text" [(ngModel)]="cloneNomeEdital" placeholder="Ex: Meu edital PF (personalizado)" />
-          </div>
-
-          <div class="form-acoes">
-            <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="clonar()" [disabled]="!cloneTemplateId">
-                Clonar
-              </button>
-            </div>
-          </div>
-
-          <div class="box-lite" *ngIf="resultadoClone !== null">
-            <div><strong>Clone OK</strong></div>
-            <div class="template-meta">Edital criado (ID): <b>{{ resultadoClone }}</b></div>
-          </div>
         </div>
       </section>
 
       <section class="card bloco-templates-lista">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Templates</h2>
+            <h2 class="card-title">Editais</h2>
 
             <div class="card-toolbar">
-              <div class="toolbar-left" *ngIf="templateSelecionado; else semTemplateSelecionado">
-                <span class="toolbar-label">Selecionado:</span>
-                <strong class="toolbar-strong" [pTooltip]="templateSelecionado?.nome" tooltipPosition="top">
-                  {{ templateSelecionado?.nome }}
-                </strong>
-              </div>
 
-              <ng-template #semTemplateSelecionado>
-                <div class="toolbar-left">
-                  <span class="toolbar-muted">Selecione um template para cadastrar materias e topicos.</span>
-                </div>
-              </ng-template>
-
-              <div class="toolbar-actions">
-                <div class="timer-modos">
-                  <button type="button" class="btn-modo-timer" (click)="buscarSelecionado()" [disabled]="!selecionadoId">
-                    Buscar por ID
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -147,7 +87,8 @@
             (click)="selecionar(t.id)">
 
             <div class="materia-info">
-              <span class="badge-nivel" [class.badge-template-ok]="t.publicado" [class.badge-template-no]="!t.publicado"></span>
+              <span class="badge-nivel" [class.badge-template-ok]="t.publicado"
+                [class.badge-template-no]="!t.publicado"></span>
 
               <div class="materia-textos">
                 <span class="materia-nome">{{ t.nome }}</span>
@@ -157,13 +98,19 @@
 
             <div class="materia-acoes" (click)="$event.stopPropagation()">
               <div class="timer-modos">
+                <button type="button" class="btn-modo-timer" (click)="selecionar(t.id)">
+                  Editar
+                </button>
                 <button type="button" class="btn-modo-timer" (click)="preencherClone(t.id)">
                   Usar no clone
                 </button>
                 <button type="button" class="btn-modo-timer" (click)="publicar(t.id)" [disabled]="t.publicado">
                   Publicar
                 </button>
-                <button type="button" class="btn-modo-timer" (click)="excluir(t.id)" [disabled]="t.publicado">
+                <button type="button" class="btn-modo-timer" (click)="despublicar(t.id)" [disabled]="!t.publicado">
+                  Despublicar
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="excluir(t.id)">
                   Excluir
                 </button>
               </div>
@@ -184,8 +131,8 @@
         <form (ngSubmit)="criarMateria()" class="form-materia">
           <div class="form-campo">
             <label class="label">Nome da materia <span class="obrigatorio">*</span></label>
-            <input #nomeMateriaInput type="text" class="input-text" [(ngModel)]="novaMateriaNome"
-              name="novaMateriaNome" placeholder="Ex: Direito Constitucional" [disabled]="!selecionadoId" />
+            <input #nomeMateriaInput type="text" class="input-text" [(ngModel)]="novaMateriaNome" name="novaMateriaNome"
+              placeholder="Ex: Direito Constitucional" [disabled]="!selecionadoId" />
 
             <div class="erro" *ngIf="campoMateriaInvalida()">
               Informe o nome da materia.
@@ -195,11 +142,13 @@
           <div class="form-acoes">
             <div class="timer-modos">
               <button type="submit" class="btn-modo-timer" [disabled]="!selecionadoId">Salvar</button>
-              <button type="button" class="btn-modo-timer" (click)="limparMateriaForm()" [disabled]="!selecionadoId">Novo</button>
+              <button type="button" class="btn-modo-timer" (click)="limparMateriaForm()"
+                [disabled]="!selecionadoId">Novo</button>
             </div>
 
             <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()" [disabled]="!selecionadoId">
+              <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()"
+                [disabled]="!selecionadoId">
                 Importar edital
               </button>
             </div>
@@ -231,8 +180,8 @@
                   <button type="button" class="btn-modo-timer" (click)="carregarMaterias()" [disabled]="!selecionadoId">
                     Recarregar
                   </button>
-                  <button type="button" class="btn-modo-timer" (click)="materiaExpandida && excluirMateria(materiaExpandida.id)"
-                    [disabled]="!materiaExpandida">
+                  <button type="button" class="btn-modo-timer"
+                    (click)="materiaExpandida && excluirMateria(materiaExpandida.id)" [disabled]="!materiaExpandida">
                     Excluir
                   </button>
                 </div>
@@ -286,11 +235,17 @@
 
           <div class="form-acoes">
             <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="atualizar()" [disabled]="templateSelecionado?.publicado">
-                Atualizar
+              <button type="button" class="btn-modo-timer" (click)="atualizar()"
+                [disabled]="templateSelecionado?.publicado">
+                Salvar edicao
               </button>
-              <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)" [disabled]="templateSelecionado?.publicado">
+              <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)"
+                [disabled]="templateSelecionado?.publicado">
                 Publicar
+              </button>
+              <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)"
+                [disabled]="!templateSelecionado?.publicado">
+                Despublicar
               </button>
             </div>
           </div>
@@ -330,8 +285,7 @@
             <div class="novo-topico-linha">
               <input #novoTopicoInput id="novoTopicoDescricao" type="text" [(ngModel)]="novoTopicoDescricao"
                 name="novoTopicoDescricao" class="input-text"
-                placeholder="Ex: Morfologia, Pronomes, Lei 8.112/90 - Estabilidade..."
-                (keyup.enter)="criarTopico()" />
+                placeholder="Ex: Morfologia, Pronomes, Lei 8.112/90 - Estabilidade..." (keyup.enter)="criarTopico()" />
             </div>
 
             <div class="novo-topico-hint">
@@ -519,7 +473,8 @@ Direito Administrativo
     </div>
 
     <p class="modal-sub">
-      Cole o conteudo do edital. O sistema cria as materias e monta topicos/subtopicos pela numeracao (1, 1.1, 1.1.1...).
+      Cole o conteudo do edital. O sistema cria as materias e monta topicos/subtopicos pela numeracao (1, 1.1,
+      1.1.1...).
     </p>
 
     <textarea class="textarea-lote" [(ngModel)]="textoEdital"
