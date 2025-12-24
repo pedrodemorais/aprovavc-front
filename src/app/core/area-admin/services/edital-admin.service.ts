@@ -7,10 +7,18 @@ import { environment } from 'src/environments/environment';
 
 import {
   AtualizarEditalTemplateRequestDTO,
-  ClonarEditalRequestDTO,
-  ClonarEditalResponseDTO,
   CriarEditalTemplateRequestDTO,
-  EditalTemplateDTO
+  EditalTemplateDTO,
+
+  CriarMateriaTemplateRequestDTO,
+  MateriaTemplateDTO,
+  CriarTopicoTemplateRequestDTO,
+  TopicoTemplateDTO,
+
+  EstruturaTemplateDTO,
+
+  ClonarEditalRequestDTO,
+  ClonarEditalResponseDTO
 } from '../dto/edital-admin.dto';
 
 @Injectable({
@@ -18,26 +26,14 @@ import {
 })
 export class EditalAdminService {
 
-  /**
-   * ✅ NÃO VAI DAR /api/api
-   * - se environment.apiUrl = http://localhost:8080/api  -> mantém
-   * - se environment.apiUrl = http://localhost:8080      -> adiciona /api
-   */
   private readonly baseUrl = `${environment.apiUrl}`.replace(/\/+$/, '');
   private readonly api = this.baseUrl.endsWith('/api') ? this.baseUrl : `${this.baseUrl}/api`;
 
-  // ADMIN endpoints (ROLE_ADMIN)
   private readonly adminTemplateBase = `${this.api}/admin/editais-template`;
-
-  // CLONE endpoint
-  // Se seu backend usa outro caminho, troca SÓ aqui.
   private readonly cloneBase = `${this.api}/editais/clonar-template`;
 
   constructor(private http: HttpClient) {}
 
-  // =====================================================
-  // ✅ OPTIONS: Bearer + withCredentials (igual seu Auth)
-  // =====================================================
   private options() {
     const token = localStorage.getItem('access_token');
 
@@ -46,15 +42,12 @@ export class EditalAdminService {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
-    return {
-      headers,
-      withCredentials: true
-    };
+    return { headers, withCredentials: true };
   }
 
-  // =====================================================
-  // ADMIN - TEMPLATES (ROLE_ADMIN)
-  // =====================================================
+  // =========================
+  // ADMIN - TEMPLATES
+  // =========================
 
   listarTemplates(): Observable<EditalTemplateDTO[]> {
     return this.http.get<EditalTemplateDTO[]>(this.adminTemplateBase, this.options());
@@ -80,11 +73,78 @@ export class EditalAdminService {
     return this.http.delete<void>(`${this.adminTemplateBase}/${id}`, this.options());
   }
 
-  // =====================================================
-  // CLONE - TEMPLATE -> EDITAL DO ALUNO
-  // =====================================================
+  // =========================
+  // ADMIN - MATERIAS
+  // =========================
+
+  listarMaterias(templateId: number): Observable<MateriaTemplateDTO[]> {
+    return this.http.get<MateriaTemplateDTO[]>(
+      `${this.adminTemplateBase}/${templateId}/materias`,
+      this.options()
+    );
+  }
+
+  criarMateria(templateId: number, payload: CriarMateriaTemplateRequestDTO): Observable<MateriaTemplateDTO> {
+    return this.http.post<MateriaTemplateDTO>(
+      `${this.adminTemplateBase}/${templateId}/materias`,
+      payload,
+      this.options()
+    );
+  }
+
+  excluirMateria(templateId: number, materiaId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.adminTemplateBase}/${templateId}/materias/${materiaId}`,
+      this.options()
+    );
+  }
+
+  // =========================
+  // ADMIN - TOPICOS
+  // =========================
+
+  listarTopicos(templateId: number, materiaId: number): Observable<TopicoTemplateDTO[]> {
+    return this.http.get<TopicoTemplateDTO[]>(
+      `${this.adminTemplateBase}/${templateId}/materias/${materiaId}/topicos`,
+      this.options()
+    );
+  }
+
+  criarTopico(templateId: number, materiaId: number, payload: CriarTopicoTemplateRequestDTO): Observable<TopicoTemplateDTO> {
+    return this.http.post<TopicoTemplateDTO>(
+      `${this.adminTemplateBase}/${templateId}/materias/${materiaId}/topicos`,
+      payload,
+      this.options()
+    );
+  }
+
+  excluirTopico(templateId: number, materiaId: number, topicoId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.adminTemplateBase}/${templateId}/materias/${materiaId}/topicos/${topicoId}`,
+      this.options()
+    );
+  }
+
+  // =========================
+  // ADMIN - ESTRUTURA
+  // =========================
+
+  buscarEstrutura(templateId: number): Observable<EstruturaTemplateDTO> {
+    return this.http.get<EstruturaTemplateDTO>(
+      `${this.adminTemplateBase}/${templateId}/estrutura`,
+      this.options()
+    );
+  }
+
+  // =========================
+  // CLONE (RETORNA NUMBER)
+  // =========================
 
   clonarTemplateParaAluno(templateId: number, payload: ClonarEditalRequestDTO = {}): Observable<ClonarEditalResponseDTO> {
-    return this.http.post<ClonarEditalResponseDTO>(`${this.cloneBase}/${templateId}`, payload, this.options());
+    return this.http.post<ClonarEditalResponseDTO>(
+      `${this.cloneBase}/${templateId}`,
+      payload,
+      this.options()
+    );
   }
 }

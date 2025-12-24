@@ -2,7 +2,7 @@
   <div class="admin-header">
     <div>
       <h1>Painel Administrativo</h1>
-      <p>Teste de permissão (ROLE_ADMIN) e endpoints de Templates de Edital.</p>
+    
     </div>
 
     <div class="admin-badges">
@@ -12,24 +12,29 @@
   </div>
 
   <div class="card">
-    <div class="card-title">Ações rápidas</div>
+    <div class="card-title">Ações rápidas
 
-    <div class="row">
+  <div class="row">
       <button class="btn" (click)="recarregar()">🔄 Recarregar Templates</button>
-      <button class="btn danger" (click)="limparMensagens()">🧹 Limpar Mensagens</button>
+      <button class="btn" (click)="limparMensagens()">🧹 Limpar Mensagens</button>
     </div>
 
-    <div class="messages">
+  
+
+
+    </div>
+  <div class="messages">
       <div class="ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
       <div class="err" *ngIf="mensagemErro">{{ mensagemErro }}</div>
       <div class="warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
     </div>
+  
   </div>
 
   <div class="grid">
-    <!-- CRIAR -->
+    <!-- CRIAR TEMPLATE -->
     <div class="card">
-      <div class="card-title">Criar Template</div>
+      <div class="card-title">1 Criar Template</div>
 
       <label>Nome do template</label>
       <input class="input" [(ngModel)]="novoNome" placeholder="Ex: PF - Agente - 2026 (v1)" />
@@ -58,21 +63,20 @@
       </div>
 
       <small class="hint">
-        Endpoint usado no service:
-        <b>POST /api/editais/clonar-template/&#123;templateId&#125;</b><br/>
-        Se o seu backend for outro caminho, eu ajusto a rota do service em 1 linha.
+        Endpoint:
+        <b>POST /api/editais/clonar-template/&#123;templateId&#125;</b>
       </small>
 
-      <div class="box" *ngIf="resultadoClone">
+      <div class="box-lite" *ngIf="resultadoClone !== null">
         <div><b>✅ Clone OK</b></div>
-        <pre>{{ resultadoClone | json }}</pre>
+        <div class="muted">Edital criado (ID): <b>{{ resultadoClone }}</b></div>
       </div>
     </div>
   </div>
 
-  <!-- LISTA -->
+  <!-- LISTA DE TEMPLATES -->
   <div class="card">
-    <div class="card-title">Templates</div>
+    <div class="card-title">2 Templates</div>
 
     <div class="table-wrap" *ngIf="templates?.length; else vazio">
       <table class="table">
@@ -84,7 +88,7 @@
           <th>Publicado</th>
           <th>Criação</th>
           <th>Publicação</th>
-          <th style="width: 320px;">Ações</th>
+          <th style="width: 340px;">Ações</th>
         </tr>
         </thead>
         <tbody>
@@ -92,15 +96,15 @@
           <td>{{ t.id }}</td>
           <td>
             <div class="name">{{ t.nome }}</div>
-            <small class="sub">Clique em “Selecionar” pra editar/publicar/excluir</small>
+            <small class="sub">Selecione para cadastrar matérias e tópicos</small>
           </td>
-          <td>{{ t.versao }}</td>
+          <td>{{ t.versao ?? '-' }}</td>
           <td>
             <span class="pill" [class.ok]="t.publicado" [class.no]="!t.publicado">
               {{ t.publicado ? 'SIM' : 'NÃO' }}
             </span>
           </td>
-          <td>{{ t.dataCriacao }}</td>
+          <td>{{ t.dataCriacao || '-' }}</td>
           <td>{{ t.dataPublicacao || '-' }}</td>
           <td>
             <div class="row">
@@ -120,26 +124,208 @@
         Nenhum template carregado (ou você está como USER e recebeu 403).
       </div>
     </ng-template>
+  </div>
 
-    <!-- EDITAR -->
-    <div class="card inner" *ngIf="selecionadoId">
-      <div class="card-title">Editar Template Selecionado (ID {{ selecionadoId }})</div>
+  <!-- WORKSPACE DO TEMPLATE SELECIONADO -->
+  <div class="card" *ngIf="selecionadoId">
+    <div class="card-title">
+       Template Selecionado: <b>ID {{ selecionadoId }}</b>
+      <span class="pill inline" [class.ok]="templateSelecionado?.publicado" [class.no]="!templateSelecionado?.publicado">
+        {{ templateSelecionado?.publicado ? 'PUBLICADO' : 'RASCUNHO' }}
+      </span>
+    </div>
+
+    <!-- EDITAR TEMPLATE -->
+    <div class="card inner">
+      <div class="card-title">Editar Template</div>
 
       <label>Novo nome</label>
       <input class="input" [(ngModel)]="editarNome" placeholder="Novo nome..." />
 
       <div class="row">
-        <button class="btn primary" (click)="atualizar()">💾 Atualizar</button>
+        <button class="btn primary" (click)="atualizar()" [disabled]="templateSelecionado?.publicado">💾 Atualizar</button>
         <button class="btn" (click)="buscarSelecionado()">🔍 Buscar por ID</button>
       </div>
 
       <small class="hint">
-        Endpoints:
-        <b>GET /api/admin/editais-template/&#123;id&#125;</b> |
-        <b>PUT /api/admin/editais-template/&#123;id&#125;</b> |
-        <b>POST /api/admin/editais-template/&#123;id&#125;/publicar</b> |
-        <b>DELETE /api/admin/editais-template/&#123;id&#125;</b>
+        (Se estiver publicado, o backend deve bloquear alterações)
       </small>
+    </div>
+
+    <!-- MATERIAS / TOPICOS -->
+    <div class="grid">
+      <!-- MATERIAS -->
+      <div class="card inner">
+        <div class="card-title">4 Matérias do Template</div>
+
+        <div class="row align-center">
+          <button class="btn" (click)="carregarMaterias()">🔄 Recarregar Matérias</button>
+          <span class="muted" *ngIf="materias?.length">Total: <b>{{ materias.length }}</b></span>
+        </div>
+
+        <div class="box-lite">
+          <label>Nome da matéria</label>
+          <input class="input" [(ngModel)]="novaMateriaNome" placeholder="Ex: Direito Constitucional" />
+
+          <label>Ordem (opcional)</label>
+          <input class="input" type="number" [(ngModel)]="novaMateriaOrdem" placeholder="Ex: 1" />
+
+          <div class="row">
+            <button class="btn primary"
+                    (click)="criarMateria()"
+                    [disabled]="templateSelecionado?.publicado">
+              ➕ Adicionar Matéria
+            </button>
+          </div>
+
+          <small class="hint">
+            Endpoint: <b>POST /api/admin/editais-template/&#123;templateId&#125;/materias</b>
+          </small>
+        </div>
+
+        <div class="table-wrap" *ngIf="materias?.length; else semMaterias">
+          <table class="table mini">
+            <thead>
+            <tr>
+              <th style="width: 80px;">ID</th>
+              <th>Nome/Descrição</th>
+              <th style="width: 80px;">Ordem</th>
+              <th style="width: 220px;">Ações</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let m of materias" [class.row-selected]="m.id === materiaSelecionadaId">
+              <td>{{ m.id }}</td>
+              <td>
+                <div class="name">{{ (m.nome || m.descricao) || '-' }}</div>
+                <small class="sub">Selecione para cadastrar tópicos</small>
+              </td>
+              <td>{{ m.ordem ?? '-' }}</td>
+              <td>
+                <div class="row">
+                  <button class="btn" (click)="selecionarMateria(m.id)">Selecionar</button>
+                  <button class="btn danger"
+                          (click)="excluirMateria(m.id)"
+                          [disabled]="templateSelecionado?.publicado">
+                    Excluir
+                  </button>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #semMaterias>
+          <div class="empty">Nenhuma matéria cadastrada neste template ainda.</div>
+        </ng-template>
+      </div>
+
+      <!-- TOPICOS -->
+      <div class="card inner">
+        <div class="card-title">5 Tópicos da Matéria</div>
+
+        <div *ngIf="!materiaSelecionadaId" class="empty">
+          Selecione uma matéria para listar/cadastrar tópicos.
+        </div>
+
+        <div *ngIf="materiaSelecionadaId">
+          <div class="row align-center">
+            <span class="pill inline ok">Matéria selecionada: <b>{{ materiaSelecionadaId }}</b></span>
+            <button class="btn" (click)="carregarTopicos()">🔄 Recarregar Tópicos</button>
+            <span class="muted" *ngIf="topicos?.length">Total: <b>{{ topicos.length }}</b></span>
+          </div>
+
+          <div class="box-lite">
+            <label>Nome do tópico</label>
+            <input class="input" [(ngModel)]="novoTopicoNome" placeholder="Ex: Princípios Fundamentais" />
+
+            <label>Ordem (opcional)</label>
+            <input class="input" type="number" [(ngModel)]="novoTopicoOrdem" placeholder="Ex: 1" />
+
+            <label>Tópico Pai (opcional)</label>
+         <select class="input"
+        [(ngModel)]="novoTopicoPaiId"
+        name="novoTopicoPaiId"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="debugPai($event)">
+  <option [ngValue]="null">— sem pai (tópico raiz) —</option>
+
+  <option *ngFor="let t of topicos; trackBy: trackByTopicoId"
+          [ngValue]="+t.id">
+    {{ t.id }} - {{ (t.nome || t.descricao) || 'tópico' }}
+  </option>
+</select>
+
+<small class="muted">Valor atual do pai: {{ novoTopicoPaiId | json }}</small>
+
+
+            <div class="row">
+              <button class="btn primary"
+                      (click)="criarTopico()"
+                      [disabled]="templateSelecionado?.publicado">
+                ➕ Adicionar Tópico
+              </button>
+            </div>
+
+            <small class="hint">
+              Endpoint: <b>POST /api/admin/editais-template/&#123;templateId&#125;/materias/&#123;materiaId&#125;/topicos</b>
+            </small>
+          </div>
+
+          <div class="table-wrap" *ngIf="topicos?.length; else semTopicos">
+            <table class="table mini">
+              <thead>
+              <tr>
+                <th style="width: 80px;">ID</th>
+                <th>Tópico</th>
+                <th style="width: 80px;">Ordem</th>
+                <th style="width: 110px;">Pai</th>
+                <th style="width: 140px;">Ações</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let t of topicos">
+                <td>{{ t.id }}</td>
+                <td>
+                  <div class="name">{{ (t.nome || t.descricao) || '-' }}</div>
+                  <small class="sub">materiaTemplateId: {{ t.materiaTemplateId || materiaSelecionadaId }}</small>
+                </td>
+                <td>{{ t.ordem ?? '-' }}</td>
+                <td>{{ t.topicoPaiId ?? '-' }}</td>
+                <td>
+                  <div class="row">
+                    <button class="btn danger"
+                            (click)="excluirTopico(t.id)"
+                            [disabled]="templateSelecionado?.publicado">
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <ng-template #semTopicos>
+            <div class="empty">Nenhum tópico cadastrado nesta matéria ainda.</div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTRUTURA (DEBUG) -->
+    <div class="card inner">
+      <div class="card-title">6) Estrutura do Template (debug)</div>
+
+      <div class="row">
+        <button class="btn" (click)="buscarEstrutura()">📚 Buscar Estrutura</button>
+        <button class="btn danger" (click)="limparEstrutura()">🧹 Limpar</button>
+      </div>
+
+      <div class="box-lite" *ngIf="estruturaTemplate">
+        <pre>{{ estruturaTemplate | json }}</pre>
+      </div>
     </div>
   </div>
 </div>
