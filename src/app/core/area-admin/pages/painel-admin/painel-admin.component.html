@@ -68,14 +68,36 @@
       </section>
 
       <section class="card bloco-templates-lista">
-        <div class="card-header">
-          <div>
+        <div class="card-header header-editais">
+          <div class="editais-row">
             <h2 class="card-title">Editais</h2>
-
-            <div class="card-toolbar">
-
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="selecionadoId && selecionar(selecionadoId)" [disabled]="!selecionadoId">
+                Editar
+              </button>
+              <button type="button" class="btn-modo-timer" (click)="preencherClone(selecionadoId!)" [disabled]="!selecionadoId">
+                Usar no clone
+              </button>
+              <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)" [disabled]="!selecionadoId || templateSelecionado?.publicado">
+                Publicar
+              </button>
+              <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)" [disabled]="!selecionadoId || !templateSelecionado?.publicado">
+                Despublicar
+              </button>
+              <button type="button" class="btn-modo-timer" (click)="excluir(selecionadoId!)" [disabled]="!selecionadoId">
+                Excluir
+              </button>
             </div>
           </div>
+          <div class="editais-meta" *ngIf="templateSelecionado; else semTemplateSelecionado">
+            <span class="toolbar-label">Selecionado:</span>
+            <strong class="toolbar-strong" [pTooltip]="templateSelecionado?.nome" tooltipPosition="top">
+              {{ templateSelecionado?.nome }}
+            </strong>
+          </div>
+          <ng-template #semTemplateSelecionado>
+         
+          </ng-template>
         </div>
 
         <p *ngIf="!templates?.length" class="estado-vazio">
@@ -89,32 +111,12 @@
             <div class="materia-info">
               <span class="badge-nivel" [class.badge-template-ok]="t.publicado"
                 [class.badge-template-no]="!t.publicado"></span>
-
-              <div class="materia-textos">
-                <span class="materia-nome">{{ t.nome }}</span>
+                 <span class="materia-nome">{{ t.nome }}</span>
                 <span class="template-meta">ID {{ t.id }} | Versao {{ t.versao ?? '-' }}</span>
-              </div>
+
+           
             </div>
 
-            <div class="materia-acoes" (click)="$event.stopPropagation()">
-              <div class="timer-modos">
-                <button type="button" class="btn-modo-timer" (click)="selecionar(t.id)">
-                  Editar
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="preencherClone(t.id)">
-                  Usar no clone
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="publicar(t.id)" [disabled]="t.publicado">
-                  Publicar
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="despublicar(t.id)" [disabled]="!t.publicado">
-                  Despublicar
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="excluir(t.id)">
-                  Excluir
-                </button>
-              </div>
-            </div>
           </li>
         </ul>
       </section>
