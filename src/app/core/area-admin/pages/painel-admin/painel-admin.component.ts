@@ -32,6 +32,7 @@ export class PainelAdminComponent implements OnInit {
 
   templates: EditalTemplateDTO[] = [];
   templateSelecionado: EditalTemplateDTO | null = null;
+  editaisFiltro = '';
 
   mensagemOk = '';
   mensagemErro = '';
@@ -109,6 +110,15 @@ export class PainelAdminComponent implements OnInit {
     this.mensagemErro = '';
     this.ultimoStatus = null;
     this.resultadoClone = null;
+  }
+
+  get templatesFiltrados(): EditalTemplateDTO[] {
+    const termo = (this.editaisFiltro || '').trim().toLowerCase();
+    if (!termo) return this.templates || [];
+    return (this.templates || []).filter(t => {
+      const nome = (t.nome || '').toLowerCase();
+      return nome.includes(termo) || String(t.id || '').includes(termo);
+    });
   }
 
   recarregar(): void {

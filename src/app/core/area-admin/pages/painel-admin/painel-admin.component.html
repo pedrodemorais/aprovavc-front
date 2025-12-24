@@ -15,8 +15,15 @@
       <section >
         <div class="">
 
+  <div class="mensagem-ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
+  <div class="mensagem-erro" *ngIf="mensagemErro">{{ mensagemErro }}</div>
+  <div class="mensagem-warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
+          
 
-          <div class="timer-modos">
+        </div>
+      </section>
+    </div>
+    <div class="timer-modos">
             <button type="button" class="btn-modo-timer" (click)="recarregar()">
               Recarregar templates
             </button>
@@ -24,15 +31,9 @@
               Limpar mensagens
             </button>
           </div>
-
-        </div>
-      </section>
-    </div>
   </div>
 
-  <div class="mensagem-ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
-  <div class="mensagem-erro" *ngIf="mensagemErro">{{ mensagemErro }}</div>
-  <div class="mensagem-warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
+
 
   <div class="page-materias-content">
     <section class="col-esquerda">
@@ -47,7 +48,7 @@
          <div class="form-acoes">
             <div class="timer-modos">
               <button type="button" class="btn-modo-timer" (click)="criarTemplate()" [disabled]="!novoNome?.trim()">
-                Criar template
+                Criar Edital
               </button>
             </div>
           </div>
@@ -71,22 +72,32 @@
         <div class="card-header header-editais">
           <div class="editais-row">
             <h2 class="card-title">Editais</h2>
-            <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="selecionadoId && selecionar(selecionadoId)" [disabled]="!selecionadoId">
-                Editar
-              </button>
-              <button type="button" class="btn-modo-timer" (click)="preencherClone(selecionadoId!)" [disabled]="!selecionadoId">
-                Usar no clone
-              </button>
-              <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)" [disabled]="!selecionadoId || templateSelecionado?.publicado">
-                Publicar
-              </button>
-              <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)" [disabled]="!selecionadoId || !templateSelecionado?.publicado">
-                Despublicar
-              </button>
-              <button type="button" class="btn-modo-timer" (click)="excluir(selecionadoId!)" [disabled]="!selecionadoId">
-                Excluir
-              </button>
+            <div class="editais-acoes">
+              <div class="editais-busca">
+                <input
+                  type="text"
+                  class="input-text"
+                  [(ngModel)]="editaisFiltro"
+                  placeholder="Pesquisar edital por nome ou ID..."
+                />
+              </div>
+              <div class="timer-modos">
+                <button type="button" class="btn-modo-timer" (click)="selecionadoId && selecionar(selecionadoId)" [disabled]="!selecionadoId">
+                  Editar
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="preencherClone(selecionadoId!)" [disabled]="!selecionadoId">
+                  Usar no clone
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)" [disabled]="!selecionadoId || templateSelecionado?.publicado">
+                  Publicar
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)" [disabled]="!selecionadoId || !templateSelecionado?.publicado">
+                  Despublicar
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="excluir(selecionadoId!)" [disabled]="!selecionadoId">
+                  Excluir
+                </button>
+              </div>
             </div>
           </div>
           <div class="editais-meta" *ngIf="templateSelecionado; else semTemplateSelecionado">
@@ -96,7 +107,7 @@
             </strong>
           </div>
           <ng-template #semTemplateSelecionado>
-         
+           
           </ng-template>
         </div>
 
@@ -105,7 +116,7 @@
         </p>
 
         <ul class="lista-materias" *ngIf="templates?.length">
-          <li class="item-materia" *ngFor="let t of templates" [class.ativa]="selecionadoId === t.id"
+          <li class="item-materia" *ngFor="let t of templatesFiltrados" [class.ativa]="selecionadoId === t.id"
             (click)="selecionar(t.id)">
 
             <div class="materia-info">
@@ -125,9 +136,22 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">Passo 1 - Cadastrar materia</h2>
-            <p class="card-subtitle">Materias pertencem ao template selecionado.</p>
+           
           </div>
-          <span class="pill pill-materia">Passo 1</span>
+          <div class="form-acoes">
+            <div class="timer-modos">
+              <button type="submit" class="btn-modo-timer" [disabled]="!selecionadoId">Salvar</button>
+              <button type="button" class="btn-modo-timer" (click)="limparMateriaForm()"
+                [disabled]="!selecionadoId">Novo</button>
+            </div>
+
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()"
+                [disabled]="!selecionadoId">
+                Importar Matérias
+              </button>
+            </div>
+          </div>
         </div>
 
         <form (ngSubmit)="criarMateria()" class="form-materia">
@@ -141,20 +165,7 @@
             </div>
           </div>
 
-          <div class="form-acoes">
-            <div class="timer-modos">
-              <button type="submit" class="btn-modo-timer" [disabled]="!selecionadoId">Salvar</button>
-              <button type="button" class="btn-modo-timer" (click)="limparMateriaForm()"
-                [disabled]="!selecionadoId">Novo</button>
-            </div>
-
-            <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()"
-                [disabled]="!selecionadoId">
-                Importar edital
-              </button>
-            </div>
-          </div>
+         
         </form>
       </section>
 
@@ -220,39 +231,7 @@
     </section>
 
     <section class="col-direita">
-      <section class="card bloco-template-edit" *ngIf="selecionadoId">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Template selecionado</h2>
-            <p class="card-subtitle">ID {{ selecionadoId }}</p>
-          </div>
-          <span class="pill pill-template">{{ templateSelecionado?.publicado ? 'PUBLICADO' : 'RASCUNHO' }}</span>
-        </div>
-
-        <div class="form-materia">
-          <div class="form-campo">
-            <label class="label">Novo nome</label>
-            <input class="input-text" [(ngModel)]="editarNome" placeholder="Novo nome..." />
-          </div>
-
-          <div class="form-acoes">
-            <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="atualizar()"
-                [disabled]="templateSelecionado?.publicado">
-                Salvar edicao
-              </button>
-              <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)"
-                [disabled]="templateSelecionado?.publicado">
-                Publicar
-              </button>
-              <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)"
-                [disabled]="!templateSelecionado?.publicado">
-                Despublicar
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+  
 
       <section class="card bloco-topicos">
         <div class="card-header">
@@ -321,12 +300,7 @@
 
           <div class="botoes-acoes-topicos">
             <div class="tree-toolbar">
-              <div class="tree-left" *ngIf="topicoSelecionado; else semTopicoSelecionado">
-                <span class="toolbar-label">Selecionado:</span>
-                <strong class="toolbar-strong">
-                  {{ topicoSelecionado?.descricao || topicoSelecionado?.nome }}
-                </strong>
-              </div>
+             
 
               <ng-template #semTopicoSelecionado>
                 <div class="tree-left">
