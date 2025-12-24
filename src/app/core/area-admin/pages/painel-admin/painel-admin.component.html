@@ -1,331 +1,592 @@
-<div class="admin-page">
-  <div class="admin-header">
+﻿<div class="page-materias">
+  <div class="page-materias-header">
     <div>
-      <h1>Painel Administrativo</h1>
-    
-    </div>
+      <h1 class="page-title">
+        Painel administrativo
+        <i class="pi pi-info-circle info-icon"
+          pTooltip="Gerencie templates, materias e topicos do sistema."
+          tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+      </h1>
+      <p class="page-subtitle">Gerencie templates, materias e topicos.</p>
 
-    <div class="admin-badges">
-      <span class="badge">Token: <b>{{ tokenPresente ? 'OK' : 'NÃO' }}</b></span>
-      <span class="badge">Role detectada: <b>{{ roleDetectada || 'desconhecida' }}</b></span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Ações rápidas
-
-  <div class="row">
-      <button class="btn" (click)="recarregar()">🔄 Recarregar Templates</button>
-      <button class="btn" (click)="limparMensagens()">🧹 Limpar Mensagens</button>
-    </div>
-
-  
-
-
-    </div>
-  <div class="messages">
-      <div class="ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
-      <div class="err" *ngIf="mensagemErro">{{ mensagemErro }}</div>
-      <div class="warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
-    </div>
-  
-  </div>
-
-  <div class="grid">
-    <!-- CRIAR TEMPLATE -->
-    <div class="card">
-      <div class="card-title">1 Criar Template</div>
-
-      <label>Nome do template</label>
-      <input class="input" [(ngModel)]="novoNome" placeholder="Ex: PF - Agente - 2026 (v1)" />
-
-      <div class="row">
-        <button class="btn primary" (click)="criarTemplate()">➕ Criar</button>
+      <div class="admin-badges">
+        <span class="badge">Token: <b>{{ tokenPresente ? 'OK' : 'NAO' }}</b></span>
+        <span class="badge">Role detectada: <b>{{ roleDetectada || 'desconhecida' }}</b></span>
       </div>
-
-      <small class="hint">
-        Endpoint: <b>POST /api/admin/editais-template</b>
-      </small>
     </div>
 
-    <!-- CLONE -->
-    <div class="card">
-      <div class="card-title">Clonar Template para o Aluno</div>
-
-      <label>Template ID</label>
-      <input class="input" type="number" [(ngModel)]="cloneTemplateId" placeholder="Ex: 1" />
-
-      <label>Nome do edital do aluno (opcional)</label>
-      <input class="input" [(ngModel)]="cloneNomeEdital" placeholder="Ex: Meu Edital PF (personalizado)" />
-
-      <div class="row">
-        <button class="btn primary" (click)="clonar()">📌 Clonar</button>
+    <div class="steps-indicador">
+      <div class="step-item ativo">
+        <span class="step-numero">0</span>
+        <span class="step-texto">Templates</span>
       </div>
-
-      <small class="hint">
-        Endpoint:
-        <b>POST /api/editais/clonar-template/&#123;templateId&#125;</b>
-      </small>
-
-      <div class="box-lite" *ngIf="resultadoClone !== null">
-        <div><b>✅ Clone OK</b></div>
-        <div class="muted">Edital criado (ID): <b>{{ resultadoClone }}</b></div>
+      <span class="step-seta">-></span>
+      <div class="step-item" [class.ativo]="!!selecionadoId">
+        <span class="step-numero">1</span>
+        <span class="step-texto">Materias</span>
+      </div>
+      <span class="step-seta">-></span>
+      <div class="step-item" [class.ativo]="!!materiaExpandida">
+        <span class="step-numero">2</span>
+        <span class="step-texto">Topicos</span>
       </div>
     </div>
   </div>
 
-  <!-- LISTA DE TEMPLATES -->
-  <div class="card">
-    <div class="card-title">2 Templates</div>
+  <div class="mensagem-ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
+  <div class="mensagem-erro" *ngIf="mensagemErro">{{ mensagemErro }}</div>
+  <div class="mensagem-warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
 
-    <div class="table-wrap" *ngIf="templates?.length; else vazio">
-      <table class="table">
-        <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nome</th>
-          <th>Versão</th>
-          <th>Publicado</th>
-          <th>Criação</th>
-          <th>Publicação</th>
-          <th style="width: 340px;">Ações</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let t of templates" [class.row-selected]="t.id === selecionadoId">
-          <td>{{ t.id }}</td>
-          <td>
-            <div class="name">{{ t.nome }}</div>
-            <small class="sub">Selecione para cadastrar matérias e tópicos</small>
-          </td>
-          <td>{{ t.versao ?? '-' }}</td>
-          <td>
-            <span class="pill" [class.ok]="t.publicado" [class.no]="!t.publicado">
-              {{ t.publicado ? 'SIM' : 'NÃO' }}
-            </span>
-          </td>
-          <td>{{ t.dataCriacao || '-' }}</td>
-          <td>{{ t.dataPublicacao || '-' }}</td>
-          <td>
-            <div class="row">
-              <button class="btn" (click)="selecionar(t.id)">Selecionar</button>
-              <button class="btn" (click)="preencherClone(t.id)">Usar no Clone</button>
-              <button class="btn primary" (click)="publicar(t.id)" [disabled]="t.publicado">Publicar</button>
-              <button class="btn danger" (click)="excluir(t.id)" [disabled]="t.publicado">Excluir</button>
-            </div>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <ng-template #vazio>
-      <div class="empty">
-        Nenhum template carregado (ou você está como USER e recebeu 403).
-      </div>
-    </ng-template>
-  </div>
-
-  <!-- WORKSPACE DO TEMPLATE SELECIONADO -->
-  <div class="card" *ngIf="selecionadoId">
-    <div class="card-title">
-       Template Selecionado: <b>ID {{ selecionadoId }}</b>
-      <span class="pill inline" [class.ok]="templateSelecionado?.publicado" [class.no]="!templateSelecionado?.publicado">
-        {{ templateSelecionado?.publicado ? 'PUBLICADO' : 'RASCUNHO' }}
-      </span>
-    </div>
-
-    <!-- EDITAR TEMPLATE -->
-    <div class="card inner">
-      <div class="card-title">Editar Template</div>
-
-      <label>Novo nome</label>
-      <input class="input" [(ngModel)]="editarNome" placeholder="Novo nome..." />
-
-      <div class="row">
-        <button class="btn primary" (click)="atualizar()" [disabled]="templateSelecionado?.publicado">💾 Atualizar</button>
-        <button class="btn" (click)="buscarSelecionado()">🔍 Buscar por ID</button>
-      </div>
-
-      <small class="hint">
-        (Se estiver publicado, o backend deve bloquear alterações)
-      </small>
-    </div>
-
-    <!-- MATERIAS / TOPICOS -->
-    <div class="grid">
-      <!-- MATERIAS -->
-      <div class="card inner">
-        <div class="card-title">4 Matérias do Template</div>
-
-        <div class="row align-center">
-          <button class="btn" (click)="carregarMaterias()">🔄 Recarregar Matérias</button>
-          <span class="muted" *ngIf="materias?.length">Total: <b>{{ materias.length }}</b></span>
+  <div class="page-materias-content">
+    <section class="col-esquerda">
+      <section class="card bloco-acoes-rapidas">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Acoes rapidas</h2>
+          </div>
         </div>
 
-        <div class="box-lite">
-          <label>Nome da matéria</label>
-          <input class="input" [(ngModel)]="novaMateriaNome" placeholder="Ex: Direito Constitucional" />
-
-          <label>Ordem (opcional)</label>
-          <input class="input" type="number" [(ngModel)]="novaMateriaOrdem" placeholder="Ex: 1" />
-
-          <div class="row">
-            <button class="btn primary"
-                    (click)="criarMateria()"
-                    [disabled]="templateSelecionado?.publicado">
-              ➕ Adicionar Matéria
+        <div class="form-acoes">
+          <div class="timer-modos">
+            <button type="button" class="btn-modo-timer" (click)="recarregar()">
+              Recarregar templates
+            </button>
+            <button type="button" class="btn-modo-timer" (click)="limparMensagens()">
+              Limpar mensagens
             </button>
           </div>
+        </div>
+      </section>
 
-          <small class="hint">
-            Endpoint: <b>POST /api/admin/editais-template/&#123;templateId&#125;/materias</b>
-          </small>
+      <section class="card bloco-template-form">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Passo 0 - Templates</h2>
+            <p class="card-subtitle">Crie e clone templates para alunos.</p>
+          </div>
+          <span class="pill pill-template">Passo 0</span>
         </div>
 
-        <div class="table-wrap" *ngIf="materias?.length; else semMaterias">
-          <table class="table mini">
-            <thead>
-            <tr>
-              <th style="width: 80px;">ID</th>
-              <th>Nome/Descrição</th>
-              <th style="width: 80px;">Ordem</th>
-              <th style="width: 220px;">Ações</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let m of materias" [class.row-selected]="m.id === materiaSelecionadaId">
-              <td>{{ m.id }}</td>
-              <td>
-                <div class="name">{{ (m.nome || m.descricao) || '-' }}</div>
-                <small class="sub">Selecione para cadastrar tópicos</small>
-              </td>
-              <td>{{ m.ordem ?? '-' }}</td>
-              <td>
-                <div class="row">
-                  <button class="btn" (click)="selecionarMateria(m.id)">Selecionar</button>
-                  <button class="btn danger"
-                          (click)="excluirMateria(m.id)"
-                          [disabled]="templateSelecionado?.publicado">
+        <div class="form-materia">
+          <div class="form-campo">
+            <label class="label">Nome do template</label>
+            <input class="input-text" [(ngModel)]="novoNome" placeholder="Ex: PF - Agente - 2026 (v1)" />
+          </div>
+
+          <div class="form-acoes">
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="criarTemplate()" [disabled]="!novoNome?.trim()">
+                Criar template
+              </button>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-campo">
+            <label class="label">Template ID</label>
+            <input class="input-text" type="number" [(ngModel)]="cloneTemplateId" placeholder="Ex: 1" />
+          </div>
+
+          <div class="form-campo">
+            <label class="label">Nome do edital do aluno (opcional)</label>
+            <input class="input-text" [(ngModel)]="cloneNomeEdital" placeholder="Ex: Meu edital PF (personalizado)" />
+          </div>
+
+          <div class="form-acoes">
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="clonar()" [disabled]="!cloneTemplateId">
+                Clonar
+              </button>
+            </div>
+          </div>
+
+          <div class="box-lite" *ngIf="resultadoClone !== null">
+            <div><strong>Clone OK</strong></div>
+            <div class="template-meta">Edital criado (ID): <b>{{ resultadoClone }}</b></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card bloco-templates-lista">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Templates</h2>
+
+            <div class="card-toolbar">
+              <div class="toolbar-left" *ngIf="templateSelecionado; else semTemplateSelecionado">
+                <span class="toolbar-label">Selecionado:</span>
+                <strong class="toolbar-strong" [pTooltip]="templateSelecionado?.nome" tooltipPosition="top">
+                  {{ templateSelecionado?.nome }}
+                </strong>
+              </div>
+
+              <ng-template #semTemplateSelecionado>
+                <div class="toolbar-left">
+                  <span class="toolbar-muted">Selecione um template para cadastrar materias e topicos.</span>
+                </div>
+              </ng-template>
+
+              <div class="toolbar-actions">
+                <div class="timer-modos">
+                  <button type="button" class="btn-modo-timer" (click)="buscarSelecionado()" [disabled]="!selecionadoId">
+                    Buscar por ID
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p *ngIf="!templates?.length" class="estado-vazio">
+          Nenhum template carregado (ou voce esta como USER e recebeu 403).
+        </p>
+
+        <ul class="lista-materias" *ngIf="templates?.length">
+          <li class="item-materia" *ngFor="let t of templates" [class.ativa]="selecionadoId === t.id"
+            (click)="selecionar(t.id)">
+
+            <div class="materia-info">
+              <span class="badge-nivel" [class.badge-template-ok]="t.publicado" [class.badge-template-no]="!t.publicado"></span>
+
+              <div class="materia-textos">
+                <span class="materia-nome">{{ t.nome }}</span>
+                <span class="template-meta">ID {{ t.id }} | Versao {{ t.versao ?? '-' }}</span>
+              </div>
+            </div>
+
+            <div class="materia-acoes" (click)="$event.stopPropagation()">
+              <div class="timer-modos">
+                <button type="button" class="btn-modo-timer" (click)="preencherClone(t.id)">
+                  Usar no clone
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="publicar(t.id)" [disabled]="t.publicado">
+                  Publicar
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="excluir(t.id)" [disabled]="t.publicado">
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="card bloco-materia-form">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Passo 1 - Cadastrar materia</h2>
+            <p class="card-subtitle">Materias pertencem ao template selecionado.</p>
+          </div>
+          <span class="pill pill-materia">Passo 1</span>
+        </div>
+
+        <form (ngSubmit)="criarMateria()" class="form-materia">
+          <div class="form-campo">
+            <label class="label">Nome da materia <span class="obrigatorio">*</span></label>
+            <input #nomeMateriaInput type="text" class="input-text" [(ngModel)]="novaMateriaNome"
+              name="novaMateriaNome" placeholder="Ex: Direito Constitucional" [disabled]="!selecionadoId" />
+
+            <div class="erro" *ngIf="campoMateriaInvalida()">
+              Informe o nome da materia.
+            </div>
+          </div>
+
+          <div class="form-acoes">
+            <div class="timer-modos">
+              <button type="submit" class="btn-modo-timer" [disabled]="!selecionadoId">Salvar</button>
+              <button type="button" class="btn-modo-timer" (click)="limparMateriaForm()" [disabled]="!selecionadoId">Novo</button>
+            </div>
+
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()" [disabled]="!selecionadoId">
+                Importar edital
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="card bloco-materias-lista">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Materias do template</h2>
+
+            <div class="card-toolbar">
+              <div class="toolbar-left" *ngIf="materiaExpandida; else semMateriaSelecionada">
+                <span class="toolbar-label">Selecionada:</span>
+                <strong class="toolbar-strong">
+                  {{ materiaExpandida?.nome || materiaExpandida?.descricao }}
+                </strong>
+              </div>
+
+              <ng-template #semMateriaSelecionada>
+                <div class="toolbar-left">
+                  <span class="toolbar-muted">Selecione uma materia para cadastrar topicos.</span>
+                </div>
+              </ng-template>
+
+              <div class="toolbar-actions">
+                <div class="timer-modos">
+                  <button type="button" class="btn-modo-timer" (click)="carregarMaterias()" [disabled]="!selecionadoId">
+                    Recarregar
+                  </button>
+                  <button type="button" class="btn-modo-timer" (click)="materiaExpandida && excluirMateria(materiaExpandida.id)"
+                    [disabled]="!materiaExpandida">
                     Excluir
                   </button>
                 </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <ng-template #semMaterias>
-          <div class="empty">Nenhuma matéria cadastrada neste template ainda.</div>
-        </ng-template>
-      </div>
+        <div *ngIf="carregandoMaterias" class="loading">Carregando materias...</div>
 
-      <!-- TOPICOS -->
-      <div class="card inner">
-        <div class="card-title">5 Tópicos da Matéria</div>
+        <p *ngIf="!carregandoMaterias && selecionadoId && !materias.length" class="estado-vazio">
+          Nenhuma materia cadastrada neste template ainda.
+        </p>
 
-        <div *ngIf="!materiaSelecionadaId" class="empty">
-          Selecione uma matéria para listar/cadastrar tópicos.
+        <p *ngIf="!selecionadoId" class="estado-vazio">
+          Selecione um template para listar materias.
+        </p>
+
+        <ul class="lista-materias" *ngIf="!carregandoMaterias && selecionadoId && materias.length">
+          <li class="item-materia" *ngFor="let m of materias" [class.ativa]="materiaExpandida?.id === m.id"
+            (click)="toggleMateria(m)">
+
+            <div class="materia-info">
+              <span class="badge-nivel badge-template-ok"></span>
+
+              <div class="materia-textos">
+                <span class="materia-nome">{{ m.nome || m.descricao }}</span>
+                <span class="template-meta">ID {{ m.id }} | Ordem {{ m.ordem ?? '-' }}</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </section>
+
+    <section class="col-direita">
+      <section class="card bloco-template-edit" *ngIf="selecionadoId">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Template selecionado</h2>
+            <p class="card-subtitle">ID {{ selecionadoId }}</p>
+          </div>
+          <span class="pill pill-template">{{ templateSelecionado?.publicado ? 'PUBLICADO' : 'RASCUNHO' }}</span>
         </div>
 
-        <div *ngIf="materiaSelecionadaId">
-          <div class="row align-center">
-            <span class="pill inline ok">Matéria selecionada: <b>{{ materiaSelecionadaId }}</b></span>
-            <button class="btn" (click)="carregarTopicos()">🔄 Recarregar Tópicos</button>
-            <span class="muted" *ngIf="topicos?.length">Total: <b>{{ topicos.length }}</b></span>
+        <div class="form-materia">
+          <div class="form-campo">
+            <label class="label">Novo nome</label>
+            <input class="input-text" [(ngModel)]="editarNome" placeholder="Novo nome..." />
           </div>
 
-          <div class="box-lite">
-            <label>Nome do tópico</label>
-            <input class="input" [(ngModel)]="novoTopicoNome" placeholder="Ex: Princípios Fundamentais" />
-
-            <label>Ordem (opcional)</label>
-            <input class="input" type="number" [(ngModel)]="novoTopicoOrdem" placeholder="Ex: 1" />
-
-            <label>Tópico Pai (opcional)</label>
-         <select class="input"
-        [(ngModel)]="novoTopicoPaiId"
-        name="novoTopicoPaiId"
-        [ngModelOptions]="{ standalone: true }"
-        (ngModelChange)="debugPai($event)">
-  <option [ngValue]="null">— sem pai (tópico raiz) —</option>
-
-  <option *ngFor="let t of topicos; trackBy: trackByTopicoId"
-          [ngValue]="+t.id">
-    {{ t.id }} - {{ (t.nome || t.descricao) || 'tópico' }}
-  </option>
-</select>
-
-<small class="muted">Valor atual do pai: {{ novoTopicoPaiId | json }}</small>
-
-
-            <div class="row">
-              <button class="btn primary"
-                      (click)="criarTopico()"
-                      [disabled]="templateSelecionado?.publicado">
-                ➕ Adicionar Tópico
+          <div class="form-acoes">
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="atualizar()" [disabled]="templateSelecionado?.publicado">
+                Atualizar
+              </button>
+              <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)" [disabled]="templateSelecionado?.publicado">
+                Publicar
               </button>
             </div>
-
-            <small class="hint">
-              Endpoint: <b>POST /api/admin/editais-template/&#123;templateId&#125;/materias/&#123;materiaId&#125;/topicos</b>
-            </small>
           </div>
-
-          <div class="table-wrap" *ngIf="topicos?.length; else semTopicos">
-            <table class="table mini">
-              <thead>
-              <tr>
-                <th style="width: 80px;">ID</th>
-                <th>Tópico</th>
-                <th style="width: 80px;">Ordem</th>
-                <th style="width: 110px;">Pai</th>
-                <th style="width: 140px;">Ações</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr *ngFor="let t of topicos">
-                <td>{{ t.id }}</td>
-                <td>
-                  <div class="name">{{ (t.nome || t.descricao) || '-' }}</div>
-                  <small class="sub">materiaTemplateId: {{ t.materiaTemplateId || materiaSelecionadaId }}</small>
-                </td>
-                <td>{{ t.ordem ?? '-' }}</td>
-                <td>{{ t.topicoPaiId ?? '-' }}</td>
-                <td>
-                  <div class="row">
-                    <button class="btn danger"
-                            (click)="excluirTopico(t.id)"
-                            [disabled]="templateSelecionado?.publicado">
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <ng-template #semTopicos>
-            <div class="empty">Nenhum tópico cadastrado nesta matéria ainda.</div>
-          </ng-template>
         </div>
+      </section>
+
+      <section class="card bloco-topicos">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              Passo 2 - Topicos e subtopicos
+              <ng-container *ngIf="materiaExpandida">
+                de<strong class="card-subtitle">{{ materiaExpandida?.nome || materiaExpandida?.descricao }}</strong>
+              </ng-container>
+            </div>
+
+            <p class="card-subtitle" *ngIf="!materiaExpandida">
+              Selecione uma materia na coluna da esquerda para comecar a cadastrar topicos.
+            </p>
+          </div>
+
+          <span class="pill pill-topico">Passo 2</span>
+        </div>
+
+        <div *ngIf="!materiaExpandida" class="estado-vazio-topicos">
+          <p>
+            1. Selecione um template.<br />
+            2. Clique na materia para seleciona-la.<br />
+            3. Depois disso, o campo para criar topicos aparecera aqui.
+          </p>
+        </div>
+
+        <ng-container *ngIf="materiaExpandida">
+          <div class="novo-topico-card">
+            <label for="novoTopicoDescricao" class="label">Novo topico ou subtopico</label>
+
+            <div class="novo-topico-linha">
+              <input #novoTopicoInput id="novoTopicoDescricao" type="text" [(ngModel)]="novoTopicoDescricao"
+                name="novoTopicoDescricao" class="input-text"
+                placeholder="Ex: Morfologia, Pronomes, Lei 8.112/90 - Estabilidade..."
+                (keyup.enter)="criarTopico()" />
+            </div>
+
+            <div class="novo-topico-hint">
+              <div class="mansagens-subtopicos">
+                <ng-container *ngIf="!topicoSelecionado">
+                  Nenhum topico pai selecionado: o novo item sera criado na <strong>raiz</strong> da materia.<br />
+                  Para criar um subtopico, clique primeiro no topico pai na lista abaixo.
+                </ng-container>
+
+                <ng-container *ngIf="topicoSelecionado">
+                  Topico pai selecionado:
+                  <strong [pTooltip]="topicoSelecionado?.descricao || topicoSelecionado?.nome" tooltipPosition="top">
+                    {{ topicoSelecionado?.descricao || topicoSelecionado?.nome }}
+                  </strong>.<br />
+                  O novo item sera criado como <strong>subtopico</strong>.
+                </ng-container>
+              </div>
+
+              <div class="novo-topico-acoes">
+                <button type="button" class="btn primario" (click)="criarTopico()"
+                  [disabled]="!novoTopicoDescricao?.trim()">
+                  Salvar topico
+                </button>
+
+                <button type="button" class="btn secundario" (click)="abrirModalLote()">
+                  Adicionar por lote
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="botoes-acoes-topicos">
+            <div class="tree-toolbar">
+              <div class="tree-left" *ngIf="topicoSelecionado; else semTopicoSelecionado">
+                <span class="toolbar-label">Selecionado:</span>
+                <strong class="toolbar-strong">
+                  {{ topicoSelecionado?.descricao || topicoSelecionado?.nome }}
+                </strong>
+              </div>
+
+              <ng-template #semTopicoSelecionado>
+                <div class="tree-left">
+                  <span class="toolbar-muted">Selecione um topico para excluir.</span>
+                </div>
+              </ng-template>
+
+              <div class="tree-actions">
+                <div class="timer-modos">
+                  <button type="button" class="btn-modo-timer" (click)="limparTopicoSelecionado()"
+                    [disabled]="!topicoSelecionado">
+                    Limpar
+                  </button>
+                </div>
+
+                <button type="button" class="btn perigo btn-sm" (click)="excluirTopicoSelecionado()"
+                  [disabled]="!topicoSelecionado">
+                  Excluir
+                </button>
+              </div>
+            </div>
+
+            <div class="arvore-card">
+              <div *ngIf="carregandoTopicos" class="loading">
+                Carregando topicos...
+              </div>
+
+              <ng-container *ngIf="!carregandoTopicos">
+                <ul class="lista-topicos" *ngIf="topicosArvore.length; else listaTopicosVazia">
+                  <ng-container *ngFor="let t of topicosArvore">
+                    <ng-container
+                      *ngTemplateOutlet="topicoTemplate; context: { $implicit: t, nivel: 0 }"></ng-container>
+                  </ng-container>
+                </ul>
+
+                <ng-template #listaTopicosVazia>
+                  <p class="estado-vazio">
+                    Nenhum topico cadastrado ainda para esta materia.
+                    Comece criando o primeiro topico acima.
+                  </p>
+                </ng-template>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+      </section>
+
+      <section class="card bloco-estrutura" *ngIf="selecionadoId">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Estrutura do template (debug)</h2>
+            <p class="card-subtitle">Use apenas para auditoria.</p>
+          </div>
+        </div>
+
+        <div class="form-acoes">
+          <div class="timer-modos">
+            <button type="button" class="btn-modo-timer" (click)="buscarEstrutura()">Buscar estrutura</button>
+            <button type="button" class="btn-modo-timer" (click)="limparEstrutura()">Limpar</button>
+          </div>
+        </div>
+
+        <div class="lote-preview-arvore" *ngIf="estruturaTemplate">
+          <pre>{{ estruturaTemplate | json }}</pre>
+        </div>
+      </section>
+    </section>
+  </div>
+</div>
+
+<!-- MODAL: ADICIONAR POR LOTE (HIERARQUICO) -->
+<div class="modal-backdrop" *ngIf="mostrarModalLote" (click)="fecharModalLote()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Adicionar topicos por lote</h3>
+        <p class="modal-subtitle">
+          Cole um topico por linha. Use tab ou espacos para criar subtopicos.
+          <br />
+          <span *ngIf="topicoSelecionado">
+            Importando dentro de: <strong>{{ topicoSelecionado?.descricao || topicoSelecionado?.nome }}</strong>
+          </span>
+          <span *ngIf="!topicoSelecionado">
+            Importando na raiz da materia.
+          </span>
+        </p>
+      </div>
+
+      <button type="button" class="btn-icone modal-fechar" (click)="fecharModalLote()" title="Fechar">
+        X
+      </button>
+    </div>
+
+    <textarea class="input-text area-lote" [(ngModel)]="textoLoteTopicos" (ngModelChange)="atualizarPreviewLote()"
+      placeholder="Ex:
+Direito Constitucional
+  Poder Constituinte
+  Direitos Fundamentais
+Direito Administrativo
+  Atos Administrativos
+    Elementos do ato
+    Anulacao e revogacao"></textarea>
+
+    <div class="modal-acoes">
+      <button type="button" class="btn secundario" (click)="fecharModalLote()">Cancelar</button>
+      <button type="button" class="btn primario" (click)="importarTopicosEmLote()"
+        [disabled]="!textoLoteTopicos?.trim() || salvandoLote">
+        {{ salvandoLote ? 'Importando...' : 'Importar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE RECURSIVO PARA ARVORE DE TOPICOS -->
+<ng-template #topicoTemplate let-topico let-nivel="nivel">
+  <li>
+    <div class="topico-linha" [style.paddingLeft.px]="nivel * 18" [class.selecionado]="topicoSelecionado === topico"
+      (click)="selecionarTopico(topico)">
+
+      <div class="topico-info">
+        <span class="badge-nivel badge-topico"></span>
+
+        <span class="topico-descricao" [pTooltip]="topico.descricao || topico.nome" tooltipPosition="top"
+          [showDelay]="150" [hideDelay]="80">
+          {{ topico.descricao || topico.nome }}
+        </span>
       </div>
     </div>
 
-    <!-- ESTRUTURA (DEBUG) -->
-    <div class="card inner">
-      <div class="card-title">6) Estrutura do Template (debug)</div>
+    <ul class="lista-topicos-filhos" *ngIf="topico.filhos?.length">
+      <ng-container *ngFor="let filho of topico.filhos">
+        <ng-container
+          *ngTemplateOutlet="topicoTemplate; context: { $implicit: filho, nivel: nivel + 1 }"></ng-container>
+      </ng-container>
+    </ul>
+  </li>
+</ng-template>
 
-      <div class="row">
-        <button class="btn" (click)="buscarEstrutura()">📚 Buscar Estrutura</button>
-        <button class="btn danger" (click)="limparEstrutura()">🧹 Limpar</button>
-      </div>
+<!-- MODAL: IMPORTAR EDITAL (MATERIAS + TOPICOS) -->
+<div class="modal-overlay" *ngIf="mostrarModalEdital">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Importar edital</h3>
+      <button type="button" class="btn-icone" (click)="fecharModalImportarEdital()" title="Fechar">X</button>
+    </div>
 
-      <div class="box-lite" *ngIf="estruturaTemplate">
-        <pre>{{ estruturaTemplate | json }}</pre>
-      </div>
+    <p class="modal-sub">
+      Cole o conteudo do edital. O sistema cria as materias e monta topicos/subtopicos pela numeracao (1, 1.1, 1.1.1...).
+    </p>
+
+    <textarea class="textarea-lote" [(ngModel)]="textoEdital"
+      placeholder="Cole aqui o texto do edital (ex: LINGUA PORTUGUESA: 1 ... 1.1 ...  )" rows="10"></textarea>
+
+    <div class="lote-preview-wrap">
+      <div class="lote-preview-titulo">Previa</div>
+
+      <ng-container *ngIf="previewEdital?.length; else semPreviewEdital">
+        <div class="lote-preview-resumo">
+          <span class="lote-preview-bullet"></span>
+          <span class="lote-preview-materia">
+            {{ previewEdital.length }} materias identificadas
+          </span>
+        </div>
+
+        <div class="lote-preview-arvore">
+          <ul class="preview-ul">
+            <li class="preview-li" *ngFor="let m of previewEdital">
+              <span class="preview-dot"></span>
+
+              <span class="preview-txt">
+                <strong>{{ m.nome }}</strong>
+                <span style="opacity:.75;"> - {{ contarTopicosRecursivo(m.topicos) }} itens</span>
+              </span>
+
+              <ul class="preview-ul" style="margin-top:6px;">
+                <ng-container *ngFor="let t of m.topicos">
+                  <ng-container
+                    *ngTemplateOutlet="previewTopicoTpl; context: { $implicit: t, nivel: 1 }"></ng-container>
+                </ng-container>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </ng-container>
+
+      <ng-template #semPreviewEdital>
+        <div class="lote-preview-vazio">
+          Cole o conteudo do edital para ver a previa (materias + topicos).
+        </div>
+      </ng-template>
+    </div>
+
+    <ng-template #previewTopicoTpl let-topico let-nivel="nivel">
+      <li class="preview-li" [style.paddingLeft.px]="nivel * 16">
+        <span class="preview-dot"></span>
+        <span class="preview-txt">{{ topico.descricao || topico.nome }}</span>
+      </li>
+
+      <ng-container *ngIf="topico.filhos?.length">
+        <ng-container *ngFor="let f of topico.filhos">
+          <ng-container
+            *ngTemplateOutlet="previewTopicoTpl; context: { $implicit: f, nivel: nivel + 1 }"></ng-container>
+        </ng-container>
+      </ng-container>
+    </ng-template>
+
+    <div class="modal-actions">
+      <button type="button" class="btn secundario" (click)="fecharModalImportarEdital()" [disabled]="salvandoEdital">
+        Cancelar
+      </button>
+
+      <button type="button" class="btn primario" (click)="importarEditalCompleto()"
+        [disabled]="salvandoEdital || !textoEdital?.trim()">
+        {{ salvandoEdital ? 'Importando...' : 'Importar agora' }}
+      </button>
     </div>
   </div>
 </div>
