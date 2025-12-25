@@ -1,41 +1,37 @@
 ﻿<div class="page-materias">
+  
   <div class="page-materias-header">
-    <div>
+    
+    <div class="nome-e-botoes">
       <h1 class="page-title">
         Painel administrativo
         <i class="pi pi-info-circle info-icon" pTooltip="Gerencie templates, materias e topicos do sistema."
           tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
       </h1>
-
-
-
+      <div class="mensagens-linha">
+        <div class="mensagem-ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
+        <div class="mensagem-erro" *ngIf="mensagemErro">{{ mensagemErro }}</div>
+        <div class="mensagem-warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
+      </div>
     </div>
 
-    <div class="steps-indicador">
-      <section >
-        <div class="">
-
-  <div class="mensagem-ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
-  <div class="mensagem-erro" *ngIf="mensagemErro">{{ mensagemErro }}</div>
-  <div class="mensagem-warn" *ngIf="ultimoStatus">HTTP Status: <b>{{ ultimoStatus }}</b></div>
-          
-
-        </div>
-      </section>
+    <div class="botoes">
+      <div class="timer-modos">
+        <button type="button" class="btn-modo-timer" (click)="recarregar()">
+          Recarregar templates
+        </button>
+        <button type="button" class="btn-modo-timer" (click)="limparMensagens()">
+          Limpar mensagens
+        </button>
+      </div>
     </div>
-    <div class="timer-modos">
-            <button type="button" class="btn-modo-timer" (click)="recarregar()">
-              Recarregar templates
-            </button>
-            <button type="button" class="btn-modo-timer" (click)="limparMensagens()">
-              Limpar mensagens
-            </button>
-          </div>
+   
   </div>
 
 
 
   <div class="page-materias-content">
+    
     <section class="col-esquerda">
 
 
@@ -43,12 +39,22 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">Cadastrar Edital</h2>
-            
+
           </div>
-         <div class="form-acoes">
+          <div class="form-acoes">
             <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="criarTemplate()" [disabled]="!novoNome?.trim()">
-                Criar Edital
+              <button type="button" class="btn-modo-timer"
+                (click)="editandoTemplate ? atualizar() : criarTemplate()"
+                [disabled]="!novoNome?.trim() || (editandoTemplate && !selecionadoId)">
+                {{ editandoTemplate ? 'Salvar' : 'Criar Edital' }}
+              </button>
+            </div>
+            <div class="timer-modos">
+              <button type="button" class="btn-modo-timer" (click)="buscarEstrutura()" [disabled]="!selecionadoId">
+                Buscar estrutura
+              </button>
+              <button type="button" class="btn-modo-timer" (click)="limparEstrutura()" [disabled]="!estruturaTemplate">
+                Limpar
               </button>
             </div>
           </div>
@@ -56,11 +62,12 @@
 
         <div class="form-materia">
           <div class="form-campo">
-           
-            <input class="input-text" [(ngModel)]="novoNome" placeholder="Ex: PF - Agente - 2026 (v1)" />
+
+            <input class="input-text" [(ngModel)]="novoNome" (ngModelChange)="editarNome = $event"
+              placeholder="Ex: PF - Agente - 2026 (v1)" />
           </div>
 
-         
+
 
           <div class="form-divider"></div>
 
@@ -74,40 +81,36 @@
             <h2 class="card-title">Editais</h2>
             <div class="editais-acoes">
               <div class="editais-busca">
-                <input
-                  type="text"
-                  class="input-text"
-                  [(ngModel)]="editaisFiltro"
-                  placeholder="Pesquisar edital por nome ou ID..."
-                />
+                <input type="text" class="input-text" [(ngModel)]="editaisFiltro"
+                  placeholder="Pesquisar edital por nome ou ID..." />
               </div>
               <div class="timer-modos">
-                <button type="button" class="btn-modo-timer" (click)="selecionadoId && selecionar(selecionadoId)" [disabled]="!selecionadoId">
+                <button type="button" class="btn-modo-timer" (click)="iniciarEdicaoTemplate()"
+                  [disabled]="!selecionadoId">
                   Editar
                 </button>
-                <button type="button" class="btn-modo-timer" (click)="preencherClone(selecionadoId!)" [disabled]="!selecionadoId">
+                <button type="button" class="btn-modo-timer" (click)="preencherClone(selecionadoId!)"
+                  [disabled]="!selecionadoId">
                   Usar no clone
                 </button>
-                <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)" [disabled]="!selecionadoId || templateSelecionado?.publicado">
+                <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)"
+                  [disabled]="!selecionadoId || templateSelecionado?.publicado">
                   Publicar
                 </button>
-                <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)" [disabled]="!selecionadoId || !templateSelecionado?.publicado">
+                <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)"
+                  [disabled]="!selecionadoId || !templateSelecionado?.publicado">
                   Despublicar
                 </button>
-                <button type="button" class="btn-modo-timer" (click)="excluir(selecionadoId!)" [disabled]="!selecionadoId">
+                <button type="button" class="btn-modo-timer" (click)="excluir(selecionadoId!)"
+                  [disabled]="!selecionadoId">
                   Excluir
                 </button>
               </div>
             </div>
           </div>
-          <div class="editais-meta" *ngIf="templateSelecionado; else semTemplateSelecionado">
-            <span class="toolbar-label">Selecionado:</span>
-            <strong class="toolbar-strong" [pTooltip]="templateSelecionado?.nome" tooltipPosition="top">
-              {{ templateSelecionado?.nome }}
-            </strong>
-          </div>
+      
           <ng-template #semTemplateSelecionado>
-           
+
           </ng-template>
         </div>
 
@@ -122,10 +125,10 @@
             <div class="materia-info">
               <span class="badge-nivel" [class.badge-template-ok]="t.publicado"
                 [class.badge-template-no]="!t.publicado"></span>
-                 <span class="materia-nome">{{ t.nome }}</span>
-                <span class="template-meta">ID {{ t.id }} | Versao {{ t.versao ?? '-' }}</span>
+              <span class="materia-nome">{{ t.nome }}</span>
+              <span class="template-meta">ID {{ t.id }} | Versao {{ t.versao ?? '-' }}</span>
 
-           
+
             </div>
 
           </li>
@@ -136,7 +139,7 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">Passo 1 - Cadastrar materia</h2>
-           
+
           </div>
           <div class="form-acoes">
             <div class="timer-modos">
@@ -165,7 +168,7 @@
             </div>
           </div>
 
-         
+
         </form>
       </section>
 
@@ -231,7 +234,7 @@
     </section>
 
     <section class="col-direita">
-  
+
 
       <section class="card bloco-topicos">
         <div class="card-header">
@@ -300,7 +303,7 @@
 
           <div class="botoes-acoes-topicos">
             <div class="tree-toolbar">
-             
+
 
               <ng-template #semTopicoSelecionado>
                 <div class="tree-left">
@@ -348,26 +351,28 @@
         </ng-container>
       </section>
 
-      <section class="card bloco-estrutura" *ngIf="selecionadoId">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Estrutura do template (debug)</h2>
-            <p class="card-subtitle">Use apenas para auditoria.</p>
-          </div>
-        </div>
-
-        <div class="form-acoes">
-          <div class="timer-modos">
-            <button type="button" class="btn-modo-timer" (click)="buscarEstrutura()">Buscar estrutura</button>
-            <button type="button" class="btn-modo-timer" (click)="limparEstrutura()">Limpar</button>
-          </div>
-        </div>
-
-        <div class="lote-preview-arvore" *ngIf="estruturaTemplate">
-          <pre>{{ estruturaTemplate | json }}</pre>
-        </div>
-      </section>
+      <section class="card bloco-estrutura" *ngIf="false"></section>
     </section>
+  </div>
+</div>
+
+<!-- MODAL: ESTRUTURA -->
+<div class="modal-overlay" *ngIf="mostrarModalEstrutura" (click)="fecharModalEstrutura()">
+  <div class="modal-card modal-estrutura" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Estrutura do template</h3>
+      <button type="button" class="btn-icone" (click)="fecharModalEstrutura()" title="Fechar">X</button>
+    </div>
+
+    <div class="estrutura-scroll" *ngIf="estruturaTemplate; else semEstrutura">
+      <pre>{{ estruturaTemplate | json }}</pre>
+    </div>
+
+    <ng-template #semEstrutura>
+      <div class="lote-preview-vazio">
+        Nenhuma estrutura carregada.
+      </div>
+    </ng-template>
   </div>
 </div>
 

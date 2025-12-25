@@ -42,6 +42,7 @@ export class PainelAdminComponent implements OnInit {
   novoNome = '';
   selecionadoId: number | null = null;
   editarNome = '';
+  editandoTemplate = false;
 
   // Clone
   cloneTemplateId: number | null = null;
@@ -74,6 +75,7 @@ export class PainelAdminComponent implements OnInit {
   mostrarModalEdital = false;
   textoEdital = '';
   salvandoEdital = false;
+  mostrarModalEstrutura = false;
 
   // Estrutura (debug)
   estruturaTemplate: EstruturaTemplateDTO | null = null;
@@ -168,6 +170,15 @@ export class PainelAdminComponent implements OnInit {
     });
   }
 
+  iniciarEdicaoTemplate(): void {
+    if (!this.selecionadoId) return;
+    const tpl = this.templates.find(t => t.id === this.selecionadoId) || null;
+    this.templateSelecionado = tpl;
+    this.editarNome = tpl?.nome || '';
+    this.novoNome = this.editarNome;
+    this.editandoTemplate = true;
+  }
+
   criarTemplate(): void {
     if (!this.novoNome || !this.novoNome.trim()) {
       this.mensagemErro = 'Informe um nome para criar.';
@@ -179,6 +190,7 @@ export class PainelAdminComponent implements OnInit {
       next: (res) => {
         this.mensagemOk = `Criado: ID ${res.id}`;
         this.novoNome = '';
+        this.editandoTemplate = false;
         this.recarregar();
       },
       error: (err) => this.tratarErro(err, 'Falha ao criar template.')
@@ -200,6 +212,7 @@ export class PainelAdminComponent implements OnInit {
       next: (res) => {
         this.templateSelecionado = res;
         this.mensagemOk = `Atualizado: ID ${res.id}`;
+        this.editandoTemplate = false;
         this.recarregar();
       },
       error: (err) => this.tratarErro(err, 'Falha ao atualizar template (se estiver publicado, deve bloquear).')
@@ -1026,6 +1039,7 @@ export class PainelAdminComponent implements OnInit {
       next: (res) => {
         this.estruturaTemplate = res;
         this.mensagemOk = 'Estrutura carregada';
+        this.mostrarModalEstrutura = true;
       },
       error: (err) => this.tratarErro(err, 'Falha ao buscar estrutura.')
     });
@@ -1034,6 +1048,11 @@ export class PainelAdminComponent implements OnInit {
   limparEstrutura(): void {
     this.estruturaTemplate = null;
     this.mensagemOk = 'Estrutura limpa';
+    this.mostrarModalEstrutura = false;
+  }
+
+  fecharModalEstrutura(): void {
+    this.mostrarModalEstrutura = false;
   }
 
   // =========================
