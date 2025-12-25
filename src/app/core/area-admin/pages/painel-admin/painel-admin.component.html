@@ -66,6 +66,18 @@
             <input class="input-text" [(ngModel)]="novoNome" (ngModelChange)="editarNome = $event"
               placeholder="Ex: PF - Agente - 2026 (v1)" />
           </div>
+          <div class="form-campo">
+            <input class="input-text" [(ngModel)]="novoArea" (ngModelChange)="editarArea = $event"
+              placeholder="Area (ex: Policial, Bancaria, Fiscal...)" />
+          </div>
+          <div class="form-campo">
+            <input class="input-text" [(ngModel)]="novoAbrangencia" (ngModelChange)="editarAbrangencia = $event"
+              placeholder="Abrangencia (ex: Federal, Estadual, Municipal)" />
+          </div>
+          <div class="form-campo">
+            <input class="input-text" [(ngModel)]="novoCargo" (ngModelChange)="editarCargo = $event"
+              placeholder="Cargo (ex: Agente, Delegado, Escrivao...)" />
+          </div>
 
 
 

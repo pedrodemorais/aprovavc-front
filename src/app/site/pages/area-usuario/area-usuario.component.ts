@@ -202,7 +202,13 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     const adminItem: MenuItem = {
       label: 'Painel Adm',
       icon: 'pi pi-shield',
-      routerLink: ['/admin/painel']
+      items: [
+        {
+          label: 'Template Edital',
+          icon: 'pi pi-file-edit',
+          routerLink: ['/admin/painel']
+        }
+      ]
     };
 
   

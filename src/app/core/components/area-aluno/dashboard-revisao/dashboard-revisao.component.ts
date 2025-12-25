@@ -114,10 +114,9 @@ export class DashboardRevisaoComponent implements OnInit {
     this.editalTemplateService.listarTemplates().subscribe({
       next: (lista) => {
         const all = lista || [];
-        const publicados = all.filter(t => t.publicado);
 
-        this.usandoTemplatesNaoPublicados = !publicados.length && all.length > 0;
-        this.templates = publicados.length ? publicados : all;
+        this.usandoTemplatesNaoPublicados = all.some(t => !t.publicado);
+        this.templates = all;
         this.templatesCarregando = false;
 
         if (!this.templateSelecionadoId && this.templates.length) {

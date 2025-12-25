@@ -92,9 +92,7 @@
 
         <div class="template-state" *ngIf="templatesCarregando">Carregando templates...</div>
         <div class="template-state erro" *ngIf="templatesErro">{{ templatesErro }}</div>
-        <div class="template-state aviso" *ngIf="usandoTemplatesNaoPublicados">
-          Nenhum template publicado encontrado. Exibindo todos.
-        </div>
+       
 
         <div class="template-grid" *ngIf="templates.length">
           <button

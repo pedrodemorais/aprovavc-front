@@ -40,8 +40,14 @@ export class PainelAdminComponent implements OnInit {
 
   // Template
   novoNome = '';
+  novoArea = '';
+  novoAbrangencia = '';
+  novoCargo = '';
   selecionadoId: number | null = null;
   editarNome = '';
+  editarArea = '';
+  editarAbrangencia = '';
+  editarCargo = '';
   editandoTemplate = false;
 
   // Clone
@@ -143,6 +149,9 @@ export class PainelAdminComponent implements OnInit {
     this.selecionadoId = id;
     this.templateSelecionado = this.templates.find(t => t.id === id) || null;
     this.editarNome = this.templateSelecionado?.nome || '';
+    this.editarArea = this.templateSelecionado?.area || '';
+    this.editarAbrangencia = this.templateSelecionado?.abrangencia || '';
+    this.editarCargo = this.templateSelecionado?.cargo || '';
 
     this.limparSelecaoMateria();
     this.estruturaTemplate = null;
@@ -175,7 +184,13 @@ export class PainelAdminComponent implements OnInit {
     const tpl = this.templates.find(t => t.id === this.selecionadoId) || null;
     this.templateSelecionado = tpl;
     this.editarNome = tpl?.nome || '';
+    this.editarArea = tpl?.area || '';
+    this.editarAbrangencia = tpl?.abrangencia || '';
+    this.editarCargo = tpl?.cargo || '';
     this.novoNome = this.editarNome;
+    this.novoArea = this.editarArea;
+    this.novoAbrangencia = this.editarAbrangencia;
+    this.novoCargo = this.editarCargo;
     this.editandoTemplate = true;
   }
 
@@ -184,12 +199,32 @@ export class PainelAdminComponent implements OnInit {
       this.mensagemErro = 'Informe um nome para criar.';
       return;
     }
+    if (!this.novoArea || !this.novoArea.trim()) {
+      this.mensagemErro = 'Informe a area para criar.';
+      return;
+    }
+    if (!this.novoAbrangencia || !this.novoAbrangencia.trim()) {
+      this.mensagemErro = 'Informe a abrangencia para criar.';
+      return;
+    }
+    if (!this.novoCargo || !this.novoCargo.trim()) {
+      this.mensagemErro = 'Informe o cargo para criar.';
+      return;
+    }
 
     this.limparMensagens();
-    this.editalAdminService.criarTemplate({ nome: this.novoNome.trim() }).subscribe({
+    this.editalAdminService.criarTemplate({
+      nome: this.novoNome.trim(),
+      area: this.novoArea.trim(),
+      abrangencia: this.novoAbrangencia.trim(),
+      cargo: this.novoCargo.trim()
+    }).subscribe({
       next: (res) => {
         this.mensagemOk = `Criado: ID ${res.id}`;
         this.novoNome = '';
+        this.novoArea = '';
+        this.novoAbrangencia = '';
+        this.novoCargo = '';
         this.editandoTemplate = false;
         this.recarregar();
       },
@@ -206,9 +241,26 @@ export class PainelAdminComponent implements OnInit {
       this.mensagemErro = 'Informe um nome novo.';
       return;
     }
+    if (!this.editarArea || !this.editarArea.trim()) {
+      this.mensagemErro = 'Informe a area.';
+      return;
+    }
+    if (!this.editarAbrangencia || !this.editarAbrangencia.trim()) {
+      this.mensagemErro = 'Informe a abrangencia.';
+      return;
+    }
+    if (!this.editarCargo || !this.editarCargo.trim()) {
+      this.mensagemErro = 'Informe o cargo.';
+      return;
+    }
 
     this.limparMensagens();
-    this.editalAdminService.atualizarTemplate(this.selecionadoId, { nome: this.editarNome.trim() }).subscribe({
+    this.editalAdminService.atualizarTemplate(this.selecionadoId, {
+      nome: this.editarNome.trim(),
+      area: this.editarArea.trim(),
+      abrangencia: this.editarAbrangencia.trim(),
+      cargo: this.editarCargo.trim()
+    }).subscribe({
       next: (res) => {
         this.templateSelecionado = res;
         this.mensagemOk = `Atualizado: ID ${res.id}`;

@@ -7,6 +7,9 @@
 export interface EditalTemplateDTO {
   id: number;
   nome: string;
+  area?: string;
+  abrangencia?: string;
+  cargo?: string;
 
   publicado?: boolean;
   versao?: number;               // ✅ pra parar erro no template
@@ -17,10 +20,16 @@ export interface EditalTemplateDTO {
 // requests
 export interface CriarEditalTemplateRequestDTO {
   nome: string;
+  area: string;
+  abrangencia: string;
+  cargo: string;
 }
 
 export interface AtualizarEditalTemplateRequestDTO {
   nome: string;
+  area: string;
+  abrangencia: string;
+  cargo: string;
 }
 
 // =========================
