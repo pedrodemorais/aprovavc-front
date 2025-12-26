@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -32,6 +32,14 @@ export class EditalTemplateService {
 
   listarTemplates(): Observable<EditalTemplateDTO[]> {
     return this.http.get<EditalTemplateDTO[]>(this.templateBase, this.options());
+  }
+
+  buscarImagemArquivo(id: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.templateBase}/${id}/imagem`, {
+      ...this.options(),
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 
   clonarTemplate(templateId: number, payload: ClonarEditalRequestDTO = {}): Observable<ClonarEditalResponseDTO> {

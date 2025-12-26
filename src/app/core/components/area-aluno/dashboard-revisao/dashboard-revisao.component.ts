@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { SalaEstudoService } from '../services/sala-estudo.service';
@@ -14,7 +14,7 @@ import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto'
   templateUrl: './dashboard-revisao.component.html',
   styleUrls: ['./dashboard-revisao.component.css']
 })
-export class DashboardRevisaoComponent implements OnInit {
+export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
   carregando = false;
   erro?: string;
@@ -33,6 +33,8 @@ export class DashboardRevisaoComponent implements OnInit {
   nomeEditalPersonalizado = false;
   clonandoTemplate = false;
   mensagemTemplateOk?: string;
+  templateImagemUrls: Record<number, string> = {};
+  private templateImagemObjectUrls = new Map<number, string>();
 
   // totais para o resumo superior
   totalVencidas = 0;
@@ -49,6 +51,10 @@ export class DashboardRevisaoComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarDados();
+  }
+
+  ngOnDestroy(): void {
+    this.limparImagensTemplates();
   }
 
   private carregarDados(): void {
@@ -114,9 +120,10 @@ export class DashboardRevisaoComponent implements OnInit {
     this.editalTemplateService.listarTemplates().subscribe({
       next: (lista) => {
         const all = lista || [];
+        const publicados = all.filter(t => t.publicado);
 
         this.usandoTemplatesNaoPublicados = all.some(t => !t.publicado);
-        this.templates = all;
+        this.templates = publicados;
         this.templatesCarregando = false;
 
         if (!this.templateSelecionadoId && this.templates.length) {
@@ -125,6 +132,9 @@ export class DashboardRevisaoComponent implements OnInit {
           this.nomeEditalTemplate = first.nome || '';
           this.nomeEditalPersonalizado = false;
         }
+
+        this.limparImagensTemplates();
+        this.carregarImagensTemplates(this.templates);
       },
       error: (err) => {
         console.error('[DASH-TEMPLATES] Erro ao carregar templates:', err);
@@ -174,6 +184,94 @@ export class DashboardRevisaoComponent implements OnInit {
         this.clonandoTemplate = false;
       }
     });
+  }
+
+  private carregarImagensTemplates(templates: EditalTemplateDTO[]): void {
+    for (const t of templates || []) {
+      if (!t?.id) continue;
+      this.carregarImagemTemplate(t.id);
+    }
+  }
+
+  private carregarImagemTemplate(templateId: number): void {
+    this.editalTemplateService.buscarImagemArquivo(templateId).subscribe({
+      next: (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        const blob = res.body;
+        this.removerImagemTemplate(templateId);
+
+        if (!blob) return;
+
+        if (contentType.startsWith('image/')) {
+          const objectUrl = URL.createObjectURL(blob);
+          this.templateImagemObjectUrls.set(templateId, objectUrl);
+          this.templateImagemUrls[templateId] = objectUrl;
+          return;
+        }
+
+        this.lerBlobComoTexto(blob)
+          .then((texto) => {
+            const payload = this.parseImagemResponse(texto);
+            if (!payload?.dados) return;
+            const tipo = this.normalizarContentType(payload.contentType);
+            this.templateImagemUrls[templateId] = `data:${tipo};base64,${payload.dados}`;
+          })
+          .catch(() => {
+            this.removerImagemTemplate(templateId);
+          });
+      },
+      error: () => {
+        this.removerImagemTemplate(templateId);
+      }
+    });
+  }
+
+  onTemplateImagemErro(templateId: number): void {
+    this.removerImagemTemplate(templateId);
+  }
+
+  private removerImagemTemplate(templateId: number): void {
+    const objectUrl = this.templateImagemObjectUrls.get(templateId);
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      this.templateImagemObjectUrls.delete(templateId);
+    }
+    delete this.templateImagemUrls[templateId];
+  }
+
+  private limparImagensTemplates(): void {
+    for (const objectUrl of this.templateImagemObjectUrls.values()) {
+      URL.revokeObjectURL(objectUrl);
+    }
+    this.templateImagemObjectUrls.clear();
+    this.templateImagemUrls = {};
+  }
+
+  private lerBlobComoTexto(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blob);
+    });
+  }
+
+  private parseImagemResponse(texto: string): { dados?: string; contentType?: any } | null {
+    const raw = (texto || '').trim();
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizarContentType(contentType: any): string {
+    if (!contentType) return 'image/png';
+    if (typeof contentType === 'string') return contentType;
+    const type = contentType.type || contentType.mainType || 'image';
+    const subtype = contentType.subtype || contentType.subType || 'png';
+    return `${type}/${subtype}`;
   }
 
 }

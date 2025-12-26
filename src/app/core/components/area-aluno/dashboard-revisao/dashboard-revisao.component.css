@@ -699,64 +699,75 @@
   max-height: 260px;
   overflow-y: auto;
   padding-right: 4px;
+  align-items: start;
 }
 
 .template-card {
   border-radius: 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: #ffffff;
-  text-align: left;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: center;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
+  align-self: start;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-.template-card:hover {
+.template-card:hover .template-info-card {
   border-color: rgba(34, 197, 94, 0.55);
   transform: translateY(-1px);
 }
 
-.template-card.selected {
+.template-card.selected .template-info-card {
   border-color: #22c55e;
   box-shadow: 0 12px 24px rgba(34, 197, 94, 0.18);
+}
+
+.template-info-card {
+  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.template-image-wrap {
+  width: 84px;
+  height: 84px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 6px;
+}
+
+.template-image {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
 }
 
 .template-name {
   font-weight: 600;
   color: #111827;
   font-size: 0.9rem;
+  text-align: center;
 }
 
-.template-meta {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+.template-cargo {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  text-align: center;
 }
 
-.pill-publicado,
-.pill-rascunho {
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 6px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-}
-
-.pill-publicado {
-  color: #15803d;
-  background: rgba(34, 197, 94, 0.12);
-  border-color: rgba(34, 197, 94, 0.2);
-}
-
-.pill-rascunho {
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.2);
-}
 
 .template-form {
   display: flex;
@@ -891,11 +902,20 @@
 }
 
 :host-context(body.theme-dark) .template-card {
+  background: transparent;
+  border-color: transparent;
+}
+
+:host-context(body.theme-dark) .template-info-card {
   background: rgba(15, 23, 42, 0.8);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
-:host-context(body.theme-dark) .template-card.selected {
+:host-context(body.theme-dark) .template-image-wrap {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+:host-context(body.theme-dark) .template-card.selected .template-info-card {
   border-color: #22c55e;
   box-shadow: 0 12px 24px rgba(34, 197, 94, 0.22);
 }
@@ -903,6 +923,7 @@
 :host-context(body.theme-dark) .template-name {
   color: var(--text);
 }
+
 
 :host-context(body.theme-dark) .template-input {
   background: rgba(15, 23, 42, 0.9);
