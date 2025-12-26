@@ -49,6 +49,10 @@ export class PainelAdminComponent implements OnInit {
   editarAbrangencia = '';
   editarCargo = '';
   editandoTemplate = false;
+  imagemArquivo: File | null = null;
+  imagemPreviewUrl = '';
+  imagemCarregando = false;
+  private imagemObjectUrl = '';
 
   // Clone
   cloneTemplateId: number | null = null;
@@ -139,6 +143,7 @@ export class PainelAdminComponent implements OnInit {
         if (this.selecionadoId) {
           const found = this.templates.find(t => t.id === this.selecionadoId) || null;
           this.templateSelecionado = found;
+          this.carregarImagemTemplate(this.selecionadoId);
         }
       },
       error: (err) => this.tratarErro(err, 'Falha ao listar templates (precisa ROLE_ADMIN).')
@@ -152,9 +157,12 @@ export class PainelAdminComponent implements OnInit {
     this.editarArea = this.templateSelecionado?.area || '';
     this.editarAbrangencia = this.templateSelecionado?.abrangencia || '';
     this.editarCargo = this.templateSelecionado?.cargo || '';
+    this.imagemArquivo = null;
+    this.imagemPreviewUrl = '';
 
     this.limparSelecaoMateria();
     this.estruturaTemplate = null;
+    this.carregarImagemTemplate(id);
 
     this.mensagemOk = `Selecionado template ID ${id}`;
     this.carregarMaterias();
@@ -226,7 +234,11 @@ export class PainelAdminComponent implements OnInit {
         this.novoAbrangencia = '';
         this.novoCargo = '';
         this.editandoTemplate = false;
-        this.recarregar();
+        if (this.imagemArquivo) {
+          this.salvarImagemTemplateId(res.id, this.imagemArquivo);
+        } else {
+          this.recarregar();
+        }
       },
       error: (err) => this.tratarErro(err, 'Falha ao criar template.')
     });
@@ -265,10 +277,140 @@ export class PainelAdminComponent implements OnInit {
         this.templateSelecionado = res;
         this.mensagemOk = `Atualizado: ID ${res.id}`;
         this.editandoTemplate = false;
-        this.recarregar();
+        if (this.imagemArquivo) {
+          this.salvarImagemTemplateId(res.id, this.imagemArquivo);
+        } else {
+          this.recarregar();
+        }
       },
       error: (err) => this.tratarErro(err, 'Falha ao atualizar template (se estiver publicado, deve bloquear).')
     });
+  }
+
+  onImagemSelecionada(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] ?? null;
+
+    if (!file) {
+      this.imagemArquivo = null;
+      this.imagemPreviewUrl = '';
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.mensagemErro = 'Selecione um arquivo de imagem.';
+      this.imagemArquivo = null;
+      this.imagemPreviewUrl = '';
+      if (input) input.value = '';
+      return;
+    }
+
+    this.imagemArquivo = file;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.imagemPreviewUrl = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  private salvarImagemTemplateId(templateId: number, arquivo: File): void {
+    this.limparMensagens();
+    this.imagemCarregando = true;
+    this.editalAdminService.salvarImagem(templateId, arquivo).subscribe({
+      next: (res) => {
+        this.templateSelecionado = res;
+        this.mensagemOk = 'Imagem salva com sucesso.';
+        this.imagemCarregando = false;
+        this.imagemArquivo = null;
+        this.imagemPreviewUrl = '';
+        this.carregarImagemTemplate(templateId);
+        this.recarregar();
+      },
+      error: (err) => {
+        this.imagemCarregando = false;
+        this.tratarErro(err, 'Falha ao salvar imagem do template.');
+      }
+    });
+  }
+
+  private carregarImagemTemplate(templateId: number): void {
+    this.editalAdminService.buscarImagemArquivo(templateId).subscribe({
+      next: (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        const blob = res.body;
+        this.limparImagemPreview();
+        console.log('[PAINEL-ADMIN] buscarImagem content-type:', contentType);
+
+        if (!blob) {
+          return;
+        }
+
+        if (contentType.startsWith('image/')) {
+          this.imagemObjectUrl = URL.createObjectURL(blob);
+          this.imagemPreviewUrl = this.imagemObjectUrl;
+          return;
+        }
+
+        this.lerBlobComoTexto(blob)
+          .then((texto) => {
+            const payload = this.parseImagemResponse(texto);
+            if (!payload?.dados) {
+              return;
+            }
+
+            const tipo = this.normalizarContentType(payload.contentType);
+            this.imagemPreviewUrl = `data:${tipo};base64,${payload.dados}`;
+          })
+          .catch((err) => {
+            console.error('[PAINEL-ADMIN] erro ao ler blob:', err);
+          });
+      },
+      error: (err) => {
+        console.error('[PAINEL-ADMIN] buscarImagem erro:', err);
+        this.limparImagemPreview();
+      }
+    });
+  }
+
+  onImagemErro(): void {
+    console.warn('[PAINEL-ADMIN] erro ao carregar imagem:', this.imagemPreviewUrl);
+    this.limparImagemPreview();
+  }
+
+  private limparImagemPreview(): void {
+    if (this.imagemObjectUrl) {
+      URL.revokeObjectURL(this.imagemObjectUrl);
+      this.imagemObjectUrl = '';
+    }
+    this.imagemPreviewUrl = '';
+  }
+
+  private lerBlobComoTexto(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blob);
+    });
+  }
+
+  private parseImagemResponse(texto: string): { dados?: string; contentType?: any } | null {
+    const raw = (texto || '').trim();
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizarContentType(contentType: any): string {
+    if (!contentType) return 'image/png';
+    if (typeof contentType === 'string') return contentType;
+    const type = contentType.type || contentType.mainType || 'image';
+    const subtype = contentType.subtype || contentType.subType || 'png';
+    return `${type}/${subtype}`;
   }
 
   publicar(id: number): void {
@@ -300,6 +442,13 @@ export class PainelAdminComponent implements OnInit {
     if (!ok) return;
 
     this.limparMensagens();
+    this.editalAdminService.excluirImagem(id).subscribe({
+      next: () => this.excluirTemplateAposImagem(id),
+      error: () => this.excluirTemplateAposImagem(id)
+    });
+  }
+
+  private excluirTemplateAposImagem(id: number): void {
     this.editalAdminService.excluirTemplate(id).subscribe({
       next: () => {
         this.mensagemOk = `Excluido: ID ${id}`;
@@ -308,6 +457,7 @@ export class PainelAdminComponent implements OnInit {
           this.templateSelecionado = null;
           this.limparSelecaoMateria();
           this.estruturaTemplate = null;
+          this.limparImagemPreview();
         }
         this.recarregar();
       },

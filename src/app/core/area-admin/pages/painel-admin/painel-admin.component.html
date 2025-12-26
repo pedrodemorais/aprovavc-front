@@ -60,21 +60,43 @@
           </div>
         </div>
 
-        <div class="form-materia">
-          <div class="form-campo">
+        <div class="template-image-row">
+          <div class="template-image-label">Logo do orgao</div>
+          <div class="template-image-input-wrap">
+            <label class="template-image-button" for="templateImagemInput">Escolher arquivo</label>
+            <span class="template-image-name">
+              {{ imagemArquivo?.name || 'Nenhum arquivo selecionado' }}
+            </span>
+            <input id="templateImagemInput" type="file" class="template-image-input" accept="image/*"
+              (change)="onImagemSelecionada($event)" />
+          </div>
+          <img
+            *ngIf="imagemPreviewUrl"
+            class="template-image-preview"
+            [src]="imagemPreviewUrl"
+            (error)="onImagemErro()"
+            alt="Preview da imagem do orgao"
+          />
+        </div>
 
+        <div class="form-materia template-form-grid">
+          <div class="form-campo">
+            <label class="label">Descricao</label>
             <input class="input-text" [(ngModel)]="novoNome" (ngModelChange)="editarNome = $event"
               placeholder="Ex: PF - Agente - 2026 (v1)" />
           </div>
           <div class="form-campo">
+            <label class="label">Area</label>
             <input class="input-text" [(ngModel)]="novoArea" (ngModelChange)="editarArea = $event"
               placeholder="Area (ex: Policial, Bancaria, Fiscal...)" />
           </div>
           <div class="form-campo">
+            <label class="label">Abrangencia</label>
             <input class="input-text" [(ngModel)]="novoAbrangencia" (ngModelChange)="editarAbrangencia = $event"
               placeholder="Abrangencia (ex: Federal, Estadual, Municipal)" />
           </div>
           <div class="form-campo">
+            <label class="label">Cargo</label>
             <input class="input-text" [(ngModel)]="novoCargo" (ngModelChange)="editarCargo = $event"
               placeholder="Cargo (ex: Agente, Delegado, Escrivao...)" />
           </div>
@@ -263,7 +285,7 @@
             </p>
           </div>
 
-          <span class="pill pill-topico">Passo 2</span>
+         
         </div>
 
         <div *ngIf="!materiaExpandida" class="estado-vazio-topicos">

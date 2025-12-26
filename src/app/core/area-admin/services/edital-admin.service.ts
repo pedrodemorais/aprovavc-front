@@ -77,6 +77,35 @@ export class EditalAdminService {
     return this.http.delete<void>(`${this.adminTemplateBase}/${id}`, this.options());
   }
 
+  salvarImagem(id: number, file: File): Observable<EditalTemplateDTO> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<EditalTemplateDTO>(
+      `${this.adminTemplateBase}/${id}/imagem`,
+      formData,
+      this.options()
+    );
+  }
+
+  buscarImagem(id: number): Observable<string> {
+    return this.http.get(`${this.adminTemplateBase}/${id}/imagem`, {
+      ...this.options(),
+      responseType: 'text'
+    });
+  }
+
+  buscarImagemArquivo(id: number): Observable<import('@angular/common/http').HttpResponse<Blob>> {
+    return this.http.get(`${this.adminTemplateBase}/${id}/imagem`, {
+      ...this.options(),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  excluirImagem(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.adminTemplateBase}/${id}/imagem`, this.options());
+  }
+
   // =========================
   // ADMIN - MATERIAS
   // =========================
