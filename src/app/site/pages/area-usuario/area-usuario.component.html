@@ -135,11 +135,71 @@
     <div class="menu">
       <nav #sidebar
            class="sidebar"
-           [ngClass]="{ 'menu-mobile': menuAberto }"
+           [ngClass]="{ 'menu-mobile': menuAberto, 'menu-expanded': menuExpandido }"
            role="navigation"
            aria-label="Menu principal"
            (click)="$event.stopPropagation()">
-        <p-panelMenu [model]="items" [multiple]="true" styleClass="menu-flat"></p-panelMenu>
+        <div class="menu-actions">
+          <button
+            type="button"
+            class="menu-lock"
+            (click)="toggleMenuExpandido()"
+            [attr.aria-pressed]="menuExpandido"
+            [attr.title]="menuExpandido ? 'Recolher menu' : 'Expandir menu'"
+          >
+            <span class="menu-icon">
+              <i class="pi" [ngClass]="menuExpandido ? 'pi-angle-left' : 'pi-angle-right'"></i>
+            </span>
+            <span class="menu-lock-text">{{ menuExpandido ? 'Recolher menu' : 'Expandir menu' }}</span>
+          </button>
+        </div>
+        <ul class="menu-list">
+          <ng-container *ngFor="let item of items">
+            <ng-container *ngTemplateOutlet="menuItemTpl; context: { $implicit: item }"></ng-container>
+          </ng-container>
+        </ul>
+
+        <ng-template #menuItemTpl let-item>
+          <li class="menu-item" [class.has-children]="item.items?.length">
+            <a
+              *ngIf="item.routerLink; else menuButton"
+              class="menu-link"
+              [routerLink]="item.routerLink"
+              routerLinkActive="is-active"
+              [class.is-disabled]="item.disabled"
+              [attr.aria-disabled]="item.disabled || null"
+              [attr.title]="item.title || item.label"
+              (click)="onMenuItemClick($event, item)"
+            >
+              <span class="menu-icon">
+                <i class="pi" [ngClass]="item.icon || ''"></i>
+              </span>
+              <span class="menu-text">{{ item.label }}</span>
+            </a>
+
+            <ng-template #menuButton>
+              <button
+                type="button"
+                class="menu-link"
+                [class.is-disabled]="item.disabled"
+                [attr.aria-disabled]="item.disabled || null"
+                [attr.title]="item.title || item.label"
+                (click)="onMenuItemClick($event, item)"
+              >
+                <span class="menu-icon">
+                  <i class="pi" [ngClass]="item.icon || ''"></i>
+                </span>
+                <span class="menu-text">{{ item.label }}</span>
+              </button>
+            </ng-template>
+
+            <ul class="submenu" [class.is-open]="isMenuExpanded(item)" *ngIf="item.items?.length">
+              <ng-container *ngFor="let child of item.items">
+                <ng-container *ngTemplateOutlet="menuItemTpl; context: { $implicit: child }"></ng-container>
+              </ng-container>
+            </ul>
+          </li>
+        </ng-template>
       </nav>
     </div>
 

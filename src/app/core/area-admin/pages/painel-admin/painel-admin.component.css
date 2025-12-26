@@ -500,6 +500,15 @@
   gap: 12px;
 }
 
+.modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .modal-header {
   display: flex;
   align-items: center;

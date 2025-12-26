@@ -27,6 +27,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   user: any;
   menuAberto = false;
+  menuExpandido = false;
   userInitials = '';
   isHome = true;
 
@@ -183,6 +184,44 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.userMenuAberto = !this.userMenuAberto;
   }
 
+  toggleMenuExpandido(): void {
+    this.menuExpandido = !this.menuExpandido;
+    if (!this.menuExpandido) {
+      this.collapseMenuItems(this.items);
+    }
+  }
+
+  toggleMenuSection(event: Event, item: MenuItem): void {
+    this.onMenuItemClick(event, item);
+  }
+
+  onMenuItemClick(event: Event, item: MenuItem): void {
+    if (item.disabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (item.items?.length) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.menuExpandido) {
+        this.menuExpandido = true;
+      }
+      item.expanded = !item.expanded;
+      return;
+    }
+
+    if (item.routerLink) {
+      this.menuExpandido = false;
+      this.collapseMenuItems(this.items);
+    }
+
+    if (item.command) {
+      item.command({ originalEvent: event, item });
+    }
+  }
+
   private carregarMateriasMenu(): void {
     this.materiaService.listarMaterias().subscribe({
       next: (lista) => {
@@ -197,7 +236,22 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-    private montarMenu(): void {
+  private collapseMenuItems(items: MenuItem[]): void {
+    for (const it of items || []) {
+      if (it.expanded) {
+        it.expanded = false;
+      }
+      if (it.items?.length) {
+        this.collapseMenuItems(it.items);
+      }
+    }
+  }
+
+  isMenuExpanded(item: MenuItem): boolean {
+    return !!item.expanded;
+  }
+
+  private montarMenu(): void {
     const isLocked = !this.assinaturaValida;
 
     const adminItem: MenuItem = {
@@ -232,19 +286,13 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
           icon: 'pi pi-clock',
           disabled: true
         },
+     
         {
-          label: 'Iniciar sessao',
-          icon: 'pi pi-play',
-          routerLink: ['/area-restrita/estudar-materias'],
-          disabled: isLocked || !this.hasMaterias,
-          title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-        },
-        {
-          label: 'Sala de Estudo',
+          label: 'Estudar',
           icon: 'pi pi-book',
           items: [
             {
-              label: 'Entrar em estudar ou revisar',
+              label: 'Iniciar sessão',
               icon: 'pi pi-sign-in',
               routerLink: ['/area-restrita/estudar-materias'],
               disabled: isLocked || !this.hasMaterias,
@@ -349,10 +397,9 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
           label: 'Configuracoes',
           icon: 'pi pi-cog',
           items: [
-            { label: 'Perfil', icon: 'pi pi-user', routerLink: ['/area-restrita/meu-cadastro'] },
+           
             { label: 'Preferencias da rotina', icon: 'pi pi-sliders-h', disabled: true },
-            { label: 'Assinatura/Plano', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
-            { label: 'Ajuda/Suporte', icon: 'pi pi-question-circle', routerLink: ['/area-restrita/suporte'] }
+           
           ]
         }
       ]
