@@ -197,8 +197,9 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private montarMenu(): void {
-  
+    private montarMenu(): void {
+    const isLocked = !this.assinaturaValida;
+
     const adminItem: MenuItem = {
       label: 'Painel Adm',
       icon: 'pi pi-shield',
@@ -211,55 +212,165 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       ]
     };
 
-  
-
-    const cadastrosMenu: MenuItem = {
-      label: 'Cadastros',
-      icon: 'pi pi-cog',
+    const menuPrincipal: MenuItem = {
+      label: 'Menu principal',
+      icon: 'pi pi-compass',
       items: [
         {
-          label: 'Matérias',
-          icon: 'pi pi-book',
-          routerLink: ['/area-restrita/cad-materias']
+          label: 'Hoje',
+          icon: 'pi pi-calendar',
+          routerLink: ['/area-restrita/dashboard'],
+          disabled: isLocked
         },
         {
-          label: 'Editais/Provas',
-          icon: 'pi pi-file-edit',
-          routerLink: ['/area-restrita/editais']
+          label: 'O que estudar agora (bloco/modulo do dia)',
+          icon: 'pi pi-bolt',
+          disabled: true
+        },
+        {
+          label: 'Revisoes vencendo hoje',
+          icon: 'pi pi-clock',
+          disabled: true
+        },
+        {
+          label: 'Iniciar sessao',
+          icon: 'pi pi-play',
+          routerLink: ['/area-restrita/estudar-materias'],
+          disabled: isLocked || !this.hasMaterias,
+          title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+        },
+        {
+          label: 'Sala de Estudo',
+          icon: 'pi pi-book',
+          items: [
+            {
+              label: 'Entrar em estudar ou revisar',
+              icon: 'pi pi-sign-in',
+              routerLink: ['/area-restrita/estudar-materias'],
+              disabled: isLocked || !this.hasMaterias,
+              title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+            },
+            {
+              label: 'Timer / registro / resumo / flashcards',
+              icon: 'pi pi-stopwatch',
+              disabled: true
+            }
+          ]
+        },
+        {
+          label: 'Plano',
+          icon: 'pi pi-sliders-h',
+          items: [
+            {
+              label: 'Rotina em blocos (modulos 1-7)',
+              icon: 'pi pi-table',
+              disabled: true
+            },
+            {
+              label: 'Disponibilidade (min/dia) e regra de reposicao',
+              icon: 'pi pi-clock',
+              disabled: true
+            },
+            {
+              label: 'Metas (ex: X horas/semana)',
+              icon: 'pi pi-flag',
+              disabled: true
+            }
+          ]
+        },
+        {
+          label: 'Conteudo',
+          icon: 'pi pi-folder',
+          items: [
+            {
+              label: 'Materias',
+              icon: 'pi pi-book',
+              routerLink: ['/area-restrita/cad-materias'],
+              disabled: isLocked
+            },
+            {
+              label: 'Topicos / Subtopicos do edital',
+              icon: 'pi pi-list',
+              disabled: true
+            },
+            {
+              label: 'Importacao / colar em lote',
+              icon: 'pi pi-upload',
+              disabled: true
+            }
+          ]
+        },
+        {
+          label: 'Revisoes',
+          icon: 'pi pi-undo',
+          items: [
+            { label: 'Fila de revisoes (verde/laranja/vermelho)', icon: 'pi pi-list', disabled: true },
+            { label: 'Atrasadas / Hoje / Proximas', icon: 'pi pi-calendar', disabled: true }
+          ]
+        },
+        {
+          label: 'Progresso',
+          icon: 'pi pi-chart-line',
+          items: [
+            { label: 'Cobertura do edital (% estudado)', icon: 'pi pi-percentage', disabled: true },
+            { label: 'Dominio (% acerto/dificuldade)', icon: 'pi pi-chart-bar', disabled: true },
+            { label: 'Tempo por materia / constancia', icon: 'pi pi-clock', disabled: true }
+          ]
         }
       ]
     };
 
-    if (this.assinaturaValida) {
-      // 🔓 assinatura OK
-      this.items = [
-        { label: 'Página inicial', icon: 'pi pi-home', routerLink: ['/area-restrita/dashboard'] },
-        { label: 'Centro de Estudo', icon: 'pi pi-play', routerLink: ['/area-restrita/estudar-materias'], disabled: !this.hasMaterias, title: 'Cadastre materias primeiro' },
-        
-        cadastrosMenu,
-        { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
-      ];
-    } else {
-      // 🔐 assinatura expirada
-      this.items = [
-        { label: 'Página inicial', icon: 'pi pi-home', disabled: true },
+    const menuSecundario: MenuItem = {
+      label: 'Menu secundario',
+      icon: 'pi pi-th-large',
+      items: [
+        {
+          label: 'Editais',
+          icon: 'pi pi-file',
+          items: [
+            {
+              label: 'Meus editais',
+              icon: 'pi pi-folder-open',
+              routerLink: ['/area-restrita/editais'],
+              disabled: isLocked
+            },
+            {
+              label: 'Templates prontos',
+              icon: 'pi pi-clone',
+              routerLink: ['/area-restrita/dashboard'],
+              disabled: isLocked
+            },
+            { label: 'Criar novo', icon: 'pi pi-plus-circle', disabled: true },
+            { label: 'Duplicar', icon: 'pi pi-copy', disabled: true },
+            { label: 'Arquivar', icon: 'pi pi-archive', disabled: true }
+          ]
+        },
+        {
+          label: 'Configuracoes',
+          icon: 'pi pi-cog',
+          items: [
+            { label: 'Perfil', icon: 'pi pi-user', routerLink: ['/area-restrita/meu-cadastro'] },
+            { label: 'Preferencias da rotina', icon: 'pi pi-sliders-h', disabled: true },
+            { label: 'Assinatura/Plano', icon: 'pi pi-credit-card', routerLink: ['/area-restrita/assinatura'] },
+            { label: 'Ajuda/Suporte', icon: 'pi pi-question-circle', routerLink: ['/area-restrita/suporte'] }
+          ]
+        }
+      ]
+    };
 
-       
+    this.items = [
+      menuPrincipal,
+      menuSecundario,
+      { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
+    ];
 
-        // ✅ escolha 1: deixar Cadastros liberado (recomendado)
-        cadastrosMenu,
-
-        { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
-      ];
-    }
     if (this.isAdmin) {
       const sairIndex = this.items.findIndex(i => i.label === 'Sair');
       const insertIndex = sairIndex >= 0 ? sairIndex : this.items.length;
       this.items.splice(insertIndex, 0, adminItem);
     }
   }
-
-  private atualizarAdminDoToken(): void {
+private atualizarAdminDoToken(): void {
     const token = this.authService.getAccessToken();
     this.isAdmin = this.isAdminFromToken(token);
   }
@@ -472,3 +583,4 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.authService.logout();
   }
 }
+

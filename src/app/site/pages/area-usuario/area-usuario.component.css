@@ -185,10 +185,11 @@ body {
   flex-shrink: 0;
   display: flex;
   align-items: stretch;
+  position: relative;
 }
 
 .sidebar {
-  width: 13rem;
+  width: 16rem;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -219,6 +220,118 @@ body {
   border-radius: 8px;
 }
 
+/* Recuo para subitens do PanelMenu */
+.menu .p-panelmenu .p-panelmenu-content .p-menuitem-link {
+  padding-left: 3.6rem;
+}
+
+/* Recuo extra para subitens de segundo nivel */
+.menu .p-panelmenu .p-panelmenu-content .p-panelmenu-content .p-menuitem-link {
+  padding-left: 4.2rem;
+}
+
+/* Menu colapsado com expansão no hover (desktop) */
+@media (min-width: 901px) {
+  .menu {
+    width: 4.5rem;
+  }
+
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4.5rem;
+    transition: width 0.2s ease;
+    overflow: hidden;
+  }
+
+  .sidebar:hover {
+    width: 16rem;
+  }
+
+  .sidebar .p-panelmenu {
+    width: 100%;
+  }
+
+  .sidebar .p-panelmenu .p-menuitem-link {
+    padding: 0.5rem 0.9rem;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .sidebar:hover .p-panelmenu .p-menuitem-link {
+    padding: 0.4rem 1.2rem;
+    justify-content: flex-start;
+    gap: 0.6rem;
+  }
+
+  .sidebar .p-panelmenu .p-panelmenu-content .p-menuitem-link {
+    padding-left: 0.9rem;
+  }
+
+  .sidebar:hover .p-panelmenu .p-panelmenu-content .p-menuitem-link {
+    padding-left: 2.6rem;
+  }
+
+  .sidebar:hover .p-panelmenu .p-panelmenu-content .p-panelmenu-content .p-menuitem-link {
+    padding-left: 3.2rem;
+  }
+
+  .sidebar .p-panelmenu .p-menuitem-text,
+  .sidebar .p-panelmenu .p-panelmenu-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+  }
+
+  .sidebar:hover .p-panelmenu .p-menuitem-text,
+  .sidebar:hover .p-panelmenu .p-panelmenu-text {
+    opacity: 1;
+    width: auto;
+  }
+
+  .sidebar .p-panelmenu .p-panelmenu-icon {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: opacity 0.15s ease;
+  }
+
+  .sidebar:hover .p-panelmenu .p-panelmenu-icon {
+    opacity: 1;
+    width: auto;
+  }
+
+  /* Expande conteudo na vertical ao passar o mouse */
+  /* Forca expansao vertical do PanelMenu no hover */
+  :host ::ng-deep .sidebar .p-panelmenu .p-panelmenu-content,
+  :host ::ng-deep .sidebar .p-panelmenu .p-toggleable-content,
+  :host ::ng-deep .sidebar .p-panelmenu .p-panelmenu-content-wrapper {
+    display: none !important;
+    max-height: 0 !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+  }
+
+  :host ::ng-deep .sidebar:hover .p-panelmenu .p-panelmenu-content,
+  :host ::ng-deep .sidebar:hover .p-panelmenu .p-toggleable-content,
+  :host ::ng-deep .sidebar:hover .p-panelmenu .p-panelmenu-header + .p-panelmenu-content,
+  :host ::ng-deep .sidebar:hover .p-panelmenu .p-panelmenu-header + .p-toggleable-content,
+  :host ::ng-deep .sidebar:hover .p-panelmenu .p-panelmenu-content-wrapper {
+    display: block !important;
+    max-height: none !important;
+    height: auto !important;
+    opacity: 1 !important;
+    overflow: visible !important;
+    visibility: visible !important;
+  }
+}
+
 /* Hover */
 .menu .p-panelmenu .p-menuitem-link:hover {
   background: #f3f4f6;
@@ -235,6 +348,13 @@ body {
 .menu .p-panelmenu .p-menuitem-link.router-link-active .p-menuitem-icon,
 .menu .p-panelmenu .p-menuitem-link-active .p-menuitem-icon {
   color: #54ba67;
+}
+
+/* Remove o icone de expansao (>) do PanelMenu */
+.menu .p-panelmenu .p-panelmenu-icon,
+.menu .p-panelmenu .p-submenu-icon,
+.menu .p-panelmenu .p-panelmenu-header .p-panelmenu-icon {
+  display: none !important;
 }
 
 /* =======================================
