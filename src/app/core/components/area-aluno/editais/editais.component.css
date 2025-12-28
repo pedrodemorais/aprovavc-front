@@ -479,6 +479,19 @@
   white-space: nowrap;
 }
 
+.badge-edital-ativo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
 .edital-desc {
   font-size: 12px;
   color: #6b7280;
@@ -941,6 +954,12 @@
 
 :host-context(body.theme-dark) .edital-desc {
   color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .badge-edital-ativo {
+  background: rgba(59, 130, 246, 0.18) !important;
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  color: #bfdbfe !important;
 }
 
 :host-context(body.theme-dark) .meta-chip {

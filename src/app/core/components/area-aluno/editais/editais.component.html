@@ -132,12 +132,13 @@
             <div class="edital-card-header" [class.aberto]="isEditalAberto(e.id)" (click)="toggleEdital(e.id)"
               role="button" tabindex="0">
               <div class="edital-header-col-esq">
-                <div class="edital-header-linha">
-                  <h2 class="edital-nome">{{ e.nome }}</h2>
+              <div class="edital-header-linha">
+                <h2 class="edital-nome">{{ e.nome }}</h2>
+                <span *ngIf="e.ativo" class="badge-edital-ativo" aria-label="Edital em estudo">Em estudo</span>
 
-                  <span class="edital-desc" *ngIf="e.descricao">
-                    {{ e.descricao }}
-                  </span>
+                <span class="edital-desc" *ngIf="e.descricao">
+                  {{ e.descricao }}
+                </span>
 
                   <div class="edital-meta">
                     <div class="meta-chip">
@@ -166,6 +167,15 @@
 
               <div class="acoes">
                 <div class="edital-acoes segmented-group">
+                  <button
+                    type="button"
+                    class="segmented-btn"
+                    [disabled]="e.ativo || definindoAtivoId === e.id"
+                    (click)="definirComoEmEstudo(e); $event.stopPropagation()"
+                    title="Definir como edital em estudo"
+                  >
+                    {{ definindoAtivoId === e.id ? 'Salvando...' : (e.ativo ? 'Em estudo' : 'Estudar este edital') }}
+                  </button>
                   <button type="button" class="segmented-btn" (click)="editar(e); $event.stopPropagation()"
                     title="Editar edital">
                     Editar

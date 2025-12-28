@@ -19,6 +19,7 @@ export class EditaisComponent implements OnInit, OnDestroy {
   salvando = false;
   erro?: string;
   mensagemSucesso?: string;
+  definindoAtivoId: number | null = null;
 private mensagemTimeout: any; // para guardar o setTimeout
 
   editais: Edital[] = [];
@@ -381,6 +382,30 @@ private mensagemTimeout: any; // para guardar o setTimeout
       error: (err) => {
         console.error('[EDITAIS] Erro ao excluir edital:', err);
         this.erro = 'Erro ao excluir edital. Tente novamente.';
+      }
+    });
+  }
+
+  definirComoEmEstudo(edital: Edital): void {
+    if (!edital?.id) {
+      return;
+    }
+
+    this.definindoAtivoId = edital.id;
+    this.erro = undefined;
+    this.mensagemSucesso = undefined;
+
+    this.editalService.definirComoAtivo(edital.id).subscribe({
+      next: () => {
+        this.definindoAtivoId = null;
+        this.mensagemSucesso = `Edital \"${edital.nome}\" definido como o edital em estudo.`;
+        this.iniciarTimeoutMensagem();
+        this.carregarEditais();
+      },
+      error: (err) => {
+        console.error('[EDITAIS] Erro ao definir edital ativo:', err);
+        this.definindoAtivoId = null;
+        this.erro = 'Erro ao definir o edital como ativo. Tente novamente.';
       }
     });
   }

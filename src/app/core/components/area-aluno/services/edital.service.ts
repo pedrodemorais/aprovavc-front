@@ -37,4 +37,8 @@ export class EditalService {
   excluir(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  definirComoAtivo(id: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/ativar`, {});
+  }
 }
