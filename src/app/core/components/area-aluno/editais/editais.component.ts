@@ -1,17 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EditalService } from '../services/edital.service';
 import { EditalFormPayload } from '../services/edital.service';
 import { Edital } from '../models/Edital';
 import { Materia } from '../models/materia.model';
 import { MateriaService } from '../services/materia.service';
+import { EditalTemplateService } from '../services/edital-template.service';
+import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto';
 
 @Component({
   selector: 'app-editais',
   templateUrl: './editais.component.html',
   styleUrls: ['./editais.component.css']
 })
-export class EditaisComponent implements OnInit {
+export class EditaisComponent implements OnInit, OnDestroy {
 
   carregando = false;
   salvando = false;
@@ -24,6 +26,24 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
   form!: FormGroup;
   editalEmEdicao?: Edital | null;
+
+  // ====== TEMPLATES (NOVO EDITAL)
+  mostrarModalTemplates = false;
+  templates: EditalTemplateDTO[] = [];
+  templatesCarregando = false;
+  templatesErro?: string;
+  usandoTemplatesNaoPublicados = false;
+  templateSelecionadoId: number | null = null;
+  nomeEditalTemplate = '';
+  nomeEditalPersonalizado = false;
+  clonandoTemplate = false;
+  mensagemTemplateOk?: string;
+  templateImagemUrls: Record<number, string> = {};
+  private templateImagemObjectUrls = new Map<number, string>();
+  areaFiltro = 'todas';
+  abrangenciaFiltro = 'todas';
+  areasDisponiveis: string[] = [];
+  abrangenciasDisponiveis: string[] = [];
 
   // ====== ESTADO DE UI (COLAPSE) ======
   // quais editais estão abertos
@@ -42,6 +62,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
   constructor(
     private editalService: EditalService,
     private materiaService: MateriaService,
+    private editalTemplateService: EditalTemplateService,
     private fb: FormBuilder
   ) {}
 
@@ -49,6 +70,10 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.montarForm();
     this.carregarMaterias();
     this.carregarEditais();
+  }
+
+  ngOnDestroy(): void {
+    this.limparImagensTemplates();
   }
 
   private montarForm(): void {
@@ -92,6 +117,200 @@ private mensagemTimeout: any; // para guardar o setTimeout
     });
   }
 
+  // ============= TEMPLATES =============
+
+  carregarTemplates(): void {
+    if (this.templatesCarregando) return;
+
+    this.templatesCarregando = true;
+    this.templatesErro = undefined;
+    this.mensagemTemplateOk = undefined;
+
+    this.editalTemplateService.listarTemplates().subscribe({
+      next: (lista) => {
+        const all = lista || [];
+        const publicados = all.filter(t => t.publicado);
+
+        this.usandoTemplatesNaoPublicados = all.some(t => !t.publicado);
+        this.templates = publicados;
+        this.templatesCarregando = false;
+
+        if (!this.templateSelecionadoId && this.templates.length) {
+          const first = this.templates[0];
+          this.templateSelecionadoId = first.id;
+          this.nomeEditalTemplate = first.nome || '';
+          this.nomeEditalPersonalizado = false;
+        }
+
+        this.areasDisponiveis = this.extrairValoresUnicos(this.templates, 'area');
+        this.abrangenciasDisponiveis = this.extrairValoresUnicos(this.templates, 'abrangencia');
+
+        this.limparImagensTemplates();
+        this.carregarImagensTemplates(this.templates);
+      },
+      error: (err) => {
+        console.error('[EDITAIS-TEMPLATES] Erro ao carregar templates:', err);
+        this.templatesErro = 'Não foi possível carregar os templates.';
+        this.templatesCarregando = false;
+      }
+    });
+  }
+
+  selecionarTemplate(template: EditalTemplateDTO): void {
+    this.templateSelecionadoId = template.id;
+
+    if (!this.nomeEditalPersonalizado) {
+      this.nomeEditalTemplate = template.nome || '';
+    }
+  }
+
+  get templatesFiltrados(): EditalTemplateDTO[] {
+    return (this.templates || []).filter((t) => {
+      const areaOk = this.areaFiltro === 'todas' || t.area === this.areaFiltro;
+      const abrangenciaOk = this.abrangenciaFiltro === 'todas' || t.abrangencia === this.abrangenciaFiltro;
+      return areaOk && abrangenciaOk;
+    });
+  }
+
+  limparFiltrosTemplates(): void {
+    this.areaFiltro = 'todas';
+    this.abrangenciaFiltro = 'todas';
+  }
+
+  private extrairValoresUnicos(templates: EditalTemplateDTO[], campo: 'area' | 'abrangencia'): string[] {
+    const valores = new Set<string>();
+    for (const t of templates || []) {
+      const valor = (t as any)?.[campo];
+      if (valor) {
+        valores.add(valor);
+      }
+    }
+    return Array.from(valores).sort((a, b) => a.localeCompare(b));
+  }
+
+  onNomeEditalTemplateChange(): void {
+    this.nomeEditalPersonalizado = true;
+  }
+
+  clonarTemplateSelecionado(): void {
+    if (!this.templateSelecionadoId) {
+      this.templatesErro = 'Selecione um template antes de continuar.';
+      return;
+    }
+
+    this.clonandoTemplate = true;
+    this.templatesErro = undefined;
+    this.mensagemTemplateOk = undefined;
+
+    const nomeEdital = this.nomeEditalTemplate?.trim() || undefined;
+
+    this.editalTemplateService.clonarTemplate(this.templateSelecionadoId, { nomeEdital }).subscribe({
+      next: () => {
+        this.clonandoTemplate = false;
+        this.mensagemTemplateOk = 'Edital criado com sucesso.';
+        this.nomeEditalTemplate = '';
+        this.nomeEditalPersonalizado = false;
+        this.templateSelecionadoId = null;
+        this.materiaService.notificarMateriasAlteradas();
+        this.carregarEditais();
+        this.fecharModalTemplates();
+      },
+      error: (err) => {
+        console.error('[EDITAIS-TEMPLATES] Erro ao clonar template:', err);
+        this.templatesErro = 'Não foi possível criar o edital pelo template.';
+        this.clonandoTemplate = false;
+      }
+    });
+  }
+
+  private carregarImagensTemplates(templates: EditalTemplateDTO[]): void {
+    for (const t of templates || []) {
+      if (!t?.id) continue;
+      this.carregarImagemTemplate(t.id);
+    }
+  }
+
+  private carregarImagemTemplate(templateId: number): void {
+    this.editalTemplateService.buscarImagemArquivo(templateId).subscribe({
+      next: (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        const blob = res.body;
+        this.removerImagemTemplate(templateId);
+
+        if (!blob) return;
+
+        if (contentType.startsWith('image/')) {
+          const objectUrl = URL.createObjectURL(blob);
+          this.templateImagemObjectUrls.set(templateId, objectUrl);
+          this.templateImagemUrls[templateId] = objectUrl;
+          return;
+        }
+
+        this.lerBlobComoTexto(blob)
+          .then((texto) => {
+            const payload = this.parseImagemResponse(texto);
+            if (!payload?.dados) return;
+            const tipo = this.normalizarContentType(payload.contentType);
+            this.templateImagemUrls[templateId] = `data:${tipo};base64,${payload.dados}`;
+          })
+          .catch(() => {
+            this.removerImagemTemplate(templateId);
+          });
+      },
+      error: () => {
+        this.removerImagemTemplate(templateId);
+      }
+    });
+  }
+
+  onTemplateImagemErro(templateId: number): void {
+    this.removerImagemTemplate(templateId);
+  }
+
+  private removerImagemTemplate(templateId: number): void {
+    const objectUrl = this.templateImagemObjectUrls.get(templateId);
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      this.templateImagemObjectUrls.delete(templateId);
+    }
+    delete this.templateImagemUrls[templateId];
+  }
+
+  private limparImagensTemplates(): void {
+    for (const objectUrl of this.templateImagemObjectUrls.values()) {
+      URL.revokeObjectURL(objectUrl);
+    }
+    this.templateImagemObjectUrls.clear();
+    this.templateImagemUrls = {};
+  }
+
+  private lerBlobComoTexto(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blob);
+    });
+  }
+
+  private parseImagemResponse(texto: string): { dados?: string; contentType?: any } | null {
+    const raw = (texto || '').trim();
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizarContentType(contentType: any): string {
+    if (!contentType) return 'image/png';
+    if (typeof contentType === 'string') return contentType;
+    const type = contentType.type || contentType.mainType || 'image';
+    const subtype = contentType.subtype || contentType.subType || 'png';
+    return `${type}/${subtype}`;
+  }
+
   // ============= FORM HELPERS =============
 
   get tituloFormulario(): string {
@@ -109,6 +328,21 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.editalEmEdicao = null;
     this.mensagemSucesso = undefined;
     this.erro = undefined;
+  }
+
+  abrirModalTemplates(): void {
+    this.mostrarModalTemplates = true;
+    this.mensagemTemplateOk = undefined;
+    this.templatesErro = undefined;
+    this.limparFiltrosTemplates();
+    this.carregarTemplates();
+  }
+
+  fecharModalTemplates(): void {
+    this.mostrarModalTemplates = false;
+    this.mensagemTemplateOk = undefined;
+    this.templatesErro = undefined;
+    this.limparImagensTemplates();
   }
 
   editar(edital: Edital): void {

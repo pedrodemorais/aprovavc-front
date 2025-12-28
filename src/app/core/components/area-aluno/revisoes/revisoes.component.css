@@ -1,0 +1,347 @@
+/* Card principal da lista */
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.rev-card {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  --rev-scrollbar: 8px;
+}
+
+/* Layout da pagina de revisoes */
+.revisoes-page {
+  max-width: 1200px;
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 16px 20px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.revisoes-header {
+  margin-bottom: 12px;
+}
+
+.revisoes-header h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+  color: #111827;
+}
+
+.revisoes-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .revisoes-page {
+    padding: 12px 12px 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .revisoes-page {
+    padding: 10px 10px 18px;
+  }
+}
+
+/* Estado (carregando/erro) */
+.rev-state {
+  padding: 12px 16px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.rev-state.erro {
+  color: #b91c1c;
+}
+
+/* Cabecalho tipo tabela (desktop) */
+.rev-list-header {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1.3fr 1.8fr 1.3fr;
+  column-gap: 24px;
+  padding: 12px 22px;
+  padding-right: calc(22px + var(--rev-scrollbar));
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Corpo rolavel da lista */
+.rev-list-body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
+}
+
+.rev-list-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rev-list-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rev-list-body::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.22);
+  border-radius: 999px;
+}
+
+.rev-list-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 24, 39, 0.35);
+}
+
+/* Linhas (desktop) */
+.rev-list-row {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1.3fr 1.8fr 1.3fr;
+  column-gap: 24px;
+  padding: 14px 22px;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  transition: background 0.12s ease;
+}
+
+.rev-list-row > * {
+  justify-self: stretch;
+  text-align: left;
+}
+
+.rev-list-row .col-materia {
+  align-items: flex-start;
+}
+
+.rev-list-row .col-tipo,
+.rev-list-row .col-data {
+  align-items: flex-start;
+}
+
+.rev-list-row .col-acoes {
+  align-items: flex-end;
+}
+
+.rev-list-row:nth-child(even) {
+  background: transparent;
+}
+
+.rev-list-row:hover {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+/* Colunas */
+.col-status,
+.col-materia,
+.col-tipo,
+.col-data {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+/* Pills / labels */
+.pill-status {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.status-vencida {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-hoje {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-futura {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.pill-tipo {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.pill-anotacao {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.pill-flashcard {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Conteudo das colunas */
+.materia-nome {
+  font-weight: 600;
+  color: #2b2b2c9c;
+  font-size: 0.9rem;
+}
+
+.topico-descricao {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.data-principal {
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: #2b2b2c9c;
+}
+
+.data-secundaria {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+/* Botao "Ir para sala de estudo" */
+.btn-ghost {
+  align-self: flex-end;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  color: #374151;
+}
+
+.btn-ghost:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .rev-list-header {
+    display: none;
+  }
+
+  .rev-list-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
+  .col-acoes {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .btn-ghost {
+    align-self: stretch;
+    text-align: center;
+  }
+}
+
+/* Tema escuro */
+:host-context(body.theme-dark) .rev-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .rev-list-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--muted) !important;
+}
+
+:host-context(body.theme-dark) .rev-list-row {
+  background: transparent !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+:host-context(body.theme-dark) .rev-list-row:nth-child(even) {
+  background: transparent !important;
+}
+
+:host-context(body.theme-dark) .rev-list-row:hover {
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .materia-nome {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .topico-descricao {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .data-principal {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .data-secundaria {
+  color: var(--muted) !important;
+}
+
+:host-context(body.theme-dark) .status-vencida {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #fecaca !important;
+}
+
+:host-context(body.theme-dark) .status-hoje {
+  background: rgba(59, 130, 246, 0.16) !important;
+  color: #bfdbfe !important;
+}
+
+:host-context(body.theme-dark) .status-futura {
+  background: rgba(148, 163, 184, 0.14) !important;
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .pill-anotacao {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #fde68a !important;
+}
+
+:host-context(body.theme-dark) .pill-flashcard {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: #bbf7d0 !important;
+}
+
+:host-context(body.theme-dark) .btn-ghost {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 26px rgba(34, 197, 94, 0.22) !important;
+}

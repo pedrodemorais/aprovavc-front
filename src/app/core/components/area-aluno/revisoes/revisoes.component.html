@@ -1,0 +1,96 @@
+<ng-template #listaTpl>
+  <div class="rev-state" *ngIf="carregando">Carregando revisões...</div>
+  <div class="rev-state erro" *ngIf="erro">{{ erro }}</div>
+
+  <div class="rev-card" *ngIf="revisoes?.length">
+
+    <!-- cabeçalho tipo "tabela" -->
+    <div class="rev-list-header">
+      <span class="col-status">Status</span>
+      <span class="col-materia">Matéria / tópico</span>
+      <span class="col-tipo">Tipo</span>
+      <span class="col-data">Próxima revisão</span>
+      <span class="col-acoes">Ações</span>
+    </div>
+
+    <!-- linhas -->
+    <div class="rev-list-body">
+      <div
+        class="rev-list-row"
+        *ngFor="let r of revisoes"
+      >
+      <!-- STATUS -->
+      <div class="col-status">
+        <span
+          class="pill-status"
+          [ngClass]="{
+            'status-vencida': r.status === 'VENCIDA',
+            'status-hoje':   r.status === 'EM_DIA',
+            'status-futura': r.status === 'FUTURA'
+          }"
+        >
+          {{
+            r.status === 'VENCIDA'
+              ? 'Vencida'
+              : r.status === 'EM_DIA'
+                ? 'Hoje'
+                : 'Futura'
+          }}
+        </span>
+      </div>
+
+      <!-- MATÉRIA / TÓPICO -->
+      <div class="col-materia">
+        <div class="materia-nome">{{ r.materiaNome }}</div>
+        <div class="topico-descricao">Tópico: {{ r.topicoDescricao }}</div>
+      </div>
+
+      <!-- TIPO -->
+      <div class="col-tipo">
+        <span
+          class="pill-tipo"
+          [ngClass]="r.tipo === 'ANOTACAO' ? 'pill-anotacao' : 'pill-flashcard'"
+        >
+          {{ r.tipo === 'ANOTACAO' ? 'Anotações' : 'Flashcards' }}
+        </span>
+      </div>
+
+      <!-- DATA / QUANTIDADE -->
+      <div class="col-data">
+        <div class="data-principal">
+          {{ r.dataProximaRevisao | date: 'shortDate' }}
+        </div>
+        <div class="data-secundaria" *ngIf="r.qtdPendentes">
+          {{ r.qtdPendentes }} itens pendentes
+        </div>
+      </div>
+
+      <!-- AÇÕES -->
+      <div class="col-acoes">
+        <button
+          type="button"
+          class="btn-ghost"
+          (click)="irParaSala(r)"
+        >
+          Ir para sala de estudo
+        </button>
+      </div>
+    </div>
+    </div>
+
+  </div>
+</ng-template>
+
+<ng-container *ngIf="modo === 'automatico'; else embedded">
+  <div class="revisoes-page">
+    <div class="revisoes-header">
+      <h2>Fila de revisões</h2>
+      <p>Priorize o que está vencido e o que vence hoje.</p>
+    </div>
+    <ng-container *ngTemplateOutlet="listaTpl"></ng-container>
+  </div>
+</ng-container>
+
+<ng-template #embedded>
+  <ng-container *ngTemplateOutlet="listaTpl"></ng-container>
+</ng-template>

@@ -52,7 +52,7 @@ body {
 
 /* Container precisa permitir �ǣencolher��� dentro do flex */
 .container {
-  flex: 1 1 auto;
+ 
   min-height: 0;      /* ԣ� evita overflow vertical fantasma */
   overflow: hidden;   /* ԣ� quem rola +� o .content */
 }
@@ -128,11 +128,13 @@ body {
   justify-content: space-between;
   height: 64px;
   padding: 0 1.5rem;
+  width: 100%;
+  min-width: 0;
  
   backdrop-filter: blur(10px);
   
   box-sizing: border-box;
-
+ box-shadow: 0 2px 10px rgba(15, 23, 42, 0.35);
   animation: fadeInTopbar 0.25s ease-out;
 }
 
@@ -376,7 +378,8 @@ body {
   background: transparent;
   padding: 4px 0 0;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* =======================================

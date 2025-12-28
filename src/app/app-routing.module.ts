@@ -29,6 +29,7 @@ import { MateriaEstudoComponent } from './core/components/area-aluno/estudo-por-
 import { PainelAdminComponent } from './core/area-admin/pages/painel-admin/painel-admin.component';
 import { AdminGuard } from './site/pages/guards/admin.guard';
 import { BlocosEstudoComponent } from './core/components/area-aluno/blocos-estudo/blocos-estudo.component';
+import { RevisoesComponent } from './core/components/area-aluno/revisoes/revisoes.component';
 
 
 const routes: Routes = [
@@ -58,6 +59,7 @@ const routes: Routes = [
       { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'blocos-estudo', component: BlocosEstudoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'revisoes', component: RevisoesComponent },
       { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'meu-cadastro', component: PerfilAlunoComponent },

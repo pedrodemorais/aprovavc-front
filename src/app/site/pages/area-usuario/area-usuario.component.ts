@@ -344,8 +344,13 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
           label: 'Revisoes',
           icon: 'pi pi-undo',
           items: [
-            { label: 'Fila de revisoes (verde/laranja/vermelho)', icon: 'pi pi-list', disabled: true },
-            { label: 'Atrasadas / Hoje / Proximas', icon: 'pi pi-calendar', disabled: true }
+            {
+              label: 'Fila de revisoes (verde/laranja/vermelho)',
+              icon: 'pi pi-list',
+              routerLink: ['/area-restrita/revisoes'],
+              disabled: false
+            },
+            { label: 'Atrasadas / Hoje / Proximas', icon: 'pi pi-calendar' }
           ]
         },
         {
@@ -380,9 +385,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
               routerLink: ['/area-restrita/dashboard'],
               disabled: isLocked
             },
-            { label: 'Criar novo', icon: 'pi pi-plus-circle', disabled: true },
-            { label: 'Duplicar', icon: 'pi pi-copy', disabled: true },
-            { label: 'Arquivar', icon: 'pi pi-archive', disabled: true }
+           
           ]
         },
         {
