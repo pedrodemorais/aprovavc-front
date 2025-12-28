@@ -317,6 +317,7 @@ body {
   .sidebar.menu-expanded {
     width: 18rem;
     overflow-y: auto;
+    z-index: 9999999999;
   }
 
   .sidebar .menu-link {

@@ -1,0 +1,150 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h2>Blocos de Estudos</h2>
+      <p class="muted">Configure suas matérias em 7 blocos (ciclo 1→7).</p>
+    </div>
+
+    <div class="actions">
+      <button
+        pButton
+        type="button"
+        label="Salvar"
+        icon="pi pi-save"
+        [disabled]="form.invalid || !form.dirty || salvando"
+        (click)="salvar()">
+      </button>
+    </div>
+  </div>
+
+  <!-- ✅ Só renderiza as abas quando já houver blocos -->
+  <p-tabView
+    *ngIf="blocos.length > 0"
+    [(activeIndex)]="abaAtiva"
+    (activeIndexChange)="trocarAba($event)">
+
+    <p-tabPanel
+      *ngFor="let b of blocos; let i = index"
+      [header]="'Bloco ' + b.numero">
+
+      <div class="grid">
+        <div class="card">
+          <h3>Tempo do bloco</h3>
+
+          <div class="row">
+            <label>Minutos disponíveis</label>
+
+            <p-inputNumber
+              [formControl]="form.controls.minutosDisponiveis"
+              [min]="0"
+              [showButtons]="true"
+              buttonLayout="horizontal"
+              incrementButtonIcon="pi pi-plus"
+              decrementButtonIcon="pi pi-minus">
+            </p-inputNumber>
+          </div>
+
+          <div class="muted small">
+            {{ minutosParaTexto(form.value.minutosDisponiveis ?? 0) }}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Matérias do bloco</h3>
+
+            <div class="row-inline">
+              <!-- ✅ grow evita o dropdown “atropelar” o botão -->
+              <div class="grow">
+                <p-dropdown
+                  #materiaDropdown
+                  [options]="materiasOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [(ngModel)]="materiaSelecionadaId"
+                  [appendTo]="'body'"
+                  [autoZIndex]="true"
+                  [baseZIndex]="3000"
+                  (onShow)="onDropdownMateriasShow()"
+                  (onHide)="onDropdownMateriasHide()"
+                  (onChange)="fecharDropdownMaterias(i)"
+                  placeholder="Adicionar matéria">
+                </p-dropdown>
+              </div>
+
+              <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                label="Adicionar"
+                [class.hidden]="dropdownMateriasAberto"
+                [disabled]="materiaSelecionadaId == null"
+                (click)="adicionarMateria()">
+              </button>
+            </div>
+          </div>
+
+          <p-table
+            [value]="itensFormArray.controls"
+            (onRowReorder)="onRowReorder($event)"
+            styleClass="p-datatable-sm">
+
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 40px"></th>
+                <th>Ordem</th>
+                <th>Matéria</th>
+                <th style="width: 140px">Peso</th>
+                <th style="width: 70px">Ações</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-rowCtrl let-rowIndex="rowIndex">
+              <tr [pReorderableRow]="rowIndex">
+                <td pReorderableRowHandle>
+                  <i class="pi pi-bars"></i>
+                </td>
+
+                <td>{{ rowIndex + 1 }}</td>
+
+                <td>
+                  {{ rowCtrl.value?.materiaNome || nomeMateria(rowCtrl.value?.materiaEstudoId) }}
+                </td>
+
+                <td>
+                  <p-inputNumber
+                    [formControl]="rowCtrl.get('peso')"
+                    [min]="1"
+                    [max]="100"
+                    placeholder="1..100">
+                  </p-inputNumber>
+                </td>
+
+                <td>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    class="p-button-text p-button-danger"
+                    (click)="removerItem(rowIndex)">
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+
+          </p-table>
+
+          <div class="muted small" *ngIf="itensFormArray.length === 0">
+            Nenhuma matéria no bloco ainda.
+          </div>
+        </div>
+      </div>
+
+    </p-tabPanel>
+  </p-tabView>
+
+  <!-- opcional: mensagem quando ainda não carregou -->
+  <div class="muted small" *ngIf="!blocos || blocos.length === 0" style="padding: 12px 0;">
+    Carregando blocos...
+  </div>
+</div>

@@ -1,134 +1,127 @@
-import { NgModule,CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { QuillModule } from 'ngx-quill';
-import { EmpresaCadastroComponent } from '../site/pages/empresa-cadastro/empresa-cadastro.component';
-import { FormsModule,ReactiveFormsModule } from '@angular/forms'; // Importação necessária para ngModel
-import { TimelineModule } from 'primeng/timeline';
-import { TabViewModule } from 'primeng/tabview'; // Adicionado
-import { ToggleButtonModule } from 'primeng/togglebutton';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; // Importação necessária
-// Componentes do CoreModule
-
-
-// Módulos de Terceiros (PrimeNG, etc.)
-import { MenubarModule } from 'primeng/menubar';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { MatTableModule } from '@angular/material/table';
-import { DropdownModule } from 'primeng/dropdown';
-import { RadioButtonModule } from 'primeng/radiobutton';
+import { NgModule } from '@angular/core';
+import { CommonModule, registerLocaleData, DatePipe } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { NgxMaskModule } from 'ngx-mask';
+
+import { PrimeNGConfig, MessageService, ConfirmationService } from 'primeng/api';
+
+// PrimeNG (usei o que seu HTML/stack usa)
+import { TabViewModule } from 'primeng/tabview';
 import { TableModule } from 'primeng/table';
+import { DragDropModule } from 'primeng/dragdrop';
+import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputNumberModule } from 'primeng/inputnumber';
+
+import { DialogModule } from 'primeng/dialog';
+import { MenubarModule } from 'primeng/menubar';
+import { TimelineModule } from 'primeng/timeline';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ChartModule } from 'primeng/chart';
 import { CalendarModule } from 'primeng/calendar';
-// Importe a função para registrar o locale
-import { registerLocaleData } from '@angular/common';
-import localePt from '@angular/common/locales/pt';
+import { InputMaskModule } from 'primeng/inputmask';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { TooltipModule } from 'primeng/tooltip';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { EditorModule } from 'primeng/editor';
 
-// Importe o PrimeNG ConfigService
-import { PrimeNGConfig } from 'primeng/api';
+import { QuillModule } from 'ngx-quill';
+import { NgxMaskModule } from 'ngx-mask';
+
+// Angular Material (se você realmente usa no CoreModule)
+import { MatTableModule } from '@angular/material/table';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputMaskModule } from 'primeng/inputmask';
-import { ConfirmationService } from 'primeng/api';
-import { MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DatePipe } from '@angular/common'; // <-- importe aqui
 
-import { AutoCompleteModule } from 'primeng/autocomplete';
-registerLocaleData(localePt);
-import { BrowserModule } from '@angular/platform-browser';
-import { EditorModule } from 'primeng/editor';
-import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
+// ✅ Seus componentes
+import { EmpresaCadastroComponent } from '../site/pages/empresa-cadastro/empresa-cadastro.component';
 import { MateriaCadastroComponent } from './components/area-aluno/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './components/area-aluno/sala-estudo/sala-estudo.component';
-import { EditaisComponent   } from './components/area-aluno/editais/editais.component';
+import { EditaisComponent } from './components/area-aluno/editais/editais.component';
 import { AssinaturaCanceladaComponent } from './components/area-aluno/assinatura-cancelada/assinatura-cancelada.component';
 import { AssinaturaPlanosComponent } from './components/area-aluno/assinatura-planos/assinatura-planos.component';
 import { PerfilAlunoComponent } from './components/area-aluno/perfil-aluno/perfil-aluno.component';
-import { TooltipModule } from 'primeng/tooltip';
 import { MateriaEstudoComponent } from './components/area-aluno/estudo-por-materia/estudo-por-materia.component';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { DashboardRevisaoComponent } from './components/area-aluno/dashboard-revisao/dashboard-revisao.component';
 import { PainelAdminComponent } from './area-admin/pages/painel-admin/painel-admin.component';
+import { BlocosEstudoComponent } from './components/area-aluno/blocos-estudo/blocos-estudo.component';
+import { PlanoDoDiaWidgetComponent } from './components/area-aluno/plano-do-dia-widget/plano-do-dia-widget.component';
 
 
+// ✅ O COMPONENTE DOS BLOCOS
 
-
+registerLocaleData(localePt);
 
 @NgModule({
   declarations: [
-    
     EmpresaCadastroComponent,
-         MateriaCadastroComponent,
-         SalaEstudoComponent,
-         EditaisComponent, 
-         AssinaturaCanceladaComponent,
-         AssinaturaPlanosComponent,
-         PerfilAlunoComponent,
-         MateriaEstudoComponent,
-         DashboardRevisaoComponent,
-         PainelAdminComponent
-        
-       
-    
-  
-    
-    
+    MateriaCadastroComponent,
+    SalaEstudoComponent,
+    EditaisComponent,
+    AssinaturaCanceladaComponent,
+    AssinaturaPlanosComponent,
+    PerfilAlunoComponent,
+    MateriaEstudoComponent,
+    DashboardRevisaoComponent,
+    PainelAdminComponent,
+    BlocosEstudoComponent,
+    BlocosEstudoComponent,
+    PlanoDoDiaWidgetComponent,
+
   ],
   imports: [
-    BrowserAnimationsModule,  // importante para Angular Material funcionar
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+
+    // PrimeNG essenciais pro BlocosEstudoComponent
+    TabViewModule,
+    TableModule,
+    DragDropModule,
+    ButtonModule,
+    DropdownModule,
+    InputNumberModule,
+
+    // Outros que você já usa no projeto
+    MenubarModule,
+    DialogModule,
+    TimelineModule,
+    ToggleButtonModule,
+    ChartModule,
+    CalendarModule,
+    InputMaskModule,
+    ConfirmDialogModule,
+    AutoCompleteModule,
+    TooltipModule,
+    OverlayPanelModule,
+    EditorModule,
+
+    QuillModule.forRoot(),
+    NgxMaskModule.forChild(),
+
+    // Material (se precisar)
+    MatTableModule,
     MatDatepickerModule,
     MatFormFieldModule,
     MatInputModule,
     MatNativeDateModule,
-    CommonModule,
-    CalendarModule,
-    DropdownModule,
-    MenubarModule,
-    DialogModule,
-    ButtonModule,
-    TimelineModule,
-    QuillModule.forRoot(),  // <-- adicione isto
-    BrowserAnimationsModule, // Importe aqui
-    TabViewModule, // Adicionado
-    MatTableModule,
-    RadioButtonModule,
-    ToggleButtonModule, // Importação necessária
-    ReactiveFormsModule, // Adicione aqui
-    FormsModule, // Certifique-se de adicionar aqui
-    HttpClientModule,
-    TableModule,
-    ChartModule,
-    InputNumberModule,
-    InputMaskModule,
-    ConfirmDialogModule,
-     AutoCompleteModule,
-       BrowserAnimationsModule,
-  BrowserAnimationsModule,   // PRECISA estar aqui
-    FormsModule,   
-    BrowserAnimationsModule,  
-     FormsModule,
-   EditorModule, 
-   BrowserModule,
-    BrowserAnimationsModule,
-    RichTextEditorModule,
-    TooltipModule,
-     OverlayPanelModule,
-  BrowserAnimationsModule,   // PRECISA estar aqui
-    NgxMaskModule.forChild()
+     
+  DragDropModule,
   ],
-
   providers: [
-    MessageService, // ✅ <-- ISSO AQUI RESOLVE
-     ConfirmationService, // 👈 Adicione isso aqui
-       DatePipe 
+    MessageService,
+    ConfirmationService,
+    DatePipe
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA], // Adicione isso
+  exports: [
+    // Se outros módulos/telas usam esses componentes
+    BlocosEstudoComponent
+  ]
 })
 export class CoreModule {
   constructor(private primengConfig: PrimeNGConfig) {
@@ -150,4 +143,5 @@ export class CoreModule {
       weekHeader: 'Sm',
       firstDayOfWeek: 0
     });
-  }}
+  }
+}

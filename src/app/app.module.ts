@@ -32,6 +32,8 @@ registerLocaleData(localePt, 'pt-BR');
     AtivacaoComponent,
     RecuperarSenhaComponent,
     ContentComponent,
+   
+    
     
    
 
@@ -49,8 +51,8 @@ registerLocaleData(localePt, 'pt-BR');
     ReactiveFormsModule,
     TooltipModule,
     
-    FormsModule,     
-
+    
+  
 
   ],
   providers: [

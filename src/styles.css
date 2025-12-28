@@ -344,6 +344,12 @@ body.theme-dark .p-panelmenu .p-menuitem {
   z-index: 99999 !important;
 }
 
+/* PRIME NG Dropdown - garantir acima dos cards */
+.p-dropdown-panel,
+.p-overlay {
+  z-index: 999999 !important;
+}
+
 /* header “pai” (quando existir) também sem borda extra */
 body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content {
   box-shadow: none !important;

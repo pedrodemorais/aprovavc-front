@@ -4,36 +4,79 @@
 
   <!-- CABEÇALHO / RESUMO -->
   <div class="rev-header">
-    <div class="rev-header-main">
-      <div class="rev-title-row">
-        <h1 class="rev-title">Controle de revis&otilde;es</h1>
-        <i class="pi pi-info-circle rev-info-icon"
-           pTooltip="Acompanhe o que est&aacute; vencido, o que &eacute; para hoje e o que j&aacute; est&aacute; agendado."
-           tooltipPosition="top" [showDelay]="150" [hideDelay]="80"
-           tabindex="0" aria-label="Ajuda"></i>
+  <div class="hero-card">
+    <div class="hero-head">
+      <div class="hero-title">
+        <h2>Bem-vindo, {{ usuarioNome }}</h2>
+        <div class="hero-edital">Edital ativo: {{ editalAtivoNome }}</div>
       </div>
-      
     </div>
 
-    <div class="rev-summary-grid" *ngIf="revisoes.length">
-      <div class="rev-summary-card vencidas">
-        <span class="rev-summary-label">Vencidas</span>
-        <span class="rev-summary-value">{{ totalVencidas }}</span>
-      </div>
+    <p class="hero-sub">
+      Seu foco hoje é avançar no edital com constância e revisar no tempo certo.
+    </p>
 
-      <div class="rev-summary-card hoje">
-        <span class="rev-summary-label">Para hoje</span>
-        <span class="rev-summary-value">{{ totalHoje }}</span>
-      </div>
+    <div class="hero-actions">
+      <a class="hero-cta primary" routerLink="/area-restrita/estudar-materias">
+        <i class="pi pi-check"></i>
+        Iniciar sessão de estudo
+      </a>
+      <button type="button" class="hero-cta ghost" [disabled]="!planoDisponivel" title="Pendente">
+        <i class="pi pi-bookmark"></i>
+        Ver meu plano (Módulos 1-7)
+      </button>
+    </div>
 
-      <div class="rev-summary-card futuras">
-        <span class="rev-summary-label">Futuras</span>
-        <span class="rev-summary-value">{{ totalFuturas }}</span>
+    <div class="hero-quick-grid">
+      <div class="quick-card">
+        <div class="quick-label">Hoje você tem</div>
+        <div class="quick-value">{{ modulosHoje }} módulo para executar</div>
+      </div>
+      <div class="quick-card">
+        <div class="quick-label">Revisões</div>
+        <div class="quick-value">
+          {{ revisoesHoje }} revisões ({{ revisoesVencemHoje }} vencem hoje)
+        </div>
+      </div>
+      <div class="quick-card">
+        <div class="quick-label">Prioridades</div>
+        <div class="quick-value">
+          <div>Revisões vencidas: {{ totalVencidas }}</div>
+          <div>Revisões vencendo hoje: {{ revisoesVencemHoje }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-columns">
+      <div class="hero-block">
+        <div class="hero-block-title">Prioridades do dia</div>
+        <div class="hero-item">
+          <span>Revisões vencidas</span>
+          <strong>{{ totalVencidas }}</strong>
+        </div>
+        <div class="hero-item">
+          <span>Revisões vencendo hoje</span>
+          <strong>{{ revisoesVencemHoje }}</strong>
+        </div>
+        <div class="hero-item">
+          <span>Conteúdo novo sugerido</span>
+          <strong>{{ conteudoNovoSugerido }}</strong>
+        </div>
+      </div>
+      <div class="hero-block">
+        <div class="hero-block-title">Seu ritmo</div>
+        <div class="hero-item">
+          <span>Sequência</span>
+          <strong>{{ sequenciaDias }} dias</strong>
+        </div>
+        <div class="hero-item">
+          <span>Tempo na semana</span>
+          <strong>{{ tempoSemana }}</strong>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- ESTADOS GERAIS -->
+</div><!-- ESTADOS GERAIS -->
   <div class="rev-state" *ngIf="carregando">
     Carregando revisões...
   </div>
@@ -47,7 +90,7 @@
       <div class="onboarding-badge">Primeiro acesso</div>
       <h2 class="onboarding-title">Sua trilha de estudo em 2 passos</h2>
       <p class="onboarding-subtitle">
-        Cadastre suas materias e, se quiser, organize por prova/editais.
+        Cadastre suas matérias e, se quiser, organize por prova/editais.
       </p>
 
       <div class="template-onboard" *ngIf="!editais.length || !materias.length">
@@ -80,11 +123,11 @@
                   class="template-image"
                   [src]="templateImagemUrls[t.id]"
                   (error)="onTemplateImagemErro(t.id)"
-                  alt="Logo do orgao"
+                  alt="Logo do órgão"
                 />
               </div>
               <div class="template-name">{{ t.nome }}</div>
-              <div class="template-cargo">{{ t.cargo || 'Cargo nao informado' }}</div>
+              <div class="template-cargo">{{ t.cargo || 'Cargo não informado' }}</div>
             </div>
           
           </button>
@@ -117,13 +160,13 @@
           <div class="step-index">1</div>
           <div class="step-content">
             <div class="step-title">
-              {{ materias.length ? 'Materias cadastradas' : 'Cadastre suas materias' }}
+              {{ materias.length ? 'Matérias cadastradas' : 'Cadastre suas matérias' }}
               <span class="step-status" *ngIf="materias.length">OK</span>
             </div>
-            <div class="step-text">Crie as disciplinas que voce estuda e deixe o painel pronto.</div>
+            <div class="step-text">Crie as disciplinas que você estuda e deixe o painel pronto.</div>
           </div>
-          <a class="step-action" *ngIf="!materias.length" routerLink="/area-restrita/cad-materias">Cadastrar materias</a>
-          <button type="button" class="step-action ghost" *ngIf="materias.length" disabled>Concluido</button>
+          <a class="step-action" *ngIf="!materias.length" routerLink="/area-restrita/cad-materias">Cadastrar matérias</a>
+          <button type="button" class="step-action ghost" *ngIf="materias.length" disabled>Concluído</button>
         </div>
 
         <div class="onboarding-step" [class.done]="editais.length">
@@ -137,12 +180,12 @@
           </div>
           <a class="step-action ghost" *ngIf="materias.length && !editais.length" routerLink="/area-restrita/editais">Criar edital</a>
           <button type="button" class="step-action ghost" *ngIf="!materias.length" disabled>Criar edital</button>
-          <button type="button" class="step-action ghost" *ngIf="editais.length" disabled>Concluido</button>
+          <button type="button" class="step-action ghost" *ngIf="editais.length" disabled>Concluído</button>
         </div>
       </div>
 
       <div class="onboarding-benefit">
-        Depois disso, o sistema agenda revisoes automaticamente e mostra seu semaforo por topico.
+        Depois disso, o sistema agenda revisões automaticamente e mostra seu semáforo por tópico.
       </div>
 
       <div class="onboarding-preview">
@@ -162,7 +205,7 @@
 
       <button type="button" class="btn-ghost info" (click)="abrirGuia()">Entender como funciona</button>
 
-      <div class="onboarding-note">Seu painel sera atualizado assim que houver revisoes.</div>
+      <div class="onboarding-note">Seu painel será atualizado assim que houver revisões.</div>
     </div>
 
     <div class="onboarding-modal" *ngIf="mostrarGuia" (click)="fecharGuia()">
@@ -172,9 +215,9 @@
           <button type="button" class="btn-close" (click)="fecharGuia()">x</button>
         </div>
         <ul class="modal-list">
-          <li>Cadastre materias e topicos para criar seu conteudo.</li>
-          <li>O sistema cria revisoes automaticas e prioriza o que importa.</li>
-          <li>O Centro de Estudo mostra o proximo passo a seguir.</li>
+          <li>Cadastre matérias e tópicos para criar seu conteúdo.</li>
+          <li>O sistema cria revisões automáticas e prioriza o que importa.</li>
+          <li>O Centro de Estudo mostra o próximo passo a seguir.</li>
         </ul>
       </div>
     </div>
@@ -259,5 +302,11 @@
   </div>
 </section>
 </div>
+
+
+
+
+
+
 
 

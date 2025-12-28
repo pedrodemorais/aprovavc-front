@@ -9,6 +9,7 @@ import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 import { Materia } from '../models/materia.model';
 import { Edital } from '../models/Edital';
 import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto';
+import { AuthService } from 'src/app/site/services/auth.service';
 @Component({
   selector: 'app-dashboard-revisao',
   templateUrl: './dashboard-revisao.component.html',
@@ -36,6 +37,16 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   templateImagemUrls: Record<number, string> = {};
   private templateImagemObjectUrls = new Map<number, string>();
 
+  usuarioNome = 'Usuário';
+  editalAtivoNome = 'Edital de exemplo';
+  modulosHoje = 1;
+  revisoesHoje = 0;
+  revisoesVencemHoje = 0;
+  conteudoNovoSugerido = 'Direito Adm - Atos';
+  sequenciaDias = 4;
+  tempoSemana = '3h20';
+  planoDisponivel = false;
+
   // totais para o resumo superior
   totalVencidas = 0;
   totalHoje = 0;
@@ -46,10 +57,12 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     private materiaService: MateriaService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.carregarUsuarioNome();
     this.carregarDados();
   }
 
@@ -85,16 +98,42 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     });
   }
 
+  private carregarUsuarioNome(): void {
+    this.authService.getUserData().subscribe({
+      next: (user) => {
+        const nome = user?.nome || user?.nomeAluno || '';
+        this.usuarioNome = this.primeiroNome(nome) || this.usuarioNome;
+      },
+      error: () => {
+        const nomeToken = this.authService.getUserNameFromToken() || '';
+        this.usuarioNome = this.primeiroNome(nomeToken) || this.usuarioNome;
+      }
+    });
+  }
+
+  private primeiroNome(nomeCompleto: string): string {
+    const nome = (nomeCompleto || '').trim();
+    if (!nome) return '';
+    return nome.split(/\s+/)[0] || '';
+  }
+
   private atualizarTotais(): void {
-    this.totalVencidas = this.revisoes.filter(r => r.status === 'VENCIDA').length;
-    this.totalHoje     = this.revisoes.filter(r => r.status === 'EM_DIA').length;
-    this.totalFuturas  = this.revisoes.filter(r => r.status === 'FUTURA').length;
+    const vencidas = this.revisoes.filter(r => r.status === 'VENCIDA').length;
+    const vencemHoje = this.revisoes.filter(r => r.status === 'EM_DIA').length;
+    const futuras = this.revisoes.filter(r => r.status === 'FUTURA').length;
+
+    this.totalVencidas = vencidas;
+    this.totalHoje = vencemHoje;
+    this.totalFuturas = futuras;
+
+    this.revisoesHoje = vencidas + vencemHoje;
+    this.revisoesVencemHoje = vencemHoje;
   }
 
   irParaSala(item: RevisaoDashboardItem): void {
     this.router.navigate(
       ['/area-restrita/sala-estudo', item.materiaId],
-      { queryParams: { topicoId: item.topicoId } } // se quiser ja mandar o topico
+      { queryParams: { topicoId: item.topicoId } } // se quiser já mandar o tópico
     );
   }
 
@@ -138,7 +177,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('[DASH-TEMPLATES] Erro ao carregar templates:', err);
-        this.templatesErro = 'Nao foi possivel carregar os templates.';
+        this.templatesErro = 'Não foi possível carregar os templates.';
         this.templatesCarregando = false;
       }
     });
@@ -180,7 +219,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('[DASH-TEMPLATES] Erro ao clonar template:', err);
-        this.templatesErro = 'Nao foi possivel criar o edital pelo template.';
+        this.templatesErro = 'Não foi possível criar o edital pelo template.';
         this.clonandoTemplate = false;
       }
     });
@@ -275,3 +314,8 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   }
 
 }
+
+
+
+
+

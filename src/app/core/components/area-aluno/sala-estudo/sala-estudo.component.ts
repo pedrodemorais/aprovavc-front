@@ -349,7 +349,7 @@ ativarRevisaoFlashcards(): void {
 
       if (temAlgoParaSalvar) {
         const desejaSalvar = window.confirm(
-          'Voc├¬ j├í possui tempo de estudo neste t├│pico. Deseja salvar antes de mudar para outro t├│pico?'
+          'Você já possui tempo de estudo neste tópico. Deseja salvar antes de mudar para outro tópico?'
         );
 
         if (desejaSalvar) {

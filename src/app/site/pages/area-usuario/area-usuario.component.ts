@@ -276,56 +276,48 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
           routerLink: ['/area-restrita/dashboard'],
           disabled: isLocked
         },
-        {
-          label: 'O que estudar agora (bloco/modulo do dia)',
-          icon: 'pi pi-bolt',
-          disabled: true
-        },
-        {
-          label: 'Revisoes vencendo hoje',
-          icon: 'pi pi-clock',
-          disabled: true
-        },
+      
      
         {
           label: 'Estudar',
           icon: 'pi pi-book',
-          items: [
-            {
-              label: 'Iniciar sessão',
-              icon: 'pi pi-sign-in',
-              routerLink: ['/area-restrita/estudar-materias'],
-              disabled: isLocked || !this.hasMaterias,
+           routerLink: ['/area-restrita/estudar-materias'],
+            disabled: isLocked || !this.hasMaterias,
               title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-            },
-            {
-              label: 'Timer / registro / resumo / flashcards',
-              icon: 'pi pi-stopwatch',
-              disabled: true
-            }
-          ]
+         
+          
         },
-        {
-          label: 'Plano',
-          icon: 'pi pi-sliders-h',
-          items: [
-            {
-              label: 'Rotina em blocos (modulos 1-7)',
-              icon: 'pi pi-table',
-              disabled: true
-            },
-            {
-              label: 'Disponibilidade (min/dia) e regra de reposicao',
-              icon: 'pi pi-clock',
-              disabled: true
-            },
-            {
-              label: 'Metas (ex: X horas/semana)',
-              icon: 'pi pi-flag',
-              disabled: true
-            }
-          ]
-        },
+      {
+  label: 'Plano',
+  icon: 'pi pi-sliders-h',
+  items: [
+    {
+      label: 'Plano do dia (bloco atual)',
+      icon: 'pi pi-calendar',
+      routerLink: ['/area-restrita/dashboard'],
+      disabled: isLocked || !this.hasMaterias,
+      title: !this.hasMaterias ? 'Cadastre matérias primeiro' : undefined
+    },
+    {
+      label: 'Rotina em blocos (módulos 1-7)',
+      icon: 'pi pi-table',
+      routerLink: ['/area-restrita/blocos-estudo'],
+      disabled: isLocked || !this.hasMaterias,
+      title: !this.hasMaterias ? 'Cadastre matérias primeiro' : undefined
+    },
+    {
+      label: 'Disponibilidade (min/dia) e regra de reposição',
+      icon: 'pi pi-clock',
+      disabled: true
+    },
+    {
+      label: 'Metas (ex: X horas/semana)',
+      icon: 'pi pi-flag',
+      disabled: true
+    }
+  ]
+},
+
         {
           label: 'Conteudo',
           icon: 'pi pi-folder',
