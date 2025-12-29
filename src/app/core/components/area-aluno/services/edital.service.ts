@@ -15,6 +15,7 @@ export interface EditalFormPayload {
 export class EditalService {
 
   private apiUrl = `${environment.apiUrl}/editais`;
+  private alunosUrl = `${environment.apiUrl}/alunos`;
 
   constructor(private http: HttpClient) {}
 
@@ -40,5 +41,13 @@ export class EditalService {
 
   definirComoAtivo(id: number): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/ativar`, {});
+  }
+
+  selecionarEdital(editalId: number): Observable<any> {
+    return this.http.post<any>(`${this.alunosUrl}/${editalId}/selecionar-edital`, {});
+  }
+
+  desmarcarEdital(editalId: number): Observable<any> {
+    return this.http.post<any>(`${this.alunosUrl}/${editalId}/desmarcar-edital`, {});
   }
 }

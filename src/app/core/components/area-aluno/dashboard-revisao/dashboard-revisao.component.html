@@ -8,20 +8,86 @@
     <div class="hero-head">
       <div class="hero-title">
         <h2>Bem-vindo, {{ usuarioNome }}</h2>
-        <div class="hero-edital">Edital ativo: {{ editalAtivoNome }}</div>
       </div>
     </div>
 
-    <p class="hero-sub">
-      Seu foco hoje é avançar no edital com constância e revisar no tempo certo.
-    </p>
+<p class="hero-sub">
+  Seu foco hoje é avançar no edital com constância e revisar no tempo certo.
+</p>
+
+    <div class="hero-edital-card">
+        <div class="hero-edital-label">Edital ativo</div>
+        <ng-container *ngIf="activeEditais.length; else heroEditalVazio">
+          <div class="hero-edital-body">
+            <div class="hero-edital-list">
+              <article class="hero-edital-row" *ngFor="let e of editaisAtivosVisiveis"
+                role="button" tabindex="0" (click)="irParaEditais()" (keydown.enter)="irParaEditais()">
+                <div class="hero-edital-logo" [class.hero-edital-logo--placeholder]="!activeEditalImagemUrls[e.id!]">
+                  <img
+                    *ngIf="activeEditalImagemUrls[e.id!]"
+                    [src]="activeEditalImagemUrls[e.id!]"
+                    (error)="onEditalAtivoImagemErro(e.id!)"
+                    alt="Logo do orgao"
+                  />
+                  <span *ngIf="!activeEditalImagemUrls[e.id!]">{{ e.nome?.slice(0, 1) }}</span>
+                </div>
+                <div class="hero-edital-info">
+                  <div class="hero-edital-title">
+                    <span class="hero-edital-nome">{{ e.nome }}</span>
+                    <span class="hero-edital-cargo" *ngIf="getEditalCargo(e)">{{ getEditalCargo(e) }}</span>
+                  </div>
+                  <div class="hero-edital-meta">
+                    <div class="hero-meta-item">
+                      <span class="hero-meta-label">Data da prova</span>
+                      <span class="hero-meta-value">{{ formatData(e.dataProva) || 'Nao definida' }}</span>
+                    </div>
+                    <div class="hero-meta-item">
+                      <span class="hero-meta-label">Progresso</span>
+                      <span class="hero-meta-pill">{{ formatPercent(e.percentualEstudadoGeral) }}</span>
+                    </div>
+                    <div class="hero-meta-item">
+                      <span class="hero-meta-label">Dominio</span>
+                      <span class="hero-meta-pill">{{ formatPercent(e.nivelDominioGeral) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="hero-edital-row hero-edital-row--more" *ngIf="editaisAtivosRestantes > 0"
+                role="button" tabindex="0" (click)="irParaEditais()" (keydown.enter)="irParaEditais()">
+                <div class="hero-edital-logo hero-edital-logo--more">+{{ editaisAtivosRestantes }}</div>
+                <div class="hero-edital-info">
+                  <div class="hero-edital-title">
+                    <span class="hero-edital-nome">Mais editais ativos</span>
+                    <span class="hero-edital-cargo">Ver todos</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #heroEditalVazio>
+          <div class="hero-edital-body">
+            <div class="hero-edital-list">
+              <article class="hero-edital-row hero-edital-row--empty"
+                role="button" tabindex="0" (click)="irParaEditais()" (keydown.enter)="irParaEditais()">
+                <div class="hero-edital-logo hero-edital-logo--placeholder">-</div>
+                <div class="hero-edital-info">
+                  <div class="hero-edital-title">
+                    <span class="hero-edital-nome">{{ editalAtivoNome }}</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </ng-template>
+      </div>
 
     <div class="hero-actions">
       <a class="hero-cta primary" routerLink="/area-restrita/estudar-materias">
         <i class="pi pi-check"></i>
         Iniciar sessão de estudo
       </a>
-      <button type="button" class="hero-cta ghost" [disabled]="!planoDisponivel" title="Pendente">
+      <button type="button" class="hero-cta ghost" (click)="irParaBlocosEstudo()">
         <i class="pi pi-bookmark"></i>
         Ver meu plano (Módulos 1-7)
       </button>
@@ -225,6 +291,9 @@
 
 </section>
 </div>
+
+
+
 
 
 

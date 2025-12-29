@@ -1,8 +1,11 @@
-import { Component, HostListener, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewChildren, QueryList } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
+import { OverlayPanel } from 'primeng/overlaypanel';
 import { MessageService } from 'primeng/api';
-import { Dropdown } from 'primeng/dropdown';
+import { AutoComplete } from 'primeng/autocomplete';
+import { SalaEstudoService } from '../services/sala-estudo.service';
+import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { MateriaService } from '../services/materia.service';
@@ -28,10 +31,14 @@ type BlocoForm = FormGroup<{
 @Component({
   selector: 'app-blocos-estudo',
   templateUrl: './blocos-estudo.component.html',
-  styleUrls: ['./blocos-estudo.component.css'],
-  providers: [MessageService]
+  styleUrls: ['./blocos-estudo.component.css']
 })
 export class BlocosEstudoComponent implements OnInit {
+  @ViewChild('copiaPanel') copiaPanel?: OverlayPanel;
+  @ViewChildren('autoMateria') autoMateriaRefs?: QueryList<AutoComplete>;
+
+  diasSemana: string[] = ['Segunda Feira', 'Terca Feira', 'Quarta Feira', 'Quinta Feira', 'Sexta Feira', 'Sabado', 'Domingo'];
+
   blocos: BlocoEstudoDTO[] = [];
   abaAtiva = 0;
 
@@ -39,48 +46,98 @@ export class BlocosEstudoComponent implements OnInit {
 
   materiasOptions: MateriaOption[] = [];
   materiasMap = new Map<number, string>();
-  materiaSelecionadaId: number | null = null;
-  dropdownMateriasAberto = false;
-  @ViewChildren('materiaDropdown') materiaDropdowns!: QueryList<Dropdown>;
+  materiasFiltradasPorBloco: MateriaOption[][] = [];
+  materiaSelecionadaPorBloco: Array<MateriaOption | null> = [];
+  materiaSelecionadaPorLinha: Array<Array<MateriaOption | null>> = [];
+  linhasFixasPorBloco: Array<Array<{ item: BlocoEstudoItemDTO | null }>> = [];
+  blocoHoraInputs: string[] = [];
+  blocoHoraErrors: Array<string | null> = [];
+
+  blocoCopiaOrigem: number | null = null;
+  blocoCopiaDestino: number | null = null;
+  ultimoRemovido: { blocoIndex: number; item: BlocoEstudoItemDTO; index: number } | null = null;
+  substituicaoAtiva: { blocoIndex: number; itemIndex: number } | null = null;
+  linhaEdicaoAtiva: { blocoIndex: number; linhaIndex: number } | null = null;
+  revisaoStatusPorMateria = new Map<number, 'VENCIDA' | 'EM_DIA' | 'FUTURA'>();
 
   salvando = false;
   carregandoBlocos = false;
   carregandoMaterias = false;
+  mensagemTexto = '';
+  mensagemTipo: 'success' | 'error' | 'warn' | null = null;
 
   constructor(
     private fb: FormBuilder,
     private blocosService: BlocosEstudoService,
     private materiaService: MateriaService,
+    private salaEstudoService: SalaEstudoService,
     private message: MessageService
   ) {}
 
   ngOnInit(): void {
-    // cria um form "vazio" para o template não quebrar antes do load
     this.form = this.fb.group({
-      minutosDisponiveis: this.fb.control(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
+      minutosDisponiveis: this.fb.control(0, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
       itens: this.fb.array<BlocoItemForm>([])
     });
 
+    this.blocos = this.criarBlocosPadrao();
+    this.abaAtiva = 0;
+    this.montarForm(this.blocos[0]);
+    this.sincronizarInputsPorBloco();
+    this.inicializarLinhasFixas();
+
     this.carregarMaterias();
     this.carregarBlocos();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    const target = event.target as Node | null;
-    for (const dropdown of this.materiaDropdowns?.toArray() || []) {
-      if (!dropdown?.overlayVisible) continue;
-      const container = dropdown.el?.nativeElement as HTMLElement | null;
-      const panel = dropdown.panel as HTMLElement | null;
-      if (target && (container?.contains(target) || panel?.contains(target))) {
-        return;
-      }
-      dropdown.hide();
-    }
+    this.carregarRevisoesDashboard();
   }
 
   get itensFormArray(): FormArray<BlocoItemForm> {
     return this.form.controls.itens;
+  }
+
+  get salvarDisabled(): boolean {
+    return this.salvando || this.form.invalid || this.temBlocosInvalidos;
+  }
+
+  get temBlocosInvalidos(): boolean {
+    return this.blocosInvalidos.length > 0;
+  }
+
+  get blocosInvalidos(): Array<{ index: number; numero: number; mensagem: string }> {
+    return this.blocos
+      .map((bloco, index) => {
+        const mensagem = this.blocoErroMensagem(index);
+        if (!mensagem) return null;
+        return { index, numero: bloco.numero, mensagem };
+      })
+      .filter((item): item is { index: number; numero: number; mensagem: string } => item != null);
+  }
+
+  get totalCicloMinutos(): number {
+    return this.blocos.reduce((total, bloco) => total + (bloco.minutosDisponiveis ?? 0), 0);
+  }
+
+  get totalCicloTexto(): string {
+    return this.minutosParaTexto(this.totalCicloMinutos);
+  }
+
+  get minutosDistribuidos(): number[] {
+    return this.calcularDistribuicaoMinutos();
+  }
+
+  get linhasPorBloco(): number {
+    return 10;
+  }
+
+  get backlogCount(): number {
+    if (!this.materiasOptions.length) return 0;
+    const usados = new Set<number>();
+    this.blocos.forEach((bloco) => {
+      (bloco.itens || []).forEach((item) => {
+        if (item.materiaEstudoId != null) usados.add(item.materiaEstudoId);
+      });
+    });
+    return Math.max(0, this.materiasOptions.length - usados.size);
   }
 
   carregarMaterias(): void {
@@ -101,74 +158,88 @@ export class BlocosEstudoComponent implements OnInit {
           this.materiasMap = new Map(materiasComId.map(m => [m.id, m.nome]));
         },
         error: () => {
-          this.message.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar matérias.' });
+          this.setMensagem('error', 'Falha ao carregar materias.');
         }
       });
   }
 
-carregarBlocos(): void {
-  this.carregandoBlocos = true;
+  carregarBlocos(): void {
+    this.carregandoBlocos = true;
 
-  this.blocosService.listarBlocos()
-    .pipe(finalize(() => (this.carregandoBlocos = false)))
-    .subscribe({
-      next: (blocos) => {
-        const lista = (blocos || []).slice().sort((a, b) => a.numero - b.numero);
+    this.blocosService.listarBlocos()
+      .pipe(finalize(() => (this.carregandoBlocos = false)))
+      .subscribe({
+        next: (blocos) => {
+          const lista = (blocos || []).slice().sort((a, b) => a.numero - b.numero);
 
-        // ✅ SE A API VEIO VAZIA: cria 7 blocos pra UI não ficar em branco
-        if (lista.length === 0) {
+          if (lista.length === 0) {
+            this.blocos = this.criarBlocosPadrao();
+            this.abaAtiva = 0;
+            this.montarForm(this.blocos[0]);
+            this.sincronizarInputsPorBloco();
+            this.inicializarLinhasFixas();
+            this.setMensagem('warn', 'Nenhum bloco veio do backend. Exibindo 7 blocos padrao.');
+            return;
+          }
+
+          this.blocos = lista;
+          this.abaAtiva = Math.min(this.abaAtiva, this.blocos.length - 1);
+          this.montarForm(this.blocos[this.abaAtiva]);
+          this.sincronizarInputsPorBloco();
+          this.inicializarLinhasFixas();
+        },
+        error: () => {
           this.blocos = this.criarBlocosPadrao();
           this.abaAtiva = 0;
           this.montarForm(this.blocos[0]);
-
-          this.message.add({
-            severity: 'warn',
-            summary: 'Atenção',
-            detail: 'Nenhum bloco veio do backend. Exibindo 7 blocos padrão (salvar pode depender do backend já ter criado esses blocos).'
-          });
-          return;
+          this.sincronizarInputsPorBloco();
+          this.inicializarLinhasFixas();
+          this.setMensagem('error', 'Falha ao carregar blocos. Mostrando blocos padrao.');
         }
+      });
+  }
 
-        this.blocos = lista;
-        this.abaAtiva = Math.min(this.abaAtiva, this.blocos.length - 1);
-        this.montarForm(this.blocos[this.abaAtiva]);
-      },
-      error: () => {
-        // ✅ EM ERRO TAMBÉM cria fallback (pra não ficar tela vazia)
-        this.blocos = this.criarBlocosPadrao();
-        this.abaAtiva = 0;
-        this.montarForm(this.blocos[0]);
+  carregarRevisoesDashboard(): void {
+    this.salaEstudoService.listarRevisoesDashboard()
+      .subscribe({
+        next: (itens: RevisaoDashboardItem[]) => {
+          const mapa = new Map<number, 'VENCIDA' | 'EM_DIA' | 'FUTURA'>();
+          (itens || []).forEach((item) => {
+            const atual = mapa.get(item.materiaId);
+            mapa.set(item.materiaId, this.priorizarStatusRevisao(atual, item.status));
+          });
+          this.revisaoStatusPorMateria = mapa;
+        },
+        error: () => {
+          this.revisaoStatusPorMateria = new Map();
+        }
+      });
+  }
 
-        this.message.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar blocos. Mostrando blocos padrão.' });
-      }
-    });
-}
-
-private criarBlocosPadrao(): BlocoEstudoDTO[] {
-  return Array.from({ length: 7 }, (_, i) => ({
-    id: 0,
-    numero: i + 1,
-    minutosDisponiveis: 0,
-    ativo: true,
-    itens: []
-  } as BlocoEstudoDTO));
-}
+  private criarBlocosPadrao(): BlocoEstudoDTO[] {
+    return Array.from({ length: 7 }, (_, i) => ({
+      id: 0,
+      numero: i + 1,
+      minutosDisponiveis: 0,
+      ativo: true,
+      itens: []
+    } as BlocoEstudoDTO));
+  }
 
   montarForm(bloco: BlocoEstudoDTO): void {
     this.form = this.fb.group({
       minutosDisponiveis: this.fb.control(bloco.minutosDisponiveis ?? 0, {
         nonNullable: true,
-        validators: [Validators.required, Validators.min(0)]
+        validators: [Validators.required, Validators.min(1)]
       }),
       itens: this.fb.array<BlocoItemForm>([])
     });
 
-    const itensOrdenados = [...(bloco.itens || [])].sort((a, b) => a.ordem - b.ordem);
+    const itensOrdenados = this.obterItensOrdenados(bloco);
     itensOrdenados.forEach((item) => this.itensFormArray.push(this.criarItemForm(item)));
 
     this.recalcularOrdem();
     this.form.markAsPristine();
-    this.materiaSelecionadaId = null;
   }
 
   criarItemForm(item: Partial<BlocoEstudoItemDTO> & { materiaEstudoId: number }): BlocoItemForm {
@@ -187,65 +258,102 @@ private criarBlocosPadrao(): BlocoEstudoDTO[] {
     });
   }
 
-  trocarAba(index: number): void {
+  selecionarBloco(index: number): void {
     this.abaAtiva = index;
     const bloco = this.blocos[this.abaAtiva];
     if (bloco) this.montarForm(bloco);
   }
 
-  adicionarMateria(): void {
-    if (this.materiaSelecionadaId == null) return;
-
-    const jaExiste = this.itensFormArray.controls.some(ctrl =>
-      ctrl.controls.materiaEstudoId.value === this.materiaSelecionadaId
-    );
-
-    if (jaExiste) {
-      this.message.add({ severity: 'warn', summary: 'Atenção', detail: 'Essa matéria já está no bloco.' });
+  onHorasChange(bloco: BlocoEstudoDTO, valor: string, index: number): void {
+    this.blocoHoraInputs[index] = valor;
+    const resultado = this.parseHora(valor);
+    if (resultado.erro) {
+      this.blocoHoraErrors[index] = resultado.erro;
+      return;
+    }
+    if (resultado.minutos == null) {
+      this.blocoHoraErrors[index] = null;
       return;
     }
 
-    const ordemNova = this.itensFormArray.length + 1;
+    const minutos = resultado.minutos ?? 0;
+    this.blocoHoraErrors[index] = null;
+    bloco.minutosDisponiveis = minutos;
 
-    this.itensFormArray.push(
-      this.criarItemForm({
-        materiaEstudoId: this.materiaSelecionadaId,
-        materiaNome: this.nomeMateria(this.materiaSelecionadaId),
-        ordem: ordemNova
-      })
-    );
-
-    this.form.markAsDirty();
-    this.materiaSelecionadaId = null;
+    if (index === this.abaAtiva) {
+      this.form.controls.minutosDisponiveis.setValue(minutos);
+      this.form.markAsDirty();
+    }
   }
 
-  fecharDropdownMaterias(index?: number): void {
-    const lista = this.materiaDropdowns?.toArray() || [];
-    if (index == null) {
-      for (const dropdown of lista) {
-        if (dropdown?.overlayVisible) dropdown.hide();
+  onHorasBlur(bloco: BlocoEstudoDTO, index: number): void {
+    const valorAtual = this.blocoHoraInputs[index];
+    const resultado = this.parseHora(valorAtual);
+    if (resultado.erro || resultado.minutos == null) {
+      this.blocoHoraInputs[index] = this.formatMinutosParaHora(bloco.minutosDisponiveis ?? 0);
+      this.blocoHoraErrors[index] = null;
+      return;
+    }
+    this.blocoHoraInputs[index] = this.formatMinutosParaHora(resultado.minutos ?? 0);
+  }
+
+  formatMinutosParaHora(minutos: number): string {
+    const total = Math.max(0, Math.min(this.maxMinutos, Number(minutos) || 0));
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    return `${this.pad2(h)}:${this.pad2(m)}`;
+  }
+
+  private parseHora(valor: string): { minutos: number | null; erro: string | null } {
+    const raw = String(valor || '').trim();
+    if (!raw || raw.includes('_')) {
+      return { minutos: null, erro: null };
+    }
+    if (/^\d{1,2}$/.test(raw)) {
+      const h = Number(raw);
+      if (!Number.isInteger(h) || h < 0 || h > 99) {
+        return { minutos: null, erro: 'Informe de 00:00 a 99:59.' };
       }
-      return;
+      return { minutos: h * 60, erro: null };
     }
-    const dropdown = lista[index];
-    if (dropdown?.overlayVisible) dropdown.hide();
+    if (/^\d{1,2}:\d{0,1}$/.test(raw)) {
+      return { minutos: null, erro: null };
+    }
+
+    let hStr = '';
+    let mStr = '';
+    if (/^\d{1,2}:\d{1,2}$/.test(raw)) {
+      [hStr, mStr] = raw.split(':');
+    } else if (/^\d{3,4}$/.test(raw)) {
+      hStr = raw.slice(0, -2);
+      mStr = raw.slice(-2);
+    } else {
+      return { minutos: null, erro: 'Formato invalido. Use HH:MM.' };
+    }
+
+    const h = Number(hStr);
+    const m = Number(mStr);
+    if (!Number.isInteger(h) || !Number.isInteger(m) || h < 0 || h > 99 || m < 0 || m > 59) {
+      return { minutos: null, erro: 'Informe de 00:00 a 99:59.' };
+    }
+    return { minutos: h * 60 + m, erro: null };
   }
 
-  onDropdownMateriasShow(): void {
-    this.dropdownMateriasAberto = true;
+  private pad2(v: number): string {
+    return String(v).padStart(2, '0');
   }
 
-  onDropdownMateriasHide(): void {
-    this.dropdownMateriasAberto = false;
+  private get maxMinutos(): number {
+    return 99 * 60 + 59;
   }
 
   removerItem(index: number): void {
     this.itensFormArray.removeAt(index);
     this.recalcularOrdem();
     this.form.markAsDirty();
+    this.atualizarBlocoAtualComForm();
   }
 
-  // ✅ move no FormArray (correto) usando dragIndex/dropIndex
   onRowReorder(event: any): void {
     const dragIndex = event?.dragIndex;
     const dropIndex = event?.dropIndex;
@@ -261,6 +369,7 @@ private criarBlocosPadrao(): BlocoEstudoDTO[] {
 
     this.recalcularOrdem();
     this.form.markAsDirty();
+    this.atualizarBlocoAtualComForm();
   }
 
   recalcularOrdem(): void {
@@ -273,12 +382,10 @@ private criarBlocosPadrao(): BlocoEstudoDTO[] {
     const blocoNumero = this.blocos[this.abaAtiva]?.numero ?? (this.abaAtiva + 1);
 
     const minutosDisponiveis = this.form.controls.minutosDisponiveis.value ?? 0;
-
     const itensPayload = this.itensFormArray.controls.map((ctrl, idx) => ({
       id: ctrl.controls.id.value ?? undefined,
       materiaEstudoId: ctrl.controls.materiaEstudoId.value,
-      ordem: idx + 1,
-      peso: ctrl.controls.peso.value ?? undefined
+      ordem: idx + 1
     }));
 
     const payload = { minutosDisponiveis, itens: itensPayload };
@@ -293,20 +400,82 @@ private criarBlocosPadrao(): BlocoEstudoDTO[] {
           if (idx >= 0) this.blocos[idx] = blocoAtualizado;
 
           this.montarForm(blocoAtualizado);
-          this.message.add({ severity: 'success', summary: 'OK', detail: `Bloco ${blocoNumero} salvo.` });
+          this.setMensagem('success', `Bloco ${blocoNumero} salvo.`);
         },
         error: (err) => {
-          this.message.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: err?.error?.message || 'Falha ao salvar.'
+          if (err?.error instanceof Blob) {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const texto = String(reader.result || '');
+              let detalhe = '';
+              try {
+                const parsed = JSON.parse(texto);
+                detalhe = parsed?.message || parsed?.error || parsed?.erro || '';
+              } catch {
+                detalhe = texto;
+              }
+              this.setMensagem('error', detalhe || 'Falha ao salvar.');
+            };
+            reader.onerror = () => {
+              this.setMensagem('error', 'Falha ao salvar.');
+            };
+            reader.readAsText(err.error);
+            return;
+          }
+
+          const detalhe = this.extrairMensagemErro(err) || 'Falha ao salvar.';
+          this.setMensagem('error', detalhe);
+        }
+      });
+  }
+
+  salvarTodos(): void {
+    if (this.temBlocosInvalidos) {
+      this.setMensagem('warn', 'Ajuste os blocos antes de salvar.');
+      return;
+    }
+
+    this.atualizarBlocoAtualComForm();
+
+    const requests = this.blocos.map((bloco) => {
+      const itens = this.obterItensOrdenados(bloco);
+      const itensPayload = itens.map((it, idx) => ({
+        id: it.id ?? undefined,
+        materiaEstudoId: it.materiaEstudoId,
+        ordem: idx + 1
+      }));
+
+      return this.blocosService.atualizarBloco(bloco.numero, {
+        minutosDisponiveis: bloco.minutosDisponiveis ?? 0,
+        itens: itensPayload
+      });
+    });
+
+    this.salvando = true;
+
+    forkJoin(requests)
+      .pipe(finalize(() => (this.salvando = false)))
+      .subscribe({
+        next: (blocosAtualizados) => {
+          blocosAtualizados.forEach((blocoAtualizado) => {
+            const idx = this.blocos.findIndex(b => b.numero === blocoAtualizado.numero);
+            if (idx >= 0) this.blocos[idx] = blocoAtualizado;
           });
+
+          const blocoAtivo = this.blocos[this.abaAtiva];
+          if (blocoAtivo) this.montarForm(blocoAtivo);
+
+          this.setMensagem('success', 'Blocos salvos.');
+        },
+        error: (err) => {
+          const detalhe = this.extrairMensagemErro(err) || 'Falha ao salvar blocos.';
+          this.setMensagem('error', detalhe);
         }
       });
   }
 
   nomeMateria(id: number): string {
-    return this.materiasMap.get(id) || `Matéria #${id}`;
+    return this.materiasMap.get(id) || `Materia #${id}`;
   }
 
   minutosParaTexto(minutos?: number | null): string {
@@ -316,5 +485,468 @@ private criarBlocosPadrao(): BlocoEstudoDTO[] {
     if (h === 0) return `${r} min`;
     if (r === 0) return `${h}h`;
     return `${h}h ${r}min`;
+  }
+
+  private extrairMensagemErro(err: any): string {
+    const payload = err?.error;
+    if (!payload) return err?.message || '';
+    if (typeof payload === 'string') return payload;
+    return payload?.message || payload?.error || payload?.erro || payload?.mensagem || '';
+  }
+
+  private calcularDistribuicaoMinutos(): number[] {
+    const total = this.form?.controls?.minutosDisponiveis?.value ?? 0;
+    const itens = this.itensFormArray?.controls || [];
+    if (!itens.length) return [];
+    if (total <= 0) return itens.map(() => 0);
+
+    const count = itens.length;
+    const base = Math.floor(total / count);
+    let restante = total - base * count;
+    const distribuido = Array.from({ length: count }, () => base);
+
+    for (let i = 0; i < restante; i += 1) {
+      distribuido[i % count] += 1;
+    }
+
+    return distribuido;
+  }
+
+  private setMensagem(tipo: 'success' | 'error' | 'warn', texto: string): void {
+    this.mensagemTipo = tipo;
+    this.mensagemTexto = texto;
+  }
+
+  obterItensOrdenados(bloco: BlocoEstudoDTO): BlocoEstudoItemDTO[] {
+    return [...(bloco.itens || [])].sort((a, b) => a.ordem - b.ordem);
+  }
+
+  private atualizarBlocoAtualComForm(): void {
+    const bloco = this.blocos[this.abaAtiva];
+    if (!bloco) return;
+    bloco.minutosDisponiveis = this.form.controls.minutosDisponiveis.value ?? 0;
+    bloco.itens = this.itensFormArray.controls.map((ctrl, idx) => ({
+      id: ctrl.controls.id.value ?? undefined,
+      materiaEstudoId: ctrl.controls.materiaEstudoId.value,
+      materiaNome: ctrl.controls.materiaNome.value ?? this.nomeMateria(ctrl.controls.materiaEstudoId.value),
+      ordem: idx + 1
+    }));
+  }
+
+  focoNoBlocoInvalido(index: number): void {
+    const bloco = this.blocos[index];
+    if (!bloco) return;
+    this.selecionarBloco(index);
+    const input = document.getElementById(`minutos-${bloco.numero}`) as HTMLInputElement | null;
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+
+  blocoErroMensagem(index: number): string {
+    const erroFormato = this.blocoHoraErrors[index];
+    if (erroFormato) return erroFormato;
+    const minutos = this.blocos[index]?.minutosDisponiveis ?? 0;
+    if (minutos <= 0) return 'Informe as horas deste bloco.';
+    return '';
+  }
+
+  isBlocoInvalido(index: number): boolean {
+    return Boolean(this.blocoErroMensagem(index));
+  }
+
+  filtrarMaterias(event: { query: string }, blocoIndex: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+    const termo = (event.query || '').toLowerCase();
+    const idsUsados = new Set(this.obterItensOrdenados(bloco).map(item => item.materiaEstudoId));
+    this.materiasFiltradasPorBloco[blocoIndex] = this.materiasOptions.filter((opt) => {
+      if (idsUsados.has(opt.value)) return false;
+      if (!termo) return true;
+      return opt.label.toLowerCase().includes(termo);
+    });
+  }
+
+  adicionarMateriaSelecionada(blocoIndex: number, event?: { value?: MateriaOption }): void {
+    const selecionada = event?.value || this.materiaSelecionadaPorBloco[blocoIndex];
+    if (!selecionada?.value) return;
+    if (this.substituicaoAtiva && this.substituicaoAtiva.blocoIndex === blocoIndex) {
+      this.substituirMateriaNoBloco(blocoIndex, this.substituicaoAtiva.itemIndex, selecionada.value);
+      this.substituicaoAtiva = null;
+      this.materiaSelecionadaPorBloco[blocoIndex] = null;
+      this.limparAutoCompleteInput(blocoIndex);
+      return;
+    }
+
+    this.adicionarMateriaAoBloco(blocoIndex, selecionada.value);
+    this.materiaSelecionadaPorBloco[blocoIndex] = null;
+    this.limparAutoCompleteInput(blocoIndex);
+  }
+
+  adicionarMateriaNaLinha(blocoIndex: number, linhaIndex: number, event?: { value?: MateriaOption }): void {
+    const selecionada = event?.value || this.materiaSelecionadaPorLinha[blocoIndex]?.[linhaIndex];
+    if (!selecionada?.value) return;
+
+    if (this.substituicaoAtiva && this.substituicaoAtiva.blocoIndex === blocoIndex) {
+      this.substituirMateriaNoBloco(blocoIndex, this.substituicaoAtiva.itemIndex, selecionada.value);
+      this.substituicaoAtiva = null;
+      this.linhaEdicaoAtiva = null;
+      this.materiaSelecionadaPorLinha[blocoIndex][linhaIndex] = null;
+      this.limparAutoCompleteInput(blocoIndex, linhaIndex);
+      return;
+    }
+
+    const itens = this.obterItensOrdenados(this.blocos[blocoIndex]);
+    if (linhaIndex < itens.length) return;
+
+    this.adicionarMateriaAoBloco(blocoIndex, selecionada.value);
+    this.linhaEdicaoAtiva = null;
+    this.materiaSelecionadaPorLinha[blocoIndex][linhaIndex] = null;
+    this.limparAutoCompleteInput(blocoIndex, linhaIndex);
+    this.atualizarLinhasFixas(blocoIndex);
+  }
+
+  adicionarMateriaAoBloco(blocoIndex: number, materiaId: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco || materiaId == null) return;
+
+    const itens = this.obterItensOrdenados(bloco);
+    if (itens.length >= this.linhasPorBloco) {
+      this.setMensagem('warn', 'Limite de materias atingido neste dia.');
+      return;
+    }
+    const jaExiste = itens.some((it) => it.materiaEstudoId === materiaId);
+    if (jaExiste) {
+      this.setMensagem('warn', 'Essa materia ja esta no bloco.');
+      return;
+    }
+
+    const materiaNome = this.nomeMateria(materiaId);
+    itens.push({
+      id: undefined,
+      materiaEstudoId: materiaId,
+      materiaNome,
+      ordem: itens.length + 1
+    });
+
+    bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
+    this.materiaSelecionadaPorBloco[blocoIndex] = null;
+    this.atualizarLinhasFixas(blocoIndex);
+
+    if (this.abaAtiva === blocoIndex) {
+      this.montarForm(bloco);
+      this.form.markAsDirty();
+    }
+  }
+
+  removerMateriaBloco(blocoIndex: number, linha: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+    const itens = this.obterItensOrdenados(bloco);
+    if (linha >= itens.length) return;
+
+    const removido = { ...itens[linha] };
+    itens.splice(linha, 1);
+    bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
+    this.ultimoRemovido = { blocoIndex, item: removido, index: linha };
+    this.message.clear('materia-removida');
+    this.message.add({ key: 'materia-removida', severity: 'info', summary: 'Materia removida', sticky: true });
+    this.atualizarLinhasFixas(blocoIndex);
+
+    if (this.abaAtiva === blocoIndex) {
+      this.montarForm(bloco);
+      this.form.markAsDirty();
+    }
+  }
+
+  iniciarSubstituicao(blocoIndex: number, itemIndex: number): void {
+    this.substituicaoAtiva = { blocoIndex, itemIndex };
+    this.linhaEdicaoAtiva = { blocoIndex, linhaIndex: itemIndex };
+    if (this.materiaSelecionadaPorLinha[blocoIndex]) {
+      this.materiaSelecionadaPorLinha[blocoIndex][itemIndex] = null;
+    }
+    setTimeout(() => {
+      const input = document.getElementById(
+        `materia-add-${this.blocos[blocoIndex]?.numero}-${itemIndex}`
+      ) as HTMLInputElement | null;
+      if (input) input.focus();
+    });
+  }
+
+  estaSubstituindo(blocoIndex: number, itemIndex: number): boolean {
+    return this.substituicaoAtiva?.blocoIndex === blocoIndex && this.substituicaoAtiva?.itemIndex === itemIndex;
+  }
+
+  estaEditandoLinha(blocoIndex: number, linhaIndex: number): boolean {
+    return this.linhaEdicaoAtiva?.blocoIndex === blocoIndex && this.linhaEdicaoAtiva?.linhaIndex === linhaIndex;
+  }
+
+  iniciarEdicaoLinha(blocoIndex: number, linhaIndex: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+    this.linhaEdicaoAtiva = { blocoIndex, linhaIndex };
+    setTimeout(() => {
+      const input = document.getElementById(`materia-add-${bloco.numero}-${linhaIndex}`) as HTMLInputElement | null;
+      if (input) input.focus();
+    });
+  }
+
+  abrirSugestoes(blocoIndex: number): void {
+    this.filtrarMaterias({ query: '' }, blocoIndex);
+  }
+
+  fecharEdicaoLinha(blocoIndex: number, linhaIndex: number): void {
+    setTimeout(() => {
+      if (this.estaEditandoLinha(blocoIndex, linhaIndex)) {
+        this.linhaEdicaoAtiva = null;
+      }
+    });
+  }
+
+  podeSubstituir(item: BlocoEstudoItemDTO): boolean {
+    return this.statusMateriaKey(item) === 'emdia';
+  }
+
+  statusMateriaKey(item: BlocoEstudoItemDTO): string {
+    const statusRevisao = this.revisaoStatusPorMateria.get(item.materiaEstudoId);
+    if (statusRevisao === 'VENCIDA' || statusRevisao === 'EM_DIA') return 'revisao';
+    if (statusRevisao === 'FUTURA') return 'emdia';
+
+    const statusRaw = this.normalizarStatus(
+      item.status || item.statusRevisao || (item as any).statusMateria || (item as any).situacao
+    );
+
+    const revisoesHoje = Number(item.revisoesHojeQtd ?? (item as any).revisoesHoje ?? 0);
+    const revisoesAtrasadas = Number(item.revisoesAtrasadasQtd ?? (item as any).revisoesAtrasadas ?? 0);
+    const pendencias = Number(
+      item.conteudoPendenteQtd ?? item.estudoPendenteQtd ?? (item as any).pendenciasEstudoQtd ?? 0
+    );
+
+    if (revisoesHoje > 0 || revisoesAtrasadas > 0) return 'revisao';
+    if (pendencias > 0) return 'estudo';
+    if (item.emDia === true) return 'emdia';
+
+    if (statusRaw) {
+      if (['REVISAO', 'REVISAO_HOJE', 'ATRASADA', 'HOJE', 'VENCIDA', 'VENCE_HOJE'].includes(statusRaw)) {
+        return 'revisao';
+      }
+      if (['ESTUDO', 'PENDENTE', 'NOVO', 'NOVO_CONTEUDO', 'CONTEUDO_NOVO'].includes(statusRaw)) {
+        return 'estudo';
+      }
+      if (['EM_DIA', 'EMDIA', 'OK', 'SEM'].includes(statusRaw)) {
+        return 'emdia';
+      }
+    }
+
+    return 'indef';
+  }
+
+  temRevisaoVencida(item: BlocoEstudoItemDTO): boolean {
+    return this.revisaoStatusPorMateria.get(item.materiaEstudoId) === 'VENCIDA';
+  }
+
+  temRevisaoHoje(item: BlocoEstudoItemDTO): boolean {
+    return this.revisaoStatusPorMateria.get(item.materiaEstudoId) === 'EM_DIA';
+  }
+
+  temRevisaoFutura(item: BlocoEstudoItemDTO): boolean {
+    return this.revisaoStatusPorMateria.get(item.materiaEstudoId) === 'FUTURA';
+  }
+
+  statusMateriaLabel(item: BlocoEstudoItemDTO): string {
+    const key = this.statusMateriaKey(item);
+    if (key === 'revisao') return 'Revisao';
+    if (key === 'estudo') return 'Estudo';
+    if (key === 'emdia') return 'Em dia';
+    return '—';
+  }
+
+  desfazerRemocao(): void {
+    if (!this.ultimoRemovido) return;
+    const { blocoIndex, item, index } = this.ultimoRemovido;
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+
+    const itens = this.obterItensOrdenados(bloco);
+    const jaExiste = itens.some((it) => it.materiaEstudoId === item.materiaEstudoId);
+    if (!jaExiste) {
+      const pos = Math.min(Math.max(index, 0), itens.length);
+      itens.splice(pos, 0, { ...item, ordem: pos + 1 });
+      bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
+    }
+    this.atualizarLinhasFixas(blocoIndex);
+
+    this.message.clear('materia-removida');
+    this.ultimoRemovido = null;
+
+    if (this.abaAtiva === blocoIndex) {
+      this.montarForm(bloco);
+      this.form.markAsDirty();
+    }
+  }
+
+  private limparAutoCompleteInput(blocoIndex: number, linhaIndex?: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+    setTimeout(() => {
+      const inputId = linhaIndex == null
+        ? `materia-add-${bloco.numero}`
+        : `materia-add-${bloco.numero}-${linhaIndex}`;
+      const input = document.getElementById(inputId) as HTMLInputElement | null;
+      if (input) input.value = '';
+    });
+  }
+
+  obterLinhasBloco(bloco: BlocoEstudoDTO): Array<{ item: BlocoEstudoItemDTO | null }> {
+    const itens = this.obterItensOrdenados(bloco);
+    return Array.from({ length: this.linhasPorBloco }, (_, idx) => ({
+      item: itens[idx] ?? null
+    }));
+  }
+
+  private atualizarLinhasFixas(blocoIndex: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+    const itens = this.obterItensOrdenados(bloco);
+    this.linhasFixasPorBloco[blocoIndex] = Array.from({ length: this.linhasPorBloco }, (_, idx) => ({
+      item: itens[idx] ?? null
+    }));
+  }
+
+  private inicializarLinhasFixas(): void {
+    this.linhasFixasPorBloco = this.blocos.map((bloco) => {
+      const itens = this.obterItensOrdenados(bloco);
+      return Array.from({ length: this.linhasPorBloco }, (_, idx) => ({
+        item: itens[idx] ?? null
+      }));
+    });
+  }
+
+  trackByLinha(index: number): number {
+    return index;
+  }
+
+  private substituirMateriaNoBloco(blocoIndex: number, itemIndex: number, materiaId: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+    const itens = this.obterItensOrdenados(bloco);
+    if (itemIndex >= itens.length) return;
+
+    const jaExiste = itens.findIndex((it) => it.materiaEstudoId === materiaId);
+    if (jaExiste >= 0 && jaExiste !== itemIndex) {
+      this.setMensagem('warn', 'Essa materia ja esta no bloco.');
+      return;
+    }
+
+    const materiaNome = this.nomeMateria(materiaId);
+    const base = itens[itemIndex];
+    itens[itemIndex] = {
+      ...base,
+      materiaEstudoId: materiaId,
+      materiaNome
+    };
+
+    bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
+    this.atualizarLinhasFixas(blocoIndex);
+
+    if (this.abaAtiva === blocoIndex) {
+      this.montarForm(bloco);
+      this.form.markAsDirty();
+    }
+  }
+
+  private normalizarStatus(status?: string | null): string {
+    if (!status) return '';
+    return String(status)
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
+  }
+
+  private priorizarStatusRevisao(
+    atual?: 'VENCIDA' | 'EM_DIA' | 'FUTURA',
+    novo?: 'VENCIDA' | 'EM_DIA' | 'FUTURA'
+  ): 'VENCIDA' | 'EM_DIA' | 'FUTURA' {
+    const ordem = { VENCIDA: 3, EM_DIA: 2, FUTURA: 1 };
+    const atualScore = atual ? ordem[atual] : 0;
+    const novoScore = novo ? ordem[novo] : 0;
+    return (novoScore >= atualScore ? novo : atual) || 'FUTURA';
+  }
+
+  limparBloco(blocoIndex: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+    bloco.minutosDisponiveis = 0;
+    bloco.itens = [];
+    this.blocoHoraInputs[blocoIndex] = this.formatMinutosParaHora(0);
+    this.blocoHoraErrors[blocoIndex] = null;
+    this.materiaSelecionadaPorBloco[blocoIndex] = null;
+    if (this.materiaSelecionadaPorLinha[blocoIndex]) {
+      this.materiaSelecionadaPorLinha[blocoIndex] = Array.from({ length: this.linhasPorBloco }, () => null);
+    }
+    this.atualizarLinhasFixas(blocoIndex);
+
+    if (this.abaAtiva === blocoIndex) {
+      this.montarForm(bloco);
+      this.form.markAsDirty();
+    }
+  }
+
+  abrirCopiaPanel(blocoIndex: number, event: Event): void {
+    event.stopPropagation();
+    this.blocoCopiaOrigem = blocoIndex;
+    this.blocoCopiaDestino = null;
+    this.copiaPanel?.toggle(event);
+  }
+
+  get blocosDestinoOptions(): Array<{ label: string; value: number }> {
+    return this.blocos
+      .map((bloco, index) => ({ label: `Bloco ${bloco.numero}`, value: index }))
+      .filter((item) => item.value !== this.blocoCopiaOrigem);
+  }
+
+  confirmarCopiaBloco(): void {
+    if (this.blocoCopiaOrigem == null || this.blocoCopiaDestino == null) return;
+    this.copiarBloco(this.blocoCopiaOrigem, this.blocoCopiaDestino);
+    this.copiaPanel?.hide();
+  }
+
+  copiarBloco(origemIndex: number, destinoIndex: number): void {
+    const origem = this.blocos[origemIndex];
+    const destino = this.blocos[destinoIndex];
+    if (!origem || !destino) return;
+
+    destino.minutosDisponiveis = origem.minutosDisponiveis ?? 0;
+    destino.itens = this.obterItensOrdenados(origem).map((item, idx) => ({
+      id: undefined,
+      materiaEstudoId: item.materiaEstudoId,
+      materiaNome: item.materiaNome ?? this.nomeMateria(item.materiaEstudoId),
+      ordem: idx + 1
+    }));
+    this.atualizarLinhasFixas(destinoIndex);
+
+    this.blocoHoraInputs[destinoIndex] = this.formatMinutosParaHora(destino.minutosDisponiveis ?? 0);
+    this.blocoHoraErrors[destinoIndex] = null;
+    this.materiaSelecionadaPorBloco[destinoIndex] = null;
+    if (this.materiaSelecionadaPorLinha[destinoIndex]) {
+      this.materiaSelecionadaPorLinha[destinoIndex] = Array.from({ length: this.linhasPorBloco }, () => null);
+    }
+
+    if (this.abaAtiva === destinoIndex) {
+      this.montarForm(destino);
+      this.form.markAsDirty();
+    }
+  }
+
+  private sincronizarInputsPorBloco(): void {
+    this.blocoHoraInputs = this.blocos.map((bloco) => this.formatMinutosParaHora(bloco.minutosDisponiveis ?? 0));
+    this.blocoHoraErrors = this.blocos.map(() => null);
+    this.materiasFiltradasPorBloco = this.blocos.map(() => []);
+    this.materiaSelecionadaPorBloco = this.blocos.map(() => null);
+    this.materiaSelecionadaPorLinha = this.blocos.map(() =>
+      Array.from({ length: this.linhasPorBloco }, () => null)
+    );
   }
 }

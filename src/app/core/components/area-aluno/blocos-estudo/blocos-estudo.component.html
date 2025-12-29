@@ -1,149 +1,211 @@
 <div class="page">
+  <p-toast key="materia-removida" position="bottom-center">
+    <ng-template let-message pTemplate="message">
+      <div class="toast-undo">
+        <span class="toast-undo-text">{{ message?.summary }}</span>
+        <button type="button" class="toast-undo-action" (click)="desfazerRemocao()">Desfazer</button>
+      </div>
+    </ng-template>
+  </p-toast>
   <div class="header">
-    <div>
-      <h2>Blocos de Estudos</h2>
-      <p class="muted">Configure suas matérias em 7 blocos (ciclo 1→7).</p>
+    <div class="header-title">
+      <div class="header-title-row">
+        <h2>Planner semanal (repete automaticamente)</h2>
+        <button
+          type="button"
+          class="header-info-btn"
+          pTooltip='O sistema usa este planner para montar seu "Hoje".'
+          tooltipPosition="top"
+          aria-label='O sistema usa este planner para montar seu "Hoje".'>
+          <i class="pi pi-info-circle"></i>
+        </button>
+      </div>
     </div>
+    <div class="header-badge">Total semanal: {{ totalCicloTexto }}</div>
 
     <div class="actions">
       <button
-        pButton
         type="button"
-        label="Salvar"
-        icon="pi pi-save"
-        [disabled]="form.invalid || !form.dirty || salvando"
-        (click)="salvar()">
+        class="btn-save"
+        [disabled]="salvarDisabled"
+        (click)="salvarTodos()">
+        Salvar
       </button>
     </div>
   </div>
 
-  <!-- ✅ Só renderiza as abas quando já houver blocos -->
-  <p-tabView
-    *ngIf="blocos.length > 0"
-    [(activeIndex)]="abaAtiva"
-    (activeIndexChange)="trocarAba($event)">
+  <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
+    {{ mensagemTexto }}
+  </div>
 
-    <p-tabPanel
+ 
+
+  <div class="validation-summary" *ngIf="blocosInvalidos.length > 0">
+    <span class="validation-title">Ajuste os blocos:</span>
+    <button
+      type="button"
+      class="validation-link"
+      *ngFor="let invalido of blocosInvalidos"
+      (click)="focoNoBlocoInvalido(invalido.index)">
+      Bloco {{ invalido.numero }} - {{ invalido.mensagem }}
+    </button>
+  </div>
+
+  <div class="planner-backlog" *ngIf="materiasOptions.length > 0; else backlogInfo">
+    Backlog: {{ backlogCount }} materias fora do planner
+  </div>
+  <ng-template #backlogInfo>
+    <div class="planner-backlog">
+      Voce pode substituir materias "Em dia" por outras ainda fora do planner.
+    </div>
+  </ng-template>
+  <div class="planner-legend">
+    <span class="legend-item">
+      <span class="legend-dot legend-vencida"></span>
+      Revisao vencida
+    </span>
+    <span class="legend-item">
+      <span class="legend-dot legend-hoje"></span>
+      Revisao do dia
+    </span>
+    <span class="legend-item">
+      <span class="legend-dot legend-ok"></span>
+      Em dia / futura
+    </span>
+  </div>
+
+  <div class="blocos-grid" *ngIf="blocos.length > 0">
+    <div
+      class="bloco-col-wrap"
       *ngFor="let b of blocos; let i = index"
-      [header]="'Bloco ' + b.numero">
-
-      <div class="grid">
-        <div class="card">
-          <h3>Tempo do bloco</h3>
-
-          <div class="row">
-            <label>Minutos disponíveis</label>
-
-            <p-inputNumber
-              [formControl]="form.controls.minutosDisponiveis"
-              [min]="0"
-              [showButtons]="true"
-              buttonLayout="horizontal"
-              incrementButtonIcon="pi pi-plus"
-              decrementButtonIcon="pi pi-minus">
-            </p-inputNumber>
+      [class.ativo]="abaAtiva === i"
+      [class.erro]="isBlocoInvalido(i)">
+      <div class="bloco-col-dia">
+        {{ diasSemana[i] || ('Bloco ' + b.numero) }}
+      </div>
+      <div
+        class="bloco-col"
+        [class.ativo]="abaAtiva === i"
+        [class.erro]="isBlocoInvalido(i)">
+        <div class="bloco-col-header" (click)="selecionarBloco(i)">
+          <div class="bloco-col-horas">
+            <div class="bloco-col-horas-row">
+               <label class="bloco-col-horas-label" for="minutos-{{ b.numero }}">Horas Líquidas</label>
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="5"
+                autocomplete="off"
+                [ngModel]="blocoHoraInputs[i]"
+                (ngModelChange)="onHorasChange(b, $event, i)"
+                (blur)="onHorasBlur(b, i)"
+                id="minutos-{{ b.numero }}"
+                class="bloco-col-horas-field"
+                placeholder="00:00"
+                [attr.aria-label]="'Horas do bloco ' + b.numero"
+                [attr.aria-invalid]="isBlocoInvalido(i)"
+                [attr.aria-describedby]="blocoErroMensagem(i) ? 'bloco-erro-' + b.numero : null" />
+            </div>
+            
           </div>
-
-          <div class="muted small">
-            {{ minutosParaTexto(form.value.minutosDisponiveis ?? 0) }}
+          <div
+            class="bloco-col-erro"
+            *ngIf="blocoErroMensagem(i)"
+            [attr.id]="'bloco-erro-' + b.numero">
+            {{ blocoErroMensagem(i) }}
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-head">
-            <h3>Matérias do bloco</h3>
-
-            <div class="row-inline">
-              <!-- ✅ grow evita o dropdown “atropelar” o botão -->
-              <div class="grow">
-                <p-dropdown
-                  #materiaDropdown
-                  [options]="materiasOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  [(ngModel)]="materiaSelecionadaId"
-                  [appendTo]="'body'"
-                  [autoZIndex]="true"
-                  [baseZIndex]="3000"
-                  (onShow)="onDropdownMateriasShow()"
-                  (onHide)="onDropdownMateriasHide()"
-                  (onChange)="fecharDropdownMaterias(i)"
-                  placeholder="Adicionar matéria">
-                </p-dropdown>
+        <div class="bloco-col-body">
+          <div
+            class="bloco-linha"
+            *ngFor="let linha of (linhasFixasPorBloco[i] || []); let li = index; trackBy: trackByLinha"
+            [class.linha-vazia]="!linha.item"
+            [ngClass]="linha.item ? ('status-' + statusMateriaKey(linha.item)) : null"
+            [class.revisao-vencida]="linha.item && temRevisaoVencida(linha.item)"
+            [class.revisao-hoje]="linha.item && temRevisaoHoje(linha.item)"
+            [class.revisao-futura]="linha.item && temRevisaoFutura(linha.item)"
+            [attr.tabindex]="!linha.item ? 0 : null"
+            (click)="!linha.item && iniciarEdicaoLinha(i, li)"
+            (keydown.enter)="!linha.item && iniciarEdicaoLinha(i, li)"
+            (keydown.space)="!linha.item && iniciarEdicaoLinha(i, li)">
+            <ng-container *ngIf="linha.item && !estaSubstituindo(i, li); else linhaEditar">
+              <span
+                class="bloco-item-text"
+                [pTooltip]="linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId)"
+                tooltipPosition="top">
+                {{ linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId) }}
+              </span>
+              <div class="bloco-item-actions">
+                <button
+                  type="button"
+                  class="bloco-item-substituir"
+                  *ngIf="podeSubstituir(linha.item)"
+                  (click)="iniciarSubstituicao(i, li); $event.stopPropagation()">
+                  Substituir
+                </button>
+                <button
+                  type="button"
+                  class="bloco-item-remove"
+                  (click)="removerMateriaBloco(i, li); $event.stopPropagation()"
+                  aria-label="Remover materia">
+                  <i class="pi pi-minus"></i>
+                </button>
               </div>
-
-              <button
-                pButton
-                type="button"
-                icon="pi pi-plus"
-                label="Adicionar"
-                [class.hidden]="dropdownMateriasAberto"
-                [disabled]="materiaSelecionadaId == null"
-                (click)="adicionarMateria()">
-              </button>
-            </div>
-          </div>
-
-          <p-table
-            [value]="itensFormArray.controls"
-            (onRowReorder)="onRowReorder($event)"
-            styleClass="p-datatable-sm">
-
-            <ng-template pTemplate="header">
-              <tr>
-                <th style="width: 40px"></th>
-                <th>Ordem</th>
-                <th>Matéria</th>
-                <th style="width: 140px">Peso</th>
-                <th style="width: 70px">Ações</th>
-              </tr>
+            </ng-container>
+            <ng-template #linhaEditar>
+              <ng-container *ngIf="estaSubstituindo(i, li) || estaEditandoLinha(i, li); else linhaVazia">
+                <p-autoComplete
+                  #autoMateria
+                  [suggestions]="materiasFiltradasPorBloco[i]"
+                  (completeMethod)="filtrarMaterias($event, i)"
+                  [(ngModel)]="materiaSelecionadaPorLinha[i][li]"
+                  field="label"
+                  [dropdown]="true"
+                  [completeOnFocus]="true"
+                  [forceSelection]="true"
+                  [minLength]="0"
+                  (onFocus)="abrirSugestoes(i)"
+                  (onSelect)="adicionarMateriaNaLinha(i, li, $event)"
+                  placeholder="Adicionar materia..."
+                  inputId="materia-add-{{ b.numero }}-{{ li }}">
+                </p-autoComplete>
+              </ng-container>
+              <ng-template #linhaVazia>
+                <button
+                  type="button"
+                  class="bloco-linha-add"
+                  (click)="iniciarEdicaoLinha(i, li); $event.stopPropagation()">
+                  +
+                </button>
+              </ng-template>
             </ng-template>
-
-            <ng-template pTemplate="body" let-rowCtrl let-rowIndex="rowIndex">
-              <tr [pReorderableRow]="rowIndex">
-                <td pReorderableRowHandle>
-                  <i class="pi pi-bars"></i>
-                </td>
-
-                <td>{{ rowIndex + 1 }}</td>
-
-                <td>
-                  {{ rowCtrl.value?.materiaNome || nomeMateria(rowCtrl.value?.materiaEstudoId) }}
-                </td>
-
-                <td>
-                  <p-inputNumber
-                    [formControl]="rowCtrl.get('peso')"
-                    [min]="1"
-                    [max]="100"
-                    placeholder="1..100">
-                  </p-inputNumber>
-                </td>
-
-                <td>
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-trash"
-                    class="p-button-text p-button-danger"
-                    (click)="removerItem(rowIndex)">
-                  </button>
-                </td>
-              </tr>
-            </ng-template>
-
-          </p-table>
-
-          <div class="muted small" *ngIf="itensFormArray.length === 0">
-            Nenhuma matéria no bloco ainda.
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
-    </p-tabPanel>
-  </p-tabView>
+  <p-overlayPanel #copiaPanel>
+    <div class="copia-panel">
+      <div class="copia-panel-title">Copiar para</div>
+      <p-dropdown
+        [options]="blocosDestinoOptions"
+        [(ngModel)]="blocoCopiaDestino"
+        placeholder="Selecione o bloco destino">
+      </p-dropdown>
+      <button
+        pButton
+        type="button"
+        label="Copiar"
+        (click)="confirmarCopiaBloco()"
+        [disabled]="blocoCopiaDestino == null">
+      </button>
+    </div>
+  </p-overlayPanel>
 
-  <!-- opcional: mensagem quando ainda não carregou -->
+ 
+
   <div class="muted small" *ngIf="!blocos || blocos.length === 0" style="padding: 12px 0;">
     Carregando blocos...
   </div>

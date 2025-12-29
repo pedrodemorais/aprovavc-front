@@ -4,6 +4,13 @@ export interface BlocoEstudoItemDTO {
   materiaNome?: string; // vem do backend (somente leitura)
   ordem: number;
   peso?: number;
+  status?: string;
+  statusRevisao?: string;
+  revisoesAtrasadasQtd?: number;
+  revisoesHojeQtd?: number;
+  conteudoPendenteQtd?: number;
+  estudoPendenteQtd?: number;
+  emDia?: boolean;
 }
 
 export interface BlocoEstudoDTO {

@@ -26,6 +26,7 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
 import { TooltipModule } from 'primeng/tooltip';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { EditorModule } from 'primeng/editor';
+import { ToastModule } from 'primeng/toast';
 
 import { QuillModule } from 'ngx-quill';
 import { NgxMaskModule } from 'ngx-mask';
@@ -102,6 +103,7 @@ registerLocaleData(localePt);
     TooltipModule,
     OverlayPanelModule,
     EditorModule,
+    ToastModule,
 
     QuillModule.forRoot(),
     NgxMaskModule.forChild(),

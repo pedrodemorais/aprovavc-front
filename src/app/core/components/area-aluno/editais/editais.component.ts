@@ -391,21 +391,31 @@ private mensagemTimeout: any; // para guardar o setTimeout
       return;
     }
 
+    if (this.definindoAtivoId) {
+      return;
+    }
+
     this.definindoAtivoId = edital.id;
     this.erro = undefined;
     this.mensagemSucesso = undefined;
 
-    this.editalService.definirComoAtivo(edital.id).subscribe({
+    const acao$ = edital.ativo
+      ? this.editalService.desmarcarEdital(edital.id)
+      : this.editalService.selecionarEdital(edital.id);
+
+    acao$.subscribe({
       next: () => {
-        this.definindoAtivoId = null;
-        this.mensagemSucesso = `Edital \"${edital.nome}\" definido como o edital em estudo.`;
+        edital.ativo = !edital.ativo;
+        this.mensagemSucesso = edital.ativo
+          ? `Edital "${edital.nome}" marcado como em estudo.`
+          : `Edital "${edital.nome}" desmarcado.`;
         this.iniciarTimeoutMensagem();
-        this.carregarEditais();
+        this.definindoAtivoId = null;
       },
       error: (err) => {
-        console.error('[EDITAIS] Erro ao definir edital ativo:', err);
+        console.error('[EDITAIS] Erro ao alterar edital em estudo:', err);
         this.definindoAtivoId = null;
-        this.erro = 'Erro ao definir o edital como ativo. Tente novamente.';
+        this.erro = 'Erro ao atualizar o edital. Tente novamente.';
       }
     });
   }

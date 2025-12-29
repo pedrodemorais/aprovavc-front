@@ -170,11 +170,11 @@
                   <button
                     type="button"
                     class="segmented-btn"
-                    [disabled]="e.ativo || definindoAtivoId === e.id"
+                    [disabled]="definindoAtivoId === e.id"
                     (click)="definirComoEmEstudo(e); $event.stopPropagation()"
                     title="Definir como edital em estudo"
                   >
-                    {{ definindoAtivoId === e.id ? 'Salvando...' : (e.ativo ? 'Em estudo' : 'Estudar este edital') }}
+                    {{ definindoAtivoId === e.id ? 'Salvando...' : (e.ativo ? 'Desativar' : 'Estudar este edital') }}
                   </button>
                   <button type="button" class="segmented-btn" (click)="editar(e); $event.stopPropagation()"
                     title="Editar edital">

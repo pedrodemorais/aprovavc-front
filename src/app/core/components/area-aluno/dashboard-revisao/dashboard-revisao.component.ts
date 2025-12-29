@@ -23,6 +23,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   revisoes: RevisaoDashboardItem[] = [];
   materias: Materia[] = [];
   editais: Edital[] = [];
+  activeEditais: Edital[] = [];
   mostrarGuia = false;
 
   templates: EditalTemplateDTO[] = [];
@@ -38,7 +39,9 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   private templateImagemObjectUrls = new Map<number, string>();
 
   usuarioNome = 'Usuário';
-  editalAtivoNome = 'Edital de exemplo';
+  editalAtivoNome = 'Nenhum edital selecionado';
+  activeEditalImagemUrls: Record<number, string> = {};
+  private activeEditalImagemObjectUrls = new Map<number, string>();
   modulosHoje = 1;
   revisoesHoje = 0;
   revisoesVencemHoje = 0;
@@ -68,6 +71,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.limparImagensTemplates();
+    this.limparImagensEditaisAtivos();
   }
 
   private carregarDados(): void {
@@ -84,6 +88,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         this.materias = materias || [];
         this.editais = editais || [];
         this.atualizarTotais();
+        this.atualizarEditalAtivoNome();
         this.carregando = false;
 
         if (!this.editais.length || !this.materias.length) {
@@ -130,11 +135,210 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     this.revisoesVencemHoje = vencemHoje;
   }
 
+  formatPercent(v?: number | null): string {
+    if (v == null) {
+      return '-';
+    }
+    return `${v.toFixed(0)}%`;
+  }
+
+  formatData(iso?: string | null): string {
+    if (!iso) {
+      return '-';
+    }
+
+    const partes = iso.split('-');
+    if (partes.length !== 3) {
+      return iso;
+    }
+
+    const ano = partes[0];
+    const mes = partes[1];
+    const dia = partes[2];
+
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  private atualizarEditalAtivoNome(): void {
+    const ativos = (this.editais || []).filter(e => e?.ativo && e?.id);
+    this.activeEditais = ativos;
+    if (!ativos.length) {
+      this.editalAtivoNome = 'Nenhum edital selecionado';
+      this.limparImagensEditaisAtivos();
+      return;
+    }
+
+    const nomes = ativos.map(e => e.nome).filter(Boolean);
+    this.editalAtivoNome = nomes.length ? nomes.join(' / ') : 'Edital selecionado';
+    console.log('[DASH-REVISAO] Editais ativos:', ativos.map(e => ({
+      id: e.id,
+      nome: e.nome,
+      imagem: (e as any)?.imagem ?? null,
+      imagemBytesTipo: typeof (e as any)?.imagemBytes,
+      imagemBytesTamanho: Array.isArray((e as any)?.imagemBytes)
+        ? (e as any).imagemBytes.length
+        : ((e as any)?.imagemBytes?.length || null)
+    })));
+    this.carregarImagensEditaisAtivos();
+  }
+
+  get editaisAtivosVisiveis(): Edital[] {
+    return (this.activeEditais || []).slice(0, 3);
+  }
+
+  get editaisAtivosRestantes(): number {
+    return Math.max(0, (this.activeEditais?.length || 0) - 3);
+  }
+
+  private carregarImagensEditaisAtivos(): void {
+    this.limparImagensEditaisAtivos();
+    for (const edital of this.activeEditais || []) {
+      if (!edital?.id) continue;
+      if (this.definirImagemEditalAtivoPorBytes(edital)) {
+        continue;
+      }
+
+      const templateId = this.obterTemplateIdDoEdital(edital);
+      if (!templateId) continue;
+      this.carregarImagemEditalAtivo(edital.id, templateId);
+    }
+  }
+
+  private obterTemplateIdDoEdital(edital: Edital): number | null {
+    const anyEdital = edital as any;
+    const templateId =
+      anyEdital?.templateId ??
+      anyEdital?.editalTemplateId ??
+      anyEdital?.template?.id ??
+      null;
+    const idNum = Number(templateId);
+    return Number.isFinite(idNum) && idNum > 0 ? idNum : null;
+  }
+
+  private carregarImagemEditalAtivo(editalId: number, templateId: number): void {
+    this.editalTemplateService.buscarImagemArquivo(templateId).subscribe({
+      next: (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        const blob = res.body;
+        this.removerImagemEditalAtivo(editalId);
+
+        if (!blob) return;
+
+        if (contentType.startsWith('image/')) {
+          const objectUrl = URL.createObjectURL(blob);
+          this.activeEditalImagemObjectUrls.set(editalId, objectUrl);
+          this.activeEditalImagemUrls[editalId] = objectUrl;
+          return;
+        }
+
+        this.lerBlobComoTexto(blob)
+          .then((texto) => {
+            const payload = this.parseImagemResponse(texto);
+            if (!payload?.dados) return;
+            const tipo = this.normalizarContentType(payload.contentType);
+            this.activeEditalImagemUrls[editalId] = `data:${tipo};base64,${payload.dados}`;
+          })
+          .catch(() => {
+            this.removerImagemEditalAtivo(editalId);
+          });
+      },
+      error: () => {
+        this.removerImagemEditalAtivo(editalId);
+      }
+    });
+  }
+
+  private definirImagemEditalAtivoPorBytes(edital: Edital): boolean {
+    const anyEdital = edital as any;
+    const bytes =
+      anyEdital?.imagemBytes ??
+      anyEdital?.imagem_bytes ??
+      anyEdital?.imagemBase64 ??
+      null;
+    if (!bytes || !edital?.id) {
+      return false;
+    }
+
+    let base64: string | null = null;
+    if (typeof bytes === 'string') {
+      base64 = bytes.trim();
+    } else if (Array.isArray(bytes)) {
+      base64 = this.uint8ArrayToBase64(new Uint8Array(bytes));
+    } else if (Array.isArray(bytes?.data)) {
+      base64 = this.uint8ArrayToBase64(new Uint8Array(bytes.data));
+    }
+
+    if (!base64) {
+      return false;
+    }
+
+    if (base64.startsWith('data:image')) {
+      this.activeEditalImagemUrls[edital.id] = base64;
+      return true;
+    }
+
+    const contentType = this.inferirContentTypeImagem(anyEdital?.imagem);
+    this.activeEditalImagemUrls[edital.id] = `data:${contentType};base64,${base64}`;
+    return true;
+  }
+
+  private uint8ArrayToBase64(bytes: Uint8Array): string {
+    const chunkSize = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
+  }
+
+  private inferirContentTypeImagem(caminho?: string | null): string {
+    const nome = (caminho || '').toLowerCase();
+    if (nome.endsWith('.png')) return 'image/png';
+    if (nome.endsWith('.jpg') || nome.endsWith('.jpeg')) return 'image/jpeg';
+    if (nome.endsWith('.webp')) return 'image/webp';
+    if (nome.endsWith('.svg')) return 'image/svg+xml';
+    return 'image/png';
+  }
+
+  onEditalAtivoImagemErro(editalId: number): void {
+    this.removerImagemEditalAtivo(editalId);
+  }
+
+  private removerImagemEditalAtivo(editalId: number): void {
+    const objectUrl = this.activeEditalImagemObjectUrls.get(editalId);
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      this.activeEditalImagemObjectUrls.delete(editalId);
+    }
+    delete this.activeEditalImagemUrls[editalId];
+  }
+
+  private limparImagensEditaisAtivos(): void {
+    for (const objectUrl of this.activeEditalImagemObjectUrls.values()) {
+      URL.revokeObjectURL(objectUrl);
+    }
+    this.activeEditalImagemObjectUrls.clear();
+    this.activeEditalImagemUrls = {};
+  }
+
   irParaSala(item: RevisaoDashboardItem): void {
     this.router.navigate(
       ['/area-restrita/sala-estudo', item.materiaId],
       { queryParams: { topicoId: item.topicoId } } // se quiser já mandar o tópico
     );
+  }
+
+  irParaEditais(): void {
+    this.router.navigate(['/area-restrita/editais']);
+  }
+
+  irParaBlocosEstudo(): void {
+    this.router.navigate(['/area-restrita/blocos-estudo']);
+  }
+
+  getEditalCargo(edital: Edital): string {
+    return String((edital as any)?.cargo || '').trim();
   }
 
   abrirGuia(): void {

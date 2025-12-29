@@ -328,16 +328,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
               routerLink: ['/area-restrita/cad-materias'],
               disabled: isLocked
             },
-            {
-              label: 'Topicos / Subtopicos do edital',
-              icon: 'pi pi-list',
-              disabled: true
-            },
-            {
-              label: 'Importacao / colar em lote',
-              icon: 'pi pi-upload',
-              disabled: true
-            }
+            
           ]
         },
         {
