@@ -417,12 +417,85 @@
 
 .hero-next-card {
   border-radius: 14px;
-  border: 1px solid var(--border);
+  border: 0;
   background: #ffffff;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.planner-alert {
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #ffffff;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.planner-alert-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.planner-alert-text strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.planner-alert-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #f97316;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  margin-right: 6px;
+  animation: planner-alert-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes planner-alert-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.planner-alert-action {
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.08);
+  color: #166534;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.planner-alert-action:hover,
+.planner-alert-action:focus-visible {
+  border-color: rgba(34, 197, 94, 0.65);
+  background: rgba(34, 197, 94, 0.16);
+  outline: none;
 }
 
 .hero-next-head {
@@ -431,6 +504,8 @@
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  padding-bottom: 8px;
 }
 
 .hero-next-title {
@@ -632,41 +707,46 @@
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .quick-module-item {
-  border: 1px solid var(--border);
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  padding: 2px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 0.8rem;
-  color: #374151;
+  font-size: 0.78rem;
+  color: #6b7280;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .quick-module-item:hover,
 .quick-module-item:focus-visible {
-  border-color: rgba(34, 197, 94, 0.5);
-  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.16);
+  color: #16a34a;
   outline: none;
+  transform: translateX(2px);
 }
 
 .quick-module-name {
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: 500;
+  color: #475569;
   text-align: left;
   flex: 1 1 auto;
 }
 
+.quick-module-item:hover .quick-module-name,
+.quick-module-item:focus-visible .quick-module-name {
+  color: #16a34a;
+}
+
 .quick-module-ordem {
   font-size: 0.72rem;
-  color: #6b7280;
+  color: #94a3b8;
 }
 
 .quick-module-empty {
@@ -1267,18 +1347,28 @@
 }
 
 :host-context(body.theme-dark) .quick-module-item {
-  background: rgba(15, 23, 42, 0.8) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text) !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--text-2) !important;
 }
 
 :host-context(body.theme-dark) .quick-module-name {
-  color: var(--text) !important;
+  color: var(--text-2) !important;
 }
 
 :host-context(body.theme-dark) .quick-module-ordem,
 :host-context(body.theme-dark) .quick-module-empty {
   color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .quick-module-item:hover,
+:host-context(body.theme-dark) .quick-module-item:focus-visible {
+  color: #bbf7d0 !important;
+}
+
+:host-context(body.theme-dark) .quick-module-item:hover .quick-module-name,
+:host-context(body.theme-dark) .quick-module-item:focus-visible .quick-module-name {
+  color: #bbf7d0 !important;
 }
 
 :host-context(body.theme-dark) .hero-cta.ghost {

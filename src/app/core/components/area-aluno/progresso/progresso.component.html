@@ -87,24 +87,82 @@
     <article class="progresso-card progresso-card--wide">
       <div class="card-head">
         <div class="card-title">Tempo por materia / constancia</div>
-        <div class="card-value">--</div>
+        <div class="card-value">{{ tempoTotalLabel }}</div>
       </div>
       <div class="card-subtitle">Resumo semanal de tempo estudado por materia.</div>
       <div class="tempo-grid">
         <div class="tempo-item">
           <span class="tempo-label">Tempo total</span>
-          <span class="tempo-value">--</span>
+          <span class="tempo-value">{{ tempoTotalLabel }}</span>
         </div>
         <div class="tempo-item">
           <span class="tempo-label">Constancia</span>
-          <span class="tempo-value">--</span>
+          <span class="tempo-value">{{ constanciaLabel }}</span>
         </div>
         <div class="tempo-item">
           <span class="tempo-label">Materia destaque</span>
-          <span class="tempo-value">--</span>
+          <span class="tempo-value">{{ materiaDestaqueLabel }}</span>
         </div>
       </div>
-      <div class="card-note">Sem dados suficientes para exibir o tempo.</div>
+      <div class="card-note" *ngIf="tempoTotalLabel === '--'">Sem dados suficientes para exibir o tempo.</div>
     </article>
   </section>
+
+  <article class="progresso-card progresso-card-constancia" *ngIf="constanciaDiasVisiveis.length">
+    <div class="card-head">
+      <div class="card-title">Constancia do mes</div>
+    </div>
+    <div class="constancia-linha">
+      <div class="constancia-linha-itens">
+        <span
+          class="constancia-dia"
+          *ngFor="let dia of constanciaDiasVisiveis"
+          [class.constancia-dia--ok]="dia.status === 'estudado'"
+          [class.constancia-dia--miss]="dia.status === 'faltou'"
+          [class.constancia-dia--future]="dia.status === 'futuro'">
+          {{ dia.dia }}
+        </span>
+      </div>
+      <span class="constancia-sep" aria-hidden="true"></span>
+      <div class="constancia-metricas">
+        <div class="constancia-metrica">
+          <span class="constancia-metrica-titulo">Tempo total</span>
+          <span class="constancia-metrica-valor">{{ tempoTotalLabel }}</span>
+        </div>
+        <span class="constancia-metrica-sep" aria-hidden="true"></span>
+        <div class="constancia-metrica">
+          <span class="constancia-metrica-titulo">Tempo mensal</span>
+          <span class="constancia-metrica-valor">{{ tempoMensalLabel }}</span>
+        </div>
+        <span class="constancia-metrica-sep" aria-hidden="true"></span>
+        <div class="constancia-metrica">
+          <span class="constancia-metrica-titulo">Tempo semanal</span>
+          <span class="constancia-metrica-valor">{{ tempoSemanalLabel }}</span>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="progresso-card progresso-card-planejado" *ngIf="plannerMetricas.length">
+    <div class="card-head">
+      <div class="card-title">Planejado x realizado</div>
+    </div>
+    <div class="planner-grid">
+      <div class="planner-item" *ngFor="let metrica of plannerMetricas">
+        <div class="planner-title">{{ metrica.label }}</div>
+        <div class="planner-values">
+          <span class="planner-value">{{ metrica.actualLabel }}</span>
+          <span class="planner-sep">/</span>
+          <span class="planner-value planner-value--planned">{{ metrica.plannedLabel }}</span>
+        </div>
+        <div class="planner-bar" [style.--percent]="metrica.percentBar">
+          <span
+            class="planner-bar__fill"
+            [class.planner-bar__fill--ok]="metrica.status === 'ok'"
+            [class.planner-bar__fill--warn]="metrica.status === 'warn'"></span>
+        </div>
+        <div class="planner-percent">{{ metrica.percentLabel }}</div>
+      </div>
+    </div>
+  </article>
 </div>

@@ -11,7 +11,7 @@ import { Materia } from '../models/materia.model';
 import { Edital } from '../models/Edital';
 import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto';
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
-import { PlanoDoDiaDTO } from '../../dto/blocos-estudo.dto';
+import { BlocoEstudoDTO, PlanoDoDiaDTO } from '../../dto/blocos-estudo.dto';
 import { AuthService } from 'src/app/site/services/auth.service';
 @Component({
   selector: 'app-dashboard-revisao',
@@ -69,6 +69,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   totalVencidas = 0;
   totalHoje = 0;
   totalFuturas = 0;
+  materiasConcluidasNoPlanner: Array<{ materiaId: number; nome: string }> = [];
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -98,9 +99,10 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
       materias: this.materiaService.listarMaterias(),
       editais: this.editalService.listar(),
-      plano: this.blocosEstudoService.planoDoDia().pipe(catchError(() => of(null)))
+      plano: this.blocosEstudoService.planoDoDia().pipe(catchError(() => of(null))),
+      blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe({
-      next: ({ revisoes, materias, editais, plano }) => {
+      next: ({ revisoes, materias, editais, plano, blocos }) => {
         this.revisoes = revisoes || [];
         this.materias = materias || [];
         this.editais = editais || [];
@@ -108,6 +110,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         this.atualizarTotais();
         this.modulosHoje = plano?.blocoNumero ?? 1;
         this.atualizarEditalAtivoNome();
+        this.atualizarMateriasConcluidasNoPlanner(blocos || []);
         this.carregando = false;
 
         if (!this.editais.length || !this.materias.length) {
@@ -211,6 +214,15 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         : ((e as any)?.imagemBytes?.length || null)
     })));
     this.carregarImagensEditaisAtivos();
+  }
+
+  get textoMateriasConcluidasNoPlanner(): string {
+    const nomes = this.materiasConcluidasNoPlanner.map(m => m.nome).filter(Boolean);
+    if (!nomes.length) return '';
+    const primeiras = nomes.slice(0, 2);
+    const restante = nomes.length - primeiras.length;
+    const base = primeiras.join(', ');
+    return restante > 0 ? `${base} e mais ${restante}` : base;
   }
 
   get editaisAtivosVisiveis(): Edital[] {
@@ -702,6 +714,37 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         this.materiasDoDiaFallback = [];
       }
     });
+  }
+
+  private atualizarMateriasConcluidasNoPlanner(blocos: BlocoEstudoDTO[]): void {
+    const concluidas = new Map<number, string>();
+    const editaisAtivos = (this.editais || []).filter(e => e?.ativo);
+
+    for (const edital of editaisAtivos) {
+      for (const m of edital.materias || []) {
+        if ((m.percentualEstudado ?? 0) >= 100) {
+          concluidas.set(m.materiaId, m.materiaNome || `Materia ${m.materiaId}`);
+        }
+      }
+    }
+
+    if (!concluidas.size) {
+      this.materiasConcluidasNoPlanner = [];
+      return;
+    }
+
+    const idsPlanner = new Set<number>();
+    for (const bloco of blocos || []) {
+      for (const item of bloco.itens || []) {
+        if (item.materiaEstudoId != null) {
+          idsPlanner.add(item.materiaEstudoId);
+        }
+      }
+    }
+
+    this.materiasConcluidasNoPlanner = Array.from(concluidas.entries())
+      .filter(([id]) => idsPlanner.has(id))
+      .map(([materiaId, nome]) => ({ materiaId, nome }));
   }
 
   private obterRevisaoPrioritaria(status: RevisaoDashboardItem['status']): RevisaoDashboardItem | null {

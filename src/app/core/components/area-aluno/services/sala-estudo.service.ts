@@ -47,6 +47,31 @@ export interface AnotacaoTopicoDTO {
   anotacoes: string;
 }
 
+export interface TempoEstudoMateriaDTO {
+  materiaId: number;
+  materiaNome: string;
+  tempoTotalSegundos?: number;
+  tempoTotal?: number;
+  totalSegundos?: number;
+  totalSegundosSemana?: number;
+}
+
+export interface TempoEstudoTotalDTO {
+  tempoTotalSegundos?: number;
+  tempoTotal?: number;
+  totalSegundos?: number;
+  totalSegundosSemana?: number;
+  constancia?: number;
+  constanciaDias?: number;
+  diasAtivos?: number;
+}
+
+export interface ConstanciaEstudoDiaDTO {
+  dia: string;
+  totalSegundos?: number;
+  teveEstudo?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SalaEstudoService {
 
@@ -109,6 +134,22 @@ export class SalaEstudoService {
    */
   responderRevisaoTopico(req: TopicoRevisaoRespostaRequest): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/topicos/revisao/responder`, req);
+  }
+
+  listarTempoEstudoPorMateria(): Observable<TempoEstudoMateriaDTO[]> {
+    return this.http.get<TempoEstudoMateriaDTO[]>(`${this.apiUrl}/estudos/tempo-por-materia`);
+  }
+
+  buscarTempoEstudoTotal(): Observable<TempoEstudoTotalDTO> {
+    return this.http.get<TempoEstudoTotalDTO>(`${this.apiUrl}/estudos/tempo-total`);
+  }
+
+  listarConstanciaMensal(ano?: number, mes?: number): Observable<ConstanciaEstudoDiaDTO[]> {
+    const params: string[] = [];
+    if (ano != null) params.push(`ano=${ano}`);
+    if (mes != null) params.push(`mes=${mes}`);
+    const query = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<ConstanciaEstudoDiaDTO[]>(`${this.apiUrl}/estudos/constancia-mes${query}`);
   }
 
 listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {

@@ -139,9 +139,25 @@
         </ng-template>
       </div>
 
+      <div class="planner-alert" *ngIf="materiasConcluidasNoPlanner.length">
+        <div class="planner-alert-text">
+          <strong>
+            <span class="planner-alert-icon" aria-hidden="true">!</span>
+            Materia concluida no planner semanal.
+          </strong>
+          <span>Substitua no planner: {{ textoMateriasConcluidasNoPlanner }}</span>
+        </div>
+        <button
+          type="button"
+          class="planner-alert-action"
+          (click)="irParaBlocosEstudo()">
+          Atualizar planner
+        </button>
+      </div>
+
       <div class="hero-next-card">
         <div class="hero-next-head">
-          <div class="hero-next-title">Meta de hoje</div>
+          <div class="hero-next-title">Metas de hoje</div>
         </div>
         <div class="hero-next-body" *ngIf="!sugestaoCarregando; else heroNextLoading">
           <div class="hero-next-columns">
