@@ -38,7 +38,39 @@
     {{ mensagemTexto }}
   </div>
 
- 
+  <div class="planner-edital-card" *ngIf="temEditalAtivo; else plannerEditalVazio">
+    <div class="planner-edital-title">Edital ativo</div>
+    <div class="planner-edital-body">
+      <div class="planner-edital-logo" [class.is-placeholder]="!editalAtivoImagemUrl">
+        <img
+          *ngIf="editalAtivoImagemUrl"
+          [src]="editalAtivoImagemUrl"
+          alt="Logo do edital"
+        />
+        <span *ngIf="!editalAtivoImagemUrl">{{ editalAtivoNome.slice(0, 1) }}</span>
+      </div>
+      <div class="planner-edital-info">
+        <div class="planner-edital-name">{{ editalAtivoNome }}</div>
+        <div class="planner-edital-cargo" *ngIf="getEditalCargo(editalAtivo)">
+          {{ getEditalCargo(editalAtivo) }}
+        </div>
+      </div>
+    </div>
+    <div class="planner-edital-note" *ngIf="materiasFiltroIds.size === 0">
+      Este edital nao possui materias cadastradas.
+    </div>
+  </div>
+  <ng-template #plannerEditalVazio>
+    <div class="planner-edital-card empty">
+      <div class="planner-edital-title">Edital ativo</div>
+      <div class="planner-edital-body">
+        <div class="planner-edital-logo is-placeholder">-</div>
+        <div class="planner-edital-info">
+          <div class="planner-edital-name">Nenhum edital selecionado</div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
 
   <div class="validation-summary" *ngIf="blocosInvalidos.length > 0">
     <span class="validation-title">Ajuste os blocos:</span>
@@ -155,21 +187,23 @@
             </ng-container>
             <ng-template #linhaEditar>
               <ng-container *ngIf="estaSubstituindo(i, li) || estaEditandoLinha(i, li); else linhaVazia">
-                <p-autoComplete
-                  #autoMateria
-                  [suggestions]="materiasFiltradasPorBloco[i]"
-                  (completeMethod)="filtrarMaterias($event, i)"
-                  [(ngModel)]="materiaSelecionadaPorLinha[i][li]"
-                  field="label"
-                  [dropdown]="true"
-                  [completeOnFocus]="true"
-                  [forceSelection]="true"
-                  [minLength]="0"
-                  (onFocus)="abrirSugestoes(i)"
-                  (onSelect)="adicionarMateriaNaLinha(i, li, $event)"
-                  placeholder="Adicionar materia..."
-                  inputId="materia-add-{{ b.numero }}-{{ li }}">
-                </p-autoComplete>
+                <div class="bloco-linha-edit" (click)="$event.stopPropagation()">
+                  <p-autoComplete
+                    #autoMateria
+                    [suggestions]="materiasFiltradasPorBloco[i]"
+                    (completeMethod)="filtrarMaterias($event, i)"
+                    [(ngModel)]="materiaSelecionadaPorLinha[i][li]"
+                    field="label"
+                    [dropdown]="true"
+                    [completeOnFocus]="true"
+                    [forceSelection]="true"
+                    [minLength]="0"
+                    (onFocus)="abrirSugestoes(i)"
+                    (onSelect)="adicionarMateriaNaLinha(i, li, $event)"
+                    placeholder="Adicionar materia..."
+                    inputId="materia-add-{{ b.numero }}-{{ li }}">
+                  </p-autoComplete>
+                </div>
               </ng-container>
               <ng-template #linhaVazia>
                 <button

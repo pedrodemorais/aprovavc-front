@@ -124,6 +124,13 @@
           >
             Suporte
           </a>
+          <button
+            type="button"
+            class="user-menu-item user-menu-item--logout"
+            (click)="logout(); userMenuAberto = false"
+          >
+            Sair
+          </button>
         </div>
       </div>
 
@@ -160,7 +167,7 @@
         </ul>
 
         <ng-template #menuItemTpl let-item>
-          <li class="menu-item" [class.has-children]="item.items?.length">
+          <li class="menu-item" [class.has-children]="item.items?.length" [class.menu-item--logout]="item.label === 'Sair'">
             <a
               *ngIf="item.routerLink; else menuButton"
               class="menu-link"

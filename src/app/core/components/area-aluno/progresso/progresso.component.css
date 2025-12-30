@@ -1,0 +1,413 @@
+.progresso-page {
+  padding: 16px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.progresso-head h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #111827;
+}
+
+.progresso-head p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.progresso-head {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.progresso-state {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.progresso-state.erro {
+  color: #dc2626;
+}
+
+.progresso-grid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
+  justify-content: center;
+}
+
+.progresso-card {
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.progresso-card-cobertura {
+  border-radius: 14px;
+  width: 200px;
+  min-height: 220px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.progresso-card-pontos-fracos {
+  grid-column: 2;
+  max-width: 560px;
+  justify-self: start;
+  min-height: 220px;
+}
+
+.progresso-card-concluidas {
+  grid-column: 3;
+  max-width: 560px;
+  justify-self: start;
+  min-height: 220px;
+}
+.progresso-card--wide {
+  grid-column: 1 / -1;
+}
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-title {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.card-head-inline {
+  align-items: center;
+}
+
+.card-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-title-text {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.progresso-card-pontos-fracos .info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-value {
+  font-weight: 700;
+  color: #111827;
+}
+
+.card-subtitle {
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.card-note {
+  color: #6b7280;
+  font-size: 0.78rem;
+}
+
+.card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.duo-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+}
+
+.duo-title {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.duo-edital {
+  color: #9ca3af;
+  font-size: 0.82rem;
+}
+
+.duo-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: center;
+  justify-items: center;
+}
+
+.duo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.duo-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+  text-align: center;
+}
+
+.pie-chart {
+  --pie-color: #22c55e;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--pie-color) calc((var(--percent, 0) * 1%)),
+    #e5e7eb 0
+  );
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.pie-chart::before {
+  content: "";
+  width: 68px;
+  height: 68px;
+  background: #ffffff;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.pie-chart__value {
+  position: relative;
+  font-weight: 700;
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.pie-chart--compact {
+  width: 72px;
+  height: 72px;
+}
+
+.pie-chart--compact::before {
+  width: 50px;
+  height: 50px;
+}
+
+.pie-chart--compact .pie-chart__value {
+  font-size: 0.75rem;
+}
+
+.progress-bar--low .pie-chart,
+.pie-chart.progress-bar--low {
+  --pie-color: #ef4444;
+}
+
+.progress-bar--mid .pie-chart,
+.pie-chart.progress-bar--mid {
+  --pie-color: #f59e0b;
+}
+
+.progress-bar--high .pie-chart,
+.pie-chart.progress-bar--high {
+  --pie-color: #22c55e;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  display: block;
+  height: 100%;
+  width: var(--percent, 0%);
+  background: #22c55e;
+  border-radius: 999px;
+}
+
+.progress-bar--low .progress-bar__fill {
+  background: #ef4444;
+}
+
+.progress-bar--mid .progress-bar__fill {
+  background: #f59e0b;
+}
+
+.progress-bar--high .progress-bar__fill {
+  background: #22c55e;
+}
+
+.tempo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.weak-pie {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.weak-pie-chart {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.weak-pie-chart::before {
+  content: "";
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #ffffff;
+  position: absolute;
+}
+
+.weak-pie-center {
+  position: relative;
+  font-weight: 700;
+  color: #111827;
+}
+
+.weak-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weak-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.weak-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.weak-legend-name {
+  flex: 1 1 auto;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.weak-legend-value {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.done-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.done-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+}
+
+.done-name {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.done-value {
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.tempo-item {
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #f8fafc;
+}
+
+.tempo-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.tempo-value {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .progresso-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .progresso-card-pontos-fracos {
+    grid-column: auto;
+  }
+
+  .progresso-card-concluidas {
+    grid-column: auto;
+  }
+
+  .tempo-grid {
+    grid-template-columns: 1fr;
+  }
+}

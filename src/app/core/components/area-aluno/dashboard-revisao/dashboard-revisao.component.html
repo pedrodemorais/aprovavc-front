@@ -2,21 +2,47 @@
 
 <section class="dashboard-revisao-page">
 
-  <!-- CABEÇALHO / RESUMO -->
+  <!-- CABECALHO / RESUMO -->
   <div class="rev-header">
-  <div class="hero-card">
-    <div class="hero-head">
-      <div class="hero-title">
-        <h2>Bem-vindo, {{ usuarioNome }}</h2>
+    <div class="hero-card">
+      <div class="hero-head">
+        <div class="hero-title">
+          <h2>Bem-vindo, {{ usuarioNome }}</h2>
+          <button
+            type="button"
+            class="hero-info-btn"
+            pTooltip="Seu foco hoje e avancar no edital com constancia e revisar no tempo certo."
+            tooltipPosition="top"
+            aria-label="Seu foco hoje e avancar no edital com constancia e revisar no tempo certo.">
+            <i class="pi pi-info-circle"></i>
+          </button>
+        </div>
+        <button
+          type="button"
+          class="hero-edital-action hero-edital-action--top"
+          (click)="irParaBlocosEstudo(); $event.stopPropagation()">
+          <i class="pi pi-bookmark"></i>
+          Ver meu plano semanal
+        </button>
       </div>
-    </div>
 
-<p class="hero-sub">
-  Seu foco hoje é avançar no edital com constância e revisar no tempo certo.
-</p>
-
-    <div class="hero-edital-card">
-        <div class="hero-edital-label">Edital ativo</div>
+      <div class="hero-edital-card">
+        <div class="hero-edital-label">
+          <ng-container *ngIf="editaisAtivosVisiveis.length; else heroEditalLabelVazio">
+            <div class="hero-edital-label__left">
+              <span class="hero-edital-label__nome">{{ editaisAtivosVisiveis[0].nome }}</span>
+              <ng-container *ngIf="getEditalCargo(editaisAtivosVisiveis[0])">
+                <span class="hero-edital-label__cargo"> - {{ getEditalCargo(editaisAtivosVisiveis[0]) }}</span>
+              </ng-container>
+            </div>
+            <span class="hero-edital-label__date">
+              Data da prova - {{ formatDataOuIndefinida(editaisAtivosVisiveis[0].dataProva) }}
+            </span>
+          </ng-container>
+          <ng-template #heroEditalLabelVazio>
+            <span class="hero-edital-label__nome">{{ editalAtivoNome }}</span>
+          </ng-template>
+        </div>
         <ng-container *ngIf="activeEditais.length; else heroEditalVazio">
           <div class="hero-edital-body">
             <div class="hero-edital-list">
@@ -32,22 +58,53 @@
                   <span *ngIf="!activeEditalImagemUrls[e.id!]">{{ e.nome?.slice(0, 1) }}</span>
                 </div>
                 <div class="hero-edital-info">
-                  <div class="hero-edital-title">
-                    <span class="hero-edital-nome">{{ e.nome }}</span>
-                    <span class="hero-edital-cargo" *ngIf="getEditalCargo(e)">{{ getEditalCargo(e) }}</span>
-                  </div>
                   <div class="hero-edital-meta">
-                    <div class="hero-meta-item">
-                      <span class="hero-meta-label">Data da prova</span>
-                      <span class="hero-meta-value">{{ formatData(e.dataProva) || 'Nao definida' }}</span>
+                    <div class="hero-meta-item hero-meta-stack hero-meta-stack--info">
+                      <div class="hero-meta-row">
+                        <span class="hero-meta-label">Progresso</span>
+                        <div
+                          class="hero-meta-bar"
+                          [style.--percent]="(e.percentualEstudadoGeral ?? 0) + '%'"
+                          [ngClass]="{
+                            'hero-meta-bar--low': (e.percentualEstudadoGeral ?? 0) <= 50,
+                            'hero-meta-bar--mid': (e.percentualEstudadoGeral ?? 0) > 50 && (e.percentualEstudadoGeral ?? 0) <= 70,
+                            'hero-meta-bar--high': (e.percentualEstudadoGeral ?? 0) > 70
+                          }"
+                          [attr.aria-label]="'Progresso ' + formatPercent(e.percentualEstudadoGeral)">
+                          <span class="hero-meta-bar__fill"></span>
+                        </div>
+                      </div>
+                      <div class="hero-meta-row">
+                        <span class="hero-meta-label">Dominio</span>
+                        <div
+                          class="hero-meta-bar"
+                          [style.--percent]="(e.nivelDominioGeral ?? 0) + '%'"
+                          [ngClass]="{
+                            'hero-meta-bar--low': (e.nivelDominioGeral ?? 0) <= 50,
+                            'hero-meta-bar--mid': (e.nivelDominioGeral ?? 0) > 50 && (e.nivelDominioGeral ?? 0) <= 70,
+                            'hero-meta-bar--high': (e.nivelDominioGeral ?? 0) > 70
+                          }"
+                          [attr.aria-label]="'Dominio ' + formatPercent(e.nivelDominioGeral)">
+                          <span class="hero-meta-bar__fill"></span>
+                        </div>
+                      </div>
                     </div>
-                    <div class="hero-meta-item">
-                      <span class="hero-meta-label">Progresso</span>
-                      <span class="hero-meta-pill">{{ formatPercent(e.percentualEstudadoGeral) }}</span>
-                    </div>
-                    <div class="hero-meta-item">
-                      <span class="hero-meta-label">Dominio</span>
-                      <span class="hero-meta-pill">{{ formatPercent(e.nivelDominioGeral) }}</span>
+                    <div class="hero-meta-divider" aria-hidden="true"></div>
+                    <div class="hero-meta-item hero-meta-stack">
+                      <div class="hero-meta-row">
+                        <span class="hero-meta-label-group">
+                          <span class="hero-meta-dot hero-meta-dot--vencida" aria-hidden="true"></span>
+                          <span class="hero-meta-label">Revisoes vencidas</span>
+                        </span>
+                        <span class="hero-meta-value">{{ totalVencidas }}</span>
+                      </div>
+                      <div class="hero-meta-row">
+                        <span class="hero-meta-label-group">
+                          <span class="hero-meta-dot hero-meta-dot--hoje" aria-hidden="true"></span>
+                          <span class="hero-meta-label">Revisoes hoje</span>
+                        </span>
+                        <span class="hero-meta-value">{{ revisoesVencemHoje }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -82,69 +139,76 @@
         </ng-template>
       </div>
 
-    <div class="hero-actions">
-      <a class="hero-cta primary" routerLink="/area-restrita/estudar-materias">
-        <i class="pi pi-check"></i>
-        Iniciar sessão de estudo
-      </a>
-      <button type="button" class="hero-cta ghost" (click)="irParaBlocosEstudo()">
-        <i class="pi pi-bookmark"></i>
-        Ver meu plano (Módulos 1-7)
-      </button>
-    </div>
-
-    <div class="hero-quick-grid">
-      <div class="quick-card">
-        <div class="quick-label">Hoje você tem</div>
-        <div class="quick-value">{{ modulosHoje }} módulo para executar</div>
-      </div>
-      <div class="quick-card">
-        <div class="quick-label">Revisões</div>
-        <div class="quick-value">
-          {{ revisoesHoje }} revisões ({{ revisoesVencemHoje }} vencem hoje)
+      <div class="hero-next-card">
+        <div class="hero-next-head">
+          <div class="hero-next-title">Meta de hoje</div>
         </div>
-      </div>
-      <div class="quick-card">
-        <div class="quick-label">Prioridades</div>
-        <div class="quick-value">
-          <div>Revisões vencidas: {{ totalVencidas }}</div>
-          <div>Revisões vencendo hoje: {{ revisoesVencemHoje }}</div>
+        <div class="hero-next-body" *ngIf="!sugestaoCarregando; else heroNextLoading">
+          <div class="hero-next-columns">
+            <div class="hero-next-col">
+              <div class="hero-next-col-title">Revisar</div>
+              <div class="hero-next-legend">
+                <span class="legend-item">
+                  <span class="legend-dot dot-vencida"></span>
+                  Revisao vencida
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot dot-hoje"></span>
+                  Revisao do dia
+                </span>
+              </div>
+              <div class="hero-next-list" *ngIf="revisoesPrioritariasOrdenadas.length; else heroNextSemRevisoes">
+                <button
+                  type="button"
+                  class="hero-next-item"
+                  *ngFor="let item of revisoesPrioritariasOrdenadas"
+                  (click)="irParaSala(item)">
+                  <span class="hero-next-item-head">
+                    <span
+                      class="hero-next-item-dot"
+                      [class.dot-vencida]="item.status === 'VENCIDA'"
+                      [class.dot-hoje]="item.status === 'EM_DIA'">
+                    </span>
+                    <span class="hero-next-item-title">{{ item.materiaNome }}</span>
+                  </span>
+                  <span class="hero-next-item-sub">{{ item.topicoDescricao }}</span>
+                </button>
+              </div>
+              <ng-template #heroNextSemRevisoes>
+                <div class="hero-next-state">Sem revisoes pendentes.</div>
+              </ng-template>
+            </div>
+            <div class="hero-next-col">
+              <div class="hero-next-col-title">Estudar</div>
+              <div class="hero-next-module">
+                <div class="quick-value">Modulo {{ modulosHoje }} para executar</div>
+                <div class="quick-module-list" *ngIf="materiasDoDiaOrdenadas.length; else semMateriasDia">
+                  <button
+                    type="button"
+                    class="quick-module-item"
+                    *ngFor="let item of materiasDoDiaOrdenadas"
+                    (click)="irParaSalaMateria(item.materiaId)">
+                    <span class="quick-module-name">{{ item.nome }}</span>
+                    <span class="quick-module-ordem">#{{ item.ordem }}</span>
+                  </button>
+                </div>
+                <ng-template #semMateriasDia>
+                  <div class="quick-module-empty">Sem materias no modulo de hoje.</div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <div class="hero-columns">
-      <div class="hero-block">
-        <div class="hero-block-title">Prioridades do dia</div>
-        <div class="hero-item">
-          <span>Revisões vencidas</span>
-          <strong>{{ totalVencidas }}</strong>
-        </div>
-        <div class="hero-item">
-          <span>Revisões vencendo hoje</span>
-          <strong>{{ revisoesVencemHoje }}</strong>
-        </div>
-        <div class="hero-item">
-          <span>Conteúdo novo sugerido</span>
-          <strong>{{ conteudoNovoSugerido }}</strong>
-        </div>
-      </div>
-      <div class="hero-block">
-        <div class="hero-block-title">Seu ritmo</div>
-        <div class="hero-item">
-          <span>Sequência</span>
-          <strong>{{ sequenciaDias }} dias</strong>
-        </div>
-        <div class="hero-item">
-          <span>Tempo na semana</span>
-          <strong>{{ tempoSemana }}</strong>
-        </div>
+        <ng-template #heroNextLoading>
+          <div class="hero-next-state">Carregando sugestao...</div>
+        </ng-template>
       </div>
     </div>
   </div>
-</div><!-- ESTADOS GERAIS -->
+
+  <!-- ESTADOS GERAIS -->
   <div class="rev-state" *ngIf="carregando">
-    Carregando revisões...
+    Carregando revisoes...
   </div>
 
   <div class="rev-state erro" *ngIf="erro">
@@ -156,7 +220,7 @@
       <div class="onboarding-badge">Primeiro acesso</div>
       <h2 class="onboarding-title">Sua trilha de estudo em 2 passos</h2>
       <p class="onboarding-subtitle">
-        Cadastre suas matérias e, se quiser, organize por prova/editais.
+        Cadastre suas materias e, se quiser, organize por prova/editais.
       </p>
 
       <div class="template-onboard" *ngIf="!editais.length || !materias.length">
@@ -172,7 +236,6 @@
 
         <div class="template-state" *ngIf="templatesCarregando">Carregando templates...</div>
         <div class="template-state erro" *ngIf="templatesErro">{{ templatesErro }}</div>
-       
 
         <div class="template-grid" *ngIf="templates.length">
           <button
@@ -180,8 +243,7 @@
             class="template-card"
             *ngFor="let t of templates"
             [class.selected]="templateSelecionadoId === t.id"
-            (click)="selecionarTemplate(t)"
-          >
+            (click)="selecionarTemplate(t)">
             <div class="template-info-card">
               <div class="template-image-wrap">
                 <img
@@ -189,13 +251,12 @@
                   class="template-image"
                   [src]="templateImagemUrls[t.id]"
                   (error)="onTemplateImagemErro(t.id)"
-                  alt="Logo do órgão"
+                  alt="Logo do orgao"
                 />
               </div>
               <div class="template-name">{{ t.nome }}</div>
-              <div class="template-cargo">{{ t.cargo || 'Cargo não informado' }}</div>
+              <div class="template-cargo">{{ t.cargo || 'Cargo nao informado' }}</div>
             </div>
-          
           </button>
         </div>
 
@@ -213,8 +274,7 @@
             type="button"
             class="step-action"
             [disabled]="clonandoTemplate || !templateSelecionadoId"
-            (click)="clonarTemplateSelecionado()"
-          >
+            (click)="clonarTemplateSelecionado()">
             {{ clonandoTemplate ? 'Criando...' : 'Criar edital pelo template' }}
           </button>
           <div class="template-ok" *ngIf="mensagemTemplateOk">{{ mensagemTemplateOk }}</div>
@@ -226,13 +286,13 @@
           <div class="step-index">1</div>
           <div class="step-content">
             <div class="step-title">
-              {{ materias.length ? 'Matérias cadastradas' : 'Cadastre suas matérias' }}
+              {{ materias.length ? 'Materias cadastradas' : 'Cadastre suas materias' }}
               <span class="step-status" *ngIf="materias.length">OK</span>
             </div>
-            <div class="step-text">Crie as disciplinas que você estuda e deixe o painel pronto.</div>
+            <div class="step-text">Crie as disciplinas que voce estuda e deixe o painel pronto.</div>
           </div>
-          <a class="step-action" *ngIf="!materias.length" routerLink="/area-restrita/cad-materias">Cadastrar matérias</a>
-          <button type="button" class="step-action ghost" *ngIf="materias.length" disabled>Concluído</button>
+          <a class="step-action" *ngIf="!materias.length" routerLink="/area-restrita/cad-materias">Cadastrar materias</a>
+          <button type="button" class="step-action ghost" *ngIf="materias.length" disabled>Concluido</button>
         </div>
 
         <div class="onboarding-step" [class.done]="editais.length">
@@ -246,12 +306,12 @@
           </div>
           <a class="step-action ghost" *ngIf="materias.length && !editais.length" routerLink="/area-restrita/editais">Criar edital</a>
           <button type="button" class="step-action ghost" *ngIf="!materias.length" disabled>Criar edital</button>
-          <button type="button" class="step-action ghost" *ngIf="editais.length" disabled>Concluído</button>
+          <button type="button" class="step-action ghost" *ngIf="editais.length" disabled>Concluido</button>
         </div>
       </div>
 
       <div class="onboarding-benefit">
-        Depois disso, o sistema agenda revisões automaticamente e mostra seu semáforo por tópico.
+        Depois disso, o sistema agenda revisoes automaticamente e mostra seu semaforo por topico.
       </div>
 
       <div class="onboarding-preview">
@@ -271,7 +331,7 @@
 
       <button type="button" class="btn-ghost info" (click)="abrirGuia()">Entender como funciona</button>
 
-      <div class="onboarding-note">Seu painel será atualizado assim que houver revisões.</div>
+      <div class="onboarding-note">Seu painel sera atualizado assim que houver revisoes.</div>
     </div>
 
     <div class="onboarding-modal" *ngIf="mostrarGuia" (click)="fecharGuia()">
@@ -281,9 +341,9 @@
           <button type="button" class="btn-close" (click)="fecharGuia()">x</button>
         </div>
         <ul class="modal-list">
-          <li>Cadastre matérias e tópicos para criar seu conteúdo.</li>
-          <li>O sistema cria revisões automáticas e prioriza o que importa.</li>
-          <li>O Centro de Estudo mostra o próximo passo a seguir.</li>
+          <li>Cadastre materias e topicos para criar seu conteudo.</li>
+          <li>O sistema cria revisoes automaticas e prioriza o que importa.</li>
+          <li>O Centro de Estudo mostra o proximo passo a seguir.</li>
         </ul>
       </div>
     </div>
@@ -291,14 +351,3 @@
 
 </section>
 </div>
-
-
-
-
-
-
-
-
-
-
-

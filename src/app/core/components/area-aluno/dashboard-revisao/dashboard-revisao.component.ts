@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
 import { EditalService  } from '../services/edital.service';
@@ -9,6 +10,8 @@ import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 import { Materia } from '../models/materia.model';
 import { Edital } from '../models/Edital';
 import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto';
+import { BlocosEstudoService } from '../services/blocos-estudo.service';
+import { PlanoDoDiaDTO } from '../../dto/blocos-estudo.dto';
 import { AuthService } from 'src/app/site/services/auth.service';
 @Component({
   selector: 'app-dashboard-revisao',
@@ -49,6 +52,18 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   sequenciaDias = 4;
   tempoSemana = '3h20';
   planoDisponivel = false;
+  planoDoDia: PlanoDoDiaDTO | null = null;
+  materiasDoDiaFallback: Array<{ materiaId: number; nome: string; ordem: number }> = [];
+
+  sugestaoCarregando = false;
+  sugestaoEstudo: {
+    origem: 'REVISAO_VENCIDA' | 'REVISAO_HOJE' | 'BLOCO_DIA';
+    materiaId?: number;
+    topicoId?: number;
+    materiaNome?: string;
+    topicoDescricao?: string;
+    blocoNumero?: number;
+  } | null = null;
 
   // totais para o resumo superior
   totalVencidas = 0;
@@ -60,6 +75,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     private materiaService: MateriaService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
+    private blocosEstudoService: BlocosEstudoService,
     private authService: AuthService,
     private router: Router
   ) {}
@@ -81,18 +97,28 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     forkJoin({
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
       materias: this.materiaService.listarMaterias(),
-      editais: this.editalService.listar()
+      editais: this.editalService.listar(),
+      plano: this.blocosEstudoService.planoDoDia().pipe(catchError(() => of(null)))
     }).subscribe({
-      next: ({ revisoes, materias, editais }) => {
+      next: ({ revisoes, materias, editais, plano }) => {
         this.revisoes = revisoes || [];
         this.materias = materias || [];
         this.editais = editais || [];
+        this.planoDoDia = plano;
         this.atualizarTotais();
+        this.modulosHoje = plano?.blocoNumero ?? 1;
         this.atualizarEditalAtivoNome();
         this.carregando = false;
 
         if (!this.editais.length || !this.materias.length) {
           this.carregarTemplates();
+        }
+
+        this.definirSugestaoEstudo();
+        if (!plano?.materiasDoBloco?.length) {
+          this.carregarMateriasDoBloco(plano?.blocoNumero ?? null);
+        } else {
+          this.materiasDoDiaFallback = [];
         }
       },
       error: (err) => {
@@ -157,6 +183,11 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     const dia = partes[2];
 
     return `${dia}/${mes}/${ano}`;
+  }
+
+  formatDataOuIndefinida(iso?: string | null): string {
+    const valor = this.formatData(iso);
+    return valor && valor !== '-' ? valor : 'indefinida';
   }
 
   private atualizarEditalAtivoNome(): void {
@@ -323,14 +354,40 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   }
 
   irParaSala(item: RevisaoDashboardItem): void {
+    const queryParams: any = {};
+    if (item?.topicoId) {
+      queryParams.topicoId = item.topicoId;
+    }
+    if (item?.status === 'VENCIDA' || item?.status === 'EM_DIA') {
+      queryParams.modo = 'revisar';
+    }
     this.router.navigate(
       ['/area-restrita/sala-estudo', item.materiaId],
-      { queryParams: { topicoId: item.topicoId } } // se quiser já mandar o tópico
+      { queryParams }
     );
   }
 
+  irParaSalaSugestao(): void {
+    if (!this.sugestaoEstudo?.materiaId) return;
+    const queryParams: any = {};
+    if (this.sugestaoEstudo.topicoId) {
+      queryParams.topicoId = this.sugestaoEstudo.topicoId;
+    }
+    if (this.sugestaoEstudo.origem !== 'BLOCO_DIA') {
+      queryParams.modo = 'revisar';
+    }
+    this.router.navigate(
+      ['/area-restrita/sala-estudo', this.sugestaoEstudo.materiaId],
+      { queryParams }
+    );
+  }
   irParaEditais(): void {
     this.router.navigate(['/area-restrita/editais']);
+  }
+
+  irParaSalaMateria(materiaId: number): void {
+    if (!materiaId) return;
+    this.router.navigate(['/area-restrita/sala-estudo', materiaId]);
   }
 
   irParaBlocosEstudo(): void {
@@ -517,7 +574,188 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     return `${type}/${subtype}`;
   }
 
+  private definirSugestaoEstudo(): void {
+    this.sugestaoCarregando = true;
+
+    const revisaoVencida = this.obterRevisaoPrioritaria('VENCIDA');
+    if (revisaoVencida) {
+      this.sugestaoEstudo = {
+        origem: 'REVISAO_VENCIDA',
+        materiaId: revisaoVencida.materiaId,
+        topicoId: revisaoVencida.topicoId,
+        materiaNome: revisaoVencida.materiaNome,
+        topicoDescricao: revisaoVencida.topicoDescricao
+      };
+      this.sugestaoCarregando = false;
+      return;
+    }
+
+    const revisaoHoje = this.obterRevisaoPrioritaria('EM_DIA');
+    if (revisaoHoje) {
+      this.sugestaoEstudo = {
+        origem: 'REVISAO_HOJE',
+        materiaId: revisaoHoje.materiaId,
+        topicoId: revisaoHoje.topicoId,
+        materiaNome: revisaoHoje.materiaNome,
+        topicoDescricao: revisaoHoje.topicoDescricao
+      };
+      this.sugestaoCarregando = false;
+      return;
+    }
+
+    const materiasPlano = this.ordenarMateriasPlano(this.planoDoDia?.materiasDoBloco || []);
+    if (!materiasPlano.length) {
+      this.sugestaoEstudo = null;
+      this.sugestaoCarregando = false;
+      return;
+    }
+
+    const materiaDoDia = materiasPlano[0];
+    this.materiaService.listarTopicos(materiaDoDia.materiaId).subscribe({
+      next: (topicos) => {
+        const todosTopicos = this.ordenarTopicosPorDataCriacao(
+          this.flattenTopicos(topicos || [])
+        );
+        const revisados = new Set(
+          (this.revisoes || [])
+            .map(r => r.topicoId)
+            .filter((id): id is number => Number.isFinite(id))
+        );
+        const topicoEscolhido =
+          todosTopicos.find(t => t?.id && !revisados.has(t.id)) || todosTopicos[0];
+
+        this.sugestaoEstudo = {
+          origem: 'BLOCO_DIA',
+          materiaId: materiaDoDia.materiaId,
+          materiaNome: materiaDoDia.nome,
+          topicoId: topicoEscolhido?.id,
+          topicoDescricao: topicoEscolhido?.descricao,
+          blocoNumero: this.planoDoDia?.blocoNumero
+        };
+        this.sugestaoCarregando = false;
+      },
+      error: () => {
+        this.sugestaoEstudo = {
+          origem: 'BLOCO_DIA',
+          materiaId: materiaDoDia.materiaId,
+          materiaNome: materiaDoDia.nome,
+          blocoNumero: this.planoDoDia?.blocoNumero
+        };
+        this.sugestaoCarregando = false;
+      }
+    });
+  }
+
+  get materiasDoDiaOrdenadas(): Array<{ materiaId: number; nome: string; ordem: number }> {
+    const planoOrdenado = this.ordenarMateriasPlano(this.planoDoDia?.materiasDoBloco || []);
+    if (planoOrdenado.length) {
+      return planoOrdenado;
+    }
+    return this.materiasDoDiaFallback;
+  }
+
+  get revisoesVencidasOrdenadas(): RevisaoDashboardItem[] {
+    return [...(this.revisoes || [])]
+      .filter(r => r.status === 'VENCIDA')
+      .sort((a, b) => this.compararDatasIso(a.dataProximaRevisao, b.dataProximaRevisao));
+  }
+
+  get revisoesPrioritariasOrdenadas(): RevisaoDashboardItem[] {
+    return [...(this.revisoes || [])]
+      .filter(r => r.status === 'VENCIDA' || r.status === 'EM_DIA')
+      .sort((a, b) => {
+        if (a.status !== b.status) {
+          return a.status === 'VENCIDA' ? -1 : 1;
+        }
+        return this.compararDatasIso(a.dataProximaRevisao, b.dataProximaRevisao);
+      });
+  }
+
+  private carregarMateriasDoBloco(blocoNumero: number | null): void {
+    if (!blocoNumero) {
+      this.materiasDoDiaFallback = [];
+      return;
+    }
+
+    this.blocosEstudoService.listarBlocos().subscribe({
+      next: (blocos) => {
+        const bloco = (blocos || []).find((b) => b.numero === blocoNumero);
+        if (!bloco?.itens?.length) {
+          this.materiasDoDiaFallback = [];
+          return;
+        }
+
+        const nomePorId = new Map<number, string>(
+          (this.materias || [])
+            .filter((m): m is Materia & { id: number } => m?.id != null)
+            .map((m) => [m.id, m.nome])
+        );
+
+        const itensOrdenados = [...bloco.itens].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+        this.materiasDoDiaFallback = itensOrdenados.map((item, index) => ({
+          materiaId: item.materiaEstudoId,
+          nome: item.materiaNome || nomePorId.get(item.materiaEstudoId) || `Materia ${item.materiaEstudoId}`,
+          ordem: item.ordem ?? index + 1
+        }));
+      },
+      error: () => {
+        this.materiasDoDiaFallback = [];
+      }
+    });
+  }
+
+  private obterRevisaoPrioritaria(status: RevisaoDashboardItem['status']): RevisaoDashboardItem | null {
+    const itens = (this.revisoes || []).filter(r => r.status === status);
+    if (!itens.length) return null;
+    return [...itens].sort((a, b) => this.compararDatasIso(a.dataProximaRevisao, b.dataProximaRevisao))[0];
+  }
+
+  private compararDatasIso(a?: string | null, b?: string | null): number {
+    if (!a && !b) return 0;
+    if (!a) return 1;
+    if (!b) return -1;
+    const da = new Date(a).getTime();
+    const db = new Date(b).getTime();
+    if (Number.isNaN(da) && Number.isNaN(db)) return 0;
+    if (Number.isNaN(da)) return 1;
+    if (Number.isNaN(db)) return -1;
+    return da - db;
+  }
+
+  private ordenarMateriasPlano(lista: PlanoDoDiaDTO['materiasDoBloco']): PlanoDoDiaDTO['materiasDoBloco'] {
+    return [...(lista || [])].sort((a, b) => a.ordem - b.ordem);
+  }
+
+  private flattenTopicos(topicos: any[]): any[] {
+    const result: any[] = [];
+    const stack = [...(topicos || [])];
+    while (stack.length) {
+      const atual = stack.shift();
+      if (!atual) continue;
+      result.push(atual);
+      const filhos = (atual.filhos || atual.subtopicos || []) as any[];
+      if (filhos.length) {
+        stack.unshift(...filhos);
+      }
+    }
+    return result;
+  }
+
+  private ordenarTopicosPorDataCriacao(topicos: any[]): any[] {
+    return [...(topicos || [])].sort((a, b) => {
+      const dataA = a?.dataCriacao || '';
+      const dataB = b?.dataCriacao || '';
+      if (dataA && dataB) {
+        return this.compararDatasIso(dataA, dataB);
+      }
+      const idA = Number(a?.id ?? 0);
+      const idB = Number(b?.id ?? 0);
+      return idA - idB;
+    });
+  }
+
 }
+
 
 
 

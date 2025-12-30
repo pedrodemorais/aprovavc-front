@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { OverlayPanel } from 'primeng/overlaypanel';
@@ -9,9 +9,12 @@ import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { MateriaService } from '../services/materia.service';
+import { EditalService } from '../services/edital.service';
+import { EditalTemplateService } from '../services/edital-template.service';
 
 import { BlocoEstudoDTO, BlocoEstudoItemDTO } from '../../dto/blocos-estudo.dto';
 import { Materia } from '../models/materia.model';
+import { Edital } from '../models/Edital';
 
 type MateriaOption = { label: string; value: number };
 
@@ -33,7 +36,7 @@ type BlocoForm = FormGroup<{
   templateUrl: './blocos-estudo.component.html',
   styleUrls: ['./blocos-estudo.component.css']
 })
-export class BlocosEstudoComponent implements OnInit {
+export class BlocosEstudoComponent implements OnInit, OnDestroy {
   @ViewChild('copiaPanel') copiaPanel?: OverlayPanel;
   @ViewChildren('autoMateria') autoMateriaRefs?: QueryList<AutoComplete>;
 
@@ -46,6 +49,10 @@ export class BlocosEstudoComponent implements OnInit {
 
   materiasOptions: MateriaOption[] = [];
   materiasMap = new Map<number, string>();
+  materiasTodas: Materia[] = [];
+  get temEditalAtivo(): boolean {
+    return !!this.editalAtivo;
+  }
   materiasFiltradasPorBloco: MateriaOption[][] = [];
   materiaSelecionadaPorBloco: Array<MateriaOption | null> = [];
   materiaSelecionadaPorLinha: Array<Array<MateriaOption | null>> = [];
@@ -63,6 +70,13 @@ export class BlocosEstudoComponent implements OnInit {
   salvando = false;
   carregandoBlocos = false;
   carregandoMaterias = false;
+  carregandoEditais = false;
+  editais: Edital[] = [];
+  editalAtivo: Edital | null = null;
+  editalAtivoNome = 'Nenhum edital selecionado';
+  materiasFiltroIds = new Set<number>();
+  editalAtivoImagemUrl = '';
+  private editalAtivoImagemObjectUrl: string | null = null;
   mensagemTexto = '';
   mensagemTipo: 'success' | 'error' | 'warn' | null = null;
 
@@ -70,6 +84,8 @@ export class BlocosEstudoComponent implements OnInit {
     private fb: FormBuilder,
     private blocosService: BlocosEstudoService,
     private materiaService: MateriaService,
+    private editalService: EditalService,
+    private editalTemplateService: EditalTemplateService,
     private salaEstudoService: SalaEstudoService,
     private message: MessageService
   ) {}
@@ -86,9 +102,14 @@ export class BlocosEstudoComponent implements OnInit {
     this.sincronizarInputsPorBloco();
     this.inicializarLinhasFixas();
 
+    this.carregarEditais();
     this.carregarMaterias();
     this.carregarBlocos();
     this.carregarRevisoesDashboard();
+  }
+
+  ngOnDestroy(): void {
+    this.limparImagemEditalAtivo();
   }
 
   get itensFormArray(): FormArray<BlocoItemForm> {
@@ -147,20 +168,199 @@ export class BlocosEstudoComponent implements OnInit {
       .pipe(finalize(() => (this.carregandoMaterias = false)))
       .subscribe({
         next: (materias: Materia[]) => {
-          const materiasComId = materias.filter(
+          this.materiasTodas = materias || [];
+          const materiasComId = this.materiasTodas.filter(
             (m): m is Materia & { id: number } => m.id != null
           );
 
-          this.materiasOptions = materiasComId
-            .map(m => ({ label: m.nome, value: m.id }))
-            .sort((a, b) => a.label.localeCompare(b.label));
-
           this.materiasMap = new Map(materiasComId.map(m => [m.id, m.nome]));
+          this.atualizarMateriasOptions();
         },
         error: () => {
           this.setMensagem('error', 'Falha ao carregar materias.');
         }
       });
+  }
+
+  carregarEditais(): void {
+    this.carregandoEditais = true;
+
+    this.editalService.listar()
+      .pipe(finalize(() => (this.carregandoEditais = false)))
+      .subscribe({
+        next: (lista) => {
+          this.editais = lista || [];
+          this.editalAtivo = this.editais.find((e) => e?.ativo) || null;
+          this.editalAtivoNome = this.editalAtivo?.nome || 'Nenhum edital selecionado';
+          this.materiasFiltroIds = new Set<number>(
+            (this.editalAtivo?.materias || [])
+              .map((m) => m.materiaId)
+              .filter((id) => Number.isFinite(id))
+          );
+          this.carregarImagemEditalAtivo();
+          this.atualizarMateriasOptions();
+        },
+        error: () => {
+          this.editalAtivo = null;
+          this.editalAtivoNome = 'Nenhum edital selecionado';
+          this.materiasFiltroIds = new Set<number>();
+          this.limparImagemEditalAtivo();
+          this.atualizarMateriasOptions();
+        }
+      });
+  }
+
+  private carregarImagemEditalAtivo(): void {
+    this.limparImagemEditalAtivo();
+    if (!this.editalAtivo?.id) return;
+    if (this.definirImagemEditalAtivoPorBytes(this.editalAtivo)) {
+      return;
+    }
+    const templateId = this.obterTemplateIdDoEdital(this.editalAtivo);
+    if (!templateId) return;
+    this.editalTemplateService.buscarImagemArquivo(templateId).subscribe({
+      next: (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        const blob = res.body;
+        if (!blob) return;
+
+        if (contentType.startsWith('image/')) {
+          const objectUrl = URL.createObjectURL(blob);
+          this.editalAtivoImagemObjectUrl = objectUrl;
+          this.editalAtivoImagemUrl = objectUrl;
+          return;
+        }
+
+        this.lerBlobComoTexto(blob)
+          .then((texto) => {
+            const payload = this.parseImagemResponse(texto);
+            if (!payload?.dados) return;
+            const tipo = this.normalizarContentType(payload.contentType);
+            this.editalAtivoImagemUrl = `data:${tipo};base64,${payload.dados}`;
+          })
+          .catch(() => {
+            this.editalAtivoImagemUrl = '';
+          });
+      },
+      error: () => {
+        this.editalAtivoImagemUrl = '';
+      }
+    });
+  }
+
+  private limparImagemEditalAtivo(): void {
+    if (this.editalAtivoImagemObjectUrl) {
+      URL.revokeObjectURL(this.editalAtivoImagemObjectUrl);
+      this.editalAtivoImagemObjectUrl = null;
+    }
+    this.editalAtivoImagemUrl = '';
+  }
+
+  private definirImagemEditalAtivoPorBytes(edital: Edital): boolean {
+    const anyEdital = edital as any;
+    const bytes =
+      anyEdital?.imagemBytes ??
+      anyEdital?.imagem_bytes ??
+      anyEdital?.imagemBase64 ??
+      null;
+    if (!bytes) {
+      return false;
+    }
+
+    let base64: string | null = null;
+    if (typeof bytes === 'string') {
+      base64 = bytes.trim();
+    } else if (Array.isArray(bytes)) {
+      base64 = this.uint8ArrayToBase64(new Uint8Array(bytes));
+    } else if (Array.isArray(bytes?.data)) {
+      base64 = this.uint8ArrayToBase64(new Uint8Array(bytes.data));
+    }
+
+    if (!base64) {
+      return false;
+    }
+
+    if (base64.startsWith('data:image')) {
+      this.editalAtivoImagemUrl = base64;
+      return true;
+    }
+
+    const contentType = this.inferirContentTypeImagem(anyEdital?.imagem);
+    this.editalAtivoImagemUrl = `data:${contentType};base64,${base64}`;
+    return true;
+  }
+
+  private uint8ArrayToBase64(bytes: Uint8Array): string {
+    const chunkSize = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
+  }
+
+  private inferirContentTypeImagem(caminho?: string | null): string {
+    const nome = (caminho || '').toLowerCase();
+    if (nome.endsWith('.png')) return 'image/png';
+    if (nome.endsWith('.jpg') || nome.endsWith('.jpeg')) return 'image/jpeg';
+    if (nome.endsWith('.webp')) return 'image/webp';
+    if (nome.endsWith('.svg')) return 'image/svg+xml';
+    return 'image/png';
+  }
+
+  private obterTemplateIdDoEdital(edital: Edital): number | null {
+    const anyEdital = edital as any;
+    const templateId =
+      anyEdital?.templateId ??
+      anyEdital?.editalTemplateId ??
+      anyEdital?.template?.id ??
+      null;
+    const idNum = Number(templateId);
+    return Number.isFinite(idNum) && idNum > 0 ? idNum : null;
+  }
+
+  private lerBlobComoTexto(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blob);
+    });
+  }
+
+  private parseImagemResponse(texto: string): { dados?: string; contentType?: any } | null {
+    const raw = (texto || '').trim();
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizarContentType(contentType: any): string {
+    if (!contentType) return 'image/png';
+    if (typeof contentType === 'string') return contentType;
+    const type = contentType.type || contentType.mainType || 'image';
+    const subtype = contentType.subtype || contentType.subType || 'png';
+    return `${type}/${subtype}`;
+  }
+
+  getEditalCargo(edital?: Edital | null): string {
+    const cargo = (edital as any)?.cargo || (edital as any)?.nomeCargo || '';
+    return String(cargo || '').trim();
+  }
+
+  private atualizarMateriasOptions(): void {
+    const materiasComId = this.materiasTodas.filter(
+      (m): m is Materia & { id: number } => m.id != null
+    );
+    const aplicarFiltro = this.temEditalAtivo;
+    this.materiasOptions = materiasComId
+      .filter((m) => !aplicarFiltro || this.materiasFiltroIds.has(m.id))
+      .map(m => ({ label: m.nome, value: m.id }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
   carregarBlocos(): void {
@@ -702,6 +902,22 @@ export class BlocosEstudoComponent implements OnInit {
         this.linhaEdicaoAtiva = null;
       }
     });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.linhaEdicaoAtiva) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (
+      target.closest('.bloco-linha-edit') ||
+      target.closest('.p-autocomplete-panel') ||
+      target.closest('.p-autocomplete')
+    ) {
+      return;
+    }
+    this.linhaEdicaoAtiva = null;
+    this.substituicaoAtiva = null;
   }
 
   podeSubstituir(item: BlocoEstudoItemDTO): boolean {

@@ -52,6 +52,7 @@ import { PainelAdminComponent } from './area-admin/pages/painel-admin/painel-adm
 import { BlocosEstudoComponent } from './components/area-aluno/blocos-estudo/blocos-estudo.component';
 import { PlanoDoDiaWidgetComponent } from './components/area-aluno/plano-do-dia-widget/plano-do-dia-widget.component';
 import { RevisoesComponent } from './components/area-aluno/revisoes/revisoes.component';
+import { ProgressoComponent } from './components/area-aluno/progresso/progresso.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -74,6 +75,7 @@ registerLocaleData(localePt);
     BlocosEstudoComponent,
     PlanoDoDiaWidgetComponent,
     RevisoesComponent,
+    ProgressoComponent,
 
   ],
   imports: [

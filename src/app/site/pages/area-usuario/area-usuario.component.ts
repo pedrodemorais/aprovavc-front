@@ -27,7 +27,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   user: any;
   menuAberto = false;
-  menuExpandido = false;
+  menuExpandido = true;
   userInitials = '';
   isHome = true;
 
@@ -186,9 +186,11 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   toggleMenuExpandido(): void {
     this.menuExpandido = !this.menuExpandido;
-    if (!this.menuExpandido) {
-      this.collapseMenuItems(this.items);
+    if (this.menuExpandido) {
+      this.expandMenuItems(this.items);
+      return;
     }
+    this.collapseMenuItems(this.items);
   }
 
   toggleMenuSection(event: Event, item: MenuItem): void {
@@ -247,6 +249,15 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private expandMenuItems(items: MenuItem[]): void {
+    for (const it of items || []) {
+      if (it.items?.length) {
+        it.expanded = true;
+        this.expandMenuItems(it.items);
+      }
+    }
+  }
+
   isMenuExpanded(item: MenuItem): boolean {
     return !!item.expanded;
   }
@@ -287,71 +298,22 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
          
           
         },
-      {
-  label: 'Plano',
-  icon: 'pi pi-sliders-h',
-  items: [
-    {
-      label: 'Plano do dia (bloco atual)',
-      icon: 'pi pi-calendar',
-      routerLink: ['/area-restrita/dashboard'],
-      disabled: isLocked || !this.hasMaterias,
-      title: !this.hasMaterias ? 'Cadastre matérias primeiro' : undefined
-    },
-    {
-      label: 'Rotina em blocos (módulos 1-7)',
-      icon: 'pi pi-table',
-      routerLink: ['/area-restrita/blocos-estudo'],
-      disabled: isLocked || !this.hasMaterias,
-      title: !this.hasMaterias ? 'Cadastre matérias primeiro' : undefined
-    },
-    {
-      label: 'Disponibilidade (min/dia) e regra de reposição',
-      icon: 'pi pi-clock',
-      disabled: true
-    },
-    {
-      label: 'Metas (ex: X horas/semana)',
-      icon: 'pi pi-flag',
-      disabled: true
-    }
-  ]
-},
 
-        {
-          label: 'Conteudo',
-          icon: 'pi pi-folder',
-          items: [
-            {
-              label: 'Materias',
-              icon: 'pi pi-book',
-              routerLink: ['/area-restrita/cad-materias'],
-              disabled: isLocked
-            },
-            
-          ]
-        },
+
+        
         {
           label: 'Revisoes',
           icon: 'pi pi-undo',
-          items: [
-            {
-              label: 'Fila de revisoes (verde/laranja/vermelho)',
-              icon: 'pi pi-list',
-              routerLink: ['/area-restrita/revisoes'],
-              disabled: false
-            },
-            { label: 'Atrasadas / Hoje / Proximas', icon: 'pi pi-calendar' }
-          ]
+           routerLink: ['/area-restrita/revisoes'],
+         
+           
+          
         },
         {
           label: 'Progresso',
           icon: 'pi pi-chart-line',
-          items: [
-            { label: 'Cobertura do edital (% estudado)', icon: 'pi pi-percentage', disabled: true },
-            { label: 'Dominio (% acerto/dificuldade)', icon: 'pi pi-chart-bar', disabled: true },
-            { label: 'Tempo por materia / constancia', icon: 'pi pi-clock', disabled: true }
-          ]
+           routerLink: ['/area-restrita/progresso'],
+         
         }
       ]
     };
@@ -361,40 +323,41 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       icon: 'pi pi-th-large',
       items: [
         {
-          label: 'Editais',
-          icon: 'pi pi-file',
-          items: [
-            {
-              label: 'Meus editais',
+           label: 'Meus editais',
               icon: 'pi pi-folder-open',
               routerLink: ['/area-restrita/editais'],
               disabled: isLocked
-            },
-            {
-              label: 'Templates prontos',
-              icon: 'pi pi-clone',
-              routerLink: ['/area-restrita/dashboard'],
-              disabled: isLocked
-            },
-           
-          ]
+         
         },
+         {
+           label: 'Gerenciar Materias',
+              icon: 'pi pi-book',
+              routerLink: ['/area-restrita/cad-materias'],
+              disabled: isLocked
+         
+            
+          
+        },
+              {
+     label: 'Planner Semanal',
+      icon: 'pi pi-table',
+      routerLink: ['/area-restrita/blocos-estudo'],
+      disabled: isLocked || !this.hasMaterias,
+      title: !this.hasMaterias ? 'Cadastre matérias primeiro' : undefined
+
+
+},
         {
           label: 'Configuracoes',
           icon: 'pi pi-cog',
-          items: [
-           
-            { label: 'Preferencias da rotina', icon: 'pi pi-sliders-h', disabled: true },
-           
-          ]
+        
         }
       ]
     };
 
     this.items = [
-      menuPrincipal,
-      menuSecundario,
-      { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.logout() }
+      ...(menuPrincipal.items || []),
+      ...(menuSecundario.items || [])
     ];
 
     if (this.isAdmin) {
@@ -568,6 +531,10 @@ private atualizarAdminDoToken(): void {
 
   toggleMenu() {
     this.menuAberto = !this.menuAberto;
+    if (this.menuAberto) {
+      this.menuExpandido = true;
+      this.expandMenuItems(this.items);
+    }
   }
 
   @HostListener('document:click', ['$event'])

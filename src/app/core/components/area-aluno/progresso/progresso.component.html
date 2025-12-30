@@ -1,0 +1,110 @@
+<div class="progresso-page">
+  <header class="progresso-head">
+    <div>
+      <h1>Progresso</h1>
+      <p>Resumo do seu edital em estudo.</p>
+    </div>
+  </header>
+
+  <div class="progresso-state" *ngIf="carregando">Carregando dados...</div>
+  <div class="progresso-state erro" *ngIf="erro">{{ erro }}</div>
+
+  <section class="progresso-grid" *ngIf="!carregando && !erro">
+    <article class="progresso-card-cobertura">
+      <div class="duo-wrap">
+        <div class="duo-title">Cobertura e Dominio</div>
+        <div class="duo-edital">Edital: {{ editalAtivo?.nome || 'Nenhum edital em estudo' }}</div>
+        <div class="duo-charts">
+          <div class="duo-item">
+            <div class="duo-label">Cobertura</div>
+            <div class="pie-chart pie-chart--compact" [style.--percent]="editalAtivo?.percentualEstudadoGeral ?? 0">
+              <span class="pie-chart__value">{{ formatPercent(editalAtivo?.percentualEstudadoGeral) }}</span>
+            </div>
+          </div>
+          <div class="duo-item">
+            <div class="duo-label">Dominio</div>
+            <div
+              class="pie-chart pie-chart--compact"
+              [ngClass]="getDominioClasse(editalAtivo?.nivelDominioGeral)"
+              [style.--percent]="editalAtivo?.nivelDominioGeral ?? 0">
+              <span class="pie-chart__value">{{ formatPercent(editalAtivo?.nivelDominioGeral) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="progresso-card progresso-card-pontos-fracos">
+      <div class="card-head card-head-inline">
+        <div class="card-title-wrap">
+          <span class="card-title-text">Pontos fracos (menor dominio)</span>
+          <i
+            class="pi pi-info-circle info-icon"
+            pTooltip="Materias ordenadas do menor para o maior dominio."
+            tooltipPosition="top"
+            [showDelay]="150"
+            [hideDelay]="80"
+            aria-label="Informacoes sobre pontos fracos"
+            tabindex="0"></i>
+        </div>
+        <div class="card-value">{{ materiasPontoFraco.length }}</div>
+      </div>
+     
+      <div class="weak-pie" *ngIf="weakSlices.length; else semPontosFracos">
+        <div class="weak-pie-chart" [style.background]="weakPieGradient">
+          <span class="weak-pie-center">{{ weakSlices.length }}</span>
+        </div>
+        <div class="weak-legend">
+          <div class="weak-legend-item" *ngFor="let slice of weakSlices">
+            <span class="weak-legend-dot" [style.background]="slice.color"></span>
+            <span class="weak-legend-name">{{ slice.label }}</span>
+            <span class="weak-legend-value">{{ formatPercent(slice.dominio) }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #semPontosFracos>
+        <div class="card-note">Sem materias cadastradas no edital.</div>
+      </ng-template>
+    </article>
+
+    <article class="progresso-card progresso-card-concluidas">
+      <div class="card-head">
+        <div class="card-title">Materias concluidas</div>
+        <div class="card-value">{{ materiasConcluidas.length }}</div>
+      </div>
+      <div class="card-subtitle">Materias com 100% de cobertura no edital.</div>
+      <div class="done-list" *ngIf="materiasConcluidas.length; else semMateriasConcluidas">
+        <div class="done-item" *ngFor="let materia of materiasConcluidas">
+          <span class="done-name">{{ materia.materiaNome }}</span>
+          <span class="done-value">{{ formatPercent(materia.percentualEstudado) }}</span>
+        </div>
+      </div>
+      <ng-template #semMateriasConcluidas>
+        <div class="card-note">Nenhuma materia concluida ainda.</div>
+      </ng-template>
+    </article>
+
+    <article class="progresso-card progresso-card--wide">
+      <div class="card-head">
+        <div class="card-title">Tempo por materia / constancia</div>
+        <div class="card-value">--</div>
+      </div>
+      <div class="card-subtitle">Resumo semanal de tempo estudado por materia.</div>
+      <div class="tempo-grid">
+        <div class="tempo-item">
+          <span class="tempo-label">Tempo total</span>
+          <span class="tempo-value">--</span>
+        </div>
+        <div class="tempo-item">
+          <span class="tempo-label">Constancia</span>
+          <span class="tempo-value">--</span>
+        </div>
+        <div class="tempo-item">
+          <span class="tempo-label">Materia destaque</span>
+          <span class="tempo-value">--</span>
+        </div>
+      </div>
+      <div class="card-note">Sem dados suficientes para exibir o tempo.</div>
+    </article>
+  </section>
+</div>

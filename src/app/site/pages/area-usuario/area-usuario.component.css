@@ -217,6 +217,12 @@ body {
   gap: 4px;
   padding: 0 0.4rem;
   max-height: 100%;
+  flex: 1 1 auto;
+}
+
+.menu-item--logout {
+  margin-top: auto;
+  padding-bottom: 12px;
 }
 
 .menu-actions {
@@ -1079,6 +1085,10 @@ body.theme-dark .sons-foco-panel .som-icone-nome{
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
 }
 
 .user-menu-item:hover{

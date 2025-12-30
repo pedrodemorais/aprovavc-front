@@ -308,7 +308,7 @@
 
                       </div>
                       <div class="botoes-avaliacao">
-                        <div class="timer-modos separado" role="tablist" aria-label="Avaliação da revisão">
+                        <div class="timer-modos separado" role="tablist" aria-label="Avalia‡Æo da revisÆo">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'ERREI'"
                             (click)="avaliarRevisaoAnotacao('ERREI')">Errei / N&atilde;o lembrei</button>
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'DIFICIL'"
@@ -319,8 +319,25 @@
                             (click)="avaliarRevisaoAnotacao('FACIL')">Muito f&aacute;cil</button>
                         </div>
                       </div>
+                      <div class="revisao-next">
+                        <button
+                          type="button"
+                          class="btn-revisao-next"
+                          (click)="voltarRevisao()"
+                          [disabled]="!podeVoltarRevisao">
+                          <i class="pi pi-arrow-left" aria-hidden="true"></i>
+                          <span>Voltar</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-revisao-next"
+                          (click)="irParaProximaRevisao()"
+                          [disabled]="!podeIrParaProximaRevisao">
+                          <span>Avan&ccedil;ar</span>
+                          <i class="pi pi-arrow-right" aria-hidden="true"></i>
+                        </button>
+                      </div>
                     </div>
-
                   </ng-container>
 
                   <ng-template #semAnotacoesTpl>
@@ -665,6 +682,10 @@
 <div *ngIf="erro" class="mensagem-erro">
   {{ erro }}
 </div>
+
+
+
+
 
 
 
