@@ -12,6 +12,11 @@
           aria-label="Resumo do seu edital em estudo"
           tabindex="0"></i>
       </h1>
+       <div class="duo-edital">Edital: {{ editalAtivo?.nome || 'Nenhum edital em estudo' }}</div>
+    </div>
+    <div class="progresso-cta progresso-cta--inline" *ngIf="revisoesVencidasCount > 0">
+      <span class="progresso-cta-text">Revisoes vencidas: {{ revisoesVencidasCount }}</span>
+      <button type="button" class="progresso-cta-btn" (click)="irParaRevisoes()">Revisar agora</button>
     </div>
   </header>
 
@@ -44,10 +49,6 @@
     </div>
   </div>
 
-  <div class="progresso-cta" *ngIf="revisoesVencidasCount > 0">
-    <span class="progresso-cta-text">Revisoes vencidas: {{ revisoesVencidasCount }}</span>
-    <button type="button" class="progresso-cta-btn" (click)="irParaRevisoes()">Revisar agora</button>
-  </div>
 
   <div class="progresso-state" *ngIf="carregando">Carregando dados...</div>
   <div class="progresso-state erro" *ngIf="erro">{{ erro }}</div>
@@ -55,10 +56,10 @@
   <section class="progresso-grid" *ngIf="!carregando && !erro">
     <article class="progresso-card progresso-card-cobertura">
       <div class="duo-wrap">
-        <div class="duo-title">Cobertura e Dominio</div>
-        <div class="duo-edital">Edital: {{ editalAtivo?.nome || 'Nenhum edital em estudo' }}</div>
-        <div class="duo-charts">
-          <div class="duo-item">
+       
+       
+        <div class="duo-quad">
+          <div class="graph-tile">
             <div class="duo-label">
               Cobertura
               <i
@@ -82,7 +83,7 @@
               {{ formatarTendencia(tendenciaCobertura) }}
             </div>
           </div>
-          <div class="duo-item">
+          <div class="graph-tile">
             <div class="duo-label">
               Dominio
               <i
@@ -108,6 +109,109 @@
               {{ formatarTendencia(tendenciaDominio) }}
             </div>
           </div>
+          <div class="graph-tile">
+            <div class="micro-title">Revisoes</div>
+            <div class="micro-hbar-list" *ngIf="revisoesResumo.total > 0; else semRevisoesResumo">
+              <div class="micro-hbar micro-hbar--alerta">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">Atrasadas</span>
+                  <span class="micro-hbar-value">{{ revisoesResumo.atrasadas }}</span>
+                </div>
+                <div class="micro-hbar-track">
+                  <span class="micro-hbar-fill micro-hbar-fill--atrasadas" [style.width.%]="revisoesResumo.atrasadasPct"></span>
+                </div>
+              </div>
+              <div class="micro-hbar micro-hbar--alerta">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">Hoje</span>
+                  <span class="micro-hbar-value">{{ revisoesResumo.hoje }}</span>
+                </div>
+                <div class="micro-hbar-track">
+                  <span class="micro-hbar-fill micro-hbar-fill--hoje" [style.width.%]="revisoesResumo.hojePct"></span>
+                </div>
+              </div>
+              <div class="micro-hbar micro-hbar--alerta">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">Em dia</span>
+                  <span class="micro-hbar-value">{{ revisoesResumo.emDia }}</span>
+                </div>
+                <div class="micro-hbar-track">
+                  <span class="micro-hbar-fill micro-hbar-fill--emdia" [style.width.%]="revisoesResumo.emDiaPct"></span>
+                </div>
+              </div>
+            </div>
+            <ng-template #semRevisoesResumo>
+              <div class="micro-empty">Sem revisoes</div>
+            </ng-template>
+          </div>
+          <div class="graph-tile">
+            <div class="micro-title">Ritmo (14d)</div>
+            <div class="micro-spark">
+              <span
+                class="micro-spark-bar"
+                *ngFor="let ponto of sparklineSeries"
+                [style.height.%]="ponto.heightPct"
+                [attr.title]="ponto.label + ' - ' + ponto.value + ' min'"></span>
+            </div>
+            <div class="micro-sub">Min/dia</div>
+          </div>
+          <div class="graph-tile">
+            <div class="micro-title">Tempo por materia</div>
+            <div class="micro-sub">{{ periodoTempoMateriasLabel }}</div>
+            <div class="micro-hbar-list" *ngIf="tempoMateriasDistribuicao.length; else semTempoMaterias">
+              <div class="micro-hbar" *ngFor="let item of tempoMateriasDistribuicao">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">{{ item.nome }}</span>
+                  <span class="micro-hbar-value">{{ item.label }}</span>
+                </div>
+                <div class="micro-hbar-track">
+                  <span class="micro-hbar-fill" [style.width.%]="item.percent"></span>
+                </div>
+              </div>
+            </div>
+            <ng-template #semTempoMaterias>
+              <div class="micro-empty">Sem dados</div>
+            </ng-template>
+          </div>
+          <div class="graph-tile">
+            <div class="micro-title">Dominio por materia</div>
+            <div class="micro-sub">Pontos fracos</div>
+            <div class="micro-hbar-list" *ngIf="materiasPontoFracoTop5.length; else semDominioMaterias">
+              <div class="micro-hbar" *ngFor="let materia of materiasPontoFracoTop5">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">{{ materia.materiaNome }}</span>
+                  <span class="micro-hbar-value">{{ formatPercent(materia.nivelDominio) }}</span>
+                </div>
+                <div class="micro-hbar-track">
+                  <span
+                    class="micro-hbar-fill micro-hbar-fill--dominio"
+                    [style.width.%]="calcularDominioFraquezaPercent(materia)"></span>
+                </div>
+              </div>
+            </div>
+            <ng-template #semDominioMaterias>
+              <div class="micro-empty">Sem dados</div>
+            </ng-template>
+          </div>
+          <div class="graph-tile">
+            <div class="micro-title">Cobertura por materia</div>
+            <div class="micro-sub">Estudado vs nao</div>
+            <div class="micro-hbar-list" *ngIf="coberturaMaterias.length; else semCoberturaMaterias">
+              <div class="micro-hbar" *ngFor="let materia of coberturaMaterias">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">{{ materia.nome }}</span>
+                  <span class="micro-hbar-value">{{ materia.label }}</span>
+                </div>
+                <div class="micro-hbar-track micro-hbar-track--split">
+                  <span class="micro-hbar-fill micro-hbar-fill--cobertura" [style.width.%]="materia.percent"></span>
+                  <span class="micro-hbar-rest" [style.width.%]="100 - materia.percent"></span>
+                </div>
+              </div>
+            </div>
+            <ng-template #semCoberturaMaterias>
+              <div class="micro-empty">Sem dados</div>
+            </ng-template>
+          </div>
         </div>
       </div>
     </article>
@@ -132,16 +236,6 @@
         <div class="weak-row" *ngFor="let materia of materiasPontoFracoTop5">
           <div class="weak-row-main">
             <span class="weak-row-name">{{ materia.materiaNome }}</span>
-            <span class="weak-row-value">{{ formatPercent(materia.nivelDominio) }}</span>
-          </div>
-          <div class="weak-row-bar">
-            <span class="weak-row-bar__fill" [style.--percent]="materia.nivelDominio ?? 0"></span>
-          </div>
-          <button type="button" class="weak-row-action" (click)="toggleDetalheMateria(materia.materiaId)">
-            Ver detalhes
-          </button>
-          <div class="weak-row-detail" *ngIf="materiaDetalheAbertaId === materia.materiaId">
-            Detalhamento por topico em breve.
           </div>
         </div>
       </div>
@@ -195,88 +289,109 @@
   </section>
 
   <section class="progresso-bottom" *ngIf="!carregando && !erro">
-    <article class="progresso-card progresso-card-constancia" *ngIf="calendarioDias.length">
-      <div class="card-head constancia-head">
-        <div class="card-title">
-          Constancia mensal
-          <i
-            class="pi pi-info-circle info-icon"
-            pTooltip="Verde = estudou (mais forte = mais tempo) | Vermelho = nao estudou"
-            tooltipPosition="top"
-            [showDelay]="150"
-            [hideDelay]="80"
-            aria-label="Informacoes sobre constancia"
-            tabindex="0"></i>
-        </div>
-        <div class="constancia-controls">
-          <button type="button" class="constancia-nav" (click)="mesAnterior()">&lt;</button>
-          <div class="constancia-mes">{{ tituloCalendario }}</div>
-          <button type="button" class="constancia-nav" (click)="mesProximo()">&gt;</button>
-        </div>
-      </div>
-      <div class="constancia-calendario">
-        <div class="constancia-semana">
-          <span>Seg</span>
-          <span>Ter</span>
-          <span>Qua</span>
-          <span>Qui</span>
-          <span>Sex</span>
-          <span>Sab</span>
-          <span>Dom</span>
-        </div>
-        <div class="constancia-grade">
-          <span
-            class="constancia-dia"
-            *ngFor="let dia of calendarioDias"
-            [class.constancia-dia--empty]="dia.isEmpty"
-            [ngStyle]="getConstanciaDiaStyle(dia)"
-            pTooltip="{{ dia.tooltip }}"
-            [tooltipDisabled]="!!dia.isEmpty"
-            tooltipPosition="top"
-            [showDelay]="150"
-            [hideDelay]="80">
-            {{ dia.day }}
-          </span>
-        </div>
-      </div>
-      <div class="constancia-metricas">
-        <div class="constancia-metrica">
-          <span class="constancia-metrica-titulo">Tempo total</span>
-          <span class="constancia-metrica-valor">{{ tempoTotalLabel }}</span>
-        </div>
-        <span class="constancia-metrica-sep" aria-hidden="true"></span>
-        <div class="constancia-metrica">
-          <span class="constancia-metrica-titulo">Tempo mensal</span>
-          <span class="constancia-metrica-valor">{{ tempoMensalLabel }}</span>
-        </div>
-        <span class="constancia-metrica-sep" aria-hidden="true"></span>
-        <div class="constancia-metrica">
-          <span class="constancia-metrica-titulo">Tempo semanal</span>
-          <span class="constancia-metrica-valor">{{ tempoSemanalLabel }}</span>
-        </div>
-      </div>
-    </article>
-
     <article class="progresso-card progresso-card-planejado" *ngIf="plannerMetricas.length">
       <div class="card-head">
         <div class="card-title">Planejado x realizado</div>
+          <i
+                class="pi pi-info-circle info-icon"
+                pTooltip="Verde = estudou (mais forte = mais tempo) | Vermelho = nao estudou"
+                tooltipPosition="top"
+                [showDelay]="150"
+                [hideDelay]="80"
+                aria-label="Informacoes sobre constancia"
+                tabindex="0"></i>
       </div>
-      <div class="card-subtitle">Calendario atual (dia, semana e mes).</div>
-      <div class="planner-grid">
-        <div class="planner-item" *ngFor="let metrica of plannerMetricas">
-          <div class="planner-title">{{ metrica.label }}</div>
-          <div class="planner-values">
-            <span class="planner-value">Realizado {{ metrica.actualLabel }}</span>
-            <span class="planner-sep">/</span>
-            <span class="planner-value planner-value--planned">Planejado {{ metrica.plannedLabel }}</span>
+     
+      <div class="planner-layout">
+        <div class="planner-calendar" *ngIf="calendarioDias.length">
+          <div class="constancia-head">
+         
+            <div class="constancia-controls">
+              <button type="button" class="constancia-nav" (click)="mesAnterior()">&lt;</button>
+              <div class="constancia-mes">{{ tituloCalendario }}</div>
+              <button type="button" class="constancia-nav" (click)="mesProximo()">&gt;</button>
+            </div>
           </div>
-          <div class="planner-bar" [style.--percent]="metrica.percentBar">
-            <span
-              class="planner-bar__fill"
-              [class.planner-bar__fill--ok]="metrica.status === 'ok'"
-              [class.planner-bar__fill--warn]="metrica.status === 'warn'"></span>
+          <div class="constancia-calendario">
+            <div class="constancia-semana">
+              <span>Seg</span>
+              <span>Ter</span>
+              <span>Qua</span>
+              <span>Qui</span>
+              <span>Sex</span>
+              <span>Sab</span>
+              <span>Dom</span>
+            </div>
+            <div class="constancia-grade">
+              <span
+                class="constancia-dia"
+                *ngFor="let dia of calendarioDias"
+                [class.constancia-dia--empty]="dia.isEmpty"
+                [class.is-selected]="dia.isSelected"
+                [ngStyle]="getConstanciaDiaStyle(dia)"
+                (click)="selecionarDia(dia)"
+                pTooltip="{{ dia.tooltip }}"
+                tooltipStyleClass="constancia-tooltip"
+                [tooltipDisabled]="!!dia.isEmpty"
+                tooltipPosition="top"
+                [showDelay]="150"
+                [hideDelay]="80">
+                {{ dia.day }}
+              </span>
+            </div>
           </div>
-          <div class="planner-percent">{{ metrica.percentLabel }}</div>
+          <div class="constancia-metricas">
+            <div class="constancia-metrica">
+              <span class="constancia-metrica-titulo">Tempo total</span>
+              <span class="constancia-metrica-valor">{{ tempoTotalLabel }}</span>
+            </div>
+            <span class="constancia-metrica-sep" aria-hidden="true"></span>
+            <div class="constancia-metrica">
+              <span class="constancia-metrica-titulo">Tempo mensal</span>
+              <span class="constancia-metrica-valor">{{ tempoMensalLabel }}</span>
+            </div>
+            <span class="constancia-metrica-sep" aria-hidden="true"></span>
+            <div class="constancia-metrica">
+              <span class="constancia-metrica-titulo">Tempo semanal</span>
+              <span class="constancia-metrica-valor">{{ tempoSemanalLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="planner-metricas">
+          <div class="planner-grid">
+            <div class="planner-item" *ngFor="let metrica of plannerMetricas">
+              <div class="planner-title">
+                {{ metrica.label }} - Realizado {{ metrica.actualLabel }}
+                <span class="planner-title-planned">Planejado {{ metrica.plannedLabel }}</span>
+              </div>
+              <div class="planner-bar" [style.--percent]="metrica.percentBar">
+                <span
+                  class="planner-bar__fill"
+                  [class.planner-bar__fill--ok]="metrica.status === 'ok'"
+                  [class.planner-bar__fill--warn]="metrica.status === 'warn'"></span>
+              </div>
+              <div class="planner-percent">{{ metrica.percentLabel }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="planner-materias">
+          <div class="planner-materias-title">
+            Materias estudadas no dia
+            <span class="planner-materias-date" *ngIf="selectedDate">
+              - {{ formatarDataCurta(selectedDate) }}
+            </span>
+          </div>
+
+          <ul class="planner-materias-lista" *ngIf="selectedMaterias.length; else semMateriasDia">
+            <li class="planner-materias-item" *ngFor="let materia of selectedMaterias">
+              {{ materia }}
+            </li>
+          </ul>
+          <ng-template #semMateriasDia>
+            <div class="planner-materias-vazio">Nenhuma materia estudada.</div>
+          </ng-template>
         </div>
       </div>
     </article>

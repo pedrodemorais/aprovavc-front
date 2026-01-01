@@ -13,6 +13,7 @@ import {
 } from '../services/sala-estudo.service';
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { BlocoEstudoDTO } from '../../dto/blocos-estudo.dto';
+import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 
 @Component({
   selector: 'app-progresso',
@@ -43,6 +44,7 @@ export class ProgressoComponent implements OnInit {
     totalSegundos?: number;
     tooltip?: string;
     isEmpty?: boolean;
+    isSelected?: boolean;
   }> = [];
   revisoesVencidasCount = 0;
   periodoSelecionado: '7d' | '30d' | '90d' | 'tudo' = '30d';
@@ -67,6 +69,22 @@ export class ProgressoComponent implements OnInit {
     percentBar: number;
     status: 'ok' | 'warn';
   }> = [];
+  selectedDate: Date | null = null;
+  selectedMaterias: string[] = [];
+  revisoesResumo = {
+    emDia: 0,
+    hoje: 0,
+    atrasadas: 0,
+    total: 0,
+    emDiaPct: 0,
+    hojePct: 0,
+    atrasadasPct: 0
+  };
+  sparklineSeries: Array<{ value: number; heightPct: number; label: string }> = [];
+  tempoMateriasDistribuicao: Array<{ nome: string; percent: number; label: string }> = [];
+  coberturaMaterias: Array<{ nome: string; percent: number; label: string }> = [];
+  private blocosCache: BlocoEstudoDTO[] = [];
+  private constanciaMesCache: ConstanciaEstudoDiaDTO[] = [];
   private weakColors = [
     '#ef4444',
     '#f59e0b',
@@ -96,6 +114,11 @@ export class ProgressoComponent implements OnInit {
       return '-';
     }
     return `${v.toFixed(0)}%`;
+  }
+
+  calcularDominioFraquezaPercent(materia: EditalMateriaResumo): number {
+    const valor = Math.max(0, Math.min(100, materia?.nivelDominio ?? 0));
+    return Math.max(2, 100 - valor);
   }
 
   formatarTendencia(v?: number | null): string {
@@ -241,11 +264,10 @@ export class ProgressoComponent implements OnInit {
 
   get tituloCalendario(): string {
     const meses = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
-    const ano = String(this.calendarioAno).slice(-2);
-    return `${meses[this.calendarioMes]}/${ano}`;
+    return `${meses[this.calendarioMes]} - ${this.calendarioAno}`;
   }
 
   toggleDetalheMateria(materiaId: number): void {
@@ -275,6 +297,7 @@ export class ProgressoComponent implements OnInit {
       next: (lista) => {
         this.editais = lista || [];
         this.editalAtivo = this.editais.find(e => e.ativo) || this.editais[0];
+        this.atualizarCoberturaMaterias();
         this.carregando = false;
       },
       error: () => {
@@ -293,16 +316,31 @@ export class ProgressoComponent implements OnInit {
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe(({ materias, total, constancia, constanciaMes, blocos }) => {
       this.temposMaterias = materias || [];
+      this.atualizarTempoMateriasDistribuicao();
+      this.atualizarCoberturaMaterias();
       this.tempoTotalLabel = this.formatarTempoTotal(total);
       this.tempoSemanalLabel = this.formatarTempoSemanal(total);
       this.constanciaLabel = this.formatarConstanciaMensal(constancia || []);
       this.constanciaDias = constanciaMes || [];
       this.constanciaDiasMes = constanciaMes || [];
       this.constanciaDiasPeriodo = constancia || [];
+      this.constanciaMesCache = constanciaMes || [];
+      this.blocosCache = blocos || [];
       this.constanciaMaxSegundos = this.definirMaxConstancia(constanciaMes || []);
       this.tempoMensalLabel = this.formatarTempoMensal(constanciaMes || []);
       this.materiaDestaqueLabel = this.definirMateriaDestaque(this.temposMaterias);
-      this.plannerMetricas = this.calcularPlannerMetricas(blocos || [], constanciaMes || [], total);
+      if (!this.selectedDate) {
+        this.selectedDate = this.inicioDia(new Date());
+      }
+      this.plannerMetricas = this.calcularPlannerMetricas(
+        this.blocosCache,
+        this.constanciaMesCache,
+        this.selectedDate
+      );
+      if (this.selectedDate) {
+        this.atualizarSelecaoDia(this.selectedDate);
+        this.atualizarSparkline(this.selectedDate);
+      }
       this.atualizarCalendario(constanciaMes || []);
     });
   }
@@ -312,6 +350,7 @@ export class ProgressoComponent implements OnInit {
       .pipe(catchError(() => of([])))
       .subscribe((itens) => {
         this.revisoesVencidasCount = (itens || []).filter((item) => item.status === 'VENCIDA').length;
+        this.atualizarResumoRevisoes(itens || []);
       });
   }
 
@@ -321,8 +360,27 @@ export class ProgressoComponent implements OnInit {
       .pipe(catchError(() => of([] as ConstanciaEstudoDiaDTO[])))
       .subscribe((lista) => {
         this.constanciaDiasMes = lista || [];
+        this.constanciaMesCache = lista || [];
         this.constanciaMaxSegundos = this.definirMaxConstancia(this.constanciaDiasMes);
         this.tempoMensalLabel = this.formatarTempoMensal(this.constanciaDiasMes);
+        if (this.selectedDate) {
+          const mesSelecionado = this.selectedDate.getMonth() === this.calendarioMes;
+          const anoSelecionado = this.selectedDate.getFullYear() === this.calendarioAno;
+          if (!mesSelecionado || !anoSelecionado) {
+            this.selectedDate = new Date(this.calendarioAno, this.calendarioMes, 1);
+          }
+        } else {
+          this.selectedDate = new Date(this.calendarioAno, this.calendarioMes, 1);
+        }
+        this.plannerMetricas = this.calcularPlannerMetricas(
+          this.blocosCache,
+          this.constanciaMesCache,
+          this.selectedDate
+        );
+        if (this.selectedDate) {
+          this.atualizarSelecaoDia(this.selectedDate);
+          this.atualizarSparkline(this.selectedDate);
+        }
         this.atualizarCalendario(this.constanciaDiasMes);
       });
   }
@@ -348,7 +406,7 @@ export class ProgressoComponent implements OnInit {
   private calcularPlannerMetricas(
     blocos: BlocoEstudoDTO[],
     constanciaMes: ConstanciaEstudoDiaDTO[],
-    total: TempoEstudoTotalDTO | null
+    baseDate: Date | null
   ): Array<{
     label: string;
     plannedLabel: string;
@@ -357,16 +415,16 @@ export class ProgressoComponent implements OnInit {
     percentBar: number;
     status: 'ok' | 'warn';
   }> {
-    const hoje = this.inicioDia(new Date());
-    const periodoSemana = this.obterPeriodoSemanaAtual(hoje);
-    const periodoMes = this.obterPeriodoMesAtual(hoje);
-    const planejadoDiaSeg = this.calcularPlanejadoDia(blocos, hoje);
+    const dataBase = baseDate ? this.inicioDia(baseDate) : this.inicioDia(new Date());
+    const periodoSemana = this.obterPeriodoSemanaAtual(dataBase);
+    const periodoMes = this.obterPeriodoMesAtual(dataBase);
+    const planejadoDiaSeg = this.calcularPlanejadoDia(blocos, dataBase);
     const planejadoSemanaSeg = this.calcularPlanejadoPeriodo(blocos, periodoSemana);
     const planejadoMesSeg = this.calcularPlanejadoPeriodo(blocos, periodoMes);
 
-    const realizadoSemanaSeg = this.obterTempoSemanalSegundos(total);
-    const realizadoMesSeg = this.somarConstanciaSegundos(constanciaMes);
-    const realizadoDiaSeg = this.obterConstanciaHojeSegundos(constanciaMes);
+    const realizadoSemanaSeg = this.somarConstanciaPeriodo(constanciaMes, periodoSemana);
+    const realizadoMesSeg = this.somarConstanciaPeriodo(constanciaMes, periodoMes);
+    const realizadoDiaSeg = this.obterConstanciaDiaSegundos(constanciaMes, dataBase);
 
     return [
       this.criarMetricaPlanejado('Dia', planejadoDiaSeg, realizadoDiaSeg),
@@ -420,21 +478,15 @@ export class ProgressoComponent implements OnInit {
     return totalMin * 60;
   }
 
-  private obterTempoSemanalSegundos(dto: TempoEstudoTotalDTO | null): number {
-    if (!dto) return 0;
-    const total = (dto as any).totalSegundosSemana ?? (dto as any).tempoTotalSemana ?? 0;
-    return Number(total) || 0;
-  }
-
   private somarConstanciaSegundos(lista: ConstanciaEstudoDiaDTO[]): number {
     return (lista || []).reduce((acc, item) => acc + (item.totalSegundos ?? 0), 0);
   }
 
-  private obterConstanciaHojeSegundos(lista: ConstanciaEstudoDiaDTO[]): number {
+  private obterConstanciaDiaSegundos(lista: ConstanciaEstudoDiaDTO[], data: Date): number {
     if (!lista?.length) return 0;
-    const hoje = this.inicioDia(new Date());
-    const chaveHoje = this.formatarDataChave(hoje);
-    const item = lista.find((i) => this.formatarDataChave(this.parseDia(i.dia)) === chaveHoje);
+    const dataBase = this.inicioDia(data);
+    const chave = this.formatarDataChave(dataBase);
+    const item = lista.find((i) => this.formatarDataChave(this.parseDia(i.dia)) === chave);
     return item?.totalSegundos ?? 0;
   }
 
@@ -624,7 +676,7 @@ export class ProgressoComponent implements OnInit {
     return `${ano}-${mes}-${dia}`;
   }
 
-  private formatarDataCurta(data: Date): string {
+  formatarDataCurta(data: Date): string {
     const dia = String(data.getDate()).padStart(2, '0');
     const mes = String(data.getMonth() + 1).padStart(2, '0');
     return `${dia}/${mes}`;
@@ -668,6 +720,7 @@ export class ProgressoComponent implements OnInit {
     const primeiroDiaSemana = inicioMes.getDay();
     const offset = (primeiroDiaSemana + 6) % 7; // semana inicia na segunda
     const mapa = new Map<string, ConstanciaEstudoDiaDTO>();
+    const selectedKey = this.selectedDate ? this.formatarDataChave(this.selectedDate) : null;
     (lista || []).forEach((item) => {
       const data = this.parseDia(item.dia);
       mapa.set(this.formatarDataChave(data), item);
@@ -679,6 +732,7 @@ export class ProgressoComponent implements OnInit {
       totalSegundos?: number;
       tooltip?: string;
       isEmpty?: boolean;
+      isSelected?: boolean;
     }> = [];
     for (let i = 0; i < offset; i += 1) {
       dias.push({ isEmpty: true });
@@ -694,9 +748,133 @@ export class ProgressoComponent implements OnInit {
         date: data,
         status,
         totalSegundos,
-        tooltip: this.formatarTooltipConstancia(data, totalSegundos, item?.materias || [])
+        tooltip: this.formatarTooltipConstancia(data, totalSegundos, item?.materias || []),
+        isSelected: selectedKey === chave
       });
     }
     this.calendarioDias = dias;
+  }
+
+  selecionarDia(dia: { isEmpty?: boolean; date?: Date }): void {
+    if (!dia || dia.isEmpty || !dia.date) return;
+    this.selectedDate = this.inicioDia(dia.date);
+    this.atualizarSelecaoDia(this.selectedDate);
+    this.atualizarSparkline(this.selectedDate);
+    this.plannerMetricas = this.calcularPlannerMetricas(
+      this.blocosCache,
+      this.constanciaMesCache,
+      this.selectedDate
+    );
+    this.atualizarCalendario(this.constanciaDiasMes);
+  }
+
+  private atualizarSelecaoDia(data: Date): void {
+    const chave = this.formatarDataChave(this.inicioDia(data));
+    const item = (this.constanciaMesCache || []).find(
+      (i) => this.formatarDataChave(this.parseDia(i.dia)) === chave
+    );
+    this.selectedMaterias = item?.materias ? [...item.materias] : [];
+  }
+
+  private somarConstanciaPeriodo(
+    lista: ConstanciaEstudoDiaDTO[],
+    periodo: { inicio: Date; fim: Date }
+  ): number {
+    const filtrada = this.filtrarConstanciaPorPeriodo(lista || [], periodo);
+    return this.somarConstanciaSegundos(filtrada);
+  }
+
+  get periodoTempoMateriasLabel(): string {
+    if (this.periodoSelecionado === '7d') return 'Ultimos 7 dias';
+    if (this.periodoSelecionado === '30d') return 'Ultimos 30 dias';
+    if (this.periodoSelecionado === '90d') return 'Ultimos 90 dias';
+    return 'Todo periodo';
+  }
+
+  private atualizarTempoMateriasDistribuicao(): void {
+    const lista = this.temposMaterias || [];
+    if (!lista.length) {
+      this.tempoMateriasDistribuicao = [];
+      return;
+    }
+    const ordenadas = [...lista].sort(
+      (a, b) => this.obterTempoEmSegundos(b) - this.obterTempoEmSegundos(a)
+    );
+    const top = ordenadas.slice(0, 4);
+    const max = Math.max(1, ...top.map((item) => this.obterTempoEmSegundos(item)));
+    this.tempoMateriasDistribuicao = top.map((item) => {
+      const tempo = this.obterTempoEmSegundos(item);
+      return {
+        nome: item.materiaNome || 'Materia',
+        percent: Math.max(2, Math.round((tempo / max) * 100)),
+        label: this.formatarDuracaoSegundos(tempo)
+      };
+    });
+  }
+
+  private atualizarCoberturaMaterias(): void {
+    const materias = this.editalAtivo?.materias || [];
+    if (!materias.length) {
+      this.coberturaMaterias = [];
+      return;
+    }
+    const ordenadas = [...materias].sort(
+      (a, b) => this.getPercentualConcluido(a) - this.getPercentualConcluido(b)
+    );
+    this.coberturaMaterias = ordenadas.slice(0, 4).map((materia) => {
+      const percent = Math.max(0, Math.min(100, this.getPercentualConcluido(materia)));
+      return {
+        nome: materia.materiaNome,
+        percent,
+        label: this.formatPercent(percent)
+      };
+    });
+  }
+
+  private atualizarResumoRevisoes(itens: RevisaoDashboardItem[]): void {
+    const atrasadas = (itens || []).filter((item) => item.status === 'VENCIDA').length;
+    const hoje = (itens || []).filter((item) => item.status === 'EM_DIA').length;
+    const emDia = (itens || []).filter((item) => item.status === 'FUTURA').length;
+    const total = atrasadas + hoje + emDia;
+    const calcularPct = (valor: number) => (total > 0 ? (valor / total) * 100 : 0);
+    this.revisoesResumo = {
+      atrasadas,
+      hoje,
+      emDia,
+      total,
+      atrasadasPct: calcularPct(atrasadas),
+      hojePct: calcularPct(hoje),
+      emDiaPct: calcularPct(emDia)
+    };
+  }
+
+  private atualizarSparkline(baseDate: Date | null): void {
+    const dataBase = baseDate ? this.inicioDia(baseDate) : this.inicioDia(new Date());
+    const inicio = new Date(dataBase);
+    inicio.setDate(dataBase.getDate() - 13);
+    const mapa = new Map<string, number>();
+    (this.constanciaDiasPeriodo || []).forEach((item) => {
+      const chave = this.formatarDataChave(this.parseDia(item.dia));
+      mapa.set(chave, item.totalSegundos ?? 0);
+    });
+    const pontos: Array<{ value: number; heightPct: number; label: string }> = [];
+    let max = 0;
+    for (let i = 0; i < 14; i += 1) {
+      const dia = new Date(inicio);
+      dia.setDate(inicio.getDate() + i);
+      const chave = this.formatarDataChave(dia);
+      const segundos = mapa.get(chave) ?? 0;
+      const minutos = Math.round(segundos / 60);
+      max = Math.max(max, minutos);
+      pontos.push({
+        value: minutos,
+        heightPct: 0,
+        label: this.formatarDataCurta(dia)
+      });
+    }
+    this.sparklineSeries = pontos.map((p) => ({
+      ...p,
+      heightPct: max > 0 ? (p.value / max) * 100 : 2
+    }));
   }
 }

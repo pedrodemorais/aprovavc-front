@@ -94,6 +94,11 @@ body {
   backdrop-filter: blur(10px);
 }
 
+/* Tooltip menor do calendario de constancia (PrimeNG append-to-body) */
+.constancia-tooltip .p-tooltip-text {
+  font-size: 0.75rem;
+}
+
 .logo img {
   width: 140px;
 }
