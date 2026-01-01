@@ -2,7 +2,7 @@
   <div class="rev-state" *ngIf="carregando">Carregando revisões...</div>
   <div class="rev-state erro" *ngIf="erro">{{ erro }}</div>
 
-  <div class="rev-card" *ngIf="revisoes?.length">
+  <div class="rev-card" *ngIf="revisoesFiltradas?.length">
 
     <!-- cabeçalho tipo "tabela" -->
     <div class="rev-list-header">
@@ -17,7 +17,7 @@
     <div class="rev-list-body">
       <div
         class="rev-list-row"
-        *ngFor="let r of revisoes"
+        *ngFor="let r of revisoesFiltradas"
       >
       <!-- STATUS -->
       <div class="col-status">

@@ -56,8 +56,10 @@
   <section class="progresso-grid" *ngIf="!carregando && !erro">
     <article class="progresso-card progresso-card-cobertura">
       <div class="duo-wrap">
-       
-       
+        <div class="duo-actions" *ngIf="selectedMateriaId">
+          <span class="duo-actions-label">Filtro: {{ selectedMateriaNome }}</span>
+          <button type="button" class="duo-actions-btn" (click)="limparFiltroMateria()">Limpar filtro</button>
+        </div>
         <div class="duo-quad">
           <div class="graph-tile">
             <div class="duo-label">
@@ -72,9 +74,8 @@
                 tabindex="0"></i>
             </div>
             <div class="duo-meta" *ngIf="coberturaFracao">{{ coberturaFracao }}</div>
-            <div class="pie-chart pie-chart--compact" [style.--percent]="editalAtivo?.percentualEstudadoGeral ?? 0">
-              <span class="pie-chart__value">{{ formatPercent(editalAtivo?.percentualEstudadoGeral) }}</span>
-            </div>
+            <div class="metric-value">{{ formatPercent(editalAtivo?.percentualEstudadoGeral) }}</div>
+            <div class="progress-bar" [style.--percent]="editalAtivo?.percentualEstudadoGeral ?? 0"></div>
             <div
               class="duo-trend"
               *ngIf="tendenciaCobertura != null"
@@ -95,24 +96,37 @@
                 aria-label="Informacoes sobre dominio"
                 tabindex="0"></i>
             </div>
-            <div
-              class="pie-chart pie-chart--compact"
-              [ngClass]="getDominioClasse(editalAtivo?.nivelDominioGeral)"
-              [style.--percent]="editalAtivo?.nivelDominioGeral ?? 0">
-              <span class="pie-chart__value">{{ formatPercent(editalAtivo?.nivelDominioGeral) }}</span>
-            </div>
+            <ng-container *ngIf="dominioSemDados; else dominioPercentTpl">
+              <span
+                class="metric-value metric-value--empty"
+                pTooltip="O dominio aparece apos suas primeiras revisoes/questoes."
+                tooltipPosition="top"
+                [showDelay]="150"
+                [hideDelay]="80"
+                tabindex="0">
+                Sem dados
+              </span>
+              <div class="progress-bar progress-bar--low" [style.--percent]="0"></div>
+            </ng-container>
+            <ng-template #dominioPercentTpl>
+              <span class="metric-value">{{ formatPercent(editalAtivo?.nivelDominioGeral) }}</span>
+              <div
+                class="progress-bar"
+                [ngClass]="getDominioClasse(editalAtivo?.nivelDominioGeral)"
+                [style.--percent]="editalAtivo?.nivelDominioGeral ?? 0"></div>
+            </ng-template>
             <div
               class="duo-trend"
-              *ngIf="tendenciaDominio != null"
+              *ngIf="tendenciaDominio != null && !dominioSemDados"
               [class.duo-trend--up]="(tendenciaDominio ?? 0) > 0"
               [class.duo-trend--down]="(tendenciaDominio ?? 0) < 0">
               {{ formatarTendencia(tendenciaDominio) }}
             </div>
           </div>
-          <div class="graph-tile">
+          <div class="graph-tile graph-tile--list">
             <div class="micro-title">Revisoes</div>
             <div class="micro-hbar-list" *ngIf="revisoesResumo.total > 0; else semRevisoesResumo">
-              <div class="micro-hbar micro-hbar--alerta">
+              <button type="button" class="micro-hbar micro-hbar--alerta" (click)="irParaFilaRevisoes('atrasadas')">
                 <div class="micro-hbar-header">
                   <span class="micro-hbar-name">Atrasadas</span>
                   <span class="micro-hbar-value">{{ revisoesResumo.atrasadas }}</span>
@@ -120,8 +134,8 @@
                 <div class="micro-hbar-track">
                   <span class="micro-hbar-fill micro-hbar-fill--atrasadas" [style.width.%]="revisoesResumo.atrasadasPct"></span>
                 </div>
-              </div>
-              <div class="micro-hbar micro-hbar--alerta">
+              </button>
+              <button type="button" class="micro-hbar micro-hbar--alerta" (click)="irParaFilaRevisoes('hoje')">
                 <div class="micro-hbar-header">
                   <span class="micro-hbar-name">Hoje</span>
                   <span class="micro-hbar-value">{{ revisoesResumo.hoje }}</span>
@@ -129,8 +143,8 @@
                 <div class="micro-hbar-track">
                   <span class="micro-hbar-fill micro-hbar-fill--hoje" [style.width.%]="revisoesResumo.hojePct"></span>
                 </div>
-              </div>
-              <div class="micro-hbar micro-hbar--alerta">
+              </button>
+              <button type="button" class="micro-hbar micro-hbar--alerta" (click)="irParaFilaRevisoes('emdia')">
                 <div class="micro-hbar-header">
                   <span class="micro-hbar-name">Em dia</span>
                   <span class="micro-hbar-value">{{ revisoesResumo.emDia }}</span>
@@ -138,7 +152,7 @@
                 <div class="micro-hbar-track">
                   <span class="micro-hbar-fill micro-hbar-fill--emdia" [style.width.%]="revisoesResumo.emDiaPct"></span>
                 </div>
-              </div>
+              </button>
             </div>
             <ng-template #semRevisoesResumo>
               <div class="micro-empty">Sem revisoes</div>
@@ -155,49 +169,11 @@
             </div>
             <div class="micro-sub">Min/dia</div>
           </div>
-          <div class="graph-tile">
-            <div class="micro-title">Tempo por materia</div>
-            <div class="micro-sub">{{ periodoTempoMateriasLabel }}</div>
-            <div class="micro-hbar-list" *ngIf="tempoMateriasDistribuicao.length; else semTempoMaterias">
-              <div class="micro-hbar" *ngFor="let item of tempoMateriasDistribuicao">
-                <div class="micro-hbar-header">
-                  <span class="micro-hbar-name">{{ item.nome }}</span>
-                  <span class="micro-hbar-value">{{ item.label }}</span>
-                </div>
-                <div class="micro-hbar-track">
-                  <span class="micro-hbar-fill" [style.width.%]="item.percent"></span>
-                </div>
-              </div>
-            </div>
-            <ng-template #semTempoMaterias>
-              <div class="micro-empty">Sem dados</div>
-            </ng-template>
-          </div>
-          <div class="graph-tile">
-            <div class="micro-title">Dominio por materia</div>
-            <div class="micro-sub">Pontos fracos</div>
-            <div class="micro-hbar-list" *ngIf="materiasPontoFracoTop5.length; else semDominioMaterias">
-              <div class="micro-hbar" *ngFor="let materia of materiasPontoFracoTop5">
-                <div class="micro-hbar-header">
-                  <span class="micro-hbar-name">{{ materia.materiaNome }}</span>
-                  <span class="micro-hbar-value">{{ formatPercent(materia.nivelDominio) }}</span>
-                </div>
-                <div class="micro-hbar-track">
-                  <span
-                    class="micro-hbar-fill micro-hbar-fill--dominio"
-                    [style.width.%]="calcularDominioFraquezaPercent(materia)"></span>
-                </div>
-              </div>
-            </div>
-            <ng-template #semDominioMaterias>
-              <div class="micro-empty">Sem dados</div>
-            </ng-template>
-          </div>
-          <div class="graph-tile">
+          <div class="graph-tile graph-tile--list">
             <div class="micro-title">Cobertura por materia</div>
             <div class="micro-sub">Estudado vs nao</div>
-            <div class="micro-hbar-list" *ngIf="coberturaMaterias.length; else semCoberturaMaterias">
-              <div class="micro-hbar" *ngFor="let materia of coberturaMaterias">
+            <div class="micro-hbar-list" *ngIf="coberturaMateriasExibidas.length; else semCoberturaMaterias">
+              <div class="micro-hbar" *ngFor="let materia of coberturaMateriasExibidas">
                 <div class="micro-hbar-header">
                   <span class="micro-hbar-name">{{ materia.nome }}</span>
                   <span class="micro-hbar-value">{{ materia.label }}</span>
@@ -212,36 +188,66 @@
               <div class="micro-empty">Sem dados</div>
             </ng-template>
           </div>
-        </div>
-      </div>
-    </article>
-
-    <article class="progresso-card progresso-card-pontos-fracos">
-      <div class="card-head card-head-inline">
-        <div class="card-title-wrap">
-          <span class="card-title-text">Pontos fracos (Top 5)</span>
-          <i
-            class="pi pi-info-circle info-icon"
-            pTooltip="Materias ordenadas do menor para o maior dominio."
-            tooltipPosition="top"
-            [showDelay]="150"
-            [hideDelay]="80"
-            aria-label="Informacoes sobre pontos fracos"
-            tabindex="0"></i>
-        </div>
-        <div class="card-value">{{ materiasPontoFracoTop5.length }}</div>
-      </div>
-     
-      <div class="weak-list" *ngIf="materiasPontoFracoTop5.length; else semPontosFracos">
-        <div class="weak-row" *ngFor="let materia of materiasPontoFracoTop5">
-          <div class="weak-row-main">
-            <span class="weak-row-name">{{ materia.materiaNome }}</span>
+          <div class="graph-tile graph-tile--list">
+            <div class="micro-title">Dominio por materia</div>
+            <div class="micro-sub">Pontos fracos</div>
+            <div class="micro-hbar-list" *ngIf="!dominioMateriasSemDados && dominioMateriasExibidas.length; else semDominioMaterias">
+              <div class="micro-hbar" *ngFor="let materia of dominioMateriasExibidas">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">{{ materia.materiaNome }}</span>
+                  <span class="micro-hbar-value">{{ formatPercent(materia.nivelDominio) }}</span>
+                </div>
+                <div class="micro-hbar-track">
+                  <span
+                    class="micro-hbar-fill micro-hbar-fill--dominio"
+                    [ngClass]="getDominioClasse(materia.nivelDominio)"
+                    [style.width.%]="calcularDominioFraquezaPercent(materia)"></span>
+                </div>
+              </div>
+            </div>
+            <ng-template #semDominioMaterias>
+              <div class="micro-empty">Sem dados</div>
+            </ng-template>
+          </div>
+          <div class="graph-tile graph-tile--list">
+            <div class="micro-title">Tempo por materia</div>
+            <div class="micro-sub">{{ periodoTempoMateriasLabel }}</div>
+            <div class="micro-hbar-list" *ngIf="tempoMateriasDistribuicao.length; else semTempoMaterias">
+              <button
+                type="button"
+                class="micro-hbar micro-hbar--click"
+                *ngFor="let item of tempoMateriasDistribuicao"
+                [class.is-selected]="item.materiaId === selectedMateriaId"
+                (click)="selecionarMateriaTempo(item)">
+                <div class="micro-hbar-header">
+                  <span class="micro-hbar-name">{{ item.nome }}</span>
+                  <span class="micro-hbar-value">{{ item.label }}</span>
+                </div>
+                <div class="micro-hbar-track">
+                  <span class="micro-hbar-fill" [style.width.%]="item.percent"></span>
+                </div>
+              </button>
+            </div>
+            <ng-template #semTempoMaterias>
+              <div class="micro-empty">Sem dados</div>
+            </ng-template>
+          </div>
+          <div class="graph-tile graph-tile--list">
+            <div class="micro-title">Prazo / Ritmo</div>
+            <div class="micro-sub">Estimativa</div>
+            <div class="micro-metric">
+              <span class="micro-metric-label">Restante:</span>
+              <span class="micro-metric-value">{{ prazoRitmo.labelRestante }}</span>
+            </div>
+            <div class="micro-metric">
+              <span class="micro-metric-label">No ritmo:</span>
+              <span class="micro-metric-value" [class.is-muted]="prazoRitmo.semDados">
+                {{ prazoRitmo.labelDias }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
-      <ng-template #semPontosFracos>
-        <div class="card-note">Sem materias cadastradas no edital.</div>
-      </ng-template>
     </article>
 
     <article class="progresso-card progresso-card-concluidas">

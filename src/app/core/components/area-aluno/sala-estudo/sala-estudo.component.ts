@@ -430,7 +430,7 @@ ativarRevisaoFlashcards(): void {
       }
     });
 
-    // se j+� estiver no modo revisar, ao trocar de t+�pico recarrega os flashcards para revis+�o
+    // se já estiver no modo revisar, ao trocar de tópico recarrega os flashcards para revisão
     if (this.modo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
@@ -661,7 +661,7 @@ ativarRevisaoFlashcards(): void {
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
 this.mensagemRevisao = undefined;
-    // quando entrar no modo revisar, se tiver t+�pico v+�lido, carrega flashcards de revis+�o
+    // quando entrar no modo revisar, se tiver tópico válido, carrega flashcards de revisão
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
@@ -1045,11 +1045,11 @@ this.mensagemRevisao = undefined;
   }
 
   // ================================================================
-  // REVIS+�O ESPA+�ADA (FLASHCARDS + ANOTA+�+�ES)
+  // REVISÃO ESPAÇADA (FLASHCARDS + ANOTAÇÕES)
   // ================================================================
 
   /**
-   * Carrega apenas os flashcards vencidos / para hoje para o t+�pico atual.
+   * Carrega apenas os flashcards vencidos / para hoje para o tópico atual.
    */
   private carregarFlashcardsParaRevisao(): void {
     if (!this.topicoSelecionado) {
@@ -1071,8 +1071,8 @@ this.mensagemRevisao = undefined;
           this.resetFlashcardFeedback();
         },
         error: (err) => {
-          console.error('[REVIS+�O] Erro ao carregar flashcards de revis+�o:', err);
-          this.erroFlashcardsRevisao = 'Erro ao carregar flashcards para revis+�o.';
+          console.error('[REVISÃO] Erro ao carregar flashcards de revisão:', err);
+          this.erroFlashcardsRevisao = 'Erro ao carregar flashcards para revisão.';
           this.carregandoFlashcardsRevisao = false;
           this.flashcards = [];
         }
@@ -1120,8 +1120,8 @@ this.mensagemRevisao = undefined;
     });
   }
   /**
-   * Marca a revis+�o das anota+�+�es (n+�vel t+�pico) como ERREI / DIFICIL / BOM / FACIL.
-   * O servidor cuida da l+�gica das "caixinhas" do t+�pico.
+   * Marca a revisão das anotações (nível tópico) como ERREI / DIFICIL / BOM / FACIL.
+   * O servidor cuida da lógica das "caixinhas" do tópico.
    */
   avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
 avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
@@ -1137,15 +1137,15 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
 
   this.salaEstudoService.responderRevisaoTopico(req).subscribe({
     next: () => {
-      console.log('[REVIS+�O] Revis+�o de anota+�+�es registrada com sucesso');
+      console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
       this.recarregarTopicosAposRevisao();
 
-      // ���� feedback visual
-      this.mostrarMensagemRevisao('Revis+�o das anota+�+�es registrada!');
+      // feedback visual
+      this.mostrarMensagemRevisao('Revisão das anotações registrada!');
     },
     error: (err) => {
-      console.error('[REVIS+�O] Erro ao registrar revis+�o de anota+�+�es:', err);
-      alert('Erro ao registrar revis+�o das anota+�+�es. Tente novamente.');
+      console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
+      alert('Erro ao registrar revisão das anotações. Tente novamente.');
     }
   });
 }
@@ -1245,9 +1245,9 @@ get podeIrParaProximaRevisao(): boolean {
 
 
 
-// --- FIM BLOCO: SONS DE FOCO POR +�CONE ---
+// --- FIM BLOCO: SONS DE FOCO POR TÓPICO ---
 
-  /** Mapa: topicoId -> info de revis+�o (status + pr+�xima data) */
+  /** Mapa: topicoId -> info de revisão (status + próxima data) */
   private revisoesPorTopico = new Map<number, {
     status: StatusRevisao;
     proximaRevisao?: string | null;
@@ -1268,8 +1268,8 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   /**
-   * Carrega o dashboard geral de revis+�es e monta o mapa por t+�pico.
-   * Reutiliza a mesma l+�gica da tela de mat+�rias.
+   * Carrega o dashboard geral de revisões e monta o mapa por tópico.
+   * Reutiliza a mesma lógica da tela de matérias.
    */
   private carregarRevisoesDashboard(): void {
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
@@ -1314,12 +1314,12 @@ get podeIrParaProximaRevisao(): boolean {
         console.log('[SALA-ESTUDO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
       },
       error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao carregar revis+�es dashboard:', err);
+        console.error('[SALA-ESTUDO] Erro ao carregar revisões dashboard:', err);
       }
     });
   }
 
-    /** Define a "for+�a" de cada status para comparar pai x filhos */
+    /** Define a "força" de cada status para comparar pai x filhos */
   private prioridadeStatus(status: StatusRevisao): number {
     switch (status) {
       case 'ATRASADA': return 3; // mais cr+�tico
@@ -1347,8 +1347,8 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   /**
-   * Status "simples" de um t+�pico, olhando s+� o pr+�prio id no mapa de revis+�es.
-   * (Dashboard j+� calculou o status com base na data).
+   * Status "simples" de um tópico, olhando só o próprio id no mapa de revisões.
+   * (Dashboard já calculou o status com base na data).
    */
   private getStatusSimplesTopico(topicoId: number | undefined): StatusRevisao {
     if (!topicoId) {
@@ -1412,11 +1412,11 @@ get podeIrParaProximaRevisao(): boolean {
     };
   }
 
-  /** Recarrega a +�rvore de t+�picos para atualizar o sem+�foro
- *  preservando o t+�pico selecionado.
+  /** Recarrega a árvore de tópicos para atualizar o semáforo
+ *  preservando o tópico selecionado.
  */
-/** Recarrega revis+�es + +�rvore de t+�picos para atualizar o sem+�foro,
- *  preservando o t+�pico selecionado.
+/** Recarrega revisões + árvore de tópicos para atualizar o semáforo,
+ *  preservando o tópico selecionado.
  */
 private recarregarTopicosAposRevisao(): void {
   if (!this.materiaId) {
@@ -1425,15 +1425,14 @@ private recarregarTopicosAposRevisao(): void {
 
   const idSelecionado = this.topicoSelecionado?.id;
 
-  // 1) Atualiza o mapa de revis+�es (+� daqui que vem o sem+�foro)
+  // 1) Atualiza o mapa de revisões (daqui que vem o semáforo)
   this.carregarRevisoesDashboard();
 
-  // 2) Recarrega a +�rvore de t+�picos (efeito "F5" na coluna esquerda)
+  // 2) Recarrega a árvore de tópicos (efeito "F5" na coluna esquerda)
   this.materiaService.listarTopicos(this.materiaId).subscribe({
     next: (lista) => {
       const listaSegura = lista || [];
-      console.log('[SALA-ESTUDO] Recarregando t+�picos ap+�s revis+�o:', listaSegura);
-
+      console.log('[SALA-ESTUDO] Recarregando tópicos após revisão:', listaSegura);
       this.arvoreTopicos = listaSegura;
       this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
@@ -1446,7 +1445,7 @@ private recarregarTopicosAposRevisao(): void {
       }
     },
     error: (err) => {
-      console.error('[SALA-ESTUDO] Erro ao recarregar t+�picos ap+�s revis+�o:', err);
+      console.error('[SALA-ESTUDO] Erro ao recarregar tópicos após revisão:', err);
     }
   });
 }

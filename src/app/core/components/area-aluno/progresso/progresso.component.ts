@@ -26,6 +26,7 @@ export class ProgressoComponent implements OnInit {
   editais: Edital[] = [];
   editalAtivo?: Edital;
   temposMaterias: TempoEstudoMateriaDTO[] = [];
+  tempoTotalDto: TempoEstudoTotalDTO | null = null;
   tempoTotalLabel = '--';
   tempoMensalLabel = '--';
   tempoSemanalLabel = '--';
@@ -80,11 +81,29 @@ export class ProgressoComponent implements OnInit {
     hojePct: 0,
     atrasadasPct: 0
   };
+  prazoRitmo = {
+    restanteTopicos: 0,
+    diasEstimados: 0,
+    labelRestante: '--',
+    labelDias: '--',
+    semDados: true
+  };
   sparklineSeries: Array<{ value: number; heightPct: number; label: string }> = [];
-  tempoMateriasDistribuicao: Array<{ nome: string; percent: number; label: string }> = [];
-  coberturaMaterias: Array<{ nome: string; percent: number; label: string }> = [];
+  tempoMateriasDistribuicao: Array<{ materiaId: number; nome: string; percent: number; label: string }> = [];
+  coberturaMaterias: Array<{ materiaId: number; nome: string; percent: number; label: string }> = [];
+  selectedMateriaId: number | null = null;
+  selectedMateriaNome: string | null = null;
+  planoAtaqueSemana: Array<{
+    materiaId: number;
+    materiaNome: string;
+    atrasadas: number;
+    hoje: number;
+    minutosSugeridos: number;
+    filtroPreferido: 'atrasadas' | 'hoje' | 'emdia';
+  }> = [];
   private blocosCache: BlocoEstudoDTO[] = [];
   private constanciaMesCache: ConstanciaEstudoDiaDTO[] = [];
+  private revisoesDashboard: RevisaoDashboardItem[] = [];
   private weakColors = [
     '#ef4444',
     '#f59e0b',
@@ -118,7 +137,45 @@ export class ProgressoComponent implements OnInit {
 
   calcularDominioFraquezaPercent(materia: EditalMateriaResumo): number {
     const valor = Math.max(0, Math.min(100, materia?.nivelDominio ?? 0));
-    return Math.max(2, 100 - valor);
+    return valor;
+  }
+
+  get dominioSemDados(): boolean {
+    const dominio = Number(this.editalAtivo?.nivelDominioGeral ?? 0) || 0;
+    return dominio <= 0 && this.revisoesResumo.total === 0;
+  }
+
+  get dominioMateriasSemDados(): boolean {
+    const materias = this.editalAtivo?.materias || [];
+    const possuiValor = materias.some((m) => (m.nivelDominio ?? 0) > 0);
+    return !possuiValor && this.revisoesResumo.total === 0;
+  }
+
+  get dominioMateriasExibidas(): EditalMateriaResumo[] {
+    const lista = this.materiasPontoFraco;
+    if (!this.selectedMateriaId) {
+      return lista.slice(0, 4);
+    }
+    const selecionada = lista.find((m) => m.materiaId === this.selectedMateriaId);
+    const restantes = lista.filter((m) => m.materiaId !== this.selectedMateriaId);
+    const base = selecionada ? [selecionada, ...restantes] : lista;
+    return base.slice(0, 4);
+  }
+
+  get coberturaMateriasExibidas(): Array<{ materiaId: number; nome: string; percent: number; label: string }> {
+    const lista = this.coberturaMaterias;
+    if (!this.selectedMateriaId) {
+      return lista.slice(0, 4);
+    }
+    const selecionada = lista.find((m) => m.materiaId === this.selectedMateriaId);
+    const restantes = lista.filter((m) => m.materiaId !== this.selectedMateriaId);
+    return selecionada ? [selecionada, ...restantes].slice(0, 4) : lista;
+  }
+
+  limparFiltroMateria(): void {
+    this.selectedMateriaId = null;
+    this.selectedMateriaNome = null;
+    this.atualizarCoberturaMaterias();
   }
 
   formatarTendencia(v?: number | null): string {
@@ -275,15 +332,24 @@ export class ProgressoComponent implements OnInit {
   }
 
   irParaRevisoes(): void {
-    this.router.navigate(['/area-restrita/revisoes']);
+    const filtro = this.revisoesResumo.atrasadas > 0 ? 'atrasadas' : this.revisoesResumo.hoje > 0 ? 'hoje' : 'emdia';
+    this.irParaFilaRevisoes(filtro);
+  }
+
+  irParaFilaRevisoes(filtro: 'atrasadas' | 'hoje' | 'emdia', materiaId?: number): void {
+    const queryParams: any = { modo: 'revisao', filtro };
+    if (materiaId) {
+      queryParams.materiaId = materiaId;
+    }
+    this.router.navigate(['/area-restrita/revisoes'], { queryParams });
   }
 
   getDominioClasse(valor?: number | null): string {
     const pct = valor ?? 0;
-    if (pct <= 50) {
+    if (pct < 50) {
       return 'progress-bar--low';
     }
-    if (pct <= 70) {
+    if (pct < 75) {
       return 'progress-bar--mid';
     }
     return 'progress-bar--high';
@@ -298,6 +364,8 @@ export class ProgressoComponent implements OnInit {
         this.editais = lista || [];
         this.editalAtivo = this.editais.find(e => e.ativo) || this.editais[0];
         this.atualizarCoberturaMaterias();
+        this.atualizarPlanoAtaque();
+        this.atualizarPrazoRitmo();
         this.carregando = false;
       },
       error: () => {
@@ -316,6 +384,7 @@ export class ProgressoComponent implements OnInit {
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe(({ materias, total, constancia, constanciaMes, blocos }) => {
       this.temposMaterias = materias || [];
+      this.tempoTotalDto = total;
       this.atualizarTempoMateriasDistribuicao();
       this.atualizarCoberturaMaterias();
       this.tempoTotalLabel = this.formatarTempoTotal(total);
@@ -329,6 +398,7 @@ export class ProgressoComponent implements OnInit {
       this.constanciaMaxSegundos = this.definirMaxConstancia(constanciaMes || []);
       this.tempoMensalLabel = this.formatarTempoMensal(constanciaMes || []);
       this.materiaDestaqueLabel = this.definirMateriaDestaque(this.temposMaterias);
+      this.atualizarPrazoRitmo();
       if (!this.selectedDate) {
         this.selectedDate = this.inicioDia(new Date());
       }
@@ -349,8 +419,10 @@ export class ProgressoComponent implements OnInit {
     this.salaEstudoService.listarRevisoesDashboard()
       .pipe(catchError(() => of([])))
       .subscribe((itens) => {
+        this.revisoesDashboard = itens || [];
         this.revisoesVencidasCount = (itens || []).filter((item) => item.status === 'VENCIDA').length;
         this.atualizarResumoRevisoes(itens || []);
+        this.atualizarPlanoAtaque();
       });
   }
 
@@ -363,6 +435,7 @@ export class ProgressoComponent implements OnInit {
         this.constanciaMesCache = lista || [];
         this.constanciaMaxSegundos = this.definirMaxConstancia(this.constanciaDiasMes);
         this.tempoMensalLabel = this.formatarTempoMensal(this.constanciaDiasMes);
+        this.atualizarPrazoRitmo();
         if (this.selectedDate) {
           const mesSelecionado = this.selectedDate.getMonth() === this.calendarioMes;
           const anoSelecionado = this.selectedDate.getFullYear() === this.calendarioAno;
@@ -805,6 +878,7 @@ export class ProgressoComponent implements OnInit {
     this.tempoMateriasDistribuicao = top.map((item) => {
       const tempo = this.obterTempoEmSegundos(item);
       return {
+        materiaId: item.materiaId,
         nome: item.materiaNome || 'Materia',
         percent: Math.max(2, Math.round((tempo / max) * 100)),
         label: this.formatarDuracaoSegundos(tempo)
@@ -821,9 +895,10 @@ export class ProgressoComponent implements OnInit {
     const ordenadas = [...materias].sort(
       (a, b) => this.getPercentualConcluido(a) - this.getPercentualConcluido(b)
     );
-    this.coberturaMaterias = ordenadas.slice(0, 4).map((materia) => {
+    this.coberturaMaterias = ordenadas.map((materia) => {
       const percent = Math.max(0, Math.min(100, this.getPercentualConcluido(materia)));
       return {
+        materiaId: materia.materiaId,
         nome: materia.materiaNome,
         percent,
         label: this.formatPercent(percent)
@@ -845,6 +920,114 @@ export class ProgressoComponent implements OnInit {
       atrasadasPct: calcularPct(atrasadas),
       hojePct: calcularPct(hoje),
       emDiaPct: calcularPct(emDia)
+    };
+  }
+
+  selecionarMateriaTempo(item: { materiaId?: number; nome: string }): void {
+    if (!item?.materiaId) return;
+    this.selectedMateriaId = item.materiaId;
+    this.selectedMateriaNome = item.nome;
+    this.atualizarCoberturaMaterias();
+  }
+
+  private atualizarPlanoAtaque(): void {
+    const materias = this.editalAtivo?.materias || [];
+    if (!materias.length) {
+      this.planoAtaqueSemana = [];
+      return;
+    }
+    const pior = [...materias].sort((a, b) => (a.nivelDominio ?? 0) - (b.nivelDominio ?? 0));
+    const foco = pior.slice(0, 2);
+
+    const revisoesMap = new Map<number, { atrasadas: number; hoje: number }>();
+    (this.revisoesDashboard || []).forEach((item) => {
+      const atual = revisoesMap.get(item.materiaId) || { atrasadas: 0, hoje: 0 };
+      if (item.status === 'VENCIDA') atual.atrasadas += 1;
+      if (item.status === 'EM_DIA') atual.hoje += 1;
+      revisoesMap.set(item.materiaId, atual);
+    });
+
+    const candidatosManutencao = materias.filter((m) => {
+      const revisao = revisoesMap.get(m.materiaId);
+      return !!revisao && (revisao.atrasadas > 0 || revisao.hoje > 0);
+    });
+    const manutencao = candidatosManutencao.sort(
+      (a, b) => (b.nivelDominio ?? 0) - (a.nivelDominio ?? 0)
+    )[0];
+
+    const lista = [...foco, ...(manutencao ? [manutencao] : [])];
+    const unicos = Array.from(new Map(lista.map((m) => [m.materiaId, m])).values());
+    this.planoAtaqueSemana = unicos.map((m) => {
+      const revisao = revisoesMap.get(m.materiaId) || { atrasadas: 0, hoje: 0 };
+      const dominio = Number(m.nivelDominio ?? 0) || 0;
+      const minutos = dominio <= 50 ? 45 : dominio <= 70 ? 35 : 25;
+      const filtroPreferido = revisao.atrasadas > 0 ? 'atrasadas' : revisao.hoje > 0 ? 'hoje' : 'emdia';
+      return {
+        materiaId: m.materiaId,
+        materiaNome: m.materiaNome,
+        atrasadas: revisao.atrasadas,
+        hoje: revisao.hoje,
+        minutosSugeridos: minutos,
+        filtroPreferido
+      };
+    });
+  }
+
+  private atualizarPrazoRitmo(): void {
+    const dadosEdital: any = this.editalAtivo || {};
+    const estudados =
+      dadosEdital.topicosEstudados ??
+      dadosEdital.topicosEstudadosGeral ??
+      dadosEdital.totalTopicosEstudados ??
+      dadosEdital.topicosConcluidos ??
+      null;
+    const total =
+      dadosEdital.topicosTotal ??
+      dadosEdital.totalTopicos ??
+      dadosEdital.topicosTotalGeral ??
+      dadosEdital.totalTopicosGeral ??
+      null;
+    if (!Number.isFinite(estudados) || !Number.isFinite(total)) {
+      this.prazoRitmo = {
+        restanteTopicos: 0,
+        diasEstimados: 0,
+        labelRestante: '--',
+        labelDias: 'Sem dados suficientes para previsao',
+        semDados: true
+      };
+      return;
+    }
+    const restanteTopicos = Math.max(0, Number(total) - Number(estudados));
+    const periodo = this.obterPeriodoAtual();
+    const diasPeriodo = this.diasNoPeriodo(periodo).length || 1;
+    const totalMinPeriodo = this.somarConstanciaSegundos(this.constanciaDiasPeriodo);
+    const mediaMinDia = totalMinPeriodo > 0 ? totalMinPeriodo / diasPeriodo / 60 : 0;
+    const totalMinutos = this.obterTempoEmSegundos(this.tempoTotalDto) / 60;
+    const mediaMinPorTopico = Number(estudados) > 0 ? totalMinutos / Number(estudados) : 0;
+    const restanteMinutos = mediaMinPorTopico > 0 ? restanteTopicos * mediaMinPorTopico : 0;
+    let diasEstimados = 0;
+    if (restanteMinutos > 0 && mediaMinDia > 0) {
+      diasEstimados = Math.ceil(restanteMinutos / mediaMinDia);
+    } else if (restanteTopicos > 0 && Number(estudados) > 0) {
+      const mediaTopicosDia = Number(estudados) / diasPeriodo;
+      diasEstimados = mediaTopicosDia > 0 ? Math.ceil(restanteTopicos / mediaTopicosDia) : 0;
+    }
+    if (!diasEstimados || !Number.isFinite(diasEstimados)) {
+      this.prazoRitmo = {
+        restanteTopicos,
+        diasEstimados: 0,
+        labelRestante: `${restanteTopicos} topicos`,
+        labelDias: 'Sem dados suficientes para previsao',
+        semDados: true
+      };
+      return;
+    }
+    this.prazoRitmo = {
+      restanteTopicos,
+      diasEstimados,
+      labelRestante: `${restanteTopicos} topicos`,
+      labelDias: `~${diasEstimados} dias para concluir`,
+      semDados: false
     };
   }
 

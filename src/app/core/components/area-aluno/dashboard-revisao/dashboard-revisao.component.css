@@ -425,6 +425,127 @@
   gap: 8px;
 }
 
+.hero-plan-card {
+  border-radius: 14px;
+  border: 0;
+  background: #ffffff;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.plan-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plan-title-text {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.plan-value {
+  font-weight: 700;
+  color: #111827;
+}
+
+.plan-note {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+.plano-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plano-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.plano-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.plano-nome {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.85rem;
+}
+
+.plano-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.plano-chip {
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+}
+
+.plano-chip--atrasadas {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.plano-chip--hoje {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.plano-chip--tempo {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.28);
+}
+
+.plano-btn {
+  border: 0;
+  background: #22c55e;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .planner-alert {
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.4);
@@ -1378,6 +1499,53 @@
 :host-context(body.theme-dark) .hero-next-card {
   background: rgba(15, 23, 42, 0.6) !important;
   border: 1px solid var(--border) !important;
+}
+
+:host-context(body.theme-dark) .hero-plan-card {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid var(--border) !important;
+}
+
+:host-context(body.theme-dark) .plan-title-text,
+:host-context(body.theme-dark) .plan-value {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .plan-note,
+:host-context(body.theme-dark) .info-icon {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .plano-item {
+  background: var(--surface-2) !important;
+  border-color: var(--border) !important;
+}
+
+:host-context(body.theme-dark) .plano-nome {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .plano-chip--atrasadas {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #fecaca !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+:host-context(body.theme-dark) .plano-chip--hoje {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fde68a !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+:host-context(body.theme-dark) .plano-chip--tempo {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #bfdbfe !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+:host-context(body.theme-dark) .plano-btn {
+  background: #22c55e !important;
+  color: #0b1220 !important;
 }
 
 :host-context(body.theme-dark) .hero-next-title,

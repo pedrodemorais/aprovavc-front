@@ -219,6 +219,45 @@
           <div class="hero-next-state">Carregando sugestao...</div>
         </ng-template>
       </div>
+
+      <div class="hero-plan-card">
+        <div class="plan-head">
+          <div class="plan-title-wrap">
+            <span class="plan-title-text">Plano de ataque da semana</span>
+            <i
+              class="pi pi-info-circle info-icon"
+              pTooltip="Foco nas materias com menor dominio e manutencao para revisoes vencendo."
+              tooltipPosition="top"
+              [showDelay]="150"
+              [hideDelay]="80"
+              aria-label="Informacoes sobre plano de ataque"
+              tabindex="0"></i>
+          </div>
+          <div class="plan-value">{{ planoAtaqueSemana.length }}</div>
+        </div>
+
+        <div class="plano-lista" *ngIf="planoAtaqueSemana.length; else semPlanoAtaque">
+          <div class="plano-item" *ngFor="let item of planoAtaqueSemana">
+            <div class="plano-main">
+              <span class="plano-nome">{{ item.materiaNome }}</span>
+              <div class="plano-chips">
+                <span class="plano-chip plano-chip--atrasadas">Revisoes atrasadas {{ item.atrasadas }}</span>
+                <span class="plano-chip plano-chip--hoje">Vence hoje {{ item.hoje }}</span>
+                <span class="plano-chip plano-chip--tempo">Minutos sugeridos {{ item.minutosSugeridos }}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="plano-btn"
+              (click)="irParaFilaRevisoes(item.filtroPreferido, item.materiaId)">
+              Ir para revisar
+            </button>
+          </div>
+        </div>
+        <ng-template #semPlanoAtaque>
+          <div class="plan-note">Sem dados suficientes para montar o plano.</div>
+        </ng-template>
+      </div>
     </div>
   </div>
 

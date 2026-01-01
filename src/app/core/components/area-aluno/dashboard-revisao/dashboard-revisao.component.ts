@@ -70,6 +70,14 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   totalHoje = 0;
   totalFuturas = 0;
   materiasConcluidasNoPlanner: Array<{ materiaId: number; nome: string }> = [];
+  planoAtaqueSemana: Array<{
+    materiaId: number;
+    materiaNome: string;
+    atrasadas: number;
+    hoje: number;
+    minutosSugeridos: number;
+    filtroPreferido: 'atrasadas' | 'hoje' | 'emdia';
+  }> = [];
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -111,6 +119,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         this.modulosHoje = plano?.blocoNumero ?? 1;
         this.atualizarEditalAtivoNome();
         this.atualizarMateriasConcluidasNoPlanner(blocos || []);
+        this.atualizarPlanoAtaque();
         this.carregando = false;
 
         if (!this.editais.length || !this.materias.length) {
@@ -377,6 +386,14 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       ['/area-restrita/sala-estudo', item.materiaId],
       { queryParams }
     );
+  }
+
+  irParaFilaRevisoes(filtro: 'atrasadas' | 'hoje' | 'emdia', materiaId?: number): void {
+    const queryParams: any = { modo: 'revisao', filtro };
+    if (materiaId) {
+      queryParams.materiaId = materiaId;
+    }
+    this.router.navigate(['/area-restrita/revisoes'], { queryParams });
   }
 
   irParaSalaSugestao(): void {
@@ -745,6 +762,58 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     this.materiasConcluidasNoPlanner = Array.from(concluidas.entries())
       .filter(([id]) => idsPlanner.has(id))
       .map(([materiaId, nome]) => ({ materiaId, nome }));
+  }
+
+  private obterEditalPlano(): Edital | null {
+    const ativo = (this.activeEditais || [])[0];
+    if (ativo) return ativo;
+    const alternativo = (this.editais || []).find(e => e?.ativo);
+    return alternativo || (this.editais || [])[0] || null;
+  }
+
+  private atualizarPlanoAtaque(): void {
+    const editalBase = this.obterEditalPlano();
+    const materias = editalBase?.materias || [];
+    if (!materias.length) {
+      this.planoAtaqueSemana = [];
+      return;
+    }
+
+    const pior = [...materias].sort((a, b) => (a.nivelDominio ?? 0) - (b.nivelDominio ?? 0));
+    const foco = pior.slice(0, 2);
+
+    const revisoesMap = new Map<number, { atrasadas: number; hoje: number }>();
+    (this.revisoes || []).forEach((item) => {
+      const atual = revisoesMap.get(item.materiaId) || { atrasadas: 0, hoje: 0 };
+      if (item.status === 'VENCIDA') atual.atrasadas += 1;
+      if (item.status === 'EM_DIA') atual.hoje += 1;
+      revisoesMap.set(item.materiaId, atual);
+    });
+
+    const candidatosManutencao = materias.filter((m) => {
+      const revisao = revisoesMap.get(m.materiaId);
+      return !!revisao && (revisao.atrasadas > 0 || revisao.hoje > 0);
+    });
+    const manutencao = candidatosManutencao.sort(
+      (a, b) => (b.nivelDominio ?? 0) - (a.nivelDominio ?? 0)
+    )[0];
+
+    const lista = [...foco, ...(manutencao ? [manutencao] : [])];
+    const unicos = Array.from(new Map(lista.map((m) => [m.materiaId, m])).values());
+    this.planoAtaqueSemana = unicos.map((m) => {
+      const revisao = revisoesMap.get(m.materiaId) || { atrasadas: 0, hoje: 0 };
+      const dominio = Number(m.nivelDominio ?? 0) || 0;
+      const minutos = dominio <= 50 ? 45 : dominio <= 70 ? 35 : 25;
+      const filtroPreferido = revisao.atrasadas > 0 ? 'atrasadas' : revisao.hoje > 0 ? 'hoje' : 'emdia';
+      return {
+        materiaId: m.materiaId,
+        materiaNome: m.materiaNome,
+        atrasadas: revisao.atrasadas,
+        hoje: revisao.hoje,
+        minutosSugeridos: minutos,
+        filtroPreferido
+      };
+    });
   }
 
   private obterRevisaoPrioritaria(status: RevisaoDashboardItem['status']): RevisaoDashboardItem | null {
