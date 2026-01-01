@@ -31,6 +31,7 @@ import { AdminGuard } from './site/pages/guards/admin.guard';
 import { BlocosEstudoComponent } from './core/components/area-aluno/blocos-estudo/blocos-estudo.component';
 import { RevisoesComponent } from './core/components/area-aluno/revisoes/revisoes.component';
 import { ProgressoComponent } from './core/components/area-aluno/progresso/progresso.component';
+import { EstudoEmAndamentoGuard } from './core/components/area-aluno/guards/estudo-em-andamento.guard';
 
 
 const routes: Routes = [
@@ -63,7 +64,7 @@ const routes: Routes = [
       { path: 'progresso', component: ProgressoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'revisoes', component: RevisoesComponent },
       { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard] },
-      { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
       { path: 'meu-cadastro', component: PerfilAlunoComponent },
       { path: 'suporte', component: SuporteComponent },
       { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },

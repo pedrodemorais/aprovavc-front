@@ -39,7 +39,7 @@
 
       <!-- CARD: CADASTRO DA MATÉRIA -->
       <section class="card bloco-materia-form">
-        <div class="card-header">
+        <div class="card-header card-header--acoes">
           <div>
             <h2 class="card-title">
               Passo 1 – Cadastrar matéria
@@ -49,27 +49,9 @@
             </h2>
           </div>
 
-          <span class="pill pill-materia">Passo 1</span>
-        </div>
-
-        <form [formGroup]="materiaForm" (ngSubmit)="salvarMateria()" class="form-materia">
-
-          <div class="form-campo">
-            <label for="nome" class="label">
-              Nome da matéria <span class="obrigatorio">*</span>
-            </label>
-
-            <input #nomeMateriaInput id="nome" type="text" class="input-text" formControlName="nome"
-              placeholder="Ex: Português, Direito Penal, Raciocínio Lógico..." />
-
-            <div class="erro" *ngIf="campoInvalido('nome')">
-              Informe o nome da matéria (máx. 100 caracteres).
-            </div>
-          </div>
-
-          <div class="form-acoes">
+          <div class="card-actions">
             <div class="timer-modos">
-              <button type="submit" class="btn-modo-timer" [disabled]="salvando">
+              <button type="submit" class="btn-modo-timer" form="materiaForm" [disabled]="salvando">
                 {{
                 salvando
                 ? 'Salvando...'
@@ -88,6 +70,23 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <form id="materiaForm" [formGroup]="materiaForm" (ngSubmit)="salvarMateria()" class="form-materia">
+
+          <div class="form-campo">
+            <label for="nome" class="label">
+              Nome da matéria <span class="obrigatorio">*</span>
+            </label>
+
+            <input #nomeMateriaInput id="nome" type="text" class="input-text" formControlName="nome"
+              placeholder="Ex: Português, Direito Penal, Raciocínio Lógico..." />
+
+            <div class="erro" *ngIf="campoInvalido('nome')">
+              Informe o nome da matéria (máx. 100 caracteres).
+            </div>
+          </div>
+
         </form>
       </section>
 

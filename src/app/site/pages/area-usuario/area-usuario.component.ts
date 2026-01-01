@@ -28,6 +28,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   user: any;
   menuAberto = false;
   menuExpandido = true;
+  menuOffset = 0;
   userInitials = '';
   isHome = true;
 
@@ -52,6 +53,8 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('sidebar', { static: false }) sidebarRef!: ElementRef;
   @ViewChild('menuToggle', { static: false }) toggleRef!: ElementRef;
+  @ViewChild('menuWrap', { static: false }) menuWrapRef!: ElementRef;
+  @ViewChild('content', { static: false }) contentRef!: ElementRef;
 
   constructor(
     private authService: AuthService,
@@ -74,6 +77,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         const url = e.urlAfterRedirects || e.url;
         this.isHome = url === '/area-restrita';
         this.menuAberto = false;
+        this.agendarMenuOffset();
       });
   }
 
@@ -144,6 +148,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   ngAfterViewInit(): void {
+    this.agendarMenuOffset();
     this.ngZone.runOutsideAngular(() => {
       document.addEventListener('pointerdown', this.onDocPointerDown, true); // capture = true
       document.addEventListener('touchstart', this.onDocPointerDown, true); // fallback mobile
@@ -167,6 +172,11 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ✅ ESC fecha o painel do som (mantém o que você já tinha funcionando)
+  @HostListener('window:resize')
+  onResize(): void {
+    this.agendarMenuOffset();
+  }
+
   @HostListener('document:keydown.escape')
   onEsc(): void {
     if (this.sonsFocoAberto) {
@@ -186,6 +196,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   toggleMenuExpandido(): void {
     this.menuExpandido = !this.menuExpandido;
+    this.agendarMenuOffset();
     if (this.menuExpandido) {
       this.expandMenuItems(this.items);
       return;
@@ -209,6 +220,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       event.stopPropagation();
       if (!this.menuExpandido) {
         this.menuExpandido = true;
+        this.agendarMenuOffset();
       }
       item.expanded = !item.expanded;
       return;
@@ -217,6 +229,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     if (item.routerLink) {
       this.menuExpandido = false;
       this.collapseMenuItems(this.items);
+      this.agendarMenuOffset();
     }
 
     if (item.command) {
@@ -529,12 +542,75 @@ private atualizarAdminDoToken(): void {
 
   // ============ MENU LATERAL / MOBILE ============
 
+  private agendarMenuOffset(): void {
+    this.ngZone.runOutsideAngular(() => {
+      requestAnimationFrame(() => {
+        this.ngZone.run(() => this.atualizarMenuOffset());
+      });
+
+      setTimeout(() => {
+        this.ngZone.run(() => this.atualizarMenuOffset());
+      }, 240);
+    });
+  }
+
+    private obterLimiteConteudo(contentEl: HTMLElement): number {
+    const contentRect = contentEl.getBoundingClientRect();
+    const maxWidth = contentRect.width * 0.92;
+    const nodes = contentEl.querySelectorAll('*');
+    let limite = Number.POSITIVE_INFINITY;
+    let count = 0;
+
+    for (const el of Array.from(nodes)) {
+      if (count++ > 60) {
+        break;
+      }
+      const rect = (el as HTMLElement).getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        continue;
+      }
+      if (rect.width >= maxWidth) {
+        continue;
+      }
+      if (rect.left <= contentRect.left + 4) {
+        continue;
+      }
+      limite = Math.min(limite, rect.left);
+    }
+
+    return Number.isFinite(limite) ? limite : contentRect.left;
+  }
+    private atualizarMenuOffset(): void {
+    if (!this.menuExpandido || window.innerWidth < 901) {
+      this.menuOffset = 0;
+      return;
+    }
+
+    const sideEl = this.sidebarRef?.nativeElement as HTMLElement | undefined;
+    const menuEl = this.menuWrapRef?.nativeElement as HTMLElement | undefined;
+    const contentEl = this.contentRef?.nativeElement as HTMLElement | undefined;
+
+    if (!sideEl || !menuEl || !contentEl) {
+      this.menuOffset = 0;
+      return;
+    }
+
+    const sideRect = sideEl.getBoundingClientRect();
+    const menuRect = menuEl.getBoundingClientRect();
+    const anchorLeft = this.obterLimiteConteudo(contentEl);
+    const baseAnchorLeft = anchorLeft - this.menuOffset;
+    const overlap = Math.max(0, sideRect.width - menuRect.width);
+    const deveEmpurrar = sideRect.right > baseAnchorLeft + 1;
+
+    this.menuOffset = deveEmpurrar ? overlap : 0;
+  }
   toggleMenu() {
     this.menuAberto = !this.menuAberto;
     if (this.menuAberto) {
       this.menuExpandido = true;
       this.expandMenuItems(this.items);
     }
+    this.agendarMenuOffset();
   }
 
   @HostListener('document:click', ['$event'])
@@ -583,4 +659,19 @@ private atualizarAdminDoToken(): void {
     this.authService.logout();
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

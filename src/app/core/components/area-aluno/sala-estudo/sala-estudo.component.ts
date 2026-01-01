@@ -76,6 +76,20 @@ export class SalaEstudoComponent implements OnInit {
     this.modoRevisaoFocoAtivo = false;
   }
 
+
+  canDeactivate(): boolean {
+    if (!this.timerAtivo) {
+      return true;
+    }
+    const salvar = confirm('Voce tem tempo de estudo em andamento. Deseja salvar antes de sair?');
+    if (salvar) {
+      this.salvarEstudo();
+      return true;
+    }
+    const sairSemSalvar = confirm('Sair sem salvar o tempo de estudo em andamento?');
+    return sairSemSalvar;
+  }
+
   toggleColunaEsquerda(): void {
     this.colunaEsquerdaOculta = !this.colunaEsquerdaOculta;
   }
@@ -86,6 +100,12 @@ export class SalaEstudoComponent implements OnInit {
   // =============== FLASHCARD (ESTADO) ===============
   mostrarModalFlashcard: boolean = false;
 
+  mostrarModalSplit: boolean = false;
+  splitTopico: any | null = null;
+  splitNovos: string[] = [];
+  splitTituloPai: string = '';
+  splitErro?: string;
+  splitSalvando: boolean = false;
   flashcardFrente: string = '';
   flashcardVerso: string = '';
   flashcardTipo: string = 'PERGUNTA_RESPOSTA';
@@ -302,7 +322,7 @@ export class SalaEstudoComponent implements OnInit {
   this.modoRevisao = 'anotacoes';
 
   if (this.topicoSelecionado && this.topicoPermiteEstudo) {
-    // se quiser, pode for+ºar recarregar anota+º+Áes aqui tamb+®m
+    // se quiser, pode for+ï¿½ar recarregar anota+ï¿½+ï¿½es aqui tamb+ï¿½m
     this.salaEstudoService.buscarAnotacoes(this.topicoSelecionado.id).subscribe({
       next: (resp) => {
         this.anotacoes = resp.anotacoes || '';
@@ -318,7 +338,7 @@ export class SalaEstudoComponent implements OnInit {
 ativarRevisaoFlashcards(): void {
   this.modoRevisao = 'flashcards';
 
-  // se j+í tiver um t+¦pico selecionado, garante que os flashcards dele sejam carregados
+  // se j+ï¿½ tiver um t+ï¿½pico selecionado, garante que os flashcards dele sejam carregados
   if (this.topicoSelecionado && this.topicoPermiteEstudo) {
     this.carregarFlashcards();
   }
@@ -326,13 +346,13 @@ ativarRevisaoFlashcards(): void {
 
 
   // ================================================================
-  // INTERA+ç+âO COM T+ôPICOS
+  // INTERA+ï¿½+ï¿½O COM T+ï¿½PICOS
   // ================================================================
 
   /**
-   * Tempo TOTAL que o cron+¦metro j+í contou nesta sess+úo (em segundos).
+   * Tempo TOTAL que o cron+ï¿½metro j+ï¿½ contou nesta sess+ï¿½o (em segundos).
    * - Livre: tempoTotalSegundos
-   * - Pomodoro: dura+º+úo da fase - segundosRestantes
+   * - Pomodoro: dura+ï¿½+ï¿½o da fase - segundosRestantes
    */
   private calcularTempoEstudoAtual(): number {
     if (this.modoTemporizador === 'livre') {
@@ -346,7 +366,7 @@ ativarRevisaoFlashcards(): void {
     this.silenciarAlarme();
     this.timerAtivo = false;
 
-    // ao trocar de t+¦pico, zera o acumulado j+í salvo para o novo t+¦pico
+    // ao trocar de t+ï¿½pico, zera o acumulado j+ï¿½ salvo para o novo t+ï¿½pico
     this.segundosEstudoJaSalvosTopicoAtual = 0;
 
     if (this.modoTemporizador === 'livre') {
@@ -372,7 +392,7 @@ ativarRevisaoFlashcards(): void {
 
       if (temAlgoParaSalvar) {
         const desejaSalvar = window.confirm(
-          'Você já possui tempo de estudo neste tópico. Deseja salvar antes de mudar para outro tópico?'
+          'VocÃª jÃ¡ possui tempo de estudo neste tÃ³pico. Deseja salvar antes de mudar para outro tÃ³pico?'
         );
 
         if (desejaSalvar) {
@@ -385,7 +405,7 @@ ativarRevisaoFlashcards(): void {
 
     this.topicoSelecionado = t;
 
-    // ao selecionar t+¦pico, carrega flashcards (modo estudar)
+    // ao selecionar t+ï¿½pico, carrega flashcards (modo estudar)
     if (this.topicoPermiteEstudo) {
       this.carregarFlashcards();
     } else {
@@ -410,7 +430,7 @@ ativarRevisaoFlashcards(): void {
       }
     });
 
-    // se j+í estiver no modo revisar, ao trocar de t+¦pico recarrega os flashcards para revis+úo
+    // se j+ï¿½ estiver no modo revisar, ao trocar de t+ï¿½pico recarrega os flashcards para revis+ï¿½o
     if (this.modo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
@@ -490,7 +510,7 @@ ativarRevisaoFlashcards(): void {
     this.silenciarAlarme();
     this.timerAtivo = false;
 
-    // quando muda de modo, reinicia o acumulado do t+¦pico no contexto do timer
+    // quando muda de modo, reinicia o acumulado do t+ï¿½pico no contexto do timer
     this.segundosEstudoJaSalvosTopicoAtual = 0;
 
     this.modoTemporizador = modo;
@@ -545,7 +565,7 @@ ativarRevisaoFlashcards(): void {
     this.silenciarAlarme();
     this.timerAtivo = false;
 
-    // o que j+í foi salvo no backend continua valendo
+    // o que j+ï¿½ foi salvo no backend continua valendo
 
     if (this.modoTemporizador === 'livre') {
       this.tempoTotalSegundos = 0;
@@ -619,7 +639,7 @@ ativarRevisaoFlashcards(): void {
           this.alarmeAtivo = true;
         })
         .catch(err => {
-          console.warn('[POMODORO] N+úo foi poss+¡vel tocar o som de alarme:', err);
+          console.warn('[POMODORO] N+ï¿½o foi poss+ï¿½vel tocar o som de alarme:', err);
         });
     } catch (e) {
       console.warn('[POMODORO] Erro ao tentar tocar o som de alarme:', e);
@@ -641,7 +661,7 @@ ativarRevisaoFlashcards(): void {
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
 this.mensagemRevisao = undefined;
-    // quando entrar no modo revisar, se tiver t+¦pico v+ílido, carrega flashcards de revis+úo
+    // quando entrar no modo revisar, se tiver t+ï¿½pico v+ï¿½lido, carrega flashcards de revis+ï¿½o
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
@@ -653,16 +673,16 @@ this.mensagemRevisao = undefined;
 
   salvarEstudo(): void {
     if (!this.topicoSelecionado) {
-      this.erro = 'Selecione um t+¦pico antes de salvar o estudo.';
+      this.erro = 'Selecione um t+ï¿½pico antes de salvar o estudo.';
       return;
     }
 
     const modoBack = this.modoTemporizador;
 
-    // tempo TOTAL decorrido no cron+¦metro para este t+¦pico / sess+úo
+    // tempo TOTAL decorrido no cron+ï¿½metro para este t+ï¿½pico / sess+ï¿½o
     const tempoAtualTotal = this.calcularTempoEstudoAtual();
 
-    // apenas o DELTA desde o +¦ltimo salvamento
+    // apenas o DELTA desde o +ï¿½ltimo salvamento
     let tempoParaSalvar = tempoAtualTotal - this.segundosEstudoJaSalvosTopicoAtual;
     if (tempoParaSalvar < 0) {
       tempoParaSalvar = 0;
@@ -684,7 +704,7 @@ this.mensagemRevisao = undefined;
       next: (resp) => {
         console.log('[SALA-ESTUDO] Estudo salvo:', resp);
 
-        // ap+¦s salvar com sucesso, acumula o que foi enviado
+        // ap+ï¿½s salvar com sucesso, acumula o que foi enviado
         this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
 
         this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
@@ -698,7 +718,7 @@ this.mensagemRevisao = undefined;
   }
 
   // ================================================================
-  // FLASHCARD ÔÇô MODAL (CRIAR)
+  // FLASHCARD ï¿½ï¿½ï¿½ MODAL (CRIAR)
   // ================================================================
 
   abrirModalFlashcard(): void {
@@ -717,6 +737,119 @@ this.mensagemRevisao = undefined;
 
   fecharModalFlashcard(): void {
     this.mostrarModalFlashcard = false;
+  }
+
+  abrirModalSplit(topico: any, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (!topico || topico.hasFilhos) {
+      return;
+    }
+
+    this.splitTopico = topico;
+    this.splitNovos = ['', ''];
+    this.splitErro = undefined;
+    this.splitSalvando = false;
+    this.mostrarModalSplit = true;
+  }
+
+  fecharModalSplit(): void {
+    this.mostrarModalSplit = false;
+    this.splitTopico = null;
+    this.splitNovos = [];
+    this.splitErro = undefined;
+    this.splitSalvando = false;
+  }
+
+  adicionarSplitLinha(): void {
+    this.splitNovos.push('');
+  }
+
+  removerSplitLinha(index: number): void {
+    if (this.splitNovos.length <= 2) {
+      return;
+    }
+    this.splitNovos.splice(index, 1);
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  salvarSplit(): void {
+    if (!this.splitTopico || !this.splitTopico.id) {
+      return;
+    }
+
+    const limpos: string[] = [];
+    const tituloPai = (this.splitTituloPai || '').trim();
+    if (!tituloPai) {
+      this.splitErro = 'Informe o titulo do topico pai.';
+      return;
+    }
+    const tituloChave = tituloPai.toLowerCase();
+    const usados = new Set<string>();
+
+    for (const item of this.splitNovos) {
+      const valor = (item || '').trim();
+      if (!valor) {
+        continue;
+      }
+      const chave = valor.toLowerCase();
+      if (chave === tituloChave) {
+        continue;
+      }
+      if (usados.has(chave)) {
+        continue;
+      }
+      usados.add(chave);
+      limpos.push(valor);
+    }
+
+    if (limpos.length < 2) {
+      this.splitErro = 'Informe pelo menos dois subtopicos diferentes do titulo do topico pai.';
+      return;
+    }
+
+    this.splitErro = undefined;
+    this.splitSalvando = true;
+
+    this.salaEstudoService
+      .splitSubtopico(this.splitTopico.id, {
+        novosSubtopicos: limpos,
+        novoTituloPai: tituloPai,
+        desativarOriginal: false
+      })
+      .subscribe({
+        next: () => {
+          const eraSelecionado = this.topicoSelecionado?.id === this.splitTopico?.id;
+
+          this.splitSalvando = false;
+          this.fecharModalSplit();
+          this.carregarTopicos();
+
+          if (eraSelecionado) {
+            this.resetarTimerAoTrocarTopico();
+            this.topicoSelecionado = null;
+            this.anotacoes = '';
+            this.anotacoesHtmlSeguras = null;
+          }
+        },
+        error: (err) => {
+          console.error('[SALA-ESTUDO] Erro ao quebrar subtopico:', err);
+          this.splitSalvando = false;
+          this.splitErro = this.getSplitErroMensagem(err);
+        }
+      });
+  }
+  private getSplitErroMensagem(err: any): string {
+    const mensagem = err?.error?.mensagem || err?.error?.message || err?.error?.erro || err?.message;
+    if (mensagem && mensagem.toLowerCase().includes('ja possui estudo')) {
+      return 'Nao e possivel quebrar este topico, pois ele ja possui estudo.';
+    }
+    return mensagem || 'Erro ao salvar. Tente novamente.';
   }
 
   onFlashcardTipoChange(tipo: string): void {
@@ -740,13 +873,13 @@ this.mensagemRevisao = undefined;
 
   salvarFlashcard(): void {
     if (!this.topicoSelecionado) {
-      alert('Selecione um t+¦pico antes de criar o flashcard.');
+      alert('Selecione um t+ï¿½pico antes de criar o flashcard.');
       return;
     }
 
     if (this.flashcardTipo === 'VERDADEIRO_FALSO') {
       if (!this.flashcardVerdadeiroFalso) {
-        alert('Selecione se a resposta é verdadeira ou falsa.');
+        alert('Selecione se a resposta ï¿½ verdadeira ou falsa.');
         return;
       }
       this.flashcardVerso = this.flashcardVerdadeiroFalso;
@@ -773,15 +906,15 @@ this.mensagemRevisao = undefined;
       next: (resp) => {
         console.log('[FLASHCARD] Criado com sucesso:', resp);
 
-        // confirma+º+úo visual
+        // confirma+ï¿½+ï¿½o visual
         this.mensagemFlashcardSucesso = 'Flashcard salvo com sucesso.';
 
-        // limpa frente e verso pra j+í digitar o pr+¦ximo, mant+®m tags e tipo/dificuldade
+        // limpa frente e verso pra j+ï¿½ digitar o pr+ï¿½ximo, mant+ï¿½m tags e tipo/dificuldade
         this.flashcardFrente = '';
         this.flashcardVerso = '';
         this.flashcardVerdadeiroFalso = null;
 
-        // recarrega a lista de flashcards do t+¦pico
+        // recarrega a lista de flashcards do t+ï¿½pico
         if (this.topicoSelecionado) {
           this.carregarFlashcards();
         }
@@ -798,7 +931,7 @@ this.mensagemRevisao = undefined;
   }
 
   // ================================================================
-  // FLASHCARDS ÔÇô NAVEGA+ç+âO E EXCLUS+âO
+  // FLASHCARDS ï¿½ï¿½ï¿½ NAVEGA+ï¿½+ï¿½O E EXCLUS+ï¿½O
   // ================================================================
 
   get existeFlashcardAtual(): boolean {
@@ -912,11 +1045,11 @@ this.mensagemRevisao = undefined;
   }
 
   // ================================================================
-  // REVIS+âO ESPA+çADA (FLASHCARDS + ANOTA+ç+òES)
+  // REVIS+ï¿½O ESPA+ï¿½ADA (FLASHCARDS + ANOTA+ï¿½+ï¿½ES)
   // ================================================================
 
   /**
-   * Carrega apenas os flashcards vencidos / para hoje para o t+¦pico atual.
+   * Carrega apenas os flashcards vencidos / para hoje para o t+ï¿½pico atual.
    */
   private carregarFlashcardsParaRevisao(): void {
     if (!this.topicoSelecionado) {
@@ -938,8 +1071,8 @@ this.mensagemRevisao = undefined;
           this.resetFlashcardFeedback();
         },
         error: (err) => {
-          console.error('[REVIS+âO] Erro ao carregar flashcards de revis+úo:', err);
-          this.erroFlashcardsRevisao = 'Erro ao carregar flashcards para revis+úo.';
+          console.error('[REVIS+ï¿½O] Erro ao carregar flashcards de revis+ï¿½o:', err);
+          this.erroFlashcardsRevisao = 'Erro ao carregar flashcards para revis+ï¿½o.';
           this.carregandoFlashcardsRevisao = false;
           this.flashcards = [];
         }
@@ -955,7 +1088,7 @@ this.mensagemRevisao = undefined;
 
   /**
    * Marca o flashcard atual como ERREI / DIFICIL / BOM / FACIL
-   * e deixa o back recalcular a próxima revisão.
+   * e deixa o back recalcular a prï¿½xima revisï¿½o.
    */
   confirmarAvaliacaoFlashcard(): void {
     const atual = this.flashcardAtual;
@@ -987,8 +1120,8 @@ this.mensagemRevisao = undefined;
     });
   }
   /**
-   * Marca a revis+úo das anota+º+Áes (n+¡vel t+¦pico) como ERREI / DIFICIL / BOM / FACIL.
-   * O servidor cuida da l+¦gica das "caixinhas" do t+¦pico.
+   * Marca a revis+ï¿½o das anota+ï¿½+ï¿½es (n+ï¿½vel t+ï¿½pico) como ERREI / DIFICIL / BOM / FACIL.
+   * O servidor cuida da l+ï¿½gica das "caixinhas" do t+ï¿½pico.
    */
   avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
 avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
@@ -1004,15 +1137,15 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
 
   this.salaEstudoService.responderRevisaoTopico(req).subscribe({
     next: () => {
-      console.log('[REVIS+âO] Revis+úo de anota+º+Áes registrada com sucesso');
+      console.log('[REVIS+ï¿½O] Revis+ï¿½o de anota+ï¿½+ï¿½es registrada com sucesso');
       this.recarregarTopicosAposRevisao();
 
-      // ­ƒæç feedback visual
-      this.mostrarMensagemRevisao('Revis+úo das anota+º+Áes registrada!');
+      // ï¿½ï¿½ï¿½ï¿½ feedback visual
+      this.mostrarMensagemRevisao('Revis+ï¿½o das anota+ï¿½+ï¿½es registrada!');
     },
     error: (err) => {
-      console.error('[REVIS+âO] Erro ao registrar revis+úo de anota+º+Áes:', err);
-      alert('Erro ao registrar revis+úo das anota+º+Áes. Tente novamente.');
+      console.error('[REVIS+ï¿½O] Erro ao registrar revis+ï¿½o de anota+ï¿½+ï¿½es:', err);
+      alert('Erro ao registrar revis+ï¿½o das anota+ï¿½+ï¿½es. Tente novamente.');
     }
   });
 }
@@ -1107,21 +1240,21 @@ get podeIrParaProximaRevisao(): boolean {
     return info?.status === 'ATRASADA' || info?.status === 'HOJE';
   }
 
-// --- IN+ìCIO BLOCO: SONS DE FOCO POR +ìCONE ---
+// --- IN+ï¿½CIO BLOCO: SONS DE FOCO POR +ï¿½CONE ---
 
 
 
 
-// --- FIM BLOCO: SONS DE FOCO POR +ìCONE ---
+// --- FIM BLOCO: SONS DE FOCO POR +ï¿½CONE ---
 
-  /** Mapa: topicoId -> info de revis+úo (status + pr+¦xima data) */
+  /** Mapa: topicoId -> info de revis+ï¿½o (status + pr+ï¿½xima data) */
   private revisoesPorTopico = new Map<number, {
     status: StatusRevisao;
     proximaRevisao?: string | null;
   }>();
 
     /**
-   * Constr+¦i uma data local (sem problema de UTC) a partir de 'YYYY-MM-DD'.
+   * Constr+ï¿½i uma data local (sem problema de UTC) a partir de 'YYYY-MM-DD'.
    */
   private construirDataLocal(isoDate: string): Date {
     const [anoStr, mesStr, diaStr] = isoDate.split('-');
@@ -1135,8 +1268,8 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   /**
-   * Carrega o dashboard geral de revis+Áes e monta o mapa por t+¦pico.
-   * Reutiliza a mesma l+¦gica da tela de mat+®rias.
+   * Carrega o dashboard geral de revis+ï¿½es e monta o mapa por t+ï¿½pico.
+   * Reutiliza a mesma l+ï¿½gica da tela de mat+ï¿½rias.
    */
   private carregarRevisoesDashboard(): void {
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
@@ -1181,15 +1314,15 @@ get podeIrParaProximaRevisao(): boolean {
         console.log('[SALA-ESTUDO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
       },
       error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao carregar revis+Áes dashboard:', err);
+        console.error('[SALA-ESTUDO] Erro ao carregar revis+ï¿½es dashboard:', err);
       }
     });
   }
 
-    /** Define a "for+ºa" de cada status para comparar pai x filhos */
+    /** Define a "for+ï¿½a" de cada status para comparar pai x filhos */
   private prioridadeStatus(status: StatusRevisao): number {
     switch (status) {
-      case 'ATRASADA': return 3; // mais cr+¡tico
+      case 'ATRASADA': return 3; // mais cr+ï¿½tico
       case 'HOJE':     return 2;
       case 'FUTURA':   return 1;
       case 'SEM':
@@ -1197,7 +1330,7 @@ get podeIrParaProximaRevisao(): boolean {
     }
   }
 
-  /** Busca um DTO de t+¦pico na +írvore original pelo id */
+  /** Busca um DTO de t+ï¿½pico na +ï¿½rvore original pelo id */
   private encontrarDtoPorId(lista: any[], id: number): any | null {
     for (const dto of lista) {
       if (dto.id === id) {
@@ -1214,8 +1347,8 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   /**
-   * Status "simples" de um t+¦pico, olhando s+¦ o pr+¦prio id no mapa de revis+Áes.
-   * (Dashboard j+í calculou o status com base na data).
+   * Status "simples" de um t+ï¿½pico, olhando s+ï¿½ o pr+ï¿½prio id no mapa de revis+ï¿½es.
+   * (Dashboard j+ï¿½ calculou o status com base na data).
    */
   private getStatusSimplesTopico(topicoId: number | undefined): StatusRevisao {
     if (!topicoId) {
@@ -1229,8 +1362,8 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   /**
-   * Status consolidado do t+¦pico na +üRVORE:
-   * considera o pr+¦prio id + todos os subtopicos.
+   * Status consolidado do t+ï¿½pico na +ï¿½RVORE:
+   * considera o pr+ï¿½prio id + todos os subtopicos.
    */
   private getStatusRevisaoTopicoNaArvore(dto: any): StatusRevisao {
     let pior: StatusRevisao = this.getStatusSimplesTopico(dto.id);
@@ -1247,8 +1380,8 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   /**
-   * Dado o n+¦ achatado (t da lista da esquerda),
-   * devolve o status consolidado (ele + filhos), usando a +írvore original.
+   * Dado o n+ï¿½ achatado (t da lista da esquerda),
+   * devolve o status consolidado (ele + filhos), usando a +ï¿½rvore original.
    */
   private getStatusRevisaoTopicoView(t: any): StatusRevisao {
     if (!t || !t.id) {
@@ -1257,7 +1390,7 @@ get podeIrParaProximaRevisao(): boolean {
 
     const dto = this.encontrarDtoPorId(this.arvoreTopicos, t.id);
     if (!dto) {
-      // fallback: s+¦ o pr+¦prio
+      // fallback: s+ï¿½ o pr+ï¿½prio
       return this.getStatusSimplesTopico(t.id);
     }
 
@@ -1265,6 +1398,9 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   /** Classes CSS para a bolinha da Sala de Estudo */
+  temEstudoNoTopico(t: any): boolean {
+    return this.getStatusRevisaoTopicoView(t) !== 'SEM';
+  }
   classeSemaforoRevisaoSala(t: any) {
     const status = this.getStatusRevisaoTopicoView(t);
 
@@ -1276,11 +1412,11 @@ get podeIrParaProximaRevisao(): boolean {
     };
   }
 
-  /** Recarrega a +írvore de t+¦picos para atualizar o sem+íforo
- *  preservando o t+¦pico selecionado.
+  /** Recarrega a +ï¿½rvore de t+ï¿½picos para atualizar o sem+ï¿½foro
+ *  preservando o t+ï¿½pico selecionado.
  */
-/** Recarrega revis+Áes + +írvore de t+¦picos para atualizar o sem+íforo,
- *  preservando o t+¦pico selecionado.
+/** Recarrega revis+ï¿½es + +ï¿½rvore de t+ï¿½picos para atualizar o sem+ï¿½foro,
+ *  preservando o t+ï¿½pico selecionado.
  */
 private recarregarTopicosAposRevisao(): void {
   if (!this.materiaId) {
@@ -1289,19 +1425,19 @@ private recarregarTopicosAposRevisao(): void {
 
   const idSelecionado = this.topicoSelecionado?.id;
 
-  // 1) Atualiza o mapa de revis+Áes (+® daqui que vem o sem+íforo)
+  // 1) Atualiza o mapa de revis+ï¿½es (+ï¿½ daqui que vem o sem+ï¿½foro)
   this.carregarRevisoesDashboard();
 
-  // 2) Recarrega a +írvore de t+¦picos (efeito "F5" na coluna esquerda)
+  // 2) Recarrega a +ï¿½rvore de t+ï¿½picos (efeito "F5" na coluna esquerda)
   this.materiaService.listarTopicos(this.materiaId).subscribe({
     next: (lista) => {
       const listaSegura = lista || [];
-      console.log('[SALA-ESTUDO] Recarregando t+¦picos ap+¦s revis+úo:', listaSegura);
+      console.log('[SALA-ESTUDO] Recarregando t+ï¿½picos ap+ï¿½s revis+ï¿½o:', listaSegura);
 
       this.arvoreTopicos = listaSegura;
       this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
-      // tenta manter o mesmo t+¦pico selecionado
+      // tenta manter o mesmo t+ï¿½pico selecionado
       if (idSelecionado) {
         const encontrado = this.topicos.find(t => t.id === idSelecionado);
         if (encontrado) {
@@ -1310,7 +1446,7 @@ private recarregarTopicosAposRevisao(): void {
       }
     },
     error: (err) => {
-      console.error('[SALA-ESTUDO] Erro ao recarregar t+¦picos ap+¦s revis+úo:', err);
+      console.error('[SALA-ESTUDO] Erro ao recarregar t+ï¿½picos ap+ï¿½s revis+ï¿½o:', err);
     }
   });
 }
@@ -1323,4 +1459,20 @@ private mostrarMensagemRevisao(texto: string): void {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

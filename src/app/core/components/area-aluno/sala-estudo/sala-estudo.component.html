@@ -5,18 +5,16 @@
 
 
   <!-- CORPO DA SALA -->
+  <div class="sala-titulo">
+    <span class="titulo-materia">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
+  </div>
+
   <section class="card sala-body">
     <!-- COLUNA ESQUERDA: LISTA DE TOPICOS -->
     <aside class="coluna-esquerda">
       <div class="nome-botoes">
         <div class="coluna-header">
 
-          <span class="titulo-materia">
-            {{ materia?.nome || 'Mat&eacute;ria' }}
-          </span>
-
-          <i class="pi pi-info-circle info-icon" pTooltip="Clique em um t&oacute;pico para focar o estudo."
-            tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
 
           <button type="button" class="btn-toggle-coluna" (click)="toggleColunaEsquerda()"
             [attr.aria-label]="colunaEsquerdaOculta ? 'Mostrar coluna esquerda' : 'Esconder coluna esquerda'"
@@ -59,10 +57,25 @@
             [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
             (click)="!t.hasFilhos && selecionarTopico(t)">
             <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
-              <span class="badge-nivel" [ngClass]="classeSemaforoRevisaoSala(t)"></span>
-              <span class="descricao-topico">
-                {{ t.descricao }}
-              </span>
+              <div class="topico-info">
+                <span class="badge-nivel" [ngClass]="classeSemaforoRevisaoSala(t)"></span>
+                <span class="descricao-topico">
+                  {{ t.descricao }}
+                </span>
+              </div>
+              <div class="topico-actions" *ngIf="!t.hasFilhos && !temEstudoNoTopico(t)">
+                <button
+                  type="button"
+                  class="btn-split-topico"
+                  (click)="abrirModalSplit(t, $event)"
+                  pTooltip="Quebrar subtopico"
+                  tooltipPosition="left"
+                  [showDelay]="150"
+                  [hideDelay]="80"
+                  aria-label="Quebrar subtopico">
+                  <i class="pi pi-sitemap"></i>
+                </button>
+              </div>
             </div>
           </li>
         </ul>
@@ -308,7 +321,7 @@
 
                       </div>
                       <div class="botoes-avaliacao">
-                        <div class="timer-modos separado" role="tablist" aria-label="Avalia‡Æo da revisÆo">
+                        <div class="timer-modos separado" role="tablist" aria-label="Avaliaï¿½ï¿½o da revisï¿½o">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'ERREI'"
                             (click)="avaliarRevisaoAnotacao('ERREI')">Errei / N&atilde;o lembrei</button>
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'DIFICIL'"
@@ -459,7 +472,7 @@
 
                       <!-- ACOES (so quando estiver no verso) -->
                       <div class="flashcard-acoes-review" *ngIf="mostrarVersoAtual && !isVerdadeiroFalso(flashcardAtual)">
-                        <div class="timer-modos separado" role="tablist" aria-label="Avaliação do flashcard">
+                        <div class="timer-modos separado" role="tablist" aria-label="Avaliaï¿½ï¿½o do flashcard">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'ERREI'"
                             (click)="selecionarAvaliacaoFlashcard('ERREI')">
                             Errei
@@ -485,7 +498,7 @@
 
                       <!-- NAVEGACAO -->
                       <div class="flashcard-acoes-review">
-                        <div class="timer-modos separado" role="tablist" aria-label="Navegação dos flashcards">
+                        <div class="timer-modos separado" role="tablist" aria-label="Navegaï¿½ï¿½o dos flashcards">
                           <button type="button" class="btn-modo-timer" (click)="anteriorFlashcard()"
                                   [disabled]="flashcardIndexAtual <= 0">
                             Anterior
@@ -670,7 +683,64 @@
       </footer>
     </div>
   </div>
-  <!-- =============== FIM MODAL =============== -->
+    <!-- =============== FIM MODAL =============== -->
+
+  <!-- =============== MODAL DE SPLIT SUBTOPICO =============== -->
+  <div class="split-overlay" *ngIf="mostrarModalSplit">
+    <div class="split-modal">
+      <header class="split-header">
+        <h2 class="split-title">Quebrar subtopico</h2>
+        <button type="button" class="split-fechar" (click)="fecharModalSplit()">x</button>
+      </header>
+
+      <div class="split-contexto">
+        <span class="split-label">Titulo do topico pai</span>
+        <input
+          type="text"
+          class="split-input split-input--title"
+          [(ngModel)]="splitTituloPai"
+          placeholder="Digite o titulo principal" />
+      </div>
+
+      <div class="split-contexto split-contexto--readonly">
+        <span class="split-label">Texto original</span>
+        <div class="split-original">{{ splitTopico?.descricao }}</div>
+      </div>
+
+      <div class="split-list">
+        <div class="split-row" *ngFor="let item of splitNovos; let i = index; trackBy: trackByIndex">
+          <input
+            type="text"
+            class="split-input"
+            [(ngModel)]="splitNovos[i]"
+            placeholder="Novo subtopico {{ i + 1 }}" />
+          <button
+            type="button"
+            class="split-remove"
+            (click)="removerSplitLinha(i)"
+            [disabled]="splitNovos.length <= 2">
+            <span class="pi pi-minus"></span>
+          </button>
+        </div>
+        <button type="button" class="split-add" (click)="adicionarSplitLinha()">
+          <span class="pi pi-plus"></span>
+          Adicionar subtopico
+        </button>
+      </div>
+
+      <div class="split-erro" *ngIf="splitErro">{{ splitErro }}</div>
+
+      <footer class="split-footer">
+        <button type="button" class="btn secundario" (click)="fecharModalSplit()">
+          Cancelar
+        </button>
+        <button type="button" class="btn primario" (click)="salvarSplit()" [disabled]="splitSalvando">
+          Salvar
+        </button>
+      </footer>
+    </div>
+  </div>
+  <!-- =============== FIM MODAL SPLIT =============== -->
 </div>
 
 <ng-template #loadingTpl>
@@ -682,6 +752,15 @@
 <div *ngIf="erro" class="mensagem-erro">
   {{ erro }}
 </div>
+
+
+
+
+
+
+
+
+
 
 
 

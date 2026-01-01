@@ -209,9 +209,21 @@ body.theme-dark,
   
 }
 
+.card-header--acoes{
+  align-items: center;
+}
+
 .card-header > div{
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.card-actions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .card-title{

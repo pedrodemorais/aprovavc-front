@@ -1,33 +1,111 @@
 <div class="progresso-page">
   <header class="progresso-head">
     <div>
-      <h1>Progresso</h1>
-      <p>Resumo do seu edital em estudo.</p>
+      <h1>
+        Progresso
+        <i
+          class="pi pi-info-circle info-icon"
+          pTooltip="Resumo do seu edital em estudo."
+          tooltipPosition="top"
+          [showDelay]="150"
+          [hideDelay]="80"
+          aria-label="Resumo do seu edital em estudo"
+          tabindex="0"></i>
+      </h1>
     </div>
   </header>
+
+  <div class="progresso-filters">
+    <div class="filter-group">
+      <span class="filter-label">Periodo</span>
+      <div class="filter-options">
+        <button
+          type="button"
+          class="filter-option"
+          *ngFor="let op of periodoOpcoes"
+          [class.is-active]="periodoSelecionado === op.value"
+          (click)="selecionarPeriodo(op.value)">
+          {{ op.label }}
+        </button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Modo</span>
+      <div class="filter-options">
+        <button
+          type="button"
+          class="filter-option"
+          *ngFor="let op of modoOpcoes"
+          [class.is-active]="modoSelecionado === op.value"
+          (click)="selecionarModo(op.value)">
+          {{ op.label }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="progresso-cta" *ngIf="revisoesVencidasCount > 0">
+    <span class="progresso-cta-text">Revisoes vencidas: {{ revisoesVencidasCount }}</span>
+    <button type="button" class="progresso-cta-btn" (click)="irParaRevisoes()">Revisar agora</button>
+  </div>
 
   <div class="progresso-state" *ngIf="carregando">Carregando dados...</div>
   <div class="progresso-state erro" *ngIf="erro">{{ erro }}</div>
 
   <section class="progresso-grid" *ngIf="!carregando && !erro">
-    <article class="progresso-card-cobertura">
+    <article class="progresso-card progresso-card-cobertura">
       <div class="duo-wrap">
         <div class="duo-title">Cobertura e Dominio</div>
         <div class="duo-edital">Edital: {{ editalAtivo?.nome || 'Nenhum edital em estudo' }}</div>
         <div class="duo-charts">
           <div class="duo-item">
-            <div class="duo-label">Cobertura</div>
+            <div class="duo-label">
+              Cobertura
+              <i
+                class="pi pi-info-circle info-icon"
+                pTooltip="Cobertura = % de topicos estudados do edital"
+                tooltipPosition="top"
+                [showDelay]="150"
+                [hideDelay]="80"
+                aria-label="Informacoes sobre cobertura"
+                tabindex="0"></i>
+            </div>
+            <div class="duo-meta" *ngIf="coberturaFracao">{{ coberturaFracao }}</div>
             <div class="pie-chart pie-chart--compact" [style.--percent]="editalAtivo?.percentualEstudadoGeral ?? 0">
               <span class="pie-chart__value">{{ formatPercent(editalAtivo?.percentualEstudadoGeral) }}</span>
             </div>
+            <div
+              class="duo-trend"
+              *ngIf="tendenciaCobertura != null"
+              [class.duo-trend--up]="(tendenciaCobertura ?? 0) > 0"
+              [class.duo-trend--down]="(tendenciaCobertura ?? 0) < 0">
+              {{ formatarTendencia(tendenciaCobertura) }}
+            </div>
           </div>
           <div class="duo-item">
-            <div class="duo-label">Dominio</div>
+            <div class="duo-label">
+              Dominio
+              <i
+                class="pi pi-info-circle info-icon"
+                pTooltip="Dominio = % de desempenho medio nas revisoes"
+                tooltipPosition="top"
+                [showDelay]="150"
+                [hideDelay]="80"
+                aria-label="Informacoes sobre dominio"
+                tabindex="0"></i>
+            </div>
             <div
               class="pie-chart pie-chart--compact"
               [ngClass]="getDominioClasse(editalAtivo?.nivelDominioGeral)"
               [style.--percent]="editalAtivo?.nivelDominioGeral ?? 0">
               <span class="pie-chart__value">{{ formatPercent(editalAtivo?.nivelDominioGeral) }}</span>
+            </div>
+            <div
+              class="duo-trend"
+              *ngIf="tendenciaDominio != null"
+              [class.duo-trend--up]="(tendenciaDominio ?? 0) > 0"
+              [class.duo-trend--down]="(tendenciaDominio ?? 0) < 0">
+              {{ formatarTendencia(tendenciaDominio) }}
             </div>
           </div>
         </div>
@@ -37,7 +115,7 @@
     <article class="progresso-card progresso-card-pontos-fracos">
       <div class="card-head card-head-inline">
         <div class="card-title-wrap">
-          <span class="card-title-text">Pontos fracos (menor dominio)</span>
+          <span class="card-title-text">Pontos fracos (Top 5)</span>
           <i
             class="pi pi-info-circle info-icon"
             pTooltip="Materias ordenadas do menor para o maior dominio."
@@ -47,18 +125,23 @@
             aria-label="Informacoes sobre pontos fracos"
             tabindex="0"></i>
         </div>
-        <div class="card-value">{{ materiasPontoFraco.length }}</div>
+        <div class="card-value">{{ materiasPontoFracoTop5.length }}</div>
       </div>
      
-      <div class="weak-pie" *ngIf="weakSlices.length; else semPontosFracos">
-        <div class="weak-pie-chart" [style.background]="weakPieGradient">
-          <span class="weak-pie-center">{{ weakSlices.length }}</span>
-        </div>
-        <div class="weak-legend">
-          <div class="weak-legend-item" *ngFor="let slice of weakSlices">
-            <span class="weak-legend-dot" [style.background]="slice.color"></span>
-            <span class="weak-legend-name">{{ slice.label }}</span>
-            <span class="weak-legend-value">{{ formatPercent(slice.dominio) }}</span>
+      <div class="weak-list" *ngIf="materiasPontoFracoTop5.length; else semPontosFracos">
+        <div class="weak-row" *ngFor="let materia of materiasPontoFracoTop5">
+          <div class="weak-row-main">
+            <span class="weak-row-name">{{ materia.materiaNome }}</span>
+            <span class="weak-row-value">{{ formatPercent(materia.nivelDominio) }}</span>
+          </div>
+          <div class="weak-row-bar">
+            <span class="weak-row-bar__fill" [style.--percent]="materia.nivelDominio ?? 0"></span>
+          </div>
+          <button type="button" class="weak-row-action" (click)="toggleDetalheMateria(materia.materiaId)">
+            Ver detalhes
+          </button>
+          <div class="weak-row-detail" *ngIf="materiaDetalheAbertaId === materia.materiaId">
+            Detalhamento por topico em breve.
           </div>
         </div>
       </div>
@@ -72,11 +155,14 @@
         <div class="card-title">Materias concluidas</div>
         <div class="card-value">{{ materiasConcluidas.length }}</div>
       </div>
-      <div class="card-subtitle">Materias com 100% de cobertura no edital.</div>
+      <div class="card-subtitle">Materias concluidas no estudo e dominadas na revisao.</div>
       <div class="done-list" *ngIf="materiasConcluidas.length; else semMateriasConcluidas">
         <div class="done-item" *ngFor="let materia of materiasConcluidas">
-          <span class="done-name">{{ materia.materiaNome }}</span>
-          <span class="done-value">{{ formatPercent(materia.percentualEstudado) }}</span>
+          <div class="done-info">
+            <span class="done-name">{{ materia.materiaNome }}</span>
+            <span class="done-tag" *ngIf="isMateriaDominada(materia)">Dominada</span>
+          </div>
+          <span class="done-value">{{ formatPercent(getPercentualConcluido(materia)) }}</span>
         </div>
       </div>
       <ng-template #semMateriasConcluidas>
@@ -108,22 +194,51 @@
     </article>
   </section>
 
-  <article class="progresso-card progresso-card-constancia" *ngIf="constanciaDiasVisiveis.length">
-    <div class="card-head">
-      <div class="card-title">Constancia do mes</div>
-    </div>
-    <div class="constancia-linha">
-      <div class="constancia-linha-itens">
-        <span
-          class="constancia-dia"
-          *ngFor="let dia of constanciaDiasVisiveis"
-          [class.constancia-dia--ok]="dia.status === 'estudado'"
-          [class.constancia-dia--miss]="dia.status === 'faltou'"
-          [class.constancia-dia--future]="dia.status === 'futuro'">
-          {{ dia.dia }}
-        </span>
+  <section class="progresso-bottom" *ngIf="!carregando && !erro">
+    <article class="progresso-card progresso-card-constancia" *ngIf="calendarioDias.length">
+      <div class="card-head constancia-head">
+        <div class="card-title">
+          Constancia mensal
+          <i
+            class="pi pi-info-circle info-icon"
+            pTooltip="Verde = estudou (mais forte = mais tempo) | Vermelho = nao estudou"
+            tooltipPosition="top"
+            [showDelay]="150"
+            [hideDelay]="80"
+            aria-label="Informacoes sobre constancia"
+            tabindex="0"></i>
+        </div>
+        <div class="constancia-controls">
+          <button type="button" class="constancia-nav" (click)="mesAnterior()">&lt;</button>
+          <div class="constancia-mes">{{ tituloCalendario }}</div>
+          <button type="button" class="constancia-nav" (click)="mesProximo()">&gt;</button>
+        </div>
       </div>
-      <span class="constancia-sep" aria-hidden="true"></span>
+      <div class="constancia-calendario">
+        <div class="constancia-semana">
+          <span>Seg</span>
+          <span>Ter</span>
+          <span>Qua</span>
+          <span>Qui</span>
+          <span>Sex</span>
+          <span>Sab</span>
+          <span>Dom</span>
+        </div>
+        <div class="constancia-grade">
+          <span
+            class="constancia-dia"
+            *ngFor="let dia of calendarioDias"
+            [class.constancia-dia--empty]="dia.isEmpty"
+            [ngStyle]="getConstanciaDiaStyle(dia)"
+            pTooltip="{{ dia.tooltip }}"
+            [tooltipDisabled]="!!dia.isEmpty"
+            tooltipPosition="top"
+            [showDelay]="150"
+            [hideDelay]="80">
+            {{ dia.day }}
+          </span>
+        </div>
+      </div>
       <div class="constancia-metricas">
         <div class="constancia-metrica">
           <span class="constancia-metrica-titulo">Tempo total</span>
@@ -140,29 +255,30 @@
           <span class="constancia-metrica-valor">{{ tempoSemanalLabel }}</span>
         </div>
       </div>
-    </div>
-  </article>
+    </article>
 
-  <article class="progresso-card progresso-card-planejado" *ngIf="plannerMetricas.length">
-    <div class="card-head">
-      <div class="card-title">Planejado x realizado</div>
-    </div>
-    <div class="planner-grid">
-      <div class="planner-item" *ngFor="let metrica of plannerMetricas">
-        <div class="planner-title">{{ metrica.label }}</div>
-        <div class="planner-values">
-          <span class="planner-value">{{ metrica.actualLabel }}</span>
-          <span class="planner-sep">/</span>
-          <span class="planner-value planner-value--planned">{{ metrica.plannedLabel }}</span>
-        </div>
-        <div class="planner-bar" [style.--percent]="metrica.percentBar">
-          <span
-            class="planner-bar__fill"
-            [class.planner-bar__fill--ok]="metrica.status === 'ok'"
-            [class.planner-bar__fill--warn]="metrica.status === 'warn'"></span>
-        </div>
-        <div class="planner-percent">{{ metrica.percentLabel }}</div>
+    <article class="progresso-card progresso-card-planejado" *ngIf="plannerMetricas.length">
+      <div class="card-head">
+        <div class="card-title">Planejado x realizado</div>
       </div>
-    </div>
-  </article>
+      <div class="card-subtitle">Calendario atual (dia, semana e mes).</div>
+      <div class="planner-grid">
+        <div class="planner-item" *ngFor="let metrica of plannerMetricas">
+          <div class="planner-title">{{ metrica.label }}</div>
+          <div class="planner-values">
+            <span class="planner-value">Realizado {{ metrica.actualLabel }}</span>
+            <span class="planner-sep">/</span>
+            <span class="planner-value planner-value--planned">Planejado {{ metrica.plannedLabel }}</span>
+          </div>
+          <div class="planner-bar" [style.--percent]="metrica.percentBar">
+            <span
+              class="planner-bar__fill"
+              [class.planner-bar__fill--ok]="metrica.status === 'ok'"
+              [class.planner-bar__fill--warn]="metrica.status === 'warn'"></span>
+          </div>
+          <div class="planner-percent">{{ metrica.percentLabel }}</div>
+        </div>
+      </div>
+    </article>
+  </section>
 </div>

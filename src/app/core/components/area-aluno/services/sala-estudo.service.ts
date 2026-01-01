@@ -70,12 +70,33 @@ export interface ConstanciaEstudoDiaDTO {
   dia: string;
   totalSegundos?: number;
   teveEstudo?: boolean;
+  materias?: string[];
+}
+export interface SplitSubtopicoRequest {
+  novosSubtopicos: string[];
+  novoTituloPai?: string;
+  desativarOriginal?: boolean;
+}
+
+export interface SplitSubtopicoResponse {
+  original: {
+    id: number;
+    descricao: string;
+    ativo: boolean;
+  };
+  novos: Array<{
+    id: number;
+    descricao: string;
+    topicoPaiId: number;
+    materiaId: number;
+  }>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class SalaEstudoService {
 
   private apiUrl = `${environment.apiUrl}/sala-estudo`;
+  private topicosApiUrl = `${environment.apiUrl}/topicos`;
 
   constructor(private http: HttpClient) {}
 
@@ -151,6 +172,9 @@ export class SalaEstudoService {
     const query = params.length ? `?${params.join('&')}` : '';
     return this.http.get<ConstanciaEstudoDiaDTO[]>(`${this.apiUrl}/estudos/constancia-mes${query}`);
   }
+  splitSubtopico(subtopicoId: number, payload: SplitSubtopicoRequest): Observable<SplitSubtopicoResponse> {
+    return this.http.post<SplitSubtopicoResponse>(`${this.topicosApiUrl}/${subtopicoId}/split`, payload);
+  }
 
 listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
   const url = `${this.apiUrl}/revisoes/dashboard`;
@@ -181,3 +205,14 @@ listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+

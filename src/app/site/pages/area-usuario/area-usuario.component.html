@@ -139,7 +139,7 @@
 
   <!-- CONTEÚDO -->
   <div class="container">
-    <div class="menu">
+    <div class="menu" #menuWrap>
       <nav #sidebar
            class="sidebar"
            [ngClass]="{ 'menu-mobile': menuAberto, 'menu-expanded': menuExpandido }"
@@ -210,9 +210,10 @@
       </nav>
     </div>
 
-    <div class="content">
+    <div class="content" #content [style.marginLeft.px]="menuOffset">
       <router-outlet></router-outlet>
     </div>
   </div>
 
 </div>
+

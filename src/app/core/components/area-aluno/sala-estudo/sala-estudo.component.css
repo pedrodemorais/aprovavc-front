@@ -14,6 +14,20 @@
   flex-direction: column;
   min-height: 0;
 }
+.sala-titulo {
+  padding: 6px 0 10px;
+  border-bottom: 1px solid rgba(79, 83, 81, 0.18);
+  margin-bottom: 8px;
+}
+
+.sala-titulo .titulo-materia {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.1rem;
+}
 
 /* tiramos o “risquinho” entre header e body (caso exista) */
 .separador {
@@ -174,9 +188,47 @@
 .linha-topico {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
 }
 
+.topico-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.topico-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.btn-split-topico {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  color: #9ca3af;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-split-topico:hover {
+  background: #ecfdf3;
+  color: #16a34a;
+}
+
+.btn-split-topico .pi {
+  font-size: 0.85rem;
+}
 .badge-nivel {
   width: 6px;
   height: 6px;
@@ -1378,6 +1430,162 @@
 }
 
 /* ============================
+   MODAL SPLIT SUBTOPICO
+   ============================ */
+.split-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1250;
+}
+
+.split-modal {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 20px;
+  width: min(560px, 100% - 32px);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.split-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.split-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.split-fechar {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.split-fechar:hover {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.split-contexto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.split-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.split-original {
+  font-size: 0.9rem;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.split-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.split-row {
+  display: grid;
+  grid-template-columns: 1fr 34px;
+  gap: 8px;
+  align-items: center;
+}
+
+.split-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.split-input:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.3);
+}
+
+.split-remove {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: #fef2f2;
+  color: #b91c1c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.split-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.split-add {
+  border: 1px dashed rgba(22, 163, 74, 0.35);
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.split-erro {
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
+.split-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+/* ============================
+.split-contexto--readonly {
+  background: #f8fafc;
+}
+
+.split-input--title {
+  width: 100%;
+}
    MODO FOCO (revisão)
    ============================ */
 .sala-container.revisao-foco {
@@ -1966,3 +2174,7 @@ height: 100%;
     min-height: calc(100dvh - 56px);
   }
 }
+
+
+
+
