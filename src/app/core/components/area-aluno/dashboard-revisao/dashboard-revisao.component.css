@@ -16,6 +16,7 @@
   padding: 12px 10px 16px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Wrapper interno da página */
@@ -31,6 +32,7 @@
   color: var(--text);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* =======================================

@@ -6,6 +6,22 @@
 /* ============================
    BASE
    ============================ */
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+:host ::ng-deep .dashboard {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+:host ::ng-deep .content {
+  overflow: hidden;
+}
+
 .sala-container {
   padding: 5px 16px 32px;
   box-sizing: border-box;
@@ -13,6 +29,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 .sala-titulo {
   padding: 6px 0 10px;
@@ -42,6 +60,7 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .coluna-esquerda {
@@ -1642,7 +1661,7 @@
 @media (max-width: 1024px) {
   .sala-container {
     height: 100%;
-    overflow-y: auto;
+    overflow: hidden;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -2053,7 +2072,7 @@
 .coluna-esquerda{
   display: flex;
   flex-direction: column;
-  height: 100dvh;            /* ou 100vh se essa coluna for a tela inteira */
+  height: 100%;
  
  
 }
@@ -2061,7 +2080,7 @@
 .sala-body{
   display: flex;
   align-items: stretch;
-  height: 82dvh;     /* pode ajustar depois, mas precisa existir */
+  height: 100%;
   min-height: 0;     /* essencial */
 }
 
@@ -2074,7 +2093,7 @@
   flex-direction: column;
   gap: 8px;
 
-  height: 88vh;
+  height: 100%;
   min-height: 0;     /* essencial */
 }
 
