@@ -356,9 +356,27 @@ ativarRevisaoFlashcards(): void {
   }
 
   private resetarTimerAoTrocarTopico(): void {
+    const tempoAtual = this.calcularTempoEstudoAtual();
+    const temAlgoParaSalvar =
+      !!this.topicoSelecionado && (tempoAtual > 0 || this.timerAtivo);
+
+    if (this.timerAtivo) {
+      this.pararTimerInterno();
+      this.timerAtivo = false;
+    }
+
     this.pararTimerInterno();
     this.silenciarAlarme();
-    this.timerAtivo = false;
+
+    if (temAlgoParaSalvar) {
+      const desejaSalvar = window.confirm(
+        'Ao mudar o tipo de estudo o tempo atual sera zerado. Deseja salvar o tempo ja estudado?'
+      );
+
+      if (desejaSalvar) {
+        this.salvarEstudo();
+      }
+    }
 
     // ao trocar de t+�pico, zera o acumulado j+� salvo para o novo t+�pico
     this.segundosEstudoJaSalvosTopicoAtual = 0;
@@ -501,6 +519,25 @@ ativarRevisaoFlashcards(): void {
   setModoTemporizador(modo: 'livre' | 'pomodoro'): void {
     if (this.modoTemporizador === modo) {
       return;
+    }
+
+    const tempoAtual = this.calcularTempoEstudoAtual();
+    const temProgresso =
+      !!this.topicoSelecionado &&
+      (tempoAtual > 0 ||
+        this.timerAtivo ||
+        this.segundosEstudoJaSalvosTopicoAtual > 0 ||
+        (this.modoTemporizador === 'pomodoro' &&
+          this.pomodoroSegundosRestantes !== this.pomodoroDuracaoFoco));
+
+    if (temProgresso) {
+      const desejaSalvar = window.confirm(
+        'Ao mudar o tipo de estudo o tempo atual sera zerado. Deseja salvar o tempo ja estudado?'
+      );
+
+      if (desejaSalvar) {
+        this.salvarEstudo();
+      }
     }
 
     this.pararTimerInterno();

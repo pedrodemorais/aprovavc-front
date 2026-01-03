@@ -144,28 +144,7 @@
                 <!-- Controles do ESTUDAR (seus atuais) -->
                 <ng-container *ngSwitchCase="'estudar'">
                   <div class="timer-bar">
-                    <div class="timer-modos" role="tablist" aria-label="Modo do temporizador">
-                      <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
-                        (click)="setModoTemporizador('livre')">
-                        <i class="pi pi-stopwatch"></i>
-                        <span>Livre</span>
-                      </button>
-
-                      <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
-                        (click)="setModoTemporizador('pomodoro')">
-
-                        <span>Pomodoro</span>
-                      </button>
-                    </div>
-
                     <div class="timer-modos" role="tablist" aria-label="Controle do cron&ocirc;metro">
-                      <button type="button" class="btn-modo-timer"
-                        [class.ativo]="!timerAtivo && topicoSelecionado && topicoPermiteEstudo"
-                        (click)="toggleTimer()" [disabled]="timerAtivo || !topicoSelecionado || !topicoPermiteEstudo">
-                        <i class="pi pi-play"></i>
-                        <span>Iniciar</span>
-                      </button>
-
                       <button type="button" class="btn-modo-timer" [class.ativo]="timerAtivo" (click)="toggleTimer()"
                         [disabled]="!timerAtivo || !topicoSelecionado || !topicoPermiteEstudo">
                         <i class="pi pi-pause"></i>
@@ -267,12 +246,12 @@
 
                 <!-- overlay bloqueio do estudar (mantem) -->
                 <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
-                  <div class="editor-aviso">
-                    <div class="editor-aviso-texto">
-                      <div class="editor-aviso-titulo">
-                        <i class="pi pi-lock editor-aviso-icon" aria-hidden="true"></i>
-                        <strong>Editor bloqueado</strong>
-                      </div>
+                <div class="editor-aviso">
+                  <div class="editor-aviso-texto">
+                    <div class="editor-aviso-titulo">
+                      <i class="pi pi-lock editor-aviso-icon" aria-hidden="true"></i>
+                      <strong>Editor bloqueado</strong>
+                    </div>
 
                       <span *ngIf="!topicoSelecionado">
                         Selecione um t&oacute;pico na coluna &agrave; esquerda para come&ccedil;ar.
@@ -282,17 +261,36 @@
                         Este t&oacute;pico possui subt&oacute;picos. Selecione um subt&oacute;pico espec&iacute;fico.
                       </span>
 
-                      <span *ngIf="topicoPermiteEstudo && !timerAtivo">
-                        Inicie o cron&ocirc;metro para liberar as anota&ccedil;&otilde;es.
-                      </span>
+                    <span *ngIf="topicoPermiteEstudo && !timerAtivo">
+                      Inicie o cron&ocirc;metro para liberar as anota&ccedil;&otilde;es.
+                    </span>
 
-                      <div class="editor-aviso-acao">
-                        <button type="button" class="btn-start-estudo" (click)="toggleTimer()"
-                          [disabled]="!topicoSelecionado || !topicoPermiteEstudo">
-                          <span class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></span>
-                          <span>Iniciar estudos</span>
+                    <div class="editor-aviso-modos" *ngIf="topicoSelecionado && topicoPermiteEstudo">
+                      <div class="timer-modos" role="tablist" aria-label="Modo do temporizador">
+                        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
+                          (click)="setModoTemporizador('livre')">
+                          <i class="pi pi-stopwatch"></i>
+                          <span>Livre</span>
+                        </button>
+
+                        <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
+                          (click)="setModoTemporizador('pomodoro')">
+                          <span>Pomodoro</span>
                         </button>
                       </div>
+                    </div>
+
+                    <div class="editor-aviso-acao">
+                      <button
+                        type="button"
+                        class="btn-start-estudo btn-start-estudo--icon"
+                        (click)="toggleTimer()"
+                        [disabled]="!topicoSelecionado || !topicoPermiteEstudo"
+                        pTooltip="Iniciar estudos"
+                        tooltipPosition="top">
+                        <span class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></span>
+                      </button>
+                    </div>
                     </div>
                   </div>
                 </div>

@@ -369,7 +369,8 @@
   display: flex;
   justify-content: space-between;
   gap: 14px;
-  margin-top: -6px;
+  margin-top: 0;
+  padding-top: 4px;
 }
 
 /* container do lado direito */
@@ -383,7 +384,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: -6px;
+  margin-top: 0;
 }
 
 /* ============================
@@ -638,9 +639,8 @@
   font-size: 12px;
   opacity: 0.85;
   padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+ 
+  
   font-weight: 600;
 }
 
@@ -708,6 +708,12 @@
   justify-content: center;
 }
 
+.editor-aviso-modos {
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+}
+
 .btn-start-estudo {
   display: inline-flex;
   align-items: center;
@@ -723,6 +729,27 @@
   cursor: pointer;
   box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
   transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+}
+
+.btn-start-estudo.btn-start-estudo--icon {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: #16a34a;
+  justify-content: center;
+  box-shadow: none;
+}
+
+.btn-start-estudo.btn-start-estudo--icon .pi {
+  font-size: 1.5rem;
+}
+
+.btn-start-estudo.btn-start-estudo--icon:disabled {
+  background: transparent;
+  color: #94a3b8;
 }
 
 .btn-start-estudo .pi {
