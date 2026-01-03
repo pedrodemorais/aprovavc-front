@@ -1256,6 +1256,38 @@ this.mensagemRevisao = undefined;
 
     return lista[0];
   }
+
+  get podeVoltarEstudo(): boolean {
+    const lista = this.getTopicosFolha();
+    return lista.length > 1;
+  }
+
+  voltarEstudo(): void {
+    const anterior = this.obterTopicoAnteriorEstudo();
+    if (!anterior) {
+      return;
+    }
+    if (this.topicoSelecionado?.id === anterior.id) {
+      return;
+    }
+    this.selecionarTopico(anterior);
+  }
+
+  private obterTopicoAnteriorEstudo(): any | null {
+    const lista = this.getTopicosFolha();
+    if (!lista.length) {
+      return null;
+    }
+
+    const atualId = this.topicoSelecionado?.id ?? null;
+    const startIdx = atualId ? lista.findIndex(t => t.id === atualId) : -1;
+
+    if (startIdx >= 0) {
+      return lista[(startIdx - 1 + lista.length) % lista.length];
+    }
+
+    return lista[0];
+  }
 get podeIrParaProximaRevisao(): boolean {
     const lista = this.getTopicosFolha();
     return lista.length > 1;
@@ -1288,6 +1320,38 @@ get podeIrParaProximaRevisao(): boolean {
         return candidato;
       }
     }
+
+    if (startIdx >= 0) {
+      return lista[(startIdx + 1) % lista.length];
+    }
+
+    return lista[0];
+  }
+
+  get podeIrParaProximoEstudo(): boolean {
+    const lista = this.getTopicosFolha();
+    return lista.length > 1;
+  }
+
+  irParaProximoEstudo(): void {
+    const proximo = this.obterProximoTopicoEstudo();
+    if (!proximo) {
+      return;
+    }
+    if (this.topicoSelecionado?.id === proximo.id) {
+      return;
+    }
+    this.selecionarTopico(proximo);
+  }
+
+  private obterProximoTopicoEstudo(): any | null {
+    const lista = this.getTopicosFolha();
+    if (!lista.length) {
+      return null;
+    }
+
+    const atualId = this.topicoSelecionado?.id ?? null;
+    const startIdx = atualId ? lista.findIndex(t => t.id === atualId) : -1;
 
     if (startIdx >= 0) {
       return lista[(startIdx + 1) % lista.length];

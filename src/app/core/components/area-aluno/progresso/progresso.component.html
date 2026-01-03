@@ -56,10 +56,6 @@
   <section class="progresso-grid" *ngIf="!carregando && !erro">
     <article class="progresso-card progresso-card-cobertura">
       <div class="duo-wrap">
-        <div class="duo-actions" *ngIf="selectedMateriaId">
-          <span class="duo-actions-label">Filtro: {{ selectedMateriaNome }}</span>
-          <button type="button" class="duo-actions-btn" (click)="limparFiltroMateria()">Limpar filtro</button>
-        </div>
         <div class="duo-quad">
           <div class="graph-tile">
             <div class="duo-label">
@@ -213,12 +209,9 @@
             <div class="micro-title">Tempo por materia</div>
             <div class="micro-sub">{{ periodoTempoMateriasLabel }}</div>
             <div class="micro-hbar-list" *ngIf="tempoMateriasDistribuicao.length; else semTempoMaterias">
-              <button
-                type="button"
-                class="micro-hbar micro-hbar--click"
-                *ngFor="let item of tempoMateriasDistribuicao"
-                [class.is-selected]="item.materiaId === selectedMateriaId"
-                (click)="selecionarMateriaTempo(item)">
+              <div
+                class="micro-hbar"
+                *ngFor="let item of tempoMateriasDistribuicao">
                 <div class="micro-hbar-header">
                   <span class="micro-hbar-name">{{ item.nome }}</span>
                   <span class="micro-hbar-value">{{ item.label }}</span>
@@ -226,7 +219,7 @@
                 <div class="micro-hbar-track">
                   <span class="micro-hbar-fill" [style.width.%]="item.percent"></span>
                 </div>
-              </button>
+              </div>
             </div>
             <ng-template #semTempoMaterias>
               <div class="micro-empty">Sem dados</div>

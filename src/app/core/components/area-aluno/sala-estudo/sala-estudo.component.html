@@ -557,6 +557,29 @@
                 </button>
               </div>
 
+              <div class="timer-modos separado" role="tablist" aria-label="Navegacao de topicos">
+                <button
+                  type="button"
+                  class="btn-modo-timer"
+                  (click)="voltarEstudo()"
+                  [disabled]="!podeVoltarEstudo"
+                  pTooltip="Topico anterior"
+                  tooltipPosition="top">
+                  <i class="pi pi-angle-left"></i>
+                  <span>Voltar</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn-modo-timer"
+                  (click)="irParaProximoEstudo()"
+                  [disabled]="!podeIrParaProximoEstudo"
+                  pTooltip="Proximo topico"
+                  tooltipPosition="top">
+                  <span>Avancar</span>
+                  <i class="pi pi-angle-right"></i>
+                </button>
+              </div>
+
               <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
             </div>
           </div>
