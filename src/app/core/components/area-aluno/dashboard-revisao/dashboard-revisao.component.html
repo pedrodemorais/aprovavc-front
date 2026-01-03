@@ -17,13 +17,22 @@
             <i class="pi pi-info-circle"></i>
           </button>
         </div>
-        <button
-          type="button"
-          class="hero-edital-action hero-edital-action--top"
-          (click)="irParaBlocosEstudo(); $event.stopPropagation()">
-          <i class="pi pi-bookmark"></i>
-          Ver meu plano semanal
-        </button>
+        <div class="hero-actions timer-modos separado">
+          <button
+            type="button"
+            class="btn-modo-timer ativo"
+            (click)="comecarAgora()">
+            <i class="pi pi-play"></i>
+            Comecar agora
+          </button>
+          <button
+            type="button"
+            class="btn-modo-timer"
+            (click)="irParaBlocosEstudo(); $event.stopPropagation()">
+            <i class="pi pi-bookmark"></i>
+            Ver meu plano semanal
+          </button>
+        </div>
       </div>
 
       <div class="hero-edital-card">
@@ -35,9 +44,12 @@
                 <span class="hero-edital-label__cargo"> - {{ getEditalCargo(editaisAtivosVisiveis[0]) }}</span>
               </ng-container>
             </div>
-            <span class="hero-edital-label__date">
-              Data da prova - {{ formatDataOuIndefinida(editaisAtivosVisiveis[0].dataProva) }}
-            </span>
+            <button
+              type="button"
+              class="hero-edital-date-btn"
+              (click)="abrirModalDataProva()">
+              {{ dataProvaLabel }}
+            </button>
           </ng-container>
           <ng-template #heroEditalLabelVazio>
             <span class="hero-edital-label__nome">{{ editalAtivoNome }}</span>
@@ -58,52 +70,23 @@
                   <span *ngIf="!activeEditalImagemUrls[e.id!]">{{ e.nome?.slice(0, 1) }}</span>
                 </div>
                 <div class="hero-edital-info">
-                  <div class="hero-edital-meta">
-                    <div class="hero-meta-item hero-meta-stack hero-meta-stack--info">
-                      <div class="hero-meta-row">
-                        <span class="hero-meta-label">Progresso</span>
-                        <div
-                          class="hero-meta-bar"
-                          [style.--percent]="(e.percentualEstudadoGeral ?? 0) + '%'"
-                          [ngClass]="{
-                            'hero-meta-bar--low': (e.percentualEstudadoGeral ?? 0) <= 50,
-                            'hero-meta-bar--mid': (e.percentualEstudadoGeral ?? 0) > 50 && (e.percentualEstudadoGeral ?? 0) <= 70,
-                            'hero-meta-bar--high': (e.percentualEstudadoGeral ?? 0) > 70
-                          }"
-                          [attr.aria-label]="'Progresso ' + formatPercent(e.percentualEstudadoGeral)">
-                          <span class="hero-meta-bar__fill"></span>
-                        </div>
+                  <div class="hero-edital-meta" *ngIf="editaisAtivosVisiveis[0]?.id === e.id">
+                    <div class="hero-kpi-grid">
+                      <div class="hero-kpi">
+                        <div class="hero-kpi-value">{{ formatPercent(kpiProgresso) }}</div>
+                        <div class="hero-kpi-label">Progresso</div>
                       </div>
-                      <div class="hero-meta-row">
-                        <span class="hero-meta-label">Dominio</span>
-                        <div
-                          class="hero-meta-bar"
-                          [style.--percent]="(e.nivelDominioGeral ?? 0) + '%'"
-                          [ngClass]="{
-                            'hero-meta-bar--low': (e.nivelDominioGeral ?? 0) <= 50,
-                            'hero-meta-bar--mid': (e.nivelDominioGeral ?? 0) > 50 && (e.nivelDominioGeral ?? 0) <= 70,
-                            'hero-meta-bar--high': (e.nivelDominioGeral ?? 0) > 70
-                          }"
-                          [attr.aria-label]="'Dominio ' + formatPercent(e.nivelDominioGeral)">
-                          <span class="hero-meta-bar__fill"></span>
-                        </div>
+                      <div class="hero-kpi">
+                        <div class="hero-kpi-value">{{ formatPercent(kpiDominio) }}</div>
+                        <div class="hero-kpi-label">Dominio</div>
                       </div>
-                    </div>
-                    <div class="hero-meta-divider" aria-hidden="true"></div>
-                    <div class="hero-meta-item hero-meta-stack">
-                      <div class="hero-meta-row">
-                        <span class="hero-meta-label-group">
-                          <span class="hero-meta-dot hero-meta-dot--vencida" aria-hidden="true"></span>
-                          <span class="hero-meta-label">Revisoes vencidas</span>
-                        </span>
-                        <span class="hero-meta-value">{{ totalVencidas }}</span>
+                      <div class="hero-kpi" [class.hero-kpi--alert]="totalVencidas > 0" [class.hero-kpi--ok]="totalVencidas === 0">
+                        <div class="hero-kpi-value">{{ totalVencidas }}</div>
+                        <div class="hero-kpi-label">Revisoes vencidas</div>
                       </div>
-                      <div class="hero-meta-row">
-                        <span class="hero-meta-label-group">
-                          <span class="hero-meta-dot hero-meta-dot--hoje" aria-hidden="true"></span>
-                          <span class="hero-meta-label">Revisoes hoje</span>
-                        </span>
-                        <span class="hero-meta-value">{{ revisoesVencemHoje }}</span>
+                      <div class="hero-kpi" [class.hero-kpi--warn]="revisoesVencemHoje > 0" [class.hero-kpi--ok]="revisoesVencemHoje === 0">
+                        <div class="hero-kpi-value">{{ revisoesVencemHoje }}</div>
+                        <div class="hero-kpi-label">Revisoes hoje</div>
                       </div>
                     </div>
                   </div>
@@ -162,7 +145,22 @@
         <div class="hero-next-body" *ngIf="!sugestaoCarregando; else heroNextLoading">
           <div class="hero-next-columns">
             <div class="hero-next-col">
-              <div class="hero-next-col-title">Revisar</div>
+              <div class="hero-next-col-head">
+                <div class="hero-next-col-title">Revisar</div>
+                <div class="timer-modos">
+                  <button
+                    type="button"
+                    class="btn-modo-timer ativo"
+                    (click)="iniciarRevisao()"
+                    [disabled]="!revisoesPrioritariasTotal">
+                    <i class="pi pi-play"></i>
+                    Iniciar revisao
+                  </button>
+                </div>
+              </div>
+              <div class="hero-next-meta">
+                Tempo estimado para zerar hoje: {{ tempoEstimadoRevisoesLabel }}
+              </div>
               <div class="hero-next-legend">
                 <span class="legend-item">
                   <span class="legend-dot dot-vencida"></span>
@@ -173,29 +171,51 @@
                   Revisao do dia
                 </span>
               </div>
-              <div class="hero-next-list" *ngIf="revisoesPrioritariasOrdenadas.length; else heroNextSemRevisoes">
+              <div class="hero-next-list" *ngIf="revisoesPrioritariasTotal; else heroNextSemRevisoes">
                 <button
                   type="button"
                   class="hero-next-item"
-                  *ngFor="let item of revisoesPrioritariasOrdenadas"
+                  *ngFor="let item of revisoesPrioritariasVisiveis"
                   (click)="irParaSala(item)">
                   <span class="hero-next-item-head">
                     <span
-                      class="hero-next-item-dot"
-                      [class.dot-vencida]="item.status === 'VENCIDA'"
-                      [class.dot-hoje]="item.status === 'EM_DIA'">
+                      class="hero-next-item-status"
+                      [class.status-vencida]="item.status === 'VENCIDA'"
+                      [class.status-hoje]="item.status === 'EM_DIA'">
+                      {{ item.status === 'VENCIDA' ? 'Vencida' : 'Hoje' }}
                     </span>
+                    <span class="hero-next-item-sep">-</span>
                     <span class="hero-next-item-title">{{ item.materiaNome }}</span>
+                    <span class="hero-next-item-min">{{ formatarMinutos(getMinutosRevisao(item)) }}</span>
                   </span>
-                  <span class="hero-next-item-sub">{{ item.topicoDescricao }}</span>
+                  <span class="sub-topico-a-revisar">{{ item.topicoDescricao }}</span>
                 </button>
               </div>
+              <button
+                type="button"
+                class="hero-next-more"
+                *ngIf="revisoesPrioritariasTotal > 5"
+                (click)="verMaisRevisoes()">
+                Ver mais
+              </button>
               <ng-template #heroNextSemRevisoes>
-                <div class="hero-next-state">Sem revisoes pendentes.</div>
+                <div class="hero-next-state">Sem revisoes hoje. Vamos avancar no estudo.</div>
               </ng-template>
             </div>
             <div class="hero-next-col">
-              <div class="hero-next-col-title">Estudar</div>
+              <div class="hero-next-col-head hero-next-col-head--study">
+                <div class="hero-next-col-title">Estudar</div>
+                <div class="timer-modos">
+                  <button
+                    type="button"
+                    class="btn-modo-timer ativo"
+                    (click)="comecarEstudoProximo()"
+                    [disabled]="!proximaMateriaEstudo">
+                    <i class="pi pi-play"></i>
+                    Comecar estudo
+                  </button>
+                </div>
+              </div>
               <div class="hero-next-module">
                 <div class="quick-value">Modulo {{ modulosHoje }} para executar</div>
                 <div class="quick-module-list" *ngIf="materiasDoDiaOrdenadas.length; else semMateriasDia">
@@ -240,6 +260,7 @@
           <div class="plano-item" *ngFor="let item of planoAtaqueSemana">
             <div class="plano-main">
               <span class="plano-nome">{{ item.materiaNome }}</span>
+              <span class="plano-justificativa">{{ getJustificativaPlano(item) }}</span>
               <div class="plano-chips">
                 <span class="plano-chip plano-chip--atrasadas">Revisoes atrasadas {{ item.atrasadas }}</span>
                 <span class="plano-chip plano-chip--hoje">Vence hoje {{ item.hoje }}</span>
@@ -403,6 +424,35 @@
       </div>
     </div>
   </div>
+
+  <p-dialog
+    header="Data da prova"
+    [(visible)]="mostrarDialogDataProva"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '360px' }">
+    <div class="date-dialog-body">
+      <label class="date-dialog-label" for="dataProvaInput">Definir data da prova</label>
+      <input
+        id="dataProvaInput"
+        type="date"
+        class="date-dialog-input"
+        [(ngModel)]="dataProvaInput" />
+    </div>
+    <ng-template pTemplate="footer">
+      <button pButton type="button" class="date-dialog-btn ghost" (click)="fecharModalDataProva()">
+        Cancelar
+      </button>
+      <button
+        pButton
+        type="button"
+        class="date-dialog-btn"
+        (click)="salvarDataProva()"
+        [disabled]="salvandoDataProva">
+        Salvar
+      </button>
+    </ng-template>
+  </p-dialog>
 
 </section>
 </div>

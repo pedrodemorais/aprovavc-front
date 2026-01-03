@@ -73,11 +73,15 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   planoAtaqueSemana: Array<{
     materiaId: number;
     materiaNome: string;
+    nivelDominio: number;
     atrasadas: number;
     hoje: number;
     minutosSugeridos: number;
     filtroPreferido: 'atrasadas' | 'hoje' | 'emdia';
   }> = [];
+  mostrarDialogDataProva = false;
+  dataProvaInput = '';
+  salvandoDataProva = false;
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -141,6 +145,46 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     });
   }
 
+  get editalPrincipal(): Edital | null {
+    return this.obterEditalPlano();
+  }
+
+  get kpiProgresso(): number {
+    return Number(this.editalPrincipal?.percentualEstudadoGeral ?? 0) || 0;
+  }
+
+  get kpiDominio(): number {
+    return Number(this.editalPrincipal?.nivelDominioGeral ?? 0) || 0;
+  }
+
+  get dataProvaLabel(): string {
+    const edital = this.editalPrincipal;
+    const data = this.obterDataProva(edital);
+    if (!data) {
+      return 'Definir data da prova';
+    }
+    return `Data da prova: ${this.formatData(data)} (editar)`;
+  }
+
+  get revisoesPrioritariasVisiveis(): RevisaoDashboardItem[] {
+    return this.revisoesPrioritariasOrdenadas.slice(0, 5);
+  }
+
+  get revisoesPrioritariasTotal(): number {
+    return this.revisoesPrioritariasOrdenadas.length;
+  }
+
+  get tempoEstimadoRevisoesLabel(): string {
+    const itens = this.revisoesPrioritariasOrdenadas;
+    if (!itens.length) return '--';
+    const totalMin = itens.reduce((acc, item) => acc + this.getMinutosRevisao(item), 0);
+    return this.formatarMinutos(totalMin);
+  }
+
+  get proximaMateriaEstudo(): { materiaId: number; nome: string; ordem: number } | null {
+    return this.materiasDoDiaOrdenadas.length ? this.materiasDoDiaOrdenadas[0] : null;
+  }
+
   private carregarUsuarioNome(): void {
     this.authService.getUserData().subscribe({
       next: (user) => {
@@ -195,6 +239,16 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     const dia = partes[2];
 
     return `${dia}/${mes}/${ano}`;
+  }
+
+  formatarMinutos(totalMinutos: number): string {
+    const minutos = Math.max(0, Math.round(totalMinutos));
+    if (minutos >= 60) {
+      const horas = Math.floor(minutos / 60);
+      const resto = minutos % 60;
+      return resto ? `${horas}h ${resto}min` : `${horas}h`;
+    }
+    return `${minutos} min`;
   }
 
   formatDataOuIndefinida(iso?: string | null): string {
@@ -414,13 +468,134 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     this.router.navigate(['/area-restrita/editais']);
   }
 
+  comecarAgora(): void {
+    if (this.totalVencidas > 0) {
+      this.irParaFilaRevisoes('atrasadas');
+      return;
+    }
+    if (this.totalHoje > 0) {
+      this.irParaFilaRevisoes('hoje');
+      return;
+    }
+    this.comecarEstudoProximo();
+  }
+
+  iniciarRevisao(): void {
+    if (this.totalVencidas > 0) {
+      this.irParaFilaRevisoes('atrasadas');
+      return;
+    }
+    this.irParaFilaRevisoes('hoje');
+  }
+
+  verMaisRevisoes(): void {
+    this.iniciarRevisao();
+  }
+
+  comecarEstudoProximo(): void {
+    const proxima = this.proximaMateriaEstudo;
+    if (proxima?.materiaId) {
+      this.irParaSalaMateriaProximo(proxima.materiaId);
+      return;
+    }
+    const primeiroId = this.materias?.[0]?.id;
+    if (primeiroId) {
+      this.irParaSalaMateriaProximo(primeiroId);
+      return;
+    }
+    this.router.navigate(['/area-restrita/cad-materias']);
+  }
+
   irParaSalaMateria(materiaId: number): void {
     if (!materiaId) return;
     this.router.navigate(['/area-restrita/sala-estudo', materiaId]);
   }
 
+  irParaSalaMateriaProximo(materiaId: number): void {
+    if (!materiaId) return;
+    this.router.navigate(['/area-restrita/sala-estudo', materiaId], {
+      queryParams: { modo: 'estudar', proximo: '1' }
+    });
+  }
+
   irParaBlocosEstudo(): void {
     this.router.navigate(['/area-restrita/blocos-estudo']);
+  }
+
+  abrirModalDataProva(): void {
+    const data = this.obterDataProva(this.editalPrincipal);
+    this.dataProvaInput = data || '';
+    this.mostrarDialogDataProva = true;
+  }
+
+  fecharModalDataProva(): void {
+    this.mostrarDialogDataProva = false;
+  }
+
+  salvarDataProva(): void {
+    const edital = this.editalPrincipal;
+    if (!this.dataProvaInput) {
+      if (edital) {
+        this.salvarDataProvaLocal(edital, null);
+      }
+      this.mostrarDialogDataProva = false;
+      return;
+    }
+    if (!edital || !edital.id) {
+      if (edital) {
+        this.salvarDataProvaLocal(edital, this.dataProvaInput);
+      }
+      this.mostrarDialogDataProva = false;
+      return;
+    }
+
+    const materiasIds = (edital.materias || []).map((m) => m.materiaId).filter((id) => Number.isFinite(id));
+    if (!edital.nome || !materiasIds.length) {
+      this.salvarDataProvaLocal(edital, this.dataProvaInput);
+      this.mostrarDialogDataProva = false;
+      return;
+    }
+
+    this.salvandoDataProva = true;
+    this.editalService.atualizar(edital.id, {
+      nome: edital.nome,
+      descricao: edital.descricao ?? null,
+      dataProva: this.dataProvaInput,
+      materiasIds
+    }).subscribe({
+      next: (atualizado) => {
+        edital.dataProva = atualizado?.dataProva ?? this.dataProvaInput;
+        this.removerDataProvaLocal(edital);
+        this.salvandoDataProva = false;
+        this.mostrarDialogDataProva = false;
+      },
+      error: () => {
+        this.salvarDataProvaLocal(edital, this.dataProvaInput);
+        this.salvandoDataProva = false;
+        this.mostrarDialogDataProva = false;
+      }
+    });
+  }
+
+  getMinutosRevisao(item: RevisaoDashboardItem): number {
+    const qtd = Number(item.qtdPendentes ?? 0) || 0;
+    const mediaSeg = this.getMediaRevisaoSegundos();
+    const baseSeg = mediaSeg ?? 360;
+    const totalSeg = qtd > 0 ? baseSeg * qtd : baseSeg;
+    return Math.max(1, Math.round(totalSeg / 60));
+  }
+
+  getJustificativaPlano(item: { atrasadas: number; hoje: number; nivelDominio: number }): string {
+    if (item.atrasadas > 0) {
+      return 'Recuperacao (revisoes vencidas)';
+    }
+    if (item.hoje > 0) {
+      return 'Manutencao (revisoes hoje)';
+    }
+    if (item.nivelDominio <= 30) {
+      return 'Ponto fraco (dominio baixo)';
+    }
+    return 'Progresso';
   }
 
   getEditalCargo(edital: Edital): string {
@@ -771,6 +946,39 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     return alternativo || (this.editais || [])[0] || null;
   }
 
+  private obterDataProva(edital: Edital | null): string | null {
+    if (!edital) return null;
+    return edital.dataProva || localStorage.getItem(this.getDataProvaKey(edital));
+  }
+
+  private salvarDataProvaLocal(edital: Edital, data: string | null): void {
+    const key = this.getDataProvaKey(edital);
+    if (!data) {
+      localStorage.removeItem(key);
+      edital.dataProva = null;
+      return;
+    }
+    localStorage.setItem(key, data);
+    edital.dataProva = data;
+  }
+
+  private removerDataProvaLocal(edital: Edital): void {
+    localStorage.removeItem(this.getDataProvaKey(edital));
+  }
+
+  private getDataProvaKey(edital: Edital): string {
+    return `dashboard:data-prova:${edital.id ?? 'temp'}`;
+  }
+
+  private getMediaRevisaoSegundos(): number | null {
+    const totalSegundos = Number(localStorage.getItem('revisao:tempoTotalSegundos')) || 0;
+    const totalItens = Number(localStorage.getItem('revisao:itensTotais')) || 0;
+    if (totalItens < 5 || totalSegundos <= 0) {
+      return null;
+    }
+    return totalSegundos / totalItens;
+  }
+
   private atualizarPlanoAtaque(): void {
     const editalBase = this.obterEditalPlano();
     const materias = editalBase?.materias || [];
@@ -808,6 +1016,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       return {
         materiaId: m.materiaId,
         materiaNome: m.materiaNome,
+        nivelDominio: dominio,
         atrasadas: revisao.atrasadas,
         hoje: revisao.hoje,
         minutosSugeridos: minutos,

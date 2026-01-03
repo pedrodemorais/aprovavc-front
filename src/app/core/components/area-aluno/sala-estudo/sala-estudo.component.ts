@@ -27,6 +27,10 @@ export class SalaEstudoComponent implements OnInit {
   topicos: any[] = [];
   topicoSelecionado?: any | null;
   private topicoIdPreferido: number | null = null;
+  private autoSelecionarUltimoNaoEstudado = false;
+  private topicosCarregados = false;
+  private revisoesCarregadas = false;
+  private selecionouTopicoInicial = false;
   private modoPreferido: 'estudar' | 'revisar' = 'estudar';
 
   arvoreTopicos: any[] = [];
@@ -128,6 +132,9 @@ export class SalaEstudoComponent implements OnInit {
   // estado da revisao (carregando flashcards de revisao)
   carregandoFlashcardsRevisao: boolean = false;
   erroFlashcardsRevisao?: string;
+  private revisaoItemInicio: number | null = null;
+  private readonly revisaoTempoKey = 'revisao:tempoTotalSegundos';
+  private readonly revisaoItensKey = 'revisao:itensTotais';
 
   constructor(
     private route: ActivatedRoute,
@@ -145,6 +152,7 @@ export class SalaEstudoComponent implements OnInit {
       const idParam = params.get('materiaId') ?? params.get('id');
       this.materiaId = idParam ? Number(idParam) : 0;
       this.topicoIdPreferido = this.getTopicoIdFromQuery();
+      this.autoSelecionarUltimoNaoEstudado = this.getAutoTopicoFromQuery();
       this.modoPreferido = this.getModoFromQuery();
       this.modo = this.modoPreferido;
 
@@ -257,30 +265,8 @@ export class SalaEstudoComponent implements OnInit {
 
         console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
 
-        // Ao abrir a sala: se vier topicoId pela query, usa ele.
-        if (!this.topicoSelecionado && this.topicos.length) {
-          let alvo: any | undefined;
-          if (this.topicoIdPreferido) {
-            const candidato = this.topicos.find(t => t.id === this.topicoIdPreferido);
-            if (candidato && !candidato.hasFilhos) {
-              alvo = candidato;
-            }
-          }
-
-          if (!alvo) {
-            // primeiro leaf ativo
-            alvo = this.topicos.find(t => !t.hasFilhos && t.ativo !== false);
-          }
-
-          // se por acaso nao tiver leaf, cai no primeiro mesmo
-          if (!alvo) {
-            alvo = this.topicos[0];
-          }
-
-          if (alvo) {
-            this.selecionarTopico(alvo);
-          }
-        }
+        this.topicosCarregados = true;
+        this.tentarSelecionarTopicoInicial();
       },
       error: (err) => {
         console.error('[SALA-ESTUDO] Erro ao carregar topicos:', err);
@@ -296,6 +282,14 @@ export class SalaEstudoComponent implements OnInit {
     }
     const id = Number(raw);
     return Number.isFinite(id) && id > 0 ? id : null;
+  }
+
+  private getAutoTopicoFromQuery(): boolean {
+    const raw = (this.route.snapshot.queryParamMap.get('proximo') || '').toLowerCase();
+    const alt = (this.route.snapshot.queryParamMap.get('autoTopico') || '').toLowerCase();
+    const alt2 = (this.route.snapshot.queryParamMap.get('proximoTopico') || '').toLowerCase();
+    return raw === '1' || raw === 'true' || raw === 'sim' || alt === '1' || alt === 'true' || alt === 'sim' ||
+      alt2 === '1' || alt2 === 'true' || alt2 === 'sim';
   }
 
   private getModoFromQuery(): 'estudar' | 'revisar' {
@@ -404,6 +398,9 @@ ativarRevisaoFlashcards(): void {
     }
 
     this.topicoSelecionado = t;
+    if (this.modo === 'revisar') {
+      this.iniciarContagemRevisaoItem();
+    }
 
     // ao selecionar t+�pico, carrega flashcards (modo estudar)
     if (this.topicoPermiteEstudo) {
@@ -1010,6 +1007,7 @@ this.mensagemRevisao = undefined;
     this.mostrarVersoAtual = false;
     this.avaliacaoFlashcardSelecionada = null;
     this.resetFlashcardFeedback();
+    this.iniciarContagemRevisaoItem();
   }
 
   anteriorFlashcard(): void {
@@ -1021,6 +1019,7 @@ this.mensagemRevisao = undefined;
     this.mostrarVersoAtual = false;
     this.avaliacaoFlashcardSelecionada = null;
     this.resetFlashcardFeedback();
+    this.iniciarContagemRevisaoItem();
   }
 
   removerFlashcardAtual(): void {
@@ -1069,6 +1068,7 @@ this.mensagemRevisao = undefined;
           this.avaliacaoFlashcardSelecionada = null;
           this.carregandoFlashcardsRevisao = false;
           this.resetFlashcardFeedback();
+          this.iniciarContagemRevisaoItem();
         },
         error: (err) => {
           console.error('[REVISÃO] Erro ao carregar flashcards de revisão:', err);
@@ -1105,6 +1105,7 @@ this.mensagemRevisao = undefined;
     this.enviandoAvaliacaoFlashcard = true;
     this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
       next: () => {
+        this.registrarTempoRevisao();
         this.proximoFlashcard();
         this.recarregarTopicosAposRevisao();
         this.avaliacaoFlashcardSelecionada = null;
@@ -1124,7 +1125,7 @@ this.mensagemRevisao = undefined;
    * O servidor cuida da lógica das "caixinhas" do tópico.
    */
   avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
-avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+  avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
   this.avaliacaoSelecionada = avaliacao;
   if (!this.topicoSelecionado) {
     return;
@@ -1135,20 +1136,47 @@ avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
     avaliacao
   };
 
-  this.salaEstudoService.responderRevisaoTopico(req).subscribe({
-    next: () => {
-      console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
-      this.recarregarTopicosAposRevisao();
+    this.salaEstudoService.responderRevisaoTopico(req).subscribe({
+      next: () => {
+        this.registrarTempoRevisao();
+        console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
+        this.recarregarTopicosAposRevisao();
 
       // feedback visual
       this.mostrarMensagemRevisao('Revisão das anotações registrada!');
     },
-    error: (err) => {
-      console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
-      alert('Erro ao registrar revisão das anotações. Tente novamente.');
+      error: (err) => {
+        console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
+        alert('Erro ao registrar revisão das anotações. Tente novamente.');
+      }
+    });
+  }
+
+  private iniciarContagemRevisaoItem(): void {
+    this.revisaoItemInicio = Date.now();
+  }
+
+  private registrarTempoRevisao(): void {
+    const agora = Date.now();
+    const inicio = this.revisaoItemInicio;
+    let deltaSeg = inicio ? Math.floor((agora - inicio) / 1000) : 0;
+    if (deltaSeg <= 0) {
+      deltaSeg = 0;
     }
-  });
-}
+    const deltaNormalizado = this.normalizarDeltaRevisao(deltaSeg);
+    const totalAtual = Number(localStorage.getItem(this.revisaoTempoKey)) || 0;
+    const itensAtuais = Number(localStorage.getItem(this.revisaoItensKey)) || 0;
+    localStorage.setItem(this.revisaoTempoKey, String(totalAtual + deltaNormalizado));
+    localStorage.setItem(this.revisaoItensKey, String(itensAtuais + 1));
+    this.revisaoItemInicio = agora;
+  }
+
+  private normalizarDeltaRevisao(deltaSeg: number): number {
+    if (!Number.isFinite(deltaSeg) || deltaSeg <= 0) {
+      return 360;
+    }
+    return Math.min(Math.max(deltaSeg, 20), 1800);
+  }
 
 
 
@@ -1312,11 +1340,101 @@ get podeIrParaProximaRevisao(): boolean {
         });
 
         console.log('[SALA-ESTUDO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
+        this.revisoesCarregadas = true;
+        this.tentarSelecionarTopicoInicial();
       },
       error: (err) => {
         console.error('[SALA-ESTUDO] Erro ao carregar revisões dashboard:', err);
       }
     });
+  }
+
+  private tentarSelecionarTopicoInicial(): void {
+    if (this.selecionouTopicoInicial || !this.topicosCarregados) {
+      return;
+    }
+    if (this.autoSelecionarUltimoNaoEstudado && !this.revisoesCarregadas) {
+      return;
+    }
+
+    let alvo: any | undefined;
+    if (this.topicoIdPreferido) {
+      const candidato = this.topicos.find(t => t.id === this.topicoIdPreferido);
+      if (candidato && !candidato.hasFilhos) {
+        alvo = candidato;
+      }
+    }
+
+    if (!alvo) {
+      const folhas = this.topicos.filter(t => !t.hasFilhos && t.ativo !== false);
+      if (this.autoSelecionarUltimoNaoEstudado && folhas.length) {
+        const primeiroNaoEstudado = this.obterPrimeiroNaoEstudado(folhas);
+        if (primeiroNaoEstudado) {
+          const proximoAposUltimoEstudado = this.obterProximoNaoEstudadoAposUltimoEstudado(folhas);
+          const precisaConfirmar = this.precisaConfirmarContinuacao(
+            folhas,
+            primeiroNaoEstudado,
+            proximoAposUltimoEstudado
+          );
+          if (precisaConfirmar) {
+            const continuar = window.confirm('Continuar de onde parou?');
+            alvo = continuar ? (proximoAposUltimoEstudado || primeiroNaoEstudado) : primeiroNaoEstudado;
+          } else {
+            alvo = primeiroNaoEstudado;
+          }
+        }
+        if (!alvo) {
+          alvo = folhas[0];
+        }
+      } else {
+        alvo = folhas[0];
+      }
+    }
+
+    if (!alvo) {
+      alvo = this.topicos[0];
+    }
+
+    if (alvo) {
+      this.selecionarTopico(alvo);
+      this.selecionouTopicoInicial = true;
+    }
+  }
+
+  private obterPrimeiroNaoEstudado(folhas: any[]): any | null {
+    const candidato = folhas.find(t => !this.temEstudoNoTopico(t));
+    return candidato || null;
+  }
+
+  private precisaConfirmarContinuacao(
+    folhas: any[],
+    primeiroNaoEstudado: any,
+    proximoAposUltimoEstudado: any | null
+  ): boolean {
+    if (!folhas.length) return false;
+    if (!primeiroNaoEstudado?.id) return false;
+    if (!proximoAposUltimoEstudado?.id) return false;
+    const index = folhas.findIndex(t => t.id === primeiroNaoEstudado.id);
+    if (index <= 0) return false;
+    return folhas.slice(0, index).some(t => this.temEstudoNoTopico(t));
+  }
+
+  private obterProximoNaoEstudadoAposUltimoEstudado(folhas: any[]): any | null {
+    let ultimoEstudadoIndex = -1;
+    for (let i = 0; i < folhas.length; i += 1) {
+      if (this.temEstudoNoTopico(folhas[i])) {
+        ultimoEstudadoIndex = i;
+      }
+    }
+    if (ultimoEstudadoIndex < 0) {
+      return null;
+    }
+    for (let i = ultimoEstudadoIndex + 1; i < folhas.length; i += 1) {
+      if (!this.temEstudoNoTopico(folhas[i])) {
+        return folhas[i];
+      }
+    }
+    return null;
   }
 
     /** Define a "força" de cada status para comparar pai x filhos */
