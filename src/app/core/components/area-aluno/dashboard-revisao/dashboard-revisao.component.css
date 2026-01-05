@@ -16,23 +16,23 @@
   padding: 12px 10px 16px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* Wrapper interno da página */
 .dashboard-revisao-page {
   max-width: 1400px;
-  height: 100%;
+  height: auto;
   min-height: 0;
   margin: 0 auto;
   box-sizing: border-box;
-  padding: 12px 10px 20px;
+  padding: 12px 10px 12px;
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   color: var(--text);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* =======================================
@@ -42,8 +42,8 @@
 .rev-header {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .hero-card {
@@ -51,7 +51,7 @@
  
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .hero-head {
@@ -556,20 +556,20 @@
   border-radius: 14px;
   border: 0;
   background: #ffffff;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .hero-plan-card {
   border-radius: 14px;
   border: 0;
   background: #ffffff;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .plan-head {
@@ -612,7 +612,7 @@
 .plano-lista {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .plano-item {

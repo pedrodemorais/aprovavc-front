@@ -586,6 +586,37 @@
                   </div>
                 </div>
 
+                <div
+                  class="editor-overlay editor-overlay--revisao-dica"
+                  *ngIf="modo === 'revisar' && timerAtivo && revisaoAutoExplicacaoAtiva">
+                  <div class="editor-aviso editor-aviso--revisao">
+                    <div class="editor-aviso-texto">
+                      <div class="editor-aviso-titulo">
+                        <i class="pi pi-comment editor-aviso-icon" aria-hidden="true"></i>
+                        <strong>Antes de iniciar a revis&atilde;o</strong>
+                      </div>
+                      <span class="revisao-dica">
+                        Antes de iniciar a revis&atilde;o, tente explicar para si mesmo o conte&uacute;do.
+                      </span>
+                      <span class="revisao-dica">
+                        Ap&oacute;s auto explicar, clique no &iacute;cone (olho) para ver seu resumo e veja se
+                        lembrou e responda abaixo como foi lembrar desse assunto.
+                      </span>
+                      <div class="editor-aviso-acao">
+                        <button
+                          type="button"
+                          class="btn-start-estudo btn-start-estudo--icon"
+                          (click)="liberarRevisaoAutoExplicacao()"
+                          pTooltip="Ver resumo"
+                          tooltipPosition="top"
+                          aria-label="Ver resumo">
+                          <i class="pi pi-eye" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </ng-container>
 
             </ng-container>

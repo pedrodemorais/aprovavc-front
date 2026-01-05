@@ -691,7 +691,7 @@
   position: absolute;
   inset: 0;
   border-radius: 16px;
-  background: #e7edeeb0;
+  background: #eef2f7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -699,6 +699,10 @@
   padding: 12px;
   box-sizing: border-box;
   margin-top: 6px;
+}
+
+.editor-overlay--revisao-dica {
+  z-index: 12;
 }
 
 .editor-aviso {
@@ -712,6 +716,10 @@
   font-size: 0.85rem;
   max-width: 460px;
   box-shadow: 0 18px 38px rgba(15, 23, 42, 0.18);
+}
+
+.editor-aviso--revisao {
+  max-width: 520px;
 }
 
 .editor-aviso-icon {
@@ -728,6 +736,10 @@
   flex-direction: column;
   gap: 6px;
   width: 100%;
+}
+
+.editor-aviso-texto .revisao-dica {
+  line-height: 1.4;
 }
 
 .editor-aviso-titulo {

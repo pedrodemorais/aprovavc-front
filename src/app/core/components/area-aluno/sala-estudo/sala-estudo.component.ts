@@ -44,6 +44,7 @@ export class SalaEstudoComponent implements OnInit {
 
   // modo de revisao (anotacoes x flashcards)
   modoRevisao: 'anotacoes' | 'flashcards' = 'anotacoes';
+  revisaoAutoExplicacaoAtiva = false;
 
   // controle da coluna esquerda (topicos)
   colunaEsquerdaOculta: boolean = false;
@@ -555,11 +556,15 @@ ativarRevisaoFlashcards(): void {
     if (this.timerAtivo) {
       this.timerAtivo = false;
       this.pararTimerInterno();
+      this.revisaoAutoExplicacaoAtiva = false;
       return;
     }
 
     this.timerAtivo = true;
     this.temTempoNaoSalvoFlag = true;
+    if (this.modo === 'revisar') {
+      this.revisaoAutoExplicacaoAtiva = true;
+    }
 
     if (this.modoTemporizador === 'livre') {
       this.iniciarTimerLivre();
@@ -689,11 +694,16 @@ ativarRevisaoFlashcards(): void {
 
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
     this.modo = novoModo;
-this.mensagemRevisao = undefined;
+    this.mensagemRevisao = undefined;
+    this.revisaoAutoExplicacaoAtiva = novoModo === 'revisar' && this.timerAtivo;
     // quando entrar no modo revisar, se tiver tópico válido, carrega flashcards de revisão
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
+  }
+
+  liberarRevisaoAutoExplicacao(): void {
+    this.revisaoAutoExplicacaoAtiva = false;
   }
 
   // ================================================================
