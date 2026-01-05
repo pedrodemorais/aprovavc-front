@@ -1,12 +1,15 @@
 <div class="sala-container" *ngIf="!carregando; else loadingTpl"
-  [ngClass]="{ 'revisao-foco': modo === 'revisar' && modoRevisaoFocoAtivo }"
   [class.coluna-esquerda-oculta]="colunaEsquerdaOculta">
 
 
 
   <!-- CORPO DA SALA -->
   <div class="sala-titulo">
-    <span class="titulo-materia">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
+    <span class="titulo-materia">
+      <span class="titulo-materia-text">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
+      <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
+      <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemRevisao">{{ mensagemRevisao }}</span>
+    </span>
   </div>
 
   <section class="card sala-body">
@@ -28,21 +31,6 @@
 
 
 
-
-            <!-- SEGMENTADO (reaproveita o CSS do timer: .timer-modos + .btn-modo-timer + .ativo) -->
-            <div class="timer-modos" role="tablist" aria-label="Modo da sala">
-              <button type="button" class="btn-modo-timer" [class.ativo]="modo === 'estudar'"
-                (click)="mudarModo('estudar')" aria-label="Modo estudar" pTooltip="Estudar" tooltipPosition="top">
-                <i class="pi pi-book"></i>
-                <span>Estudar</span>
-              </button>
-
-              <button type="button" class="btn-modo-timer" [class.ativo]="modo === 'revisar'"
-                (click)="mudarModo('revisar')" aria-label="Modo revisar" pTooltip="Revisar" tooltipPosition="top">
-                <i class="pi pi-refresh"></i>
-                <span>Revisar</span>
-              </button>
-            </div>
 
           </div>
 
@@ -123,9 +111,6 @@
                     <h2 class="titulo-section">
                       Revisando: <span>{{ topicoSelecionado.descricao }}</span>
                     </h2>
-                    <p class="muted pequeno">
-                      Mat&eacute;ria: <strong>{{ materia?.nome || '-' }}</strong>
-                    </p>
                   </ng-container>
                 </ng-container>
               </ng-container>
@@ -175,17 +160,27 @@
                       </button>
                     </div>
 
-                    <div class="timer-modos" role="tablist" aria-label="Modo foco">
-                      <button type="button" class="btn-modo-timer" *ngIf="!modoRevisaoFocoAtivo"
-                        (click)="ativarModoFocoRevisao()">
-                        <span>Foco</span>
+                    <div class="timer-modos" role="tablist" aria-label="Controle do cron&ocirc;metro">
+                      <button type="button" class="btn-modo-timer" [class.ativo]="timerAtivo" (click)="toggleTimer()"
+                        [disabled]="!timerAtivo || !topicoSelecionado || !topicoPermiteEstudo">
+                        <i class="pi pi-pause"></i>
+                        <span>Pausar</span>
                       </button>
 
-                      <button type="button" class="btn-modo-timer" *ngIf="modoRevisaoFocoAtivo"
-                        (click)="sairModoFocoRevisao()">
-                        <span>Sair</span>
+                      <button type="button" class="btn-modo-timer" (click)="zerarTimer()" [disabled]="(!tempoTotalSegundos && modoTemporizador === 'livre') ||
+                              (modoTemporizador === 'pomodoro' && pomodoroSegundosRestantes === duracaoFaseAtual)">
+                        <i class="pi pi-refresh"></i>
+                        <span>Zerar</span>
                       </button>
                     </div>
+
+                    <span class="timer-inline">
+                      {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
+                      <ng-container *ngIf="modoTemporizador === 'pomodoro'">
+                        - <span class="timer-fase-inline">{{ labelFasePomodoro }}</span>
+                      </ng-container>
+                      | {{ tempoFormatado }}
+                    </span>
                   </div>
                 </ng-container>
 
@@ -265,6 +260,22 @@
                       Inicie o cron&ocirc;metro para liberar as anota&ccedil;&otilde;es.
                     </span>
 
+                    <div class="editor-aviso-sala">
+                      <div class="timer-modos" role="tablist" aria-label="Modo da sala">
+                        <button type="button" class="btn-modo-timer" [class.ativo]="modo === 'estudar'"
+                          (click)="mudarModo('estudar')" aria-label="Modo estudar">
+                          <i class="pi pi-book"></i>
+                          <span>Estudar</span>
+                        </button>
+
+                        <button type="button" class="btn-modo-timer" [class.ativo]="modo === 'revisar'"
+                          (click)="mudarModo('revisar')" aria-label="Modo revisar">
+                          <i class="pi pi-refresh"></i>
+                          <span>Revisar</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <div class="editor-aviso-modos" *ngIf="topicoSelecionado && topicoPermiteEstudo">
                       <div class="timer-modos" role="tablist" aria-label="Modo do temporizador">
                         <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
@@ -306,50 +317,37 @@
                 <ng-container *ngIf="modoRevisao === 'anotacoes'">
                   <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
 
-                    <div class="subtitulo-section">Anota&ccedil;&otilde;es deste t&oacute;pico</div>
-                    <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras"></div>
-
-                    <div class="revisao-anotacoes-feedback">
-                      <div class="muted pequeno">Como foi revisar essas anota&ccedil;&otilde;es?
-                        <div class="alerta-revisao" *ngIf="mensagemRevisao">
-                          <span class="alerta-revisao-icone">!</span>
-                          <span class="alerta-revisao-texto">{{ mensagemRevisao }}</span>
+                    <div class="revisao-anotacoes-layout">
+                      <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras"></div>
+                      <div class="revisao-footer">
+                        <div class="revisao-anotacoes-feedback">
+                          <div class="muted pequeno">Como foi revisar essas anota&ccedil;&otilde;es?</div>
+                          <div class="botoes-avaliacao">
+                            <div class="timer-modos separado" role="tablist" aria-label="Avaliacao da revisao">
+                              <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'ERREI'"
+                                (click)="avaliarRevisaoAnotacao('ERREI')">Errei / N&atilde;o lembrei</button>
+                              <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'DIFICIL'"
+                                (click)="avaliarRevisaoAnotacao('DIFICIL')">Lembrei com dificuldade</button>
+                              <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'BOM'"
+                                (click)="avaliarRevisaoAnotacao('BOM')">Lembrei bem</button>
+                              <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'FACIL'"
+                                (click)="avaliarRevisaoAnotacao('FACIL')">Muito f&aacute;cil</button>
+                            </div>
+                          </div>
+                          <div class="revisao-next">
+                            <button
+                              type="button"
+                              class="btn-revisao-next"
+                              (click)="voltarRevisao()"
+                              [disabled]="!podeVoltarRevisao || !avaliacaoSelecionada">
+                              <i class="pi pi-arrow-left" aria-hidden="true"></i>
+                              <span>Voltar</span>
+                            </button>
+                          </div>
                         </div>
-
-
-                      </div>
-                      <div class="botoes-avaliacao">
-                        <div class="timer-modos separado" role="tablist" aria-label="Avalia��o da revis�o">
-                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'ERREI'"
-                            (click)="avaliarRevisaoAnotacao('ERREI')">Errei / N&atilde;o lembrei</button>
-                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'DIFICIL'"
-                            (click)="avaliarRevisaoAnotacao('DIFICIL')">Lembrei com dificuldade</button>
-                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'BOM'"
-                            (click)="avaliarRevisaoAnotacao('BOM')">Lembrei bem</button>
-                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'FACIL'"
-                            (click)="avaliarRevisaoAnotacao('FACIL')">Muito f&aacute;cil</button>
-                        </div>
-                      </div>
-                      <div class="revisao-next">
-                        <button
-                          type="button"
-                          class="btn-revisao-next"
-                          (click)="voltarRevisao()"
-                          [disabled]="!podeVoltarRevisao">
-                          <i class="pi pi-arrow-left" aria-hidden="true"></i>
-                          <span>Voltar</span>
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-revisao-next"
-                          (click)="irParaProximaRevisao()"
-                          [disabled]="!podeIrParaProximaRevisao">
-                          <span>Avan&ccedil;ar</span>
-                          <i class="pi pi-arrow-right" aria-hidden="true"></i>
-                        </button>
                       </div>
                     </div>
-                  </ng-container>
+</ng-container>
 
                   <ng-template #semAnotacoesTpl>
                     <div class="painel-revisao-placeholder">
@@ -522,15 +520,68 @@
                   </ng-template>
                 </ng-container>
 
-                <!-- overlay do revisar (opcional, pra ficar identico no comportamento) -->
-                <div class="editor-overlay" *ngIf="!topicoSelecionado">
+                <!-- overlay do revisar -->
+                <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
                   <div class="editor-aviso">
                     <div class="editor-aviso-texto">
                       <div class="editor-aviso-titulo">
                         <i class="pi pi-lock editor-aviso-icon" aria-hidden="true"></i>
-                        <strong>Selecione um t&oacute;pico</strong>
+                        <strong>Revisao bloqueada</strong>
                       </div>
-                      Escolha um t&oacute;pico na coluna &agrave; esquerda para revisar.
+                      <span *ngIf="!topicoSelecionado">
+                        Escolha um t&oacute;pico na coluna &agrave; esquerda para revisar.
+                      </span>
+
+                      <span *ngIf="topicoSelecionado && topicoSelecionado.hasFilhos">
+                        Este t&oacute;pico possui subt&oacute;picos. Selecione um subt&oacute;pico espec&iacute;fico.
+                      </span>
+
+                      <span *ngIf="topicoPermiteEstudo && !timerAtivo">
+                        Inicie o cron&ocirc;metro para liberar a revis&atilde;o.
+                      </span>
+
+                      <div class="editor-aviso-sala">
+                        <div class="timer-modos" role="tablist" aria-label="Modo da sala">
+                          <button type="button" class="btn-modo-timer" [class.ativo]="modo === 'estudar'"
+                            (click)="mudarModo('estudar')" aria-label="Modo estudar">
+                            <i class="pi pi-book"></i>
+                            <span>Estudar</span>
+                          </button>
+
+                          <button type="button" class="btn-modo-timer" [class.ativo]="modo === 'revisar'"
+                            (click)="mudarModo('revisar')" aria-label="Modo revisar">
+                            <i class="pi pi-refresh"></i>
+                            <span>Revisar</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="editor-aviso-modos" *ngIf="topicoSelecionado && topicoPermiteEstudo">
+                        <div class="timer-modos" role="tablist" aria-label="Modo do temporizador">
+                          <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'livre'"
+                            (click)="setModoTemporizador('livre')">
+                            <i class="pi pi-stopwatch"></i>
+                            <span>Livre</span>
+                          </button>
+
+                          <button type="button" class="btn-modo-timer" [class.ativo]="modoTemporizador === 'pomodoro'"
+                            (click)="setModoTemporizador('pomodoro')">
+                            <span>Pomodoro</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="editor-aviso-acao">
+                        <button
+                          type="button"
+                          class="btn-start-estudo btn-start-estudo--icon"
+                          (click)="toggleTimer()"
+                          [disabled]="!topicoSelecionado || !topicoPermiteEstudo"
+                          pTooltip="Iniciar revisao"
+                          tooltipPosition="top">
+                          <span class="pi" [ngClass]="timerAtivo ? 'pi-pause' : 'pi-play'"></span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -580,9 +631,10 @@
                 </button>
               </div>
 
-              <span class="salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
             </div>
           </div>
+
+          
 
         </div>
       </section>
@@ -773,6 +825,7 @@
 <div *ngIf="erro" class="mensagem-erro">
   {{ erro }}
 </div>
+
 
 
 

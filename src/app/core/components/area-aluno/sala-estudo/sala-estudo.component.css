@@ -39,12 +39,36 @@
 }
 
 .sala-titulo .titulo-materia {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   max-width: 100%;
+  min-width: 0;
+  font-size: 1.1rem;
+}
+
+.sala-titulo .titulo-materia-text {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 1.1rem;
+}
+
+.sala-salvo-msg {
+  flex: 1 1 auto;
+  margin-left: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* tiramos o “risquinho” entre header e body (caso exista) */
@@ -528,6 +552,16 @@
   gap: 0.7rem;
   text-align: center;
 }
+.revisao-footer {
+  flex: 0 0 auto;
+  padding-top: 8px;
+}
+.revisao-anotacoes-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
 
 .revisao-next {
   display: flex;
@@ -638,9 +672,14 @@
   white-space: nowrap;
   font-size: 12px;
   opacity: 0.85;
-  padding: 6px 10px;
- 
-  
+  padding: 6px 14px 6px 10px;
+  min-width: 240px;
+  width: 240px;
+  flex: 0 0 240px;
+  text-align: right;
+  display: inline-flex;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
 
@@ -708,10 +747,33 @@
   justify-content: center;
 }
 
+.editor-aviso-sala {
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+}
+
 .editor-aviso-modos {
   margin-top: 6px;
   display: flex;
   justify-content: center;
+}
+
+.timer-inline {
+  white-space: nowrap;
+  font-size: 12px;
+  opacity: 0.85;
+  
+  min-width: 190px;
+ 
+  text-align: right;
+  display: inline-flex;
+ 
+  font-variant-numeric: tabular-nums;
+
+ 
+
+  font-weight: 600;
 }
 
 .btn-start-estudo {
@@ -807,6 +869,11 @@
   font-size: 0.8rem;
   color: #16a34a;
 }
+.revisao-salvo-msg {
+  flex: 0 0 auto;
+  margin: 6px auto 0;
+  max-width: 100%;
+}
 
 /* ============================
    MODO REVISAR
@@ -856,10 +923,6 @@
   border: 1px solid #bbf7d0;
   color: #166534;
   font-size: 0.85rem;
-}
-
-.alerta-revisao-icone {
-  font-size: 1rem;
 }
 
 
@@ -1637,31 +1700,6 @@
 }
    MODO FOCO (revisão)
    ============================ */
-.sala-container.revisao-foco {
-  background: transparent;
-}
-
-.sala-container.revisao-foco .coluna-esquerda {
-  display: none !important;
-}
-
-.sala-container.revisao-foco .card.sala-body {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.sala-container.revisao-foco .modo-conteudo {
-  height: calc(100vh - 2.5rem);
-  padding: 0 4px;
-}
-
-.sala-container.revisao-foco .bloco {
-  border-left: 0;
-}
 
 /* ============================
    LOADING / ERRO
@@ -2158,7 +2196,10 @@
   border-radius: 12px;
   
   border: 1px solid #e5e7eb;
-  max-height: 420px;
+  max-height: none;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -2226,6 +2267,7 @@ height: 100%;
     min-height: calc(100dvh - 56px);
   }
 }
+
 
 
 

@@ -105,11 +105,11 @@
               <div class="progress-bar progress-bar--low" [style.--percent]="0"></div>
             </ng-container>
             <ng-template #dominioPercentTpl>
-              <span class="metric-value">{{ formatPercent(editalAtivo?.nivelDominioGeral) }}</span>
+              <span class="metric-value">{{ formatPercent(dominioGeralAjustado) }}</span>
               <div
                 class="progress-bar"
-                [ngClass]="getDominioClasse(editalAtivo?.nivelDominioGeral)"
-                [style.--percent]="editalAtivo?.nivelDominioGeral ?? 0"></div>
+                [ngClass]="getDominioClasse(dominioGeralAjustado)"
+                [style.--percent]="dominioGeralAjustado"></div>
             </ng-template>
             <div
               class="duo-trend"

@@ -154,7 +154,9 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   }
 
   get kpiDominio(): number {
-    return Number(this.editalPrincipal?.nivelDominioGeral ?? 0) || 0;
+    const dominio = Number(this.editalPrincipal?.nivelDominioGeral ?? 0) || 0;
+    const progresso = Number(this.editalPrincipal?.percentualEstudadoGeral ?? 0) || 0;
+    return Math.min(dominio, progresso);
   }
 
   get dataProvaLabel(): string {

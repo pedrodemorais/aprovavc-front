@@ -496,6 +496,12 @@ private mensagemTimeout: any; // para guardar o setTimeout
     return `${v.toFixed(0)}%`;
   }
 
+  getDominioEdital(edital?: Edital | null): number {
+    const dominio = Number(edital?.nivelDominioGeral ?? 0) || 0;
+    const progresso = Number(edital?.percentualEstudadoGeral ?? 0) || 0;
+    return Math.min(dominio, progresso);
+  }
+
   formatData(iso?: string | null): string {
     if (!iso) {
       return '-';

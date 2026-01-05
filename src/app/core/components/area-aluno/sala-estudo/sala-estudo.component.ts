@@ -1,5 +1,5 @@
 import { FlashcardDTO } from '../models/FlashcardDTO';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MateriaService } from '../services/materia.service';
 import { Materia } from '../models/materia.model';
@@ -32,6 +32,7 @@ export class SalaEstudoComponent implements OnInit {
   private revisoesCarregadas = false;
   private selecionouTopicoInicial = false;
   private modoPreferido: 'estudar' | 'revisar' = 'estudar';
+  private temTempoNaoSalvoFlag = false;
 
   arvoreTopicos: any[] = [];
 
@@ -69,29 +70,30 @@ export class SalaEstudoComponent implements OnInit {
   pomodoroSegundosRestantes: number = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos: number = 0;
 
-  // modo foco na revisao (tela cheia)
-  modoRevisaoFocoAtivo: boolean = false;
-
-  ativarModoFocoRevisao(): void {
-    this.modoRevisaoFocoAtivo = true;
-  }
-
-  sairModoFocoRevisao(): void {
-    this.modoRevisaoFocoAtivo = false;
-  }
-
 
   canDeactivate(): boolean {
-    if (!this.timerAtivo) {
+    if (!this.temTempoNaoSalvo()) {
       return true;
     }
-    const salvar = confirm('Voce tem tempo de estudo em andamento. Deseja salvar antes de sair?');
+
+    const salvar = confirm(
+      'Voce tem tempo de estudo nao salvo. Deseja salvar antes de sair?'
+    );
     if (salvar) {
       this.salvarEstudo();
       return true;
     }
-    const sairSemSalvar = confirm('Sair sem salvar o tempo de estudo em andamento?');
-    return sairSemSalvar;
+    return false;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  beforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.temTempoNaoSalvo()) {
+      return;
+    }
+    event.preventDefault();
+    event.returnValue =
+      'Voce tem tempo de estudo nao salvo. Deseja salvar antes de sair?';
   }
 
   toggleColunaEsquerda(): void {
@@ -355,11 +357,14 @@ ativarRevisaoFlashcards(): void {
     return this.duracaoFaseAtual - this.pomodoroSegundosRestantes;
   }
 
-  private resetarTimerAoTrocarTopico(): void {
-    const tempoAtual = this.calcularTempoEstudoAtual();
-    const temAlgoParaSalvar =
-      !!this.topicoSelecionado && (tempoAtual > 0 || this.timerAtivo);
+  private temTempoNaoSalvo(): boolean {
+    if (!this.topicoSelecionado || !this.topicoPermiteEstudo) {
+      return false;
+    }
+    return this.temTempoNaoSalvoFlag;
+  }
 
+  private resetarTimerAoTrocarTopico(): void {
     if (this.timerAtivo) {
       this.pararTimerInterno();
       this.timerAtivo = false;
@@ -368,18 +373,9 @@ ativarRevisaoFlashcards(): void {
     this.pararTimerInterno();
     this.silenciarAlarme();
 
-    if (temAlgoParaSalvar) {
-      const desejaSalvar = window.confirm(
-        'Ao mudar o tipo de estudo o tempo atual sera zerado. Deseja salvar o tempo ja estudado?'
-      );
-
-      if (desejaSalvar) {
-        this.salvarEstudo();
-      }
-    }
-
     // ao trocar de t+�pico, zera o acumulado j+� salvo para o novo t+�pico
     this.segundosEstudoJaSalvosTopicoAtual = 0;
+    this.temTempoNaoSalvoFlag = false;
 
     if (this.modoTemporizador === 'livre') {
       this.tempoTotalSegundos = 0;
@@ -392,10 +388,11 @@ ativarRevisaoFlashcards(): void {
 
   selecionarTopico(t: any): void {
       this.mensagemRevisao = undefined;
+    this.avaliacaoSelecionada = null;
     const trocandoDeTopico =
       this.topicoSelecionado && this.topicoSelecionado.id !== t.id;
 
-    if (trocandoDeTopico) {
+    if (trocandoDeTopico && this.modo === 'estudar') {
       const tempoAtual = this.calcularTempoEstudoAtual();
 
       const temAlgoParaSalvar =
@@ -409,6 +406,7 @@ ativarRevisaoFlashcards(): void {
 
         if (desejaSalvar) {
           this.salvarEstudo();
+          this.temTempoNaoSalvoFlag = false;
         }
       }
 
@@ -521,16 +519,7 @@ ativarRevisaoFlashcards(): void {
       return;
     }
 
-    const tempoAtual = this.calcularTempoEstudoAtual();
-    const temProgresso =
-      !!this.topicoSelecionado &&
-      (tempoAtual > 0 ||
-        this.timerAtivo ||
-        this.segundosEstudoJaSalvosTopicoAtual > 0 ||
-        (this.modoTemporizador === 'pomodoro' &&
-          this.pomodoroSegundosRestantes !== this.pomodoroDuracaoFoco));
-
-    if (temProgresso) {
+    if (this.temTempoNaoSalvo()) {
       const desejaSalvar = window.confirm(
         'Ao mudar o tipo de estudo o tempo atual sera zerado. Deseja salvar o tempo ja estudado?'
       );
@@ -543,9 +532,11 @@ ativarRevisaoFlashcards(): void {
     this.pararTimerInterno();
     this.silenciarAlarme();
     this.timerAtivo = false;
+    this.temTempoNaoSalvoFlag = false;
 
     // quando muda de modo, reinicia o acumulado do t+�pico no contexto do timer
     this.segundosEstudoJaSalvosTopicoAtual = 0;
+    this.temTempoNaoSalvoFlag = false;
 
     this.modoTemporizador = modo;
 
@@ -568,6 +559,7 @@ ativarRevisaoFlashcards(): void {
     }
 
     this.timerAtivo = true;
+    this.temTempoNaoSalvoFlag = true;
 
     if (this.modoTemporizador === 'livre') {
       this.iniciarTimerLivre();
@@ -615,15 +607,18 @@ ativarRevisaoFlashcards(): void {
 
     this.timerRef = setInterval(() => {
       this.tempoTotalSegundos++;
+      this.temTempoNaoSalvoFlag = true;
     }, 1000);
   }
 
   private iniciarPomodoro(): void {
     this.pararTimerInterno();
+    this.temTempoNaoSalvoFlag = true;
 
     this.timerRef = setInterval(() => {
       if (this.pomodoroSegundosRestantes > 0) {
         this.pomodoroSegundosRestantes--;
+        this.temTempoNaoSalvoFlag = true;
         return;
       }
 
@@ -707,7 +702,7 @@ this.mensagemRevisao = undefined;
 
   salvarEstudo(): void {
     if (!this.topicoSelecionado) {
-      this.erro = 'Selecione um t+�pico antes de salvar o estudo.';
+      this.erro = 'Selecione um topico antes de salvar o estudo.';
       return;
     }
 
@@ -726,6 +721,7 @@ this.mensagemRevisao = undefined;
       materiaId: this.materiaId,
       topicoId: this.topicoSelecionado.id,
       modoTemporizador: modoBack,
+      tipoSessao: this.modo === 'revisar' ? 'REVISAO' : 'ESTUDO',
       tempoLivreSegundos: tempoParaSalvar,
       anotacoes: this.anotacoes,
       pomodoroFase: this.modoTemporizador === 'pomodoro' ? this.pomodoroFase : undefined,
@@ -740,8 +736,11 @@ this.mensagemRevisao = undefined;
 
         // ap+�s salvar com sucesso, acumula o que foi enviado
         this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
+        this.temTempoNaoSalvoFlag = false;
 
-        this.mensagemEstudoSalvo = 'Estudo salvo com sucesso.';
+        this.mensagemEstudoSalvo = this.modo === 'revisar'
+          ? 'Revis\u00e3o salva com sucesso.'
+          : 'Estudo salvo com sucesso.';
         setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
       },
       error: (err) => {
@@ -1142,13 +1141,16 @@ this.mensagemRevisao = undefined;
     this.enviandoAvaliacaoFlashcard = true;
     this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
       next: () => {
-        this.registrarTempoRevisao();
         this.proximoFlashcard();
+        if (this.podeIrParaProximaRevisao) {
+          this.irParaProximaRevisao();
+        }
         this.recarregarTopicosAposRevisao();
         this.avaliacaoFlashcardSelecionada = null;
         this.enviandoAvaliacaoFlashcard = false;
 
         this.mostrarMensagemRevisao('Revisao do flashcard registrada!');
+        this.temTempoNaoSalvoFlag = false;
       },
       error: (err) => {
         console.error('[REVISAO] Erro ao registrar resposta do flashcard:', err);
@@ -1173,14 +1175,20 @@ this.mensagemRevisao = undefined;
     avaliacao
   };
 
+  const proximo = this.obterProximoTopicoRevisao();
+
+  this.registrarTempoRevisao();
+  this.mostrarMensagemRevisao('Revis\u00e3o das anota\u00e7\u00f5es registrada!');
+  this.temTempoNaoSalvoFlag = false;
+
+  if (proximo && this.topicoSelecionado?.id !== proximo.id) {
+    this.selecionarTopico(proximo);
+  }
+
     this.salaEstudoService.responderRevisaoTopico(req).subscribe({
       next: () => {
-        this.registrarTempoRevisao();
         console.log('[REVISÃO] Revisão de anotações registrada com sucesso');
         this.recarregarTopicosAposRevisao();
-
-      // feedback visual
-      this.mostrarMensagemRevisao('Revisão das anotações registrada!');
     },
       error: (err) => {
         console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
@@ -1191,6 +1199,7 @@ this.mensagemRevisao = undefined;
 
   private iniciarContagemRevisaoItem(): void {
     this.revisaoItemInicio = Date.now();
+    this.avaliacaoSelecionada = null;
   }
 
   private registrarTempoRevisao(): void {
@@ -1672,11 +1681,15 @@ private mostrarMensagemRevisao(texto: string): void {
   this.mensagemRevisao = texto;
   setTimeout(() => {
     this.mensagemRevisao = undefined;
-  }, 3000); // some depois de 3s
+  }, 4000);
 }
 
 
 }
+
+
+
+
 
 
 

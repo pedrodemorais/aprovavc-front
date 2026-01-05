@@ -77,9 +77,12 @@ export class RevisoesComponent implements OnInit {
   }
 
   irParaSala(item: RevisaoDashboardItem): void {
+    const rawModo = (this.route.snapshot.queryParamMap.get('modo') || '').toLowerCase();
+    const modo = rawModo === 'revisao' || rawModo === 'revisar' ? rawModo : null;
+
     this.router.navigate(
       ['/area-restrita/sala-estudo', item.materiaId],
-      { queryParams: { topicoId: item.topicoId } }
+      { queryParams: { topicoId: item.topicoId, modo } }
     );
   }
 }

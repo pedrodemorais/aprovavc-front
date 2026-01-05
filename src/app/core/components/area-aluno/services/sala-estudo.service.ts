@@ -25,6 +25,7 @@ export interface EstudoTopicoRequest {
 
   // mesmo nome e tipo lógico do back
   modoTemporizador: string;   // "livre" ou "pomodoro"
+  tipoSessao: 'ESTUDO' | 'REVISAO';
 
   tempoLivreSegundos: number; // tempo que será somado no back
 
@@ -40,6 +41,7 @@ export interface EstudoTopicoResponse {
   topicoId: number;
   modoTemporizador: string;
   tempoLivreSegundos: number;
+  tipoSessao?: 'ESTUDO' | 'REVISAO';
 }
 
 export interface AnotacaoTopicoDTO {
@@ -50,6 +52,10 @@ export interface AnotacaoTopicoDTO {
 export interface TempoEstudoMateriaDTO {
   materiaId: number;
   materiaNome: string;
+  tempoEstudoSegundos?: number;
+  tempoRevisaoSegundos?: number;
+  tempoEstudoSemanaSegundos?: number;
+  tempoRevisaoSemanaSegundos?: number;
   tempoTotalSegundos?: number;
   tempoTotal?: number;
   totalSegundos?: number;
@@ -57,6 +63,10 @@ export interface TempoEstudoMateriaDTO {
 }
 
 export interface TempoEstudoTotalDTO {
+  tempoEstudoSegundos?: number;
+  tempoRevisaoSegundos?: number;
+  tempoEstudoSemanaSegundos?: number;
+  tempoRevisaoSemanaSegundos?: number;
   tempoTotalSegundos?: number;
   tempoTotal?: number;
   totalSegundos?: number;
@@ -68,6 +78,8 @@ export interface TempoEstudoTotalDTO {
 
 export interface ConstanciaEstudoDiaDTO {
   dia: string;
+  tempoEstudoSegundos?: number;
+  tempoRevisaoSegundos?: number;
   totalSegundos?: number;
   teveEstudo?: boolean;
   materias?: string[];

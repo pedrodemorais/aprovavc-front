@@ -252,8 +252,27 @@
   color: #6b7280;
 }
 
-.planner-backlog {
+.planner-row {
   margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.planner-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.planner-row-actions {
+  display: flex;
+  align-items: center;
+}
+
+.planner-backlog {
   color: #6b7280;
   font-size: 0.82rem;
 }
@@ -306,6 +325,12 @@
   border-radius: 12px;
   overflow: visible;
   box-shadow: 0 6px 16px rgba(17, 24, 39, 0.06);
+}
+
+.blocos-save-row {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
 }
 
 .bloco-col-dia {

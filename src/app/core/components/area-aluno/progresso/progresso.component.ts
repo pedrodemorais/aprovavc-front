@@ -135,14 +135,24 @@ export class ProgressoComponent implements OnInit {
     return `${v.toFixed(0)}%`;
   }
 
+  private obterDominioAjustado(edital?: Edital | null): number {
+    const dominio = Number(edital?.nivelDominioGeral ?? 0) || 0;
+    const progresso = Number(edital?.percentualEstudadoGeral ?? 0) || 0;
+    return Math.min(dominio, progresso);
+  }
+
   calcularDominioFraquezaPercent(materia: EditalMateriaResumo): number {
     const valor = Math.max(0, Math.min(100, materia?.nivelDominio ?? 0));
     return valor;
   }
 
   get dominioSemDados(): boolean {
-    const dominio = Number(this.editalAtivo?.nivelDominioGeral ?? 0) || 0;
+    const dominio = this.dominioGeralAjustado;
     return dominio <= 0 && this.revisoesResumo.total === 0;
+  }
+
+  get dominioGeralAjustado(): number {
+    return this.obterDominioAjustado(this.editalAtivo);
   }
 
   get dominioMateriasSemDados(): boolean {
@@ -465,14 +475,13 @@ export class ProgressoComponent implements OnInit {
 
   private formatarTempoSemanal(dto: TempoEstudoTotalDTO | null): string {
     if (!dto) return '--';
-    const total = (dto as any).totalSegundosSemana ?? (dto as any).tempoTotalSemana ?? 0;
-    const totalSegundos = Number(total) || 0;
+    const totalSegundos = this.obterTempoSemanaSegundos(dto);
     return totalSegundos > 0 ? this.formatarDuracaoSegundos(totalSegundos) : '--';
   }
 
   private formatarTempoMensal(lista: ConstanciaEstudoDiaDTO[]): string {
     if (!lista?.length) return '--';
-    const totalSegundos = lista.reduce((acc, item) => acc + (item.totalSegundos ?? 0), 0);
+    const totalSegundos = lista.reduce((acc, item) => acc + this.obterTempoSegundosConstancia(item), 0);
     return totalSegundos > 0 ? this.formatarDuracaoSegundos(totalSegundos) : '--';
   }
 
@@ -552,7 +561,7 @@ export class ProgressoComponent implements OnInit {
   }
 
   private somarConstanciaSegundos(lista: ConstanciaEstudoDiaDTO[]): number {
-    return (lista || []).reduce((acc, item) => acc + (item.totalSegundos ?? 0), 0);
+    return (lista || []).reduce((acc, item) => acc + this.obterTempoSegundosConstancia(item), 0);
   }
 
   private obterConstanciaDiaSegundos(lista: ConstanciaEstudoDiaDTO[], data: Date): number {
@@ -560,7 +569,7 @@ export class ProgressoComponent implements OnInit {
     const dataBase = this.inicioDia(data);
     const chave = this.formatarDataChave(dataBase);
     const item = lista.find((i) => this.formatarDataChave(this.parseDia(i.dia)) === chave);
-    return item?.totalSegundos ?? 0;
+    return item ? this.obterTempoSegundosConstancia(item) : 0;
   }
 
   private formatarConstanciaMensal(lista: ConstanciaEstudoDiaDTO[]): string {
@@ -568,7 +577,7 @@ export class ProgressoComponent implements OnInit {
     const periodo = this.obterPeriodoAtual();
     const diasPeriodo = this.diasNoPeriodo(periodo).length;
     if (!diasPeriodo) return '--';
-    const diasComEstudo = lista.filter((item) => (item.totalSegundos ?? 0) > 0 || item.teveEstudo).length;
+    const diasComEstudo = lista.filter((item) => this.obterTempoSegundosConstancia(item) > 0 || item.teveEstudo).length;
     const percentual = Math.round((diasComEstudo / diasPeriodo) * 100);
     return `${percentual}%`;
   }
@@ -583,13 +592,45 @@ export class ProgressoComponent implements OnInit {
 
   private obterTempoEmSegundos(dto?: TempoEstudoTotalDTO | TempoEstudoMateriaDTO | null): number {
     if (!dto) return 0;
-    const total = (dto as any).tempoTotalSegundos
+    const estudo = this.obterTempoEstudoSegundos(dto);
+    const revisao = this.obterTempoRevisaoSegundos(dto);
+    if (this.modoSelecionado === 'estudo') return estudo;
+    if (this.modoSelecionado === 'revisao') return revisao;
+    return estudo + revisao;
+  }
+
+  private obterTempoEstudoSegundos(dto?: TempoEstudoTotalDTO | TempoEstudoMateriaDTO | null): number {
+    if (!dto) return 0;
+    const total = (dto as any).tempoEstudoSegundos
+      ?? (dto as any).tempoTotalSegundos
       ?? (dto as any).tempoTotal
       ?? (dto as any).totalSegundos
-      ?? (dto as any).totalSegundosSemana
       ?? (dto as any).segundos
       ?? 0;
     return Number(total) || 0;
+  }
+
+  private obterTempoRevisaoSegundos(dto?: TempoEstudoTotalDTO | TempoEstudoMateriaDTO | null): number {
+    if (!dto) return 0;
+    const total = (dto as any).tempoRevisaoSegundos ?? 0;
+    return Number(total) || 0;
+  }
+
+  private obterTempoSemanaSegundos(dto?: TempoEstudoTotalDTO | TempoEstudoMateriaDTO | null): number {
+    if (!dto) return 0;
+    const estudo = Number((dto as any).tempoEstudoSemanaSegundos ?? (dto as any).totalSegundosSemana ?? 0) || 0;
+    const revisao = Number((dto as any).tempoRevisaoSemanaSegundos ?? 0) || 0;
+    if (this.modoSelecionado === 'estudo') return estudo;
+    if (this.modoSelecionado === 'revisao') return revisao;
+    return estudo + revisao;
+  }
+
+  private obterTempoSegundosConstancia(item: ConstanciaEstudoDiaDTO): number {
+    const estudo = Number(item.tempoEstudoSegundos ?? item.totalSegundos ?? 0) || 0;
+    const revisao = Number(item.tempoRevisaoSegundos ?? 0) || 0;
+    if (this.modoSelecionado === 'estudo') return estudo;
+    if (this.modoSelecionado === 'revisao') return revisao;
+    return estudo + revisao;
   }
 
   private formatarDuracao(minutos: number): string {
@@ -635,7 +676,7 @@ export class ProgressoComponent implements OnInit {
   }
 
   private definirMaxConstancia(lista: ConstanciaEstudoDiaDTO[]): number {
-    return Math.max(0, ...(lista || []).map((item) => item.totalSegundos ?? 0));
+    return Math.max(0, ...(lista || []).map((item) => this.obterTempoSegundosConstancia(item)));
   }
 
   private obterPeriodoAtual(): { inicio: Date; fim: Date } {
@@ -814,8 +855,8 @@ export class ProgressoComponent implements OnInit {
       const data = new Date(this.calendarioAno, this.calendarioMes, dia);
       const chave = this.formatarDataChave(data);
       const item = mapa.get(chave);
-      const totalSegundos = item?.totalSegundos ?? 0;
-      const status = totalSegundos > 0 || item?.teveEstudo ? 'estudado' : 'faltou';
+    const totalSegundos = item ? this.obterTempoSegundosConstancia(item) : 0;
+    const status = totalSegundos > 0 || item?.teveEstudo ? 'estudado' : 'faltou';
       dias.push({
         day: dia,
         date: data,
@@ -1038,7 +1079,7 @@ export class ProgressoComponent implements OnInit {
     const mapa = new Map<string, number>();
     (this.constanciaDiasPeriodo || []).forEach((item) => {
       const chave = this.formatarDataChave(this.parseDia(item.dia));
-      mapa.set(chave, item.totalSegundos ?? 0);
+      mapa.set(chave, this.obterTempoSegundosConstancia(item));
     });
     const pontos: Array<{ value: number; heightPct: number; label: string }> = [];
     let max = 0;
