@@ -84,8 +84,49 @@
 <ng-container *ngIf="modo === 'automatico'; else embedded">
   <div class="revisoes-page">
     <div class="revisoes-header">
-      <h2>Fila de revisões</h2>
-      <p>Priorize o que está vencido e o que vence hoje.</p>
+      <div class="revisoes-head-row">
+        <div class="revisoes-title">
+          <h2>Fila de revisões</h2>
+          <button
+            type="button"
+            class="rev-info-btn"
+            pTooltip="Priorize o que está vencido e o que vence hoje."
+            tooltipPosition="top"
+            aria-label="Priorize o que está vencido e o que vence hoje.">
+            <i class="pi pi-info-circle" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="revisoes-actions">
+          <div class="timer-modos separado" role="tablist" aria-label="Filtrar revisoes por status">
+            <button
+              type="button"
+              class="btn-modo-timer"
+              [class.ativo]="filtroStatus === 'hoje'"
+              (click)="setFiltroStatus('hoje')"
+            >
+              Hoje
+            </button>
+            <span class="seg-sep" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="btn-modo-timer"
+              [class.ativo]="filtroStatus === 'atrasadas'"
+              (click)="setFiltroStatus('atrasadas')"
+            >
+              Atrasadas
+            </button>
+            <span class="seg-sep" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="btn-modo-timer"
+              [class.ativo]="filtroStatus === 'emdia'"
+              (click)="setFiltroStatus('emdia')"
+            >
+              Em dia
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     <ng-container *ngTemplateOutlet="listaTpl"></ng-container>
   </div>

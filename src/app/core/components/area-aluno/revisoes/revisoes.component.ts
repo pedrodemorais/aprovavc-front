@@ -37,6 +37,19 @@ export class RevisoesComponent implements OnInit {
     }
   }
 
+  setFiltroStatus(status: 'atrasadas' | 'hoje' | 'emdia'): void {
+    this.filtroStatus = status;
+    this.aplicarFiltro();
+
+    if (this.modo === 'automatico') {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { filtro: status },
+        queryParamsHandling: 'merge'
+      });
+    }
+  }
+
   private carregarRevisoes(): void {
     this.carregando = true;
     this.erro = undefined;

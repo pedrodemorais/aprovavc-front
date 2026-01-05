@@ -20,19 +20,36 @@
 }
 
 .page-title {
-  font-size: 1.35rem;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   margin: 0;
   color: #2b2b2c9c;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  letter-spacing: 0.2px;
 }
 
 .info-icon {
-  font-size: 0.95rem;
-  color: #6b7280;
-  cursor: pointer;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: help;
+  line-height: 1;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.info-icon:hover,
+.info-icon:focus {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+:host-context(body.theme-dark) .page-title {
+  color: #e5e7eb;
+}
+
+:host-context(body.theme-dark) .info-icon {
+  color: var(--text-2);
 }
 
 .card {

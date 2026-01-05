@@ -46,13 +46,14 @@ body.theme-dark,
 }
 
 .page-title{
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   color: #2b2b2c9c;
   margin: 0 0 4px;
   display: flex;
   align-items: center;
   gap: 10px;
+  letter-spacing: 0.2px;
 }
 
 .page-subtitle{
@@ -65,15 +66,14 @@ body.theme-dark,
 .info-icon{
   font-size: 14px;
   line-height: 1;
-  cursor: pointer;
-  opacity: .55;
-  transform: translateY(1px);
+  cursor: help;
+  color: var(--muted);
   transition: opacity 120ms ease, transform 120ms ease;
 }
 .info-icon:hover,
 .info-icon:focus{
   opacity: .9;
-  transform: translateY(0);
+  transform: translateY(-1px);
   outline: none;
 }
 

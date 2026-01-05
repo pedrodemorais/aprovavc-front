@@ -34,19 +34,108 @@
 
 .revisoes-header {
   margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.revisoes-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.revisoes-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .revisoes-header h2 {
-  margin: 0 0 6px;
-  font-size: 1.2rem;
-  color: #111827;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #2b2b2c9c;
+  letter-spacing: 0.2px;
 }
 
-.revisoes-header p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.9rem;
+.revisoes-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
+
+.rev-info-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: help;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.rev-info-btn:hover,
+.rev-info-btn:focus {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.timer-modos {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.055);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  width: fit-content;
+}
+
+.btn-modo-timer {
+  position: relative;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.seg-sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  margin: 0 4px;
+  flex: 0 0 auto;
+}
+
+.btn-modo-timer:hover {
+  transform: translateY(-1px);
+}
+
+.btn-modo-timer.ativo {
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  z-index: 1;
+}
+
 
 @media (max-width: 900px) {
   .revisoes-page {
@@ -345,4 +434,32 @@
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 12px 26px rgba(34, 197, 94, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .revisoes-title h2 {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .rev-info-btn {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .timer-modos {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .btn-modo-timer {
+  color: #cbd5e1 !important;
+}
+
+:host-context(body.theme-dark) .btn-modo-timer.ativo {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: rgba(84, 186, 103, 0.35) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35) !important;
+}
+
+:host-context(body.theme-dark) .seg-sep {
+  background: rgba(255, 255, 255, 0.18) !important;
 }

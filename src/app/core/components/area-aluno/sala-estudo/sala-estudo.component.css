@@ -44,7 +44,10 @@
   gap: 10px;
   max-width: 100%;
   min-width: 0;
-  font-size: 1.1rem;
+  font-size: 18px;
+  font-weight: 500;
+  color: #2b2b2c9c;
+  letter-spacing: 0.2px;
 }
 
 .sala-titulo .titulo-materia-text {
@@ -1862,6 +1865,10 @@
 :host-context(body.theme-dark) .titulo-section,
 :host-context(body.theme-dark) .flashcard-titulo {
   color: #ecececbb !important;
+}
+
+:host-context(body.theme-dark) .titulo-materia {
+  color: #e5e7eb !important;
 }
 
 :host-context(body.theme-dark) .btn-toggle-coluna {

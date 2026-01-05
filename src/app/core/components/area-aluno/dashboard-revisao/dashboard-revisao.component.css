@@ -48,7 +48,7 @@
 
 .hero-card {
 
-  padding: 18px;
+ 
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -136,8 +136,10 @@
 
 .hero-title h2 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 18px;
+  font-weight: 500;
   color: #2b2b2c9c;
+  letter-spacing: 0.2px;
 }
 
 .hero-title {
@@ -149,19 +151,19 @@
 .hero-info-btn {
   border: none;
   background: transparent;
-  color: #6b7280;
-  cursor: pointer;
+  color: var(--muted);
+  cursor: help;
   padding: 0;
   display: inline-flex;
   align-items: center;
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: 14px;
+  line-height: 1;
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .hero-info-btn:hover,
 .hero-info-btn:focus-visible {
-  opacity: 1;
+  opacity: 0.9;
   transform: translateY(-1px);
   outline: none;
 }
@@ -211,7 +213,7 @@
 .hero-edital-date-btn {
   border: 0;
   background: transparent;
-  color: #2563eb;
+  color: #16a34a;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -871,6 +873,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  
 }
 
 .hero-next-col-head {
@@ -878,6 +881,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+
+  padding-bottom: 8px;
+
 }
 
 .hero-next-col-head--study {
@@ -895,6 +902,11 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .hero-next-col-title {
@@ -987,7 +999,7 @@
 
 .hero-next-item:hover,
 .hero-next-item:focus-visible {
-  color: #1f2937;
+  color: #16a34a;
   outline: none;
 }
 
@@ -998,6 +1010,14 @@
   flex: 1 1 auto;
 }
 
+.hero-next-item:hover .hero-next-item-title,
+.hero-next-item:focus-visible .hero-next-item-title,
+.hero-next-item:hover .hero-next-item-sub,
+.hero-next-item:focus-visible .hero-next-item-sub,
+.hero-next-item:hover .hero-next-item-min,
+.hero-next-item:focus-visible .hero-next-item-min {
+  color: #16a34a;
+}
 .hero-next-item-min {
   font-size: 0.72rem;
   color: #94a3b8;
@@ -1652,7 +1672,7 @@
 }
 
 :host-context(body.theme-dark) .hero-edital-date-btn {
-  color: #93c5fd !important;
+  color: #22c55e !important;
 }
 
 :host-context(body.theme-dark) .hero-edital-row {
@@ -1908,6 +1928,12 @@
 
 :host-context(body.theme-dark) .hero-next-item-min {
   color: var(--muted) !important;
+}
+
+:host-context(body.theme-dark) .hero-next-col {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
 }
 
 :host-context(body.theme-dark) .hero-next-more {

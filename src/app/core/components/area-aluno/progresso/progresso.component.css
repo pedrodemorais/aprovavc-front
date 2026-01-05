@@ -6,13 +6,38 @@
   min-height: 0;
 }
 
-.progresso-head h1 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: #111827;
+.progresso-title {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.progresso-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #2b2b2c9c;
+  letter-spacing: 0.2px;
+}
+
+.progresso-info-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: help;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.progresso-info-btn:hover,
+.progresso-info-btn:focus-visible {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  outline: none;
 }
 
 .progresso-head p {
@@ -1126,7 +1151,11 @@
   color: var(--text);
 }
 
-:host-context(body.theme-dark) .progresso-head h1,
+:host-context(body.theme-dark) .progresso-info-btn {
+  color: var(--text-2);
+}
+
+:host-context(body.theme-dark) .progresso-title h2,
 :host-context(body.theme-dark) .duo-title,
 :host-context(body.theme-dark) .duo-meta,
 :host-context(body.theme-dark) .card-value,
