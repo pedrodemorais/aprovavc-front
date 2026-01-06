@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -461,12 +461,32 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       queryParams.topicoId = item.topicoId;
     }
     if (item?.status === 'VENCIDA' || item?.status === 'EM_DIA') {
-      queryParams.modo = 'revisar';
+      queryParams.modo = 'revisao';
     }
     this.router.navigate(
       ['/area-restrita/sala-estudo', item.materiaId],
       { queryParams }
     );
+  }
+
+  irParaSalaRevisao(item: RevisaoDashboardItem): void {
+    if (!item?.materiaId) return;
+    const queryTopico = item.topicoId ? `topicoId=${item.topicoId}&` : '';
+    window.location.assign(`/area-restrita/sala-estudo/${item.materiaId}?${queryTopico}modo=revisao`);
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentoPointerDown(event: PointerEvent): void {
+    const target = event.target as HTMLElement | null;
+    const topic = target?.closest?.('.hero-next-topic');
+    if (topic) {
+      const materiaId = Number((topic as HTMLElement).dataset?.['materiaId']);
+      const topicoId = Number((topic as HTMLElement).dataset?.['topicoId']);
+      if (Number.isFinite(materiaId) && materiaId > 0) {
+        const queryTopico = Number.isFinite(topicoId) && topicoId > 0 ? `topicoId=${topicoId}&` : '';
+        window.location.assign(`/area-restrita/sala-estudo/${materiaId}?${queryTopico}modo=revisao`);
+      }
+    }
   }
 
   irParaFilaRevisoes(filtro: 'atrasadas' | 'hoje' | 'emdia', materiaId?: number): void {
@@ -484,7 +504,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       queryParams.topicoId = this.sugestaoEstudo.topicoId;
     }
     if (this.sugestaoEstudo.origem !== 'BLOCO_DIA') {
-      queryParams.modo = 'revisar';
+      queryParams.modo = 'revisao';
     }
     this.router.navigate(
       ['/area-restrita/sala-estudo', this.sugestaoEstudo.materiaId],
@@ -508,15 +528,20 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   }
 
   iniciarRevisao(): void {
-    if (this.totalVencidas > 0) {
-      this.irParaFilaRevisoes('atrasadas');
+    const item = this.revisoesPrioritariasFiltradas[0];
+    if (item) {
+      this.irParaSala(item);
       return;
     }
     this.irParaFilaRevisoes('hoje');
   }
 
   verMaisRevisoes(): void {
-    this.iniciarRevisao();
+    if (this.totalVencidas > 0) {
+      this.irParaFilaRevisoes('atrasadas');
+      return;
+    }
+    this.irParaFilaRevisoes('hoje');
   }
 
   comecarEstudoProximo(): void {

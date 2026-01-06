@@ -66,7 +66,7 @@
 .revisoes-actions {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-left: auto;
 }
 
@@ -96,6 +96,7 @@
   gap: 10px;
   font-size: 0.72rem;
   color: #6b7280;
+  margin-right: 6px;
 }
 
 .counter-item {
@@ -203,7 +204,7 @@
 /* Cabecalho tipo tabela (desktop) */
 .rev-list-header {
   display: grid;
-  grid-template-columns: 12px 1fr 1.6fr;
+  grid-template-columns: 12px 2.2fr 1fr;
   column-gap: 10px;
   padding: 12px 22px;
   padding-right: calc(22px + var(--rev-scrollbar));
@@ -278,7 +279,7 @@
 /* Linhas (desktop) */
 .rev-list-row {
   display: grid;
-  grid-template-columns: 12px 1fr 1.6fr;
+  grid-template-columns: 12px 2.2fr 1fr;
   column-gap: 10px;
   padding: 14px 22px;
   align-items: center;
@@ -427,6 +428,30 @@
 
 .btn-acao-principal {
   align-self: center;
+}
+
+.btn-revisar-cta {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 11.5px;
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.btn-revisar-cta:hover {
+  transform: translateY(-1px);
+}
+
+:host-context(body.theme-dark) .btn-revisar-cta {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: rgba(84, 186, 103, 0.35) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* Responsivo */
@@ -592,4 +617,3 @@
 :host-context(body.theme-dark) .seg-sep {
   background: rgba(255, 255, 255, 0.18) !important;
 }
-

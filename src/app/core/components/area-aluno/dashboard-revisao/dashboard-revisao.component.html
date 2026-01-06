@@ -174,11 +174,14 @@
               <div class="hero-next-list" *ngIf="revisoesPrioritariasTotal; else heroNextSemRevisoes">
                 <div class="hero-next-group" *ngFor="let grupo of revisoesPrioritariasAgrupadas">
                   <div class="hero-next-group-title">{{ grupo.materiaNome }}</div>
-                  <button
-                    type="button"
-                    class="hero-next-topic"
-                    *ngFor="let item of grupo.itens"
-                    (click)="irParaSala(item)">
+                    <button
+                      type="button"
+                      class="hero-next-topic"
+                      *ngFor="let item of grupo.itens"
+                      (pointerdown)="irParaSalaRevisao(item)"
+                      [attr.data-materia-id]="item.materiaId"
+                      [attr.data-topico-id]="item.topicoId"
+                      (click)="irParaSalaRevisao(item)">
                     <span
                       class="hero-next-item-status-dot"
                       [class.status-vencida]="item.status === 'VENCIDA'"
@@ -189,7 +192,7 @@
                     ></span>
                     <span class="hero-next-topic-text">{{ item.topicoDescricao }}</span>
                     <span class="hero-next-item-min">{{ formatarMinutos(getMinutosRevisao(item)) }}</span>
-                  </button>
+                    </button>
                 </div>
               </div>
               <button

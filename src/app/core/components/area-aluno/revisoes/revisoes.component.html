@@ -93,6 +93,8 @@
             aria-label="Priorize o que est&aacute; vencido e o que vence hoje.">
             <i class="pi pi-info-circle" aria-hidden="true"></i>
           </button>
+        </div>
+        <div class="revisoes-actions">
           <div class="revisoes-counters" aria-label="Resumo das revisoes">
             <span class="counter-item">
               <span class="counter-dot dot-vencida" aria-hidden="true"></span>
@@ -110,11 +112,9 @@
               <span class="counter-value">{{ contagemRevisoes.emDia }}</span>
             </span>
           </div>
-        </div>
-        <div class="revisoes-actions">
           <button
             type="button"
-            class="btn-ghost btn-acao-principal"
+            class="btn-ghost btn-acao-principal btn-revisar-cta"
             [disabled]="!revisaoSelecionada"
             (click)="irParaSala(revisaoSelecionada!)"
           >
