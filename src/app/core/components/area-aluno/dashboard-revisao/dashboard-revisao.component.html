@@ -259,19 +259,21 @@
         <div class="plano-lista" *ngIf="planoAtaqueSemana.length; else semPlanoAtaque">
           <div class="plano-item" *ngFor="let item of planoAtaqueSemana">
             <div class="plano-main">
-              <span class="plano-nome">{{ item.materiaNome }}</span>
-              <span class="plano-justificativa">{{ getJustificativaPlano(item) }}</span>
-              <div class="plano-chips">
-                <span class="plano-chip plano-chip--atrasadas">Revisoes atrasadas {{ item.atrasadas }}</span>
-                <span class="plano-chip plano-chip--hoje">Vence hoje {{ item.hoje }}</span>
-                <span class="plano-chip plano-chip--tempo">Minutos sugeridos {{ item.minutosSugeridos }}</span>
+              <div class="plano-top">
+                <span class="plano-nome">{{ item.materiaNome }}</span>
+                <div class="plano-chips">
+                  <span class="plano-chip plano-chip--atrasadas">Revisoes atrasadas <span class="plano-chip-num">{{ item.atrasadas }}</span></span>
+                  <span class="plano-chip plano-chip--hoje">Vence hoje <span class="plano-chip-num">{{ item.hoje }}</span></span>
+                  <span class="plano-chip plano-chip--tempo">Minutos sugeridos <span class="plano-chip-num">{{ item.minutosSugeridos }}</span></span>
+                </div>
               </div>
+              <span class="plano-justificativa">{{ getJustificativaPlano(item) }}</span>
             </div>
             <button
               type="button"
               class="plano-btn"
               (click)="irParaFilaRevisoes(item.filtroPreferido, item.materiaId)">
-              Ir para revisar
+              Revisar
             </button>
           </div>
         </div>

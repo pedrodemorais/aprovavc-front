@@ -15,6 +15,7 @@ export class RevisoesComponent implements OnInit {
   erro?: string;
   filtroStatus: 'atrasadas' | 'hoje' | 'emdia' | 'todas' = 'todas';
   filtroMateriaId: number | null = null;
+  revisaoSelecionada: RevisaoDashboardItem | null = null;
   private revisoesTodas: RevisaoDashboardItem[] = [];
 
   constructor(
@@ -37,7 +38,7 @@ export class RevisoesComponent implements OnInit {
     }
   }
 
-  setFiltroStatus(status: 'atrasadas' | 'hoje' | 'emdia'): void {
+  setFiltroStatus(status: 'atrasadas' | 'hoje' | 'emdia' | 'todas'): void {
     this.filtroStatus = status;
     this.aplicarFiltro();
 
@@ -87,6 +88,13 @@ export class RevisoesComponent implements OnInit {
       lista = lista.filter((item) => item.materiaId === this.filtroMateriaId);
     }
     this.revisoes = lista;
+    if (this.revisaoSelecionada && !this.revisoes.some((item) => item.materiaId === this.revisaoSelecionada?.materiaId && item.topicoId === this.revisaoSelecionada?.topicoId)) {
+      this.revisaoSelecionada = null;
+    }
+  }
+
+  selecionarRevisao(item: RevisaoDashboardItem): void {
+    this.revisaoSelecionada = item;
   }
 
   irParaSala(item: RevisaoDashboardItem): void {

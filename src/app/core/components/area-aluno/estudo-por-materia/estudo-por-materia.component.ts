@@ -624,6 +624,31 @@ export class MateriaEstudoComponent implements OnInit {
     return Math.round((concl / total) * 100);
   }
 
+  getResumoMateriaLinha(m: Materia): ResumoMateriaExpandida {
+    const materiaId = this.asId((m as any)?.id ?? (m as any)?.materiaId);
+    if (!materiaId) {
+      return { total: 0, concluidas: 0, atrasadas: 0, hoje: 0, emDia: 0 };
+    }
+
+    let total = 0;
+    let concluidas = 0;
+    let atrasadas = 0;
+    let hoje = 0;
+    let emDia = 0;
+
+    this.revisoesPorTopico.forEach((info, topicoId) => {
+      if (info.materiaId !== materiaId) return;
+      total++;
+      if (this.concluidosPorTopico.has(topicoId)) concluidas++;
+
+      if (info.status === 'ATRASADA') atrasadas++;
+      else if (info.status === 'HOJE') hoje++;
+      else if (info.status === 'FUTURA') emDia++;
+    });
+
+    return { total, concluidas, atrasadas, hoje, emDia };
+  }
+
   // ==========================
   // ✅ Resumo do expandir (métricas no lugar certo)
   // ==========================

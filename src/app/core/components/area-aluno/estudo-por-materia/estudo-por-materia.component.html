@@ -134,20 +134,29 @@
           </div>
         </div>
 
+        <ng-container *ngIf="getResumoMateriaLinha(m) as resumo">
+          <div class="curso-resumo" *ngIf="resumo.total">
+            <span class="curso-resumo-item curso-resumo-item--atrasadas">
+              Atrasadas <span class="curso-resumo-num curso-resumo-num--bad">{{ resumo.atrasadas }}</span>
+            </span>
+            <span class="curso-resumo-item curso-resumo-item--hoje">
+              Hoje <span class="curso-resumo-num curso-resumo-num--hoje">{{ resumo.hoje }}</span>
+            </span>
+            <span class="curso-resumo-item curso-resumo-item--em-dia">
+              Em dias <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.emDia }}</span>
+            </span>
+            <span class="curso-resumo-item curso-resumo-item--concluidas">
+              <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.concluidas }}/{{ resumo.total }}</span> concluidas
+            </span>
+          </div>
+        </ng-container>
+
         <i class="pi curso-chevron"
            [ngClass]="(materiaExpandida?.id === m.id) ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
       </button>
 
       <!-- CORPO -->
       <div class="curso-body" *ngIf="materiaExpandida?.id === m.id">
-
-        <!-- ✅ resumo da matéria (métricas no lugar certo: expandir) -->
-        <div class="materia-resumo" *ngIf="resumoExpandida">
-          <span class="rk rk--bad">{{ resumoExpandida.atrasadas }} atrasadas</span>
-          <span class="rk rk--hoje">{{ resumoExpandida.hoje }} hoje</span>
-          <span class="rk rk--ok">{{ resumoExpandida.emDia }} em dia</span>
-          <span class="rk rk--muted">{{ resumoExpandida.concluidas }}/{{ resumoExpandida.total }} concluídas</span>
-        </div>
 
         <!-- Loading tópicos -->
         <div class="estado estado-loading" *ngIf="carregandoTopicos">
@@ -297,3 +306,4 @@
     </button>
   </div>
 </p-overlayPanel>
+

@@ -14,7 +14,7 @@
           
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/visao",
+            "outputPath": "dist/visao/browser",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -64,8 +64,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "25kb",
-                  "maximumError": "35kb"
+                  "maximumWarning": "50kb",
+                  "maximumError": "70kb"
                 }
               ],
               "outputHashing": "all"
@@ -121,6 +121,69 @@
             ],
             "scripts": []
           }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/visao/server",
+            "main": "server.ts",
+            "tsConfig": "tsconfig.server.json"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "media",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "sourceMap": true,
+              "extractLicenses": false,
+              "vendorChunk": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-ssr": {
+          "builder": "@nguniversal/builders:ssr-dev-server",
+          "configurations": {
+            "development": {
+              "browserTarget": "visao:build:development",
+              "serverTarget": "visao:server:development"
+            },
+            "production": {
+              "browserTarget": "visao:build:production",
+              "serverTarget": "visao:server:production"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "prerender": {
+          "builder": "@nguniversal/builders:prerender",
+          "options": {
+            "guessRoutes": false,
+            "routes": [
+              "/",
+              "/politica-privacidade",
+              "/termos-de-uso"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "visao:build:production",
+              "serverTarget": "visao:server:production"
+            },
+            "development": {
+              "browserTarget": "visao:build:development",
+              "serverTarget": "visao:server:development"
+            }
+          },
+          "defaultConfiguration": "production"
         }
       }
     }

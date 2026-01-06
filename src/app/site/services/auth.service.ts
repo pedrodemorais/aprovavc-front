@@ -1,9 +1,11 @@
-import { Injectable, EventEmitter } from '@angular/core';
+import { Inject, Injectable, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, of, throwError, BehaviorSubject } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 
 export interface LoginResponse {
   access_token: string;
@@ -32,7 +34,11 @@ export class AuthService {
   // 🔥 Estado reativo do access_token
   private accessTokenSubject = new BehaviorSubject<string | null>(this.getAccessToken());
 
-  constructor(private router: Router, private http: HttpClient) {
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private router: Router,
+    private http: HttpClient
+  ) {
     // 🔥 IMPORTANTE: reidratar estado ao iniciar (inclusive depois de F5)
     this.recarregarEstadoDoLocalStorage();
   }
@@ -41,6 +47,7 @@ export class AuthService {
   //   🔥 REIDRATA OS SUBJECTS A PARTIR DO LOCALSTORAGE
   // =====================================================
   private recarregarEstadoDoLocalStorage(): void {
+    if (!this.isBrowser()) return;
     const token = localStorage.getItem('access_token');
     const assinaturaValida = localStorage.getItem('assinaturaValida');
     const statusAssinatura = localStorage.getItem('statusAssinatura');
@@ -158,10 +165,12 @@ checarAssinaturaNoBack(): Observable<boolean> {
   // ========= HELPERS DE TOKEN =========
 
   getAccessToken(): string | null {
+    if (!this.isBrowser()) return null;
     return localStorage.getItem('access_token');
   }
 
   refreshAccessToken(): void {
+    if (!this.isBrowser()) return;
     const token = localStorage.getItem('access_token');
 
     if (token) {
@@ -171,11 +180,14 @@ checarAssinaturaNoBack(): Observable<boolean> {
       console.info('🔄 Token atualizado no localStorage.');
       this.accessTokenSubject.next(token);
       this.tokenAtualizado.emit();
-      window.dispatchEvent(new Event('storage'));
+      if (this.isBrowser()) {
+        window.dispatchEvent(new Event('storage'));
+      }
     }
   }
 
   setAccessToken(token: string): void {
+    if (!this.isBrowser()) return;
     localStorage.setItem('access_token', token);
     this.accessTokenSubject.next(token);
     this.tokenAtualizado.emit();
@@ -195,6 +207,7 @@ checarAssinaturaNoBack(): Observable<boolean> {
   // ========= ASSINATURA / PLANO =========
 
   private getAssinaturaValidaFromStorage(): boolean {
+    if (!this.isBrowser()) return false;
     const valor = localStorage.getItem('assinaturaValida');
     return valor === 'true';
   }
@@ -204,10 +217,12 @@ checarAssinaturaNoBack(): Observable<boolean> {
   }
 
   getStatusAssinatura(): string | null {
+    if (!this.isBrowser()) return null;
     return localStorage.getItem('statusAssinatura');
   }
 
   getPlanoAtual(): string | null {
+    if (!this.isBrowser()) return null;
     return localStorage.getItem('planoAtual');
   }
 
@@ -349,10 +364,12 @@ checarAssinaturaNoBack(): Observable<boolean> {
   // ========= LOGOUT =========
 
   logout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('assinaturaValida');
-    localStorage.removeItem('statusAssinatura');
-    localStorage.removeItem('planoAtual');
+    if (this.isBrowser()) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('assinaturaValida');
+      localStorage.removeItem('statusAssinatura');
+      localStorage.removeItem('planoAtual');
+    }
 
     this.accessTokenSubject.next(null);
     this.assinaturaValidaSubject.next(false);
@@ -408,9 +425,15 @@ checarAssinaturaNoBack(): Observable<boolean> {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     });
-    console.log('🔍 Token salvo no sessionStorage:', sessionStorage.getItem('authToken'));
+    if (this.isBrowser()) {
+      console.log('🔍 Token salvo no sessionStorage:', sessionStorage.getItem('authToken'));
+    }
 
     const body = { senhaAtual, novaSenha };
     return this.http.post(`${environment.apiUrl}/usuarios/alterar-senha`, body, { headers });
+  }
+
+  private isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
   }
 }

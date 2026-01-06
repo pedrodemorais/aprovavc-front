@@ -1,4 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 
 type Slide = {
   image: string;
@@ -43,7 +45,10 @@ export class FullWidthSliderComponent implements OnInit, OnDestroy {
   private readonly fadeMs = 1200;
   private readonly textSwapDelayMs = 400;
 
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
+
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     if (this.slides.length <= 1) return;
 
     this.intervalId = setInterval(() => {
@@ -56,6 +61,7 @@ export class FullWidthSliderComponent implements OnInit, OnDestroy {
   }
 
   nextSlide(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     if (this.slides.length <= 1) return;
 
     // anima o texto (some -> troca -> aparece)

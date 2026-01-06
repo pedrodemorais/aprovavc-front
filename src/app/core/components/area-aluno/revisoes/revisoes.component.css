@@ -20,11 +20,11 @@
 
 /* Layout da pagina de revisoes */
 .revisoes-page {
-  max-width: none;
+  max-width: 1080px;
   width: 100%;
   height: 100%;
   min-height: 0;
-  margin: 0;
+  margin: 0 auto;
   padding: 16px 20px 24px;
   box-sizing: border-box;
   display: flex;
@@ -163,7 +163,7 @@
 /* Cabecalho tipo tabela (desktop) */
 .rev-list-header {
   display: grid;
-  grid-template-columns: 1fr 3fr 1.3fr 1.8fr 1.3fr;
+  grid-template-columns: 1fr 3fr 1.8fr;
   column-gap: 24px;
   padding: 12px 22px;
   padding-right: calc(22px + var(--rev-scrollbar));
@@ -175,6 +175,37 @@
   color: #6b7280;
   align-items: center;
   flex-shrink: 0;
+}
+
+.rev-list-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-filter-select {
+  margin-top: 6px;
+  padding: 5px 28px 5px 10px;
+  min-width: 140px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  background: #ffffff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 10px center;
+  color: #374151;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: none;
+  line-height: 1.2;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+  appearance: none;
+}
+
+.status-filter-select:focus-visible {
+  outline: none;
+  border-color: rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
 }
 
 /* Corpo rolavel da lista */
@@ -207,13 +238,14 @@
 /* Linhas (desktop) */
 .rev-list-row {
   display: grid;
-  grid-template-columns: 1fr 3fr 1.3fr 1.8fr 1.3fr;
+  grid-template-columns: 1fr 3fr 1.8fr;
   column-gap: 24px;
   padding: 14px 22px;
   align-items: center;
   border-top: 1px solid var(--border);
   background: transparent;
   transition: background 0.12s ease;
+  cursor: pointer;
 }
 
 .rev-list-row > * {
@@ -225,13 +257,8 @@
   align-items: flex-start;
 }
 
-.rev-list-row .col-tipo,
 .rev-list-row .col-data {
   align-items: flex-start;
-}
-
-.rev-list-row .col-acoes {
-  align-items: flex-end;
 }
 
 .rev-list-row:nth-child(even) {
@@ -242,15 +269,28 @@
   background: rgba(34, 197, 94, 0.08);
 }
 
+.rev-list-row.is-selected {
+  background: rgba(34, 197, 94, 0.14);
+}
+
 /* Colunas */
 .col-status,
 .col-materia,
-.col-tipo,
 .col-data {
   display: flex;
   flex-direction: column;
   gap: 4px;
   align-items: flex-start;
+}
+
+.rev-list-header .col-data {
+  justify-self: end;
+  text-align: right;
+}
+
+.rev-list-row .col-data {
+  align-items: flex-end;
+  text-align: right;
 }
 
 /* Pills / labels */
@@ -332,9 +372,24 @@
   color: #374151;
 }
 
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .btn-ghost:hover {
   border-color: #16a34a;
   color: #16a34a;
+}
+
+.rev-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 22px 18px;
+}
+
+.btn-acao-principal {
+  align-self: center;
 }
 
 /* Responsivo */
@@ -351,14 +406,13 @@
     padding: 12px 14px;
   }
 
-  .col-acoes {
-    width: 100%;
-    align-items: flex-start;
-  }
-
   .btn-ghost {
     align-self: stretch;
     text-align: center;
+  }
+
+  .rev-footer {
+    padding: 10px 14px 16px;
   }
 }
 
@@ -386,6 +440,22 @@
 
 :host-context(body.theme-dark) .rev-list-row:hover {
   background: rgba(34, 197, 94, 0.12) !important;
+}
+
+:host-context(body.theme-dark) .rev-list-row.is-selected {
+  background: rgba(34, 197, 94, 0.2) !important;
+}
+
+:host-context(body.theme-dark) .status-filter-select {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .status-filter-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 8l4 4 4-4' stroke='%23cbd5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
 }
 
 :host-context(body.theme-dark) .materia-nome {

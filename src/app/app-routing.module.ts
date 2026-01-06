@@ -87,8 +87,9 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes, {
     // deixa o browser lidar com scroll no F5 (evita “pulo pro topo” forçado)
     scrollPositionRestoration: 'disabled',
-    anchorScrolling: 'disabled'
-  })],
+    anchorScrolling: 'disabled',
+    initialNavigation: 'enabledBlocking'
+})],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

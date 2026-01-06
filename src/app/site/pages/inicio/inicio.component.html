@@ -25,9 +25,21 @@
       </div>
 
       <nav class="menu" aria-label="Menu principal">
-        <p-menubar [model]="menuItems" class="custom-menubar">
-          <ng-template pTemplate="start"></ng-template>
-        </p-menubar>
+        <ng-container *ngIf="isBrowser; else menuFallback">
+          <p-menubar [model]="menuItems" class="custom-menubar">
+            <ng-template pTemplate="start"></ng-template>
+          </p-menubar>
+        </ng-container>
+        <ng-template #menuFallback>
+          <ul class="menu-fallback">
+            <li><a href="/">Home</a></li>
+            <li><a href="#sobre-nos">Sobre</a></li>
+            <li><a href="#services">Soluções</a></li>
+            <li><a href="#plans">Planos</a></li>
+            <li><a href="#blog">Blog</a></li>
+            <li><a href="/login">Entrar</a></li>
+          </ul>
+        </ng-template>
       </nav>
     </div>
   </header>

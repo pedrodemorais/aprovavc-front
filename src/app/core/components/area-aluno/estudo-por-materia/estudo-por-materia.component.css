@@ -384,9 +384,10 @@
   width: 100%;
   border: 0;
   background: transparent;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 10px;
+  column-gap: 10px;
   padding: 10px 12px;
   padding-left: 14px; /* respiro da barra */
   cursor: pointer;
@@ -431,7 +432,7 @@
 .curso-title-row{
   display:flex;
   align-items:center;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 .curso-title{
@@ -443,6 +444,43 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.curso-resumo{
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #6b7280;
+  justify-content: flex-end;
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.curso-resumo-item{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.curso-resumo-item + .curso-resumo-item::before{
+  content: '|';
+  color: #cbd5e1;
+  margin: 0 6px 0 2px;
+}
+
+.curso-resumo-item--atrasadas{ min-width: 0; }
+.curso-resumo-item--hoje{ min-width: 0; }
+.curso-resumo-item--em-dia{ min-width: 0; }
+.curso-resumo-item--concluidas{ min-width: 0; }
+
+.curso-resumo-num{
+  font-weight: 600;
+}
+
+.curso-resumo-num--bad{ color: var(--bad); }
+.curso-resumo-num--hoje{ color: var(--hoje); }
+.curso-resumo-num--ok{ color: var(--ok); }
 
 .curso-chevron{
   margin-left: auto;

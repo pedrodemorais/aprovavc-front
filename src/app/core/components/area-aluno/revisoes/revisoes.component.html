@@ -1,81 +1,72 @@
-<ng-template #listaTpl>
-  <div class="rev-state" *ngIf="carregando">Carregando revisões...</div>
+﻿<ng-template #listaTpl>
+  <div class="rev-state" *ngIf="carregando">Carregando revis&otilde;es...</div>
   <div class="rev-state erro" *ngIf="erro">{{ erro }}</div>
 
   <div class="rev-card" *ngIf="revisoesFiltradas?.length">
 
-    <!-- cabeçalho tipo "tabela" -->
+    <!-- cabe&ccedil;alho tipo "tabela" -->
     <div class="rev-list-header">
-      <span class="col-status">Status</span>
-      <span class="col-materia">Matéria / tópico</span>
-      <span class="col-tipo">Tipo</span>
-      <span class="col-data">Próxima revisão</span>
-      <span class="col-acoes">Ações</span>
+      <div class="col-status">
+        <select
+          class="status-filter-select"
+          [ngModel]="filtroStatus"
+          (ngModelChange)="setFiltroStatus($event)"
+          aria-label="Filtrar revis&otilde;es por status"
+        >
+          <option value="todas">Todos</option>
+          <option value="hoje">Hoje</option>
+          <option value="atrasadas">Vencidas</option>
+          <option value="emdia">Em dia</option>
+        </select>
+      </div>
+      <span class="col-materia">Mat&eacute;ria / t&oacute;pico</span>
+      <span class="col-data">Pr&oacute;xima revis&atilde;o</span>
     </div>
 
-    <!-- linhas -->
+        <!-- linhas -->
     <div class="rev-list-body">
       <div
         class="rev-list-row"
+        [class.is-selected]="revisaoSelecionada?.materiaId === r.materiaId && revisaoSelecionada?.topicoId === r.topicoId"
+        (click)="selecionarRevisao(r)"
         *ngFor="let r of revisoesFiltradas"
       >
-      <!-- STATUS -->
-      <div class="col-status">
-        <span
-          class="pill-status"
-          [ngClass]="{
-            'status-vencida': r.status === 'VENCIDA',
-            'status-hoje':   r.status === 'EM_DIA',
-            'status-futura': r.status === 'FUTURA'
-          }"
-        >
-          {{
-            r.status === 'VENCIDA'
-              ? 'Vencida'
-              : r.status === 'EM_DIA'
-                ? 'Hoje'
-                : 'Futura'
-          }}
-        </span>
-      </div>
-
-      <!-- MATÉRIA / TÓPICO -->
-      <div class="col-materia">
-        <div class="materia-nome">{{ r.materiaNome }}</div>
-        <div class="topico-descricao">Tópico: {{ r.topicoDescricao }}</div>
-      </div>
-
-      <!-- TIPO -->
-      <div class="col-tipo">
-        <span
-          class="pill-tipo"
-          [ngClass]="r.tipo === 'ANOTACAO' ? 'pill-anotacao' : 'pill-flashcard'"
-        >
-          {{ r.tipo === 'ANOTACAO' ? 'Anotações' : 'Flashcards' }}
-        </span>
-      </div>
-
-      <!-- DATA / QUANTIDADE -->
-      <div class="col-data">
-        <div class="data-principal">
-          {{ r.dataProximaRevisao | date: 'shortDate' }}
+        <!-- STATUS -->
+        <div class="col-status">
+          <span
+            class="pill-status"
+            [ngClass]="{
+              'status-vencida': r.status === 'VENCIDA',
+              'status-hoje':   r.status === 'EM_DIA',
+              'status-futura': r.status === 'FUTURA'
+            }"
+          >
+            {{
+              r.status === 'VENCIDA'
+                ? 'Vencida'
+                : r.status === 'EM_DIA'
+                  ? 'Hoje'
+                  : 'Futura'
+            }}
+          </span>
         </div>
-        <div class="data-secundaria" *ngIf="r.qtdPendentes">
-          {{ r.qtdPendentes }} itens pendentes
+
+        <!-- MATERIA / TOPICO -->
+        <div class="col-materia">
+          <div class="materia-nome">{{ r.materiaNome }}</div>
+          <div class="topico-descricao">T&oacute;pico: {{ r.topicoDescricao }}</div>
+        </div>
+
+        <!-- DATA / QUANTIDADE -->
+        <div class="col-data">
+          <div class="data-principal">
+            {{ r.dataProximaRevisao | date: 'shortDate' }}
+          </div>
+          <div class="data-secundaria" *ngIf="r.qtdPendentes">
+            {{ r.qtdPendentes }} itens pendentes
+          </div>
         </div>
       </div>
-
-      <!-- AÇÕES -->
-      <div class="col-acoes">
-        <button
-          type="button"
-          class="btn-ghost"
-          (click)="irParaSala(r)"
-        >
-          Ir para sala de estudo
-        </button>
-      </div>
-    </div>
     </div>
 
   </div>
@@ -84,47 +75,27 @@
 <ng-container *ngIf="modo === 'automatico'; else embedded">
   <div class="revisoes-page">
     <div class="revisoes-header">
-      <div class="revisoes-head-row">
+            <div class="revisoes-head-row">
         <div class="revisoes-title">
-          <h2>Fila de revisões</h2>
+          <h2>Fila de revis&otilde;es</h2>
           <button
             type="button"
             class="rev-info-btn"
-            pTooltip="Priorize o que está vencido e o que vence hoje."
+            pTooltip="Priorize o que est&aacute; vencido e o que vence hoje."
             tooltipPosition="top"
-            aria-label="Priorize o que está vencido e o que vence hoje.">
+            aria-label="Priorize o que est&aacute; vencido e o que vence hoje.">
             <i class="pi pi-info-circle" aria-hidden="true"></i>
           </button>
         </div>
         <div class="revisoes-actions">
-          <div class="timer-modos separado" role="tablist" aria-label="Filtrar revisoes por status">
-            <button
-              type="button"
-              class="btn-modo-timer"
-              [class.ativo]="filtroStatus === 'hoje'"
-              (click)="setFiltroStatus('hoje')"
-            >
-              Hoje
-            </button>
-            <span class="seg-sep" aria-hidden="true"></span>
-            <button
-              type="button"
-              class="btn-modo-timer"
-              [class.ativo]="filtroStatus === 'atrasadas'"
-              (click)="setFiltroStatus('atrasadas')"
-            >
-              Atrasadas
-            </button>
-            <span class="seg-sep" aria-hidden="true"></span>
-            <button
-              type="button"
-              class="btn-modo-timer"
-              [class.ativo]="filtroStatus === 'emdia'"
-              (click)="setFiltroStatus('emdia')"
-            >
-              Em dia
-            </button>
-          </div>
+          <button
+            type="button"
+            class="btn-ghost btn-acao-principal"
+            [disabled]="!revisaoSelecionada"
+            (click)="irParaSala(revisaoSelecionada!)"
+          >
+            Ir para sala de estudo
+          </button>
         </div>
       </div>
     </div>
