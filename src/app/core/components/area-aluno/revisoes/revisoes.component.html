@@ -1,4 +1,4 @@
-﻿<ng-template #listaTpl>
+<ng-template #listaTpl>
   <div class="rev-state" *ngIf="carregando">Carregando revis&otilde;es...</div>
   <div class="rev-state erro" *ngIf="erro">{{ erro }}</div>
 
@@ -7,17 +7,6 @@
     <!-- cabe&ccedil;alho tipo "tabela" -->
     <div class="rev-list-header">
       <div class="col-status">
-        <select
-          class="status-filter-select"
-          [ngModel]="filtroStatus"
-          (ngModelChange)="setFiltroStatus($event)"
-          aria-label="Filtrar revis&otilde;es por status"
-        >
-          <option value="todas">Todos</option>
-          <option value="hoje">Hoje</option>
-          <option value="atrasadas">Vencidas</option>
-          <option value="emdia">Em dia</option>
-        </select>
       </div>
       <span class="col-materia">Mat&eacute;ria / t&oacute;pico</span>
       <span class="col-data">Pr&oacute;xima revis&atilde;o</span>
@@ -34,21 +23,28 @@
         <!-- STATUS -->
         <div class="col-status">
           <span
-            class="pill-status"
+            class="status-dot"
             [ngClass]="{
               'status-vencida': r.status === 'VENCIDA',
               'status-hoje':   r.status === 'EM_DIA',
               'status-futura': r.status === 'FUTURA'
             }"
-          >
-            {{
+            [attr.aria-label]="
               r.status === 'VENCIDA'
-                ? 'Vencida'
+                ? 'Revisao vencida'
                 : r.status === 'EM_DIA'
-                  ? 'Hoje'
-                  : 'Futura'
-            }}
-          </span>
+                  ? 'Revisao do dia'
+                  : 'Revisao futura'
+            "
+            [attr.title]="
+              r.status === 'VENCIDA'
+                ? 'Revisao vencida'
+                : r.status === 'EM_DIA'
+                  ? 'Revisao do dia'
+                  : 'Revisao futura'
+            "
+            role="img"
+          ></span>
         </div>
 
         <!-- MATERIA / TOPICO -->
@@ -78,6 +74,17 @@
             <div class="revisoes-head-row">
         <div class="revisoes-title">
           <h2>Fila de revis&otilde;es</h2>
+          <select
+            class="status-filter-select"
+            [ngModel]="filtroStatus"
+            (ngModelChange)="setFiltroStatus($event)"
+            aria-label="Filtrar revis&otilde;es por status"
+          >
+            <option value="atrasadas">Vencidas</option>
+            <option value="hoje">Hoje</option>
+            <option value="emdia">Em dia</option>
+            <option value="todas">Todos</option>
+          </select>
           <button
             type="button"
             class="rev-info-btn"
@@ -86,6 +93,23 @@
             aria-label="Priorize o que est&aacute; vencido e o que vence hoje.">
             <i class="pi pi-info-circle" aria-hidden="true"></i>
           </button>
+          <div class="revisoes-counters" aria-label="Resumo das revisoes">
+            <span class="counter-item">
+              <span class="counter-dot dot-vencida" aria-hidden="true"></span>
+              <span class="counter-label">Vencidas</span>
+              <span class="counter-value">{{ contagemRevisoes.vencidas }}</span>
+            </span>
+            <span class="counter-item">
+              <span class="counter-dot dot-hoje" aria-hidden="true"></span>
+              <span class="counter-label">Hoje</span>
+              <span class="counter-value">{{ contagemRevisoes.hoje }}</span>
+            </span>
+            <span class="counter-item">
+              <span class="counter-dot dot-emdia" aria-hidden="true"></span>
+              <span class="counter-label">Em dia</span>
+              <span class="counter-value">{{ contagemRevisoes.emDia }}</span>
+            </span>
+          </div>
         </div>
         <div class="revisoes-actions">
           <button
@@ -94,7 +118,7 @@
             [disabled]="!revisaoSelecionada"
             (click)="irParaSala(revisaoSelecionada!)"
           >
-            Ir para sala de estudo
+            Revisar
           </button>
         </div>
       </div>
@@ -106,3 +130,5 @@
 <ng-template #embedded>
   <ng-container *ngTemplateOutlet="listaTpl"></ng-container>
 </ng-template>
+
+

@@ -169,18 +169,43 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   }
 
   get revisoesPrioritariasVisiveis(): RevisaoDashboardItem[] {
-    return this.revisoesPrioritariasOrdenadas.slice(0, 5);
+    return this.revisoesPrioritariasFiltradas.slice(0, 5);
   }
 
   get revisoesPrioritariasTotal(): number {
-    return this.revisoesPrioritariasOrdenadas.length;
+    return this.revisoesPrioritariasFiltradas.length;
   }
 
   get tempoEstimadoRevisoesLabel(): string {
-    const itens = this.revisoesPrioritariasOrdenadas;
+    const itens = this.revisoesPrioritariasFiltradas;
     if (!itens.length) return '--';
     const totalMin = itens.reduce((acc, item) => acc + this.getMinutosRevisao(item), 0);
     return this.formatarMinutos(totalMin);
+  }
+
+  get revisoesPrioritariasAgrupadas(): { materiaId: number; materiaNome: string; itens: RevisaoDashboardItem[] }[] {
+    const itens = this.revisoesPrioritariasVisiveis;
+    const grupos: { materiaId: number; materiaNome: string; itens: RevisaoDashboardItem[] }[] = [];
+    const indicePorMateria = new Map<number, number>();
+
+    for (const item of itens) {
+      const index = indicePorMateria.get(item.materiaId);
+      if (index === undefined) {
+        indicePorMateria.set(item.materiaId, grupos.length);
+        grupos.push({ materiaId: item.materiaId, materiaNome: item.materiaNome, itens: [item] });
+      } else {
+        grupos[index].itens.push(item);
+      }
+    }
+
+    return grupos;
+  }
+
+  private get revisoesPrioritariasFiltradas(): RevisaoDashboardItem[] {
+    const ordenadas = this.revisoesPrioritariasOrdenadas;
+    const temVencidas = ordenadas.some((item) => item.status === 'VENCIDA');
+    const statusAlvo = temVencidas ? 'VENCIDA' : 'EM_DIA';
+    return ordenadas.filter((item) => item.status === statusAlvo);
   }
 
   get proximaMateriaEstudo(): { materiaId: number; nome: string; ordem: number } | null {

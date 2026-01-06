@@ -141,6 +141,16 @@
       <div class="hero-next-card">
         <div class="hero-next-head">
           <div class="hero-next-title">Metas de hoje</div>
+          <div class="hero-next-legend hero-next-legend--head">
+            <span class="legend-item">
+              <span class="legend-dot dot-vencida"></span>
+              Revisao vencida
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot dot-hoje"></span>
+              Revisao do dia
+            </span>
+          </div>
         </div>
         <div class="hero-next-body" *ngIf="!sugestaoCarregando; else heroNextLoading">
           <div class="hero-next-columns">
@@ -161,35 +171,26 @@
               <div class="hero-next-meta">
                 Tempo estimado para zerar hoje: {{ tempoEstimadoRevisoesLabel }}
               </div>
-              <div class="hero-next-legend">
-                <span class="legend-item">
-                  <span class="legend-dot dot-vencida"></span>
-                  Revisao vencida
-                </span>
-                <span class="legend-item">
-                  <span class="legend-dot dot-hoje"></span>
-                  Revisao do dia
-                </span>
-              </div>
               <div class="hero-next-list" *ngIf="revisoesPrioritariasTotal; else heroNextSemRevisoes">
-                <button
-                  type="button"
-                  class="hero-next-item"
-                  *ngFor="let item of revisoesPrioritariasVisiveis"
-                  (click)="irParaSala(item)">
-                  <span class="hero-next-item-head">
+                <div class="hero-next-group" *ngFor="let grupo of revisoesPrioritariasAgrupadas">
+                  <div class="hero-next-group-title">{{ grupo.materiaNome }}</div>
+                  <button
+                    type="button"
+                    class="hero-next-topic"
+                    *ngFor="let item of grupo.itens"
+                    (click)="irParaSala(item)">
                     <span
-                      class="hero-next-item-status"
+                      class="hero-next-item-status-dot"
                       [class.status-vencida]="item.status === 'VENCIDA'"
-                      [class.status-hoje]="item.status === 'EM_DIA'">
-                      {{ item.status === 'VENCIDA' ? 'Vencida' : 'Hoje' }}
-                    </span>
-                    <span class="hero-next-item-sep">-</span>
-                    <span class="hero-next-item-title">{{ item.materiaNome }}</span>
+                      [class.status-hoje]="item.status === 'EM_DIA'"
+                      [attr.aria-label]="item.status === 'VENCIDA' ? 'Revisao vencida' : 'Revisao do dia'"
+                      [attr.title]="item.status === 'VENCIDA' ? 'Revisao vencida' : 'Revisao do dia'"
+                      role="img"
+                    ></span>
+                    <span class="hero-next-topic-text">{{ item.topicoDescricao }}</span>
                     <span class="hero-next-item-min">{{ formatarMinutos(getMinutosRevisao(item)) }}</span>
-                  </span>
-                  <span class="sub-topico-a-revisar">{{ item.topicoDescricao }}</span>
-                </button>
+                  </button>
+                </div>
               </div>
               <button
                 type="button"

@@ -72,6 +72,25 @@ export class RevisoesComponent implements OnInit {
     return this.revisoes;
   }
 
+  get contagemRevisoes(): { vencidas: number; hoje: number; emDia: number } {
+    const base = this.revisoesTodas.length ? this.revisoesTodas : this.revisoes;
+    let vencidas = 0;
+    let hoje = 0;
+    let emDia = 0;
+
+    for (const item of base) {
+      if (item.status === 'VENCIDA') {
+        vencidas += 1;
+      } else if (item.status === 'EM_DIA') {
+        hoje += 1;
+      } else if (item.status === 'FUTURA') {
+        emDia += 1;
+      }
+    }
+
+    return { vencidas, hoje, emDia };
+  }
+
   private aplicarFiltro(): void {
     const base = this.revisoesTodas.length ? this.revisoesTodas : this.revisoes;
     let lista = [...base];
