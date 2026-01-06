@@ -343,37 +343,56 @@
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: #ffffff;
-  padding: 10px 12px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   text-align: center;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
 }
 
 .hero-kpi-value {
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #111827;
+  line-height: 1.05;
 }
 
 .hero-kpi-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  text-transform: none;
+  letter-spacing: 0.01em;
   font-weight: 600;
 }
 
-.hero-kpi--alert .hero-kpi-value {
-  color: #dc2626;
+.metric-card {
+  border-radius: 12px;
 }
 
-.hero-kpi--warn .hero-kpi-value {
+.metric-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.metric-variant-neutral .metric-value {
+  color: #111827;
+}
+
+.metric-variant-warning .metric-value {
   color: #d97706;
 }
 
-.hero-kpi--ok .hero-kpi-value {
-  color: #16a34a;
+.metric-variant-danger .metric-value {
+  color: #dc2626;
 }
 
 .hero-meta-divider {
@@ -1895,6 +1914,7 @@
 :host-context(body.theme-dark) .hero-kpi {
   background: var(--surface-2) !important;
   border-color: var(--border) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
 }
 
 :host-context(body.theme-dark) .hero-kpi-value {
@@ -1903,6 +1923,14 @@
 
 :host-context(body.theme-dark) .hero-kpi-label {
   color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .metric-variant-warning .metric-value {
+  color: #fbbf24 !important;
+}
+
+:host-context(body.theme-dark) .metric-variant-danger .metric-value {
+  color: #f87171 !important;
 }
 
 :host-context(body.theme-dark) .hero-plan-card {

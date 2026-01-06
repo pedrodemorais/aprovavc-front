@@ -72,21 +72,21 @@
                 <div class="hero-edital-info">
                   <div class="hero-edital-meta" *ngIf="editaisAtivosVisiveis[0]?.id === e.id">
                     <div class="hero-kpi-grid">
-                      <div class="hero-kpi">
-                        <div class="hero-kpi-value">{{ formatPercent(kpiProgresso) }}</div>
-                        <div class="hero-kpi-label">Progresso</div>
+                      <div class="hero-kpi metric-card metric-variant-neutral">
+                        <div class="hero-kpi-value metric-value">{{ formatPercent(kpiProgresso) }}</div>
+                        <div class="hero-kpi-label metric-label">Progresso</div>
                       </div>
-                      <div class="hero-kpi">
-                        <div class="hero-kpi-value">{{ formatPercent(kpiDominio) }}</div>
-                        <div class="hero-kpi-label">Dominio</div>
+                      <div class="hero-kpi metric-card metric-variant-neutral">
+                        <div class="hero-kpi-value metric-value">{{ formatPercent(kpiDominio) }}</div>
+                        <div class="hero-kpi-label metric-label">Dominio</div>
                       </div>
-                      <div class="hero-kpi" [class.hero-kpi--alert]="totalVencidas > 0" [class.hero-kpi--ok]="totalVencidas === 0">
-                        <div class="hero-kpi-value">{{ totalVencidas }}</div>
-                        <div class="hero-kpi-label">Revisoes vencidas</div>
+                      <div class="hero-kpi metric-card metric-variant-danger" [class.metric-variant-neutral]="totalVencidas === 0">
+                        <div class="hero-kpi-value metric-value">{{ totalVencidas }}</div>
+                        <div class="hero-kpi-label metric-label">Revisoes vencidas</div>
                       </div>
-                      <div class="hero-kpi" [class.hero-kpi--warn]="revisoesVencemHoje > 0" [class.hero-kpi--ok]="revisoesVencemHoje === 0">
-                        <div class="hero-kpi-value">{{ revisoesVencemHoje }}</div>
-                        <div class="hero-kpi-label">Revisoes hoje</div>
+                      <div class="hero-kpi metric-card metric-variant-warning" [class.metric-variant-neutral]="revisoesVencemHoje === 0">
+                        <div class="hero-kpi-value metric-value">{{ revisoesVencemHoje }}</div>
+                        <div class="hero-kpi-label metric-label">Revisoes hoje</div>
                       </div>
                     </div>
                   </div>
