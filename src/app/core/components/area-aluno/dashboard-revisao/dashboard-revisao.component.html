@@ -17,22 +17,7 @@
             <i class="pi pi-info-circle"></i>
           </button>
         </div>
-        <div class="hero-actions timer-modos separado">
-          <button
-            type="button"
-            class="btn-modo-timer ativo"
-            (click)="comecarAgora()">
-            <i class="pi pi-play"></i>
-            Comecar agora
-          </button>
-          <button
-            type="button"
-            class="btn-modo-timer"
-            (click)="irParaBlocosEstudo(); $event.stopPropagation()">
-            <i class="pi pi-bookmark"></i>
-            Ver meu plano semanal
-          </button>
-        </div>
+        <div class="hero-actions timer-modos separado"></div>
       </div>
 
       <div class="hero-edital-card">
@@ -140,7 +125,16 @@
 
       <div class="hero-next-card">
         <div class="hero-next-head">
-          <div class="hero-next-title">Metas de hoje</div>
+          <div class="hero-next-title-row">
+            <div class="hero-next-title">Metas de hoje</div>
+            <button
+              type="button"
+              class="btn-modo-timer ativo btn-hero-primary hero-next-primary"
+              (click)="comecarAgora()">
+              <i class="pi pi-play"></i>
+              Come&ccedil;ar agora
+            </button>
+          </div>
           <div class="hero-next-legend hero-next-legend--head">
             <span class="legend-item">
               <span class="legend-dot dot-vencida"></span>
@@ -150,6 +144,12 @@
               <span class="legend-dot dot-hoje"></span>
               Revisao do dia
             </span>
+            <button
+              type="button"
+              class="hero-next-legend-link"
+              (click)="irParaBlocosEstudo(); $event.stopPropagation()">
+              Ver meu plano semanal
+            </button>
           </div>
         </div>
         <div class="hero-next-body" *ngIf="!sugestaoCarregando; else heroNextLoading">
@@ -221,13 +221,13 @@
                 </div>
               </div>
               <div class="hero-next-module">
-                <div class="quick-value">Modulo {{ modulosHoje }} para executar</div>
+                <div class="quick-value">Modulo {{ moduloHojeLabel }} para executar</div>
                 <div class="quick-module-list" *ngIf="materiasDoDiaOrdenadas.length; else semMateriasDia">
                   <button
                     type="button"
                     class="quick-module-item"
                     *ngFor="let item of materiasDoDiaOrdenadas"
-                    (click)="irParaSalaMateria(item.materiaId)">
+                    (click)="irParaSalaMateriaProximo(item.materiaId)">
                     <span class="quick-module-name">{{ item.nome }}</span>
                     <span class="quick-module-ordem">#{{ item.ordem }}</span>
                   </button>

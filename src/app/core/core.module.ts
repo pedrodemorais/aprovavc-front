@@ -27,6 +27,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { EditorModule } from 'primeng/editor';
 import { ToastModule } from 'primeng/toast';
+import { TreeTableModule } from 'primeng/treetable';
+import { TreeModule } from 'primeng/tree';
 
 import { QuillModule } from 'ngx-quill';
 import { NgxMaskModule } from 'ngx-mask';
@@ -106,6 +108,8 @@ registerLocaleData(localePt);
     OverlayPanelModule,
     EditorModule,
     ToastModule,
+    TreeTableModule,
+    TreeModule,
 
     QuillModule.forRoot(),
     NgxMaskModule.forChild(),

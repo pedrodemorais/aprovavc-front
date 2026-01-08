@@ -1,6 +1,6 @@
 import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
@@ -82,6 +82,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   mostrarDialogDataProva = false;
   dataProvaInput = '';
   salvandoDataProva = false;
+  private blocosSubscription?: Subscription;
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -96,11 +97,14 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.carregarUsuarioNome();
     this.carregarDados();
+    this.blocosSubscription = this.blocosEstudoService.blocosChanged$
+      .subscribe(() => this.carregarDados());
   }
 
   ngOnDestroy(): void {
     this.limparImagensTemplates();
     this.limparImagensEditaisAtivos();
+    this.blocosSubscription?.unsubscribe();
   }
 
   private carregarDados(): void {
@@ -174,6 +178,11 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
   get revisoesPrioritariasTotal(): number {
     return this.revisoesPrioritariasFiltradas.length;
+  }
+
+  get moduloHojeLabel(): number {
+    const blocoNumero = Number(this.planoDoDia?.blocoNumero ?? this.modulosHoje ?? 1) || 1;
+    return (blocoNumero % 7) + 1;
   }
 
   get tempoEstimadoRevisoesLabel(): string {

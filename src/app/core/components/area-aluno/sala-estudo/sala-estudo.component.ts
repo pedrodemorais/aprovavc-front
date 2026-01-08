@@ -3,7 +3,8 @@ import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MateriaService } from '../services/materia.service';
 import { Materia } from '../models/materia.model';
-import {SalaEstudoService,  EstudoTopicoRequest,  FlashcardRevisaoRespostaRequest, TopicoRevisaoRespostaRequest
+import { BlocosEstudoService } from '../services/blocos-estudo.service';
+import {SalaEstudoService,  EstudoTopicoRequest,  FlashcardRevisaoRespostaRequest, TopicoRevisaoRespostaRequest, TopicoFinalizadoDTO
 } from '../services/sala-estudo.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
@@ -23,6 +24,11 @@ export class SalaEstudoComponent implements OnInit {
 
   anotacoes: string = '';
   mensagemEstudoSalvo?: string;
+  mensagemAvancoCiclo?: string;
+  mensagemTopicoFinalizado?: string;
+  pausarAoSairDaAba = true;
+  private readonly pausarAoSairDaAbaKey = 'sala-estudo:pausar-ao-sair-aba';
+  private topicosFinalizados = new Set<number>();
 
   topicos: any[] = [];
   topicoSelecionado?: any | null;
@@ -103,6 +109,8 @@ export class SalaEstudoComponent implements OnInit {
 
   private audioAlarme?: HTMLAudioElement;
   alarmeAtivo: boolean = false;
+  private timerBaseMs: number | null = null;
+  private pomodoroFaseInicioMs: number | null = null;
 
   // =============== FLASHCARD (ESTADO) ===============
   mostrarModalFlashcard: boolean = false;
@@ -138,11 +146,13 @@ export class SalaEstudoComponent implements OnInit {
   private revisaoItemInicio: number | null = null;
   private readonly revisaoTempoKey = 'revisao:tempoTotalSegundos';
   private readonly revisaoItensKey = 'revisao:itensTotais';
+  private readonly ultimoTopicoKeyPrefix = 'sala-estudo:ultimo-topico:';
 
   constructor(
     private route: ActivatedRoute,
     private materiaService: MateriaService,
     private salaEstudoService: SalaEstudoService,
+    private blocosService: BlocosEstudoService,
     private sanitizer: DomSanitizer
   ) {}
 
@@ -151,6 +161,8 @@ export class SalaEstudoComponent implements OnInit {
   // ================================================================
 
   ngOnInit(): void {
+    this.carregarPreferenciaPausaAba();
+    this.carregarTopicosFinalizados();
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('materiaId') ?? params.get('id');
       this.materiaId = idParam ? Number(idParam) : 0;
@@ -388,7 +400,7 @@ ativarRevisaoFlashcards(): void {
   }
 
   selecionarTopico(t: any): void {
-      this.mensagemRevisao = undefined;
+    this.mensagemRevisao = undefined;
     this.avaliacaoSelecionada = null;
     const trocandoDeTopico =
       this.topicoSelecionado && this.topicoSelecionado.id !== t.id;
@@ -415,6 +427,7 @@ ativarRevisaoFlashcards(): void {
     }
 
     this.topicoSelecionado = t;
+    this.salvarUltimoTopico(t);
     if (this.modo === 'revisar') {
       this.iniciarContagemRevisaoItem();
     }
@@ -470,6 +483,58 @@ ativarRevisaoFlashcards(): void {
           this.flashcards = [];
         }
       });
+  }
+
+  private obterUltimoTopicoId(): number | null {
+    const key = `${this.ultimoTopicoKeyPrefix}${this.materiaId}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    const id = Number(raw);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+
+  private salvarUltimoTopico(t: any): void {
+    if (!t?.id || t?.hasFilhos || !this.materiaId) {
+      return;
+    }
+    const key = `${this.ultimoTopicoKeyPrefix}${this.materiaId}`;
+    localStorage.setItem(key, String(t.id));
+  }
+
+  private obterProximoTopicoApos(folhas: any[], topicoId: number): any | null {
+    const index = folhas.findIndex(t => t.id === topicoId);
+    if (index < 0) {
+      return null;
+    }
+    for (let i = index + 1; i < folhas.length; i += 1) {
+      if (!folhas[i]?.hasFilhos && folhas[i]?.ativo !== false) {
+        return folhas[i];
+      }
+    }
+    return null;
+  }
+
+  private isTopicoFinalizado(t: any): boolean {
+    const id = t?.id;
+    if (!id) {
+      return false;
+    }
+    return this.topicosFinalizados.has(id);
+  }
+
+  private carregarTopicosFinalizados(): void {
+    this.salaEstudoService.listarTopicosFinalizados().subscribe({
+      next: (lista: TopicoFinalizadoDTO[]) => {
+        this.topicosFinalizados = new Set((lista || [])
+          .map((item) => item?.topicoId)
+          .filter((id): id is number => Number.isFinite(id)));
+      },
+      error: () => {
+        this.topicosFinalizados = new Set();
+      }
+    });
   }
 
   // ================================================================
@@ -609,26 +674,53 @@ ativarRevisaoFlashcards(): void {
 
   private iniciarTimerLivre(): void {
     this.pararTimerInterno();
+    this.timerBaseMs = Date.now() - (this.tempoTotalSegundos * 1000);
 
     this.timerRef = setInterval(() => {
-      this.tempoTotalSegundos++;
+      this.atualizarTempoLivre();
       this.temTempoNaoSalvoFlag = true;
-    }, 1000);
+    }, 500);
   }
 
   private iniciarPomodoro(): void {
     this.pararTimerInterno();
     this.temTempoNaoSalvoFlag = true;
+    this.pomodoroFaseInicioMs = Date.now()
+      - ((this.duracaoFaseAtual - this.pomodoroSegundosRestantes) * 1000);
 
     this.timerRef = setInterval(() => {
-      if (this.pomodoroSegundosRestantes > 0) {
-        this.pomodoroSegundosRestantes--;
-        this.temTempoNaoSalvoFlag = true;
-        return;
-      }
+      this.atualizarPomodoro();
+    }, 500);
+  }
 
+  private atualizarTempoLivre(): void {
+    if (!this.timerBaseMs) {
+      this.timerBaseMs = Date.now();
+      return;
+    }
+
+    const agora = Date.now();
+    this.tempoTotalSegundos = Math.floor((agora - this.timerBaseMs) / 1000);
+  }
+
+  private atualizarPomodoro(): void {
+    if (!this.pomodoroFaseInicioMs) {
+      this.pomodoroFaseInicioMs = Date.now();
+      return;
+    }
+
+    const agora = Date.now();
+    const elapsed = Math.floor((agora - this.pomodoroFaseInicioMs) / 1000);
+    const restante = Math.max(0, this.duracaoFaseAtual - elapsed);
+    this.temTempoNaoSalvoFlag = true;
+
+    if (restante !== this.pomodoroSegundosRestantes) {
+      this.pomodoroSegundosRestantes = restante;
+    }
+
+    if (this.pomodoroSegundosRestantes === 0) {
       this.trocarFasePomodoro();
-    }, 1000);
+    }
   }
 
   private trocarFasePomodoro(): void {
@@ -657,6 +749,8 @@ ativarRevisaoFlashcards(): void {
       clearInterval(this.timerRef);
       this.timerRef = null;
     }
+    this.timerBaseMs = null;
+    this.pomodoroFaseInicioMs = null;
   }
 
   private tocarAlarme(): void {
@@ -752,10 +846,57 @@ ativarRevisaoFlashcards(): void {
           ? 'Revis\u00e3o salva com sucesso.'
           : 'Estudo salvo com sucesso.';
         setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
+
+        if (this.modo === 'estudar' && tempoParaSalvar > 0) {
+          this.tentarAvancarCicloSilencioso();
+        }
       },
       error: (err) => {
         console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
         this.erro = 'Erro ao salvar o estudo. Tente novamente.';
+      }
+    });
+  }
+
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (!document.hidden) {
+      return;
+    }
+
+    if (!this.pausarAoSairDaAba || !this.timerAtivo) {
+      return;
+    }
+
+    this.timerAtivo = false;
+    this.pararTimerInterno();
+    this.revisaoAutoExplicacaoAtiva = false;
+  }
+
+  onTogglePausarAoSairDaAba(): void {
+    localStorage.setItem(this.pausarAoSairDaAbaKey, String(this.pausarAoSairDaAba));
+  }
+
+  private carregarPreferenciaPausaAba(): void {
+    const raw = localStorage.getItem(this.pausarAoSairDaAbaKey);
+    if (raw === null) {
+      this.pausarAoSairDaAba = true;
+      return;
+    }
+    this.pausarAoSairDaAba = raw === 'true' || raw === '1';
+  }
+
+  private tentarAvancarCicloSilencioso(): void {
+    this.blocosService.avancarCiclo().subscribe({
+      next: () => {
+        this.mensagemAvancoCiclo = undefined;
+        this.blocosService.notificarBlocosAlterados();
+      },
+      error: (err) => {
+        const msg = err?.error?.message
+          || 'Estudo salvo, mas o tempo minimo para avancar o modulo ainda nao foi atingido.';
+        this.mensagemAvancoCiclo = msg;
+        setTimeout(() => (this.mensagemAvancoCiclo = undefined), 5000);
       }
     });
   }
@@ -1488,6 +1629,29 @@ get podeIrParaProximaRevisao(): boolean {
     if (!alvo) {
       const folhas = this.topicos.filter(t => !t.hasFilhos && t.ativo !== false);
       if (this.autoSelecionarUltimoNaoEstudado && folhas.length) {
+        const ultimoTopicoId = this.obterUltimoTopicoId();
+        if (ultimoTopicoId) {
+          const ultimoTopico = folhas.find(t => t.id === ultimoTopicoId);
+          if (ultimoTopico) {
+            const continuar = window.confirm('Continuar de onde parou?');
+            if (continuar) {
+              if (this.isTopicoFinalizado(ultimoTopico)) {
+                const proximo = this.obterProximoTopicoApos(folhas, ultimoTopico.id);
+                alvo = proximo || this.obterPrimeiroNaoEstudado(folhas) || ultimoTopico;
+              } else {
+                alvo = ultimoTopico;
+              }
+            }
+          }
+        }
+      }
+
+      if (alvo) {
+        this.selecionarTopico(alvo);
+        this.selecionouTopicoInicial = true;
+        return;
+      }
+      if (this.autoSelecionarUltimoNaoEstudado && folhas.length) {
         const primeiroNaoEstudado = this.obterPrimeiroNaoEstudado(folhas);
         if (primeiroNaoEstudado) {
           const proximoAposUltimoEstudado = this.obterProximoNaoEstudadoAposUltimoEstudado(folhas);
@@ -1519,6 +1683,35 @@ get podeIrParaProximaRevisao(): boolean {
       this.selecionarTopico(alvo);
       this.selecionouTopicoInicial = true;
     }
+  }
+
+  finalizarTopico(): void {
+    if (!this.topicoSelecionado || !this.topicoPermiteEstudo) {
+      return;
+    }
+    if (this.timerAtivo) {
+      this.timerAtivo = false;
+      this.pararTimerInterno();
+      this.revisaoAutoExplicacaoAtiva = false;
+    }
+    if (this.temTempoNaoSalvo()) {
+      this.salvarEstudo();
+    }
+    const topicoId = this.topicoSelecionado?.id;
+    if (!topicoId) {
+      return;
+    }
+    this.salaEstudoService.finalizarTopico(topicoId).subscribe({
+      next: () => {
+        this.topicosFinalizados.add(topicoId);
+        this.mensagemTopicoFinalizado = 'Topico finalizado.';
+        setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+      },
+      error: () => {
+        this.mensagemTopicoFinalizado = 'Nao foi possivel finalizar o topico.';
+        setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+      }
+    });
   }
 
   private obterPrimeiroNaoEstudado(folhas: any[]): any | null {

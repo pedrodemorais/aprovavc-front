@@ -9,6 +9,8 @@
       <span class="titulo-materia-text">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemRevisao">{{ mensagemRevisao }}</span>
+      <span class="salvo-msg sala-avanco-msg" *ngIf="mensagemAvancoCiclo">{{ mensagemAvancoCiclo }}</span>
+      <span class="salvo-msg sala-topico-finalizado-msg" *ngIf="mensagemTopicoFinalizado">{{ mensagemTopicoFinalizado }}</span>
     </span>
   </div>
 
@@ -142,6 +144,10 @@
                         <span>Zerar</span>
                       </button>
                     </div>
+                    <label class="timer-toggle">
+                      <input type="checkbox" [(ngModel)]="pausarAoSairDaAba" (change)="onTogglePausarAoSairDaAba()" />
+                      <span>Pausar ao sair da aba</span>
+                    </label>
                   </div>
                 </ng-container>
 
@@ -173,6 +179,10 @@
                         <span>Zerar</span>
                       </button>
                     </div>
+                    <label class="timer-toggle">
+                      <input type="checkbox" [(ngModel)]="pausarAoSairDaAba" (change)="onTogglePausarAoSairDaAba()" />
+                      <span>Pausar ao sair da aba</span>
+                    </label>
 
                     <span class="timer-inline">
                       {{ modoTemporizador === 'livre' ? 'Tempo de estudo' : 'Pomodoro' }}
@@ -632,10 +642,15 @@
                   <span>Flashcard</span>
                 </button>
 
-                <button type="button" class="btn-modo-timer" [class.ativo]="topicoPermiteEstudo && timerAtivo"
+                <button type="button" class="btn-modo-timer btn-salvar" [class.ativo]="topicoPermiteEstudo && timerAtivo"
                   [disabled]="!topicoPermiteEstudo || !timerAtivo" (click)="salvarEstudo()">
                   <i class="pi pi-check"></i>
                   <span>Salvar</span>
+                </button>
+                <button type="button" class="btn-modo-timer"
+                  [disabled]="!topicoPermiteEstudo" (click)="finalizarTopico()">
+                  <i class="pi pi-flag"></i>
+                  <span>Finalizar</span>
                 </button>
               </div>
 

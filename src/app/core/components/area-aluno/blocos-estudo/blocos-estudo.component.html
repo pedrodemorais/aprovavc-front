@@ -7,99 +7,105 @@
       </div>
     </ng-template>
   </p-toast>
-  <div class="header">
-    <div class="header-title">
-      <div class="header-title-row">
-        <h2>Planner semanal (repete automaticamente)</h2>
-        <button
-          type="button"
-          class="header-info-btn"
-          pTooltip='O sistema usa este planner para montar seu "Hoje".'
-          tooltipPosition="top"
-          aria-label='O sistema usa este planner para montar seu "Hoje".'>
-          <i class="pi pi-info-circle"></i>
-        </button>
-      </div>
-    </div>
-    <div class="header-badge">Total semanal: {{ totalCicloTexto }}</div>
-
-  </div>
-
-  <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
-    {{ mensagemTexto }}
-  </div>
-
-  <div class="planner-edital-card" *ngIf="temEditalAtivo; else plannerEditalVazio">
-    <div class="planner-edital-title">Edital ativo</div>
-    <div class="planner-edital-body">
-      <div class="planner-edital-logo" [class.is-placeholder]="!editalAtivoImagemUrl">
-        <img
-          *ngIf="editalAtivoImagemUrl"
-          [src]="editalAtivoImagemUrl"
-          alt="Logo do edital"
-        />
-        <span *ngIf="!editalAtivoImagemUrl">{{ editalAtivoNome.slice(0, 1) }}</span>
-      </div>
-      <div class="planner-edital-info">
-        <div class="planner-edital-name">{{ editalAtivoNome }}</div>
-        <div class="planner-edital-cargo" *ngIf="getEditalCargo(editalAtivo)">
-          {{ getEditalCargo(editalAtivo) }}
+  <div class="planner-shell">
+    <div class="header">
+      <div class="header-title">
+        <div class="header-title-row">
+          <h2>Planner semanal (repete automaticamente)</h2>
+          <button
+            type="button"
+            class="header-info-btn"
+            pTooltip='O sistema usa este planner para montar seu "Hoje".'
+            tooltipPosition="top"
+            aria-label='O sistema usa este planner para montar seu "Hoje".'>
+            <i class="pi pi-info-circle"></i>
+          </button>
         </div>
       </div>
+      <div class="header-badge">Total semanal: {{ totalCicloTexto }}</div>
     </div>
-    <div class="planner-edital-note" *ngIf="materiasFiltroIds.size === 0">
-      Este edital nao possui materias cadastradas.
+
+    <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
+      {{ mensagemTexto }}
     </div>
-  </div>
-  <ng-template #plannerEditalVazio>
-    <div class="planner-edital-card empty">
+
+    <div class="planner-edital-card" *ngIf="temEditalAtivo; else plannerEditalVazio">
       <div class="planner-edital-title">Edital ativo</div>
       <div class="planner-edital-body">
-        <div class="planner-edital-logo is-placeholder">-</div>
+        <div class="planner-edital-logo" [class.is-placeholder]="!editalAtivoImagemUrl">
+          <img
+            *ngIf="editalAtivoImagemUrl"
+            [src]="editalAtivoImagemUrl"
+            alt="Logo do edital"
+          />
+          <span *ngIf="!editalAtivoImagemUrl">{{ editalAtivoNome.slice(0, 1) }}</span>
+        </div>
         <div class="planner-edital-info">
-          <div class="planner-edital-name">Nenhum edital selecionado</div>
+          <div class="planner-edital-name">{{ editalAtivoNome }}</div>
+          <div class="planner-edital-cargo" *ngIf="getEditalCargo(editalAtivo)">
+            {{ getEditalCargo(editalAtivo) }}
+          </div>
         </div>
       </div>
-    </div>
-  </ng-template>
-
-  <div class="validation-summary" *ngIf="blocosInvalidos.length > 0">
-    <span class="validation-title">Ajuste os blocos:</span>
-    <button
-      type="button"
-      class="validation-link"
-      *ngFor="let invalido of blocosInvalidos"
-      (click)="focoNoBlocoInvalido(invalido.index)">
-      Bloco {{ invalido.numero }} - {{ invalido.mensagem }}
-    </button>
-  </div>
-
-  <div class="planner-row" *ngIf="blocos.length > 0">
-    <div class="planner-row-info">
-      <div class="planner-backlog" *ngIf="materiasOptions.length > 0; else backlogInfo">
-        Backlog: {{ backlogCount }} materias fora do planner
+      <div class="planner-edital-note" *ngIf="materiasFiltroIds.size === 0">
+        Este edital nao possui materias cadastradas.
       </div>
-      <ng-template #backlogInfo>
-        <div class="planner-backlog">
-          Voce pode substituir materias "Em dia" por outras ainda fora do planner.
+    </div>
+    <ng-template #plannerEditalVazio>
+      <div class="planner-edital-card empty">
+        <div class="planner-edital-title">Edital ativo</div>
+        <div class="planner-edital-body">
+          <div class="planner-edital-logo is-placeholder">-</div>
+          <div class="planner-edital-info">
+            <div class="planner-edital-name">Nenhum edital selecionado</div>
+          </div>
         </div>
-      </ng-template>
-      <div class="planner-legend">
-        <span class="legend-item">
-          <span class="legend-dot legend-vencida"></span>
-          Revisao vencida
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot legend-hoje"></span>
-          Revisao do dia
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot legend-ok"></span>
-          Em dia / futura
-        </span>
       </div>
+    </ng-template>
+
+    <div class="validation-summary" *ngIf="blocosInvalidos.length > 0">
+      <span class="validation-title">Ajuste os blocos:</span>
+      <button
+        type="button"
+        class="validation-link"
+        *ngFor="let invalido of blocosInvalidos"
+        (click)="focoNoBlocoInvalido(invalido.index)">
+        Bloco {{ invalido.numero }} - {{ invalido.mensagem }}
+      </button>
     </div>
+
+    <div class="planner-row" *ngIf="blocos.length > 0">
+      <div class="planner-row-info">
+        <div class="planner-backlog" *ngIf="materiasOptions.length > 0; else backlogInfo">
+          Backlog: {{ backlogCount }} materias fora do planner
+        </div>
+        <ng-template #backlogInfo>
+          <div class="planner-backlog">
+            Voce pode substituir materias "Em dia" por outras ainda fora do planner.
+          </div>
+        </ng-template>
+        <div class="planner-legend">
+          <span class="legend-item">
+            <span class="legend-dot legend-vencida"></span>
+            Revisao vencida
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot legend-hoje"></span>
+            Revisao do dia
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot legend-ok"></span>
+            Em dia / futura
+          </span>
+        </div>
+      </div>
     <div class="planner-row-actions">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="toggleWeeklyView()">
+        {{ showWeekly ? 'Ver por dia' : 'Ver semana' }}
+      </button>
       <button
         type="button"
         class="btn-save"
@@ -110,116 +116,32 @@
     </div>
   </div>
 
-  <div class="blocos-grid" *ngIf="blocos.length > 0">
-    <div
-      class="bloco-col-wrap"
-      *ngFor="let b of blocos; let i = index"
-      [class.ativo]="abaAtiva === i"
-      [class.erro]="isBlocoInvalido(i)">
-      <div class="bloco-col-dia">
-        {{ diasSemana[i] || ('Bloco ' + b.numero) }}
+    <div class="planner-day-nav" *ngIf="blocos.length > 0 && !showWeekly">
+      <button type="button" class="day-nav-btn" (click)="navegarDia(-1)" aria-label="Dia anterior">
+        <i class="pi pi-chevron-left"></i>
+      </button>
+      <div class="day-nav-title">
+        {{ diasSemana[selectedDayIndex] || ('Bloco ' + (selectedDayIndex + 1)) }}
       </div>
-      <div
-        class="bloco-col"
-        [class.ativo]="abaAtiva === i"
-        [class.erro]="isBlocoInvalido(i)">
-        <div class="bloco-col-header" (click)="selecionarBloco(i)">
-          <div class="bloco-col-horas">
-            <div class="bloco-col-horas-row">
-               <label class="bloco-col-horas-label" for="minutos-{{ b.numero }}">Horas Líquidas</label>
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="5"
-                autocomplete="off"
-                [ngModel]="blocoHoraInputs[i]"
-                (ngModelChange)="onHorasChange(b, $event, i)"
-                (blur)="onHorasBlur(b, i)"
-                id="minutos-{{ b.numero }}"
-                class="bloco-col-horas-field"
-                placeholder="00:00"
-                [attr.aria-label]="'Horas do bloco ' + b.numero"
-                [attr.aria-invalid]="isBlocoInvalido(i)"
-                [attr.aria-describedby]="blocoErroMensagem(i) ? 'bloco-erro-' + b.numero : null" />
-            </div>
-            
-          </div>
-          <div
-            class="bloco-col-erro"
-            *ngIf="blocoErroMensagem(i)"
-            [attr.id]="'bloco-erro-' + b.numero">
-            {{ blocoErroMensagem(i) }}
-          </div>
-        </div>
+      <button type="button" class="day-nav-btn" (click)="navegarDia(1)" aria-label="Proximo dia">
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
 
-        <div class="bloco-col-body">
-          <div
-            class="bloco-linha"
-            *ngFor="let linha of (linhasFixasPorBloco[i] || []); let li = index; trackBy: trackByLinha"
-            [class.linha-vazia]="!linha.item"
-            [ngClass]="linha.item ? ('status-' + statusMateriaKey(linha.item)) : null"
-            [class.revisao-vencida]="linha.item && temRevisaoVencida(linha.item)"
-            [class.revisao-hoje]="linha.item && temRevisaoHoje(linha.item)"
-            [class.revisao-futura]="linha.item && temRevisaoFutura(linha.item)"
-            [attr.tabindex]="!linha.item ? 0 : null"
-            (click)="!linha.item && iniciarEdicaoLinha(i, li)"
-            (keydown.enter)="!linha.item && iniciarEdicaoLinha(i, li)"
-            (keydown.space)="!linha.item && iniciarEdicaoLinha(i, li)">
-            <ng-container *ngIf="linha.item && !estaSubstituindo(i, li); else linhaEditar">
-              <span
-                class="bloco-item-text"
-                [pTooltip]="linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId)"
-                tooltipPosition="top">
-                {{ linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId) }}
-              </span>
-              <div class="bloco-item-actions">
-                <button
-                  type="button"
-                  class="bloco-item-substituir"
-                  *ngIf="podeSubstituir(linha.item)"
-                  (click)="iniciarSubstituicao(i, li); $event.stopPropagation()">
-                  Substituir
-                </button>
-                <button
-                  type="button"
-                  class="bloco-item-remove"
-                  (click)="removerMateriaBloco(i, li); $event.stopPropagation()"
-                  aria-label="Remover materia">
-                  <i class="pi pi-minus"></i>
-                </button>
-              </div>
-            </ng-container>
-            <ng-template #linhaEditar>
-              <ng-container *ngIf="estaSubstituindo(i, li) || estaEditandoLinha(i, li); else linhaVazia">
-                <div class="bloco-linha-edit" (click)="$event.stopPropagation()">
-                  <p-autoComplete
-                    #autoMateria
-                    [suggestions]="materiasFiltradasPorBloco[i]"
-                    (completeMethod)="filtrarMaterias($event, i)"
-                    [(ngModel)]="materiaSelecionadaPorLinha[i][li]"
-                    field="label"
-                    [dropdown]="true"
-                    [completeOnFocus]="true"
-                    [forceSelection]="true"
-                    [minLength]="0"
-                    (onFocus)="abrirSugestoes(i)"
-                    (onSelect)="adicionarMateriaNaLinha(i, li, $event)"
-                    placeholder="Adicionar materia..."
-                    inputId="materia-add-{{ b.numero }}-{{ li }}">
-                  </p-autoComplete>
-                </div>
-              </ng-container>
-              <ng-template #linhaVazia>
-                <button
-                  type="button"
-                  class="bloco-linha-add"
-                  (click)="iniciarEdicaoLinha(i, li); $event.stopPropagation()">
-                  +
-                </button>
-              </ng-template>
-            </ng-template>
-          </div>
-        </div>
+    <div class="bloco-single" *ngIf="blocos.length > 0 && !showWeekly">
+      <ng-container *ngFor="let b of blocos; let i = index">
+        <ng-container *ngIf="i === selectedDayIndex">
+          <ng-container *ngTemplateOutlet="blocoCard; context: { $implicit: b, index: i, weekly: false }"></ng-container>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <div class="blocos-grid-weekly" *ngIf="blocos.length > 0 && showWeekly">
+      <div class="blocos-weekly-title">Semana completa (domingo a sabado)</div>
+      <div
+        class="bloco-weekly-item"
+        *ngFor="let item of weeklyOrderedBlocos">
+        <ng-container *ngTemplateOutlet="blocoCard; context: { $implicit: item.bloco, index: item.index, weekly: true }"></ng-container>
       </div>
     </div>
   </div>
@@ -248,3 +170,124 @@
     Carregando blocos...
   </div>
 </div>
+
+<ng-template #blocoCard let-b let-i="index" let-weekly="weekly">
+  <div
+    [class.bloco-col-wrap-weekly]="weekly"
+    [class.bloco-col-wrap]="!weekly"
+    [class.ativo]="abaAtiva === i"
+    [class.erro]="isBlocoInvalido(i)"
+    [style.background]="getCardBgColor(i)">
+    <div class="bloco-col-dia">
+      <span class="bloco-col-dia-primary" *ngIf="!weekly">{{ getModuloLabel(i) }}</span>
+      <span class="bloco-col-dia-primary bloco-col-dia-primary--weekly" *ngIf="weekly">
+        {{ getNomeDiaSemanaSemFeira(i) }} - {{ getModuloLabel(i) }}
+      </span>
+    </div>
+    <div
+      class="bloco-col"
+      [class.ativo]="abaAtiva === i"
+      [class.erro]="isBlocoInvalido(i)">
+      <div class="bloco-col-header" (click)="selecionarBloco(i)">
+        <div class="bloco-col-horas">
+          <div class="bloco-col-horas-row">
+            <ng-container *ngIf="weekly; else horasInput">
+              <span class="bloco-col-horas-weekly">Hrs Liq - {{ blocoHoraInputs[i] }}</span>
+            </ng-container>
+            <ng-template #horasInput>
+              <label class="bloco-col-horas-label" for="minutos-{{ b.numero }}">Horas Liquidas</label>
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="5"
+                autocomplete="off"
+                [ngModel]="blocoHoraInputs[i]"
+                (ngModelChange)="onHorasChange(b, $event, i)"
+                (blur)="onHorasBlur(b, i)"
+                id="minutos-{{ b.numero }}"
+                class="bloco-col-horas-field"
+                placeholder="00:00"
+                [attr.aria-label]="'Horas do bloco ' + b.numero"
+                [attr.aria-invalid]="isBlocoInvalido(i)"
+                [attr.aria-describedby]="blocoErroMensagem(i) ? 'bloco-erro-' + b.numero : null" />
+            </ng-template>
+          </div>
+        </div>
+        <div
+          class="bloco-col-erro"
+          *ngIf="blocoErroMensagem(i)"
+          [attr.id]="'bloco-erro-' + b.numero">
+          {{ blocoErroMensagem(i) }}
+        </div>
+      </div>
+      <div class="bloco-col-body">
+        <div
+          class="bloco-linha"
+          *ngFor="let linha of (linhasFixasPorBloco[i] || []); let li = index; trackBy: trackByLinha"
+          [class.linha-vazia]="!linha.item"
+          [ngClass]="linha.item ? ('status-' + statusMateriaKey(linha.item)) : null"
+          [class.revisao-vencida]="linha.item && temRevisaoVencida(linha.item)"
+          [class.revisao-hoje]="linha.item && temRevisaoHoje(linha.item)"
+          [class.revisao-futura]="linha.item && temRevisaoFutura(linha.item)"
+          [attr.tabindex]="!linha.item ? 0 : null"
+          (click)="!linha.item && iniciarEdicaoLinha(i, li)"
+          (keydown.enter)="!linha.item && iniciarEdicaoLinha(i, li)"
+          (keydown.space)="!linha.item && iniciarEdicaoLinha(i, li)">
+          <ng-container *ngIf="linha.item && !estaSubstituindo(i, li); else linhaEditar">
+            <span
+              class="bloco-item-text"
+              [pTooltip]="linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId)"
+              tooltipPosition="top">
+              {{ linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId) }}
+            </span>
+            <div class="bloco-item-actions">
+              <button
+                type="button"
+                class="bloco-item-substituir"
+                *ngIf="podeSubstituir(linha.item)"
+                (click)="iniciarSubstituicao(i, li); $event.stopPropagation()">
+                Substituir
+              </button>
+              <button
+                type="button"
+                class="bloco-item-remove"
+                (click)="removerMateriaBloco(i, li); $event.stopPropagation()"
+                aria-label="Remover materia">
+                <i class="pi pi-minus"></i>
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #linhaEditar>
+            <ng-container *ngIf="estaSubstituindo(i, li) || estaEditandoLinha(i, li); else linhaVazia">
+              <div class="bloco-linha-edit" (click)="$event.stopPropagation()">
+                <p-autoComplete
+                  #autoMateria
+                  [suggestions]="materiasFiltradasPorBloco[i]"
+                  (completeMethod)="filtrarMaterias($event, i)"
+                  [(ngModel)]="materiaSelecionadaPorLinha[i][li]"
+                  field="label"
+                  [dropdown]="true"
+                  [completeOnFocus]="true"
+                  [forceSelection]="true"
+                  [minLength]="0"
+                  (onFocus)="abrirSugestoes(i)"
+                  (onSelect)="adicionarMateriaNaLinha(i, li, $event)"
+                  placeholder="Adicionar materia..."
+                  inputId="materia-add-{{ b.numero }}-{{ li }}">
+                </p-autoComplete>
+              </div>
+            </ng-container>
+            <ng-template #linhaVazia>
+              <button
+                type="button"
+                class="bloco-linha-add"
+                (click)="iniciarEdicaoLinha(i, li); $event.stopPropagation()">
+                +
+              </button>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>

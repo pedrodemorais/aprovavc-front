@@ -74,6 +74,40 @@
   text-overflow: ellipsis;
 }
 
+.sala-avanco-msg {
+  flex: 1 1 auto;
+  margin-left: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(234, 179, 8, 0.18);
+  color: #92400e;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sala-topico-finalizado-msg {
+  flex: 1 1 auto;
+  margin-left: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.16);
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* tiramos o “risquinho” entre header e body (caso exista) */
 .separador {
   display: none;
@@ -414,6 +448,24 @@
   margin-top: 0;
 }
 
+.timer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  user-select: none;
+}
+
+.timer-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: #1d4ed8;
+}
+
 /* ============================
    SEGMENTADO (reutilizado: Estudar/Revisar e Livre/Pomodoro)
    ============================ */
@@ -453,11 +505,35 @@
   line-height: 1;
 }
 
-.btn-modo-timer:hover {
+.btn-modo-timer:hover,
+.btn-modo-timer:focus-visible,
+.btn-modo-timer.ativo:hover,
+.btn-modo-timer.ativo:focus-visible {
   transform: translateY(-1px);
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .btn-modo-timer.ativo {
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.btn-modo-timer.btn-salvar.ativo {
+  background: transparent;
+  color: rgba(0, 0, 0, 0.65);
+  box-shadow: none;
+  border: 0;
+}
+
+.btn-modo-timer.btn-salvar:hover,
+.btn-modo-timer.btn-salvar:focus-visible,
+.btn-modo-timer.btn-salvar.ativo:hover,
+.btn-modo-timer.btn-salvar.ativo:focus-visible {
   background: #ffffff;
   color: rgba(0, 0, 0, 0.85);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
@@ -1931,7 +2007,34 @@
   color: #cbd5e1 !important;
 }
 
+:host-context(body.theme-dark) .btn-modo-timer:hover,
+:host-context(body.theme-dark) .btn-modo-timer:focus-visible,
+:host-context(body.theme-dark) .btn-modo-timer.ativo:hover,
+:host-context(body.theme-dark) .btn-modo-timer.ativo:focus-visible {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: rgba(84, 186, 103, 0.35) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35) !important;
+}
+
 :host-context(body.theme-dark) .btn-modo-timer.ativo {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: rgba(84, 186, 103, 0.35) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35) !important;
+}
+
+:host-context(body.theme-dark) .btn-modo-timer.btn-salvar.ativo {
+  background: transparent !important;
+  color: #cbd5e1 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .btn-modo-timer.btn-salvar:hover,
+:host-context(body.theme-dark) .btn-modo-timer.btn-salvar:focus-visible,
+:host-context(body.theme-dark) .btn-modo-timer.btn-salvar.ativo:hover,
+:host-context(body.theme-dark) .btn-modo-timer.btn-salvar.ativo:focus-visible {
   background: #16a34a !important;
   color: #ffffff !important;
   border-color: rgba(84, 186, 103, 0.35) !important;

@@ -3,68 +3,85 @@
   <div class="rev-state erro" *ngIf="erro">{{ erro }}</div>
 
   <div class="rev-card" *ngIf="revisoesFiltradas?.length">
-
-    <!-- cabe&ccedil;alho tipo "tabela" -->
-    <div class="rev-list-header">
-      <div class="col-status">
-      </div>
-      <span class="col-materia">Mat&eacute;ria / t&oacute;pico</span>
-      <span class="col-data">Pr&oacute;xima revis&atilde;o</span>
-    </div>
-
-        <!-- linhas -->
-    <div class="rev-list-body">
-      <div
-        class="rev-list-row"
-        [class.is-selected]="revisaoSelecionada?.materiaId === r.materiaId && revisaoSelecionada?.topicoId === r.topicoId"
-        (click)="selecionarRevisao(r)"
-        *ngFor="let r of revisoesFiltradas"
-      >
-        <!-- STATUS -->
-        <div class="col-status">
-          <span
-            class="status-dot"
-            [ngClass]="{
-              'status-vencida': r.status === 'VENCIDA',
-              'status-hoje':   r.status === 'EM_DIA',
-              'status-futura': r.status === 'FUTURA'
-            }"
-            [attr.aria-label]="
-              r.status === 'VENCIDA'
-                ? 'Revisao vencida'
-                : r.status === 'EM_DIA'
-                  ? 'Revisao do dia'
-                  : 'Revisao futura'
-            "
-            [attr.title]="
-              r.status === 'VENCIDA'
-                ? 'Revisao vencida'
-                : r.status === 'EM_DIA'
-                  ? 'Revisao do dia'
-                  : 'Revisao futura'
-            "
-            role="img"
-          ></span>
-        </div>
-
-        <!-- MATERIA / TOPICO -->
-        <div class="col-materia">
-          <div class="materia-nome">{{ r.materiaNome }}</div>
-          <div class="topico-descricao">T&oacute;pico: {{ r.topicoDescricao }}</div>
-        </div>
-
-        <!-- DATA / QUANTIDADE -->
-        <div class="col-data">
-          <div class="data-principal">
-            {{ r.dataProximaRevisao | date: 'shortDate' }}
-          </div>
-          <div class="data-secundaria" *ngIf="r.qtdPendentes">
-            {{ r.qtdPendentes }} itens pendentes
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <p-treeTable
+      class="rev-tree-table"
+      [value]="treeNodes"
+      [scrollable]="true"
+      scrollHeight="flex"
+    >
+      <ng-template pTemplate="colgroup">
+        <colgroup>
+          <col class="col-materia" />
+          <col class="col-data" />
+        </colgroup>
+      </ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="col-materia">Mat&eacute;ria / t&oacute;pico</th>
+          <th class="col-data">Pr&oacute;xima revis&atilde;o</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
+        <tr
+          [class.is-selected]="rowData?.source && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          [class.is-materia]="rowData?.isMateria"
+          [class.row-clickable]="rowData?.source && !rowData?.hasChildren"
+          [class.row-vencida]="rowData?.source && rowData.status === 'VENCIDA'"
+          [class.row-hoje]="rowData?.source && rowData.status === 'EM_DIA'"
+          [class.row-futura]="rowData?.source && rowData.status === 'FUTURA'"
+          [class.row-status-vencida]="rowData?.source && rowData.status === 'VENCIDA' && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          [class.row-status-hoje]="rowData?.source && rowData.status === 'EM_DIA' && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          [class.row-status-futura]="rowData?.source && rowData.status === 'FUTURA' && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          (click)="onTreeRowClick(rowData)"
+        >
+          <td>
+            <div class="tree-label">
+              <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
+              <span
+                class="status-dot"
+                *ngIf="rowData?.isTopico"
+                [ngClass]="{
+                  'status-vencida': rowData.status === 'VENCIDA',
+                  'status-hoje':   rowData.status === 'EM_DIA',
+                  'status-futura': rowData.status === 'FUTURA'
+                }"
+                [attr.aria-label]="
+                  rowData.status === 'VENCIDA'
+                    ? 'Revisao vencida'
+                    : rowData.status === 'EM_DIA'
+                      ? 'Revisao do dia'
+                      : 'Revisao futura'
+                "
+                [attr.title]="
+                  rowData.status === 'VENCIDA'
+                    ? 'Revisao vencida'
+                    : rowData.status === 'EM_DIA'
+                      ? 'Revisao do dia'
+                    : 'Revisao futura'
+                "
+                role="img"
+              ></span>
+              <span class="tree-text">{{ rowData?.label }}</span>
+            </div>
+          </td>
+          <td class="col-data">
+            <div class="data-wrap">
+              <button
+                *ngIf="rowData?.source && !rowData?.hasChildren && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+                type="button"
+                class="btn-revisar-linha"
+                (click)="irParaSala(rowData.source); $event.stopPropagation()"
+              >
+                Revisar
+              </button>
+              <div class="data-principal" *ngIf="rowData?.dataProximaRevisao">
+                {{ rowData.dataProximaRevisao | date: 'shortDate' }}
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-treeTable>
   </div>
 </ng-template>
 

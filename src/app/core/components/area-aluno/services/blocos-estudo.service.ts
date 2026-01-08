@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import {
   AtualizarBlocoEstudoRequestDTO,
   AvancarCicloResponseDTO,
@@ -12,6 +13,8 @@ import { environment } from 'src/environments/environment';
 @Injectable({ providedIn: 'root' })
 export class BlocosEstudoService {
   private baseUrl = `${environment.apiUrl}/blocos-estudo`;
+  private blocosChangedSubject = new Subject<void>();
+  blocosChanged$ = this.blocosChangedSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
@@ -24,7 +27,12 @@ export class BlocosEstudoService {
   }
 
   atualizarBloco(numero: number, dto: AtualizarBlocoEstudoRequestDTO): Observable<BlocoEstudoDTO> {
-    return this.http.put<BlocoEstudoDTO>(`${this.baseUrl}/${numero}`, dto);
+    return this.http.put<BlocoEstudoDTO>(`${this.baseUrl}/${numero}`, dto)
+      .pipe(tap(() => this.blocosChangedSubject.next()));
+  }
+
+  notificarBlocosAlterados(): void {
+    this.blocosChangedSubject.next();
   }
 
   removerItem(itemId: number): Observable<void> {

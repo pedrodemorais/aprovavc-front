@@ -44,6 +44,12 @@ export interface EstudoTopicoResponse {
   tipoSessao?: 'ESTUDO' | 'REVISAO';
 }
 
+export interface TopicoFinalizadoDTO {
+  topicoId: number;
+  materiaId: number;
+  dataFinalizacao: string;
+}
+
 export interface AnotacaoTopicoDTO {
   topicoId: number;
   anotacoes: string;
@@ -116,6 +122,18 @@ export class SalaEstudoService {
 
   salvarEstudo(req: EstudoTopicoRequest): Observable<EstudoTopicoResponse> {
     return this.http.post<EstudoTopicoResponse>(`${this.apiUrl}/estudos`, req);
+  }
+
+  finalizarTopico(topicoId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`, {});
+  }
+
+  desfinalizarTopico(topicoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`);
+  }
+
+  listarTopicosFinalizados(): Observable<TopicoFinalizadoDTO[]> {
+    return this.http.get<TopicoFinalizadoDTO[]>(`${this.apiUrl}/topicos/finalizados`);
   }
 
   buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {

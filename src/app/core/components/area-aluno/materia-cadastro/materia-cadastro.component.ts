@@ -1,13 +1,15 @@
 import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
 import { MateriaService } from '../services/materia.service';
 import { SalaEstudoService } from '../services/sala-estudo.service';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
+import { TreeNode } from 'primeng/api';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 
@@ -25,6 +27,14 @@ interface MateriaImport {
   nome: string;
   topicos: Topico[];
 }
+
+type CadastroTreeRow = {
+  tipo: 'MATERIA' | 'TOPICO';
+  id: number;
+  materiaId?: number;
+  label: string;
+  temp?: boolean;
+};
 
 @Component({
   selector: 'app-materia-cadastro',
@@ -57,6 +67,17 @@ previewDuplicadosIgnorados = 0;
 
   topicos: Topico[] = [];
   novoTopicoDescricao: string = '';
+  treeNodes: TreeNode[] = [];
+  selectedTreeNode: TreeNode | TreeNode[] | null = null;
+  get currentTreeNode(): TreeNode | null {
+    return Array.isArray(this.selectedTreeNode) ? this.selectedTreeNode[0] : this.selectedTreeNode;
+  }
+  editingNodeKey: string | null = null;
+  editingLabel: string = '';
+  treeLoading = false;
+  private tempNodeId = -1;
+  nomeMateriaFocado = false;
+  arvoreExpandida = false;
 
   // ==========================
   // ✅ MODAL LOTE (NOME NOVO)
@@ -652,6 +673,30 @@ if (desc.length > 255) {
     });
   }
 
+  onNomeMateriaFocus(): void {
+    this.nomeMateriaFocado = true;
+  }
+
+  onNomeMateriaBlur(): void {
+    this.nomeMateriaFocado = false;
+  }
+
+  deveExibirBotaoNovo(): boolean {
+    const nome = (this.materiaForm?.get('nome')?.value || '').trim();
+    const id = this.materiaForm?.get('id')?.value;
+    return !this.nomeMateriaFocado && !nome && !id;
+  }
+
+  acaoBotaoMateria(event?: Event): void {
+    if (this.deveExibirBotaoNovo()) {
+      event?.preventDefault();
+      this.novaMateria();
+      return;
+    }
+
+    this.salvarMateria();
+  }
+
   private focarNovoTopico(): void {
     setTimeout(() => {
       if (this.novoTopicoInput) {
@@ -665,15 +710,362 @@ if (desc.length > 255) {
   carregarMaterias(): void {
     this.carregandoMaterias = true;
     this.mensagemErro = undefined;
+    this.treeLoading = true;
 
     this.materiaService.listarMaterias().subscribe({
       next: (lista) => {
-        this.materias = lista;
-        this.carregandoMaterias = false;
+        this.materias = lista || [];
+        const requisicoes = (this.materias || []).map((materia) => {
+          if (!materia.id) {
+            return of([]);
+          }
+          return this.materiaService.listarTopicos(materia.id).pipe(catchError(() => of([])));
+        });
+
+        if (!requisicoes.length) {
+          this.treeNodes = [];
+          this.carregandoMaterias = false;
+          this.treeLoading = false;
+          return;
+        }
+
+        forkJoin(requisicoes).subscribe({
+          next: (listas) => {
+            this.treeNodes = this.buildTreeFromMaterias(this.materias, listas);
+            this.carregandoMaterias = false;
+            this.treeLoading = false;
+          },
+          error: () => {
+            this.mensagemErro = 'Erro ao carregar topicos das materias.';
+            this.carregandoMaterias = false;
+            this.treeLoading = false;
+          }
+        });
       },
       error: () => {
-        this.mensagemErro = 'Erro ao carregar matérias.';
+        this.mensagemErro = 'Erro ao carregar materias.';
         this.carregandoMaterias = false;
+        this.treeLoading = false;
+      }
+    });
+  }
+
+  private buildTreeFromMaterias(materias: Materia[], topicosPorMateria: any[][]): TreeNode[] {
+    return (materias || []).map((materia, index) => {
+      const materiaId = materia.id as number;
+      const topicosDto = (topicosPorMateria[index] || []) as any[];
+      const topicosConvertidos = topicosDto.map((dto) => this.converterDtoParaTopico(dto, 0));
+      const node: TreeNode = {
+        key: this.nodeKey('MATERIA', materiaId),
+        data: {
+          tipo: 'MATERIA',
+          id: materiaId,
+          label: materia.nome,
+          temp: false
+        } as CadastroTreeRow,
+        children: [],
+        expanded: this.arvoreExpandida
+      };
+      node.children = this.buildTopicoNodes(topicosConvertidos, materiaId, node);
+      node.expanded = this.arvoreExpandida;
+      this.setTreeExpanded(node.children || [], this.arvoreExpandida);
+      return node;
+    });
+  }
+
+  private buildTopicoNodes(topicos: Topico[], materiaId: number, parent?: TreeNode): TreeNode[] {
+    return (topicos || []).map((topico) => this.toTopicoNode(topico, materiaId, parent));
+  }
+
+  private toTopicoNode(topico: Topico, materiaId: number, parent?: TreeNode): TreeNode {
+    const id = (topico as any).id ?? this.nextTempId();
+    const node: TreeNode = {
+      key: this.nodeKey('TOPICO', id),
+      data: {
+        tipo: 'TOPICO',
+        id,
+        materiaId,
+        label: topico.descricao,
+        temp: !(topico as any).id
+      } as CadastroTreeRow,
+      children: [],
+      expanded: this.arvoreExpandida
+    };
+    if (parent) {
+      node.parent = parent;
+    }
+    node.children = this.buildTopicoNodes(topico.filhos || [], materiaId, node);
+    return node;
+  }
+
+  toggleArvoreExpandida(): void {
+    this.arvoreExpandida = !this.arvoreExpandida;
+    this.setTreeExpanded(this.treeNodes, this.arvoreExpandida);
+  }
+
+  private setTreeExpanded(nodes: TreeNode[], expanded: boolean): void {
+    (nodes || []).forEach((node) => {
+      node.expanded = expanded;
+      if (node.children?.length) {
+        this.setTreeExpanded(node.children, expanded);
+      }
+    });
+  }
+
+  private nodeKey(tipo: 'MATERIA' | 'TOPICO', id: number): string {
+    return `${tipo}-${id}`;
+  }
+
+  private nextTempId(): number {
+    this.tempNodeId -= 1;
+    return this.tempNodeId;
+  }
+
+  onTreeSelect(event: any): void {
+    const node = event?.node as TreeNode | undefined;
+    this.selectedTreeNode = node || null;
+
+    if (this.editingNodeKey && node?.key === this.editingNodeKey) {
+      return;
+    }
+
+    this.editingNodeKey = null;
+    this.editingLabel = '';
+
+    if (node?.data?.tipo === 'MATERIA') {
+      const materia = this.materias.find((m) => m.id === node.data.id);
+      this.materiaSelecionada = materia;
+      this.materiaExpandida = materia || null;
+      this.topicoSelecionado = null;
+      return;
+    }
+
+    if (node?.data?.tipo === 'TOPICO') {
+      const materia = this.materias.find((m) => m.id === node.data.materiaId);
+      this.materiaSelecionada = materia;
+      this.materiaExpandida = materia || null;
+      this.topicoSelecionado = null;
+    }
+  }
+
+  iniciarEdicaoSelecionado(): void {
+    if (!this.currentTreeNode?.data) return;
+    this.editingNodeKey = this.currentTreeNode.key || null;
+    this.editingLabel = String(this.currentTreeNode.data.label || '');
+  }
+
+  cancelarEdicao(): void {
+    this.editingNodeKey = null;
+    this.editingLabel = '';
+  }
+
+  confirmarEdicao(node: TreeNode): void {
+    const label = (this.editingLabel || '').trim();
+    if (!label || !node?.data) {
+      this.cancelarEdicao();
+      return;
+    }
+
+    if (node.data.tipo === 'MATERIA') {
+      const payload: Materia = { id: node.data.temp ? null : node.data.id, nome: label } as any;
+      this.materiaService.salvarMateria(payload).subscribe({
+        next: () => {
+          this.cancelarEdicao();
+          this.carregarMaterias();
+        },
+        error: () => {
+          this.mensagemErro = 'Erro ao salvar materia.';
+          this.cancelarEdicao();
+        }
+      });
+      return;
+    }
+
+    if (node.data.tipo === 'TOPICO') {
+      const materiaId = node.data.materiaId as number;
+      const payload: any = {
+        id: node.data.temp ? null : node.data.id,
+        descricao: label,
+        ativo: true
+      };
+
+      const parentTopicoId = node.parent?.data?.tipo === 'TOPICO' ? node.parent.data.id : null;
+      if (parentTopicoId) {
+        payload.topicoPaiId = parentTopicoId;
+      }
+
+      this.materiaService.salvarTopico(materiaId, payload).subscribe({
+        next: () => {
+          this.cancelarEdicao();
+          this.carregarMaterias();
+        },
+        error: () => {
+          this.mensagemErro = 'Erro ao salvar topico.';
+          this.cancelarEdicao();
+        }
+      });
+    }
+  }
+
+  onTreeEditKeydown(event: KeyboardEvent): void {
+    event.stopPropagation();
+  }
+
+  acaoEditarNode(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedTreeNode = node;
+    this.iniciarEdicaoSelecionado();
+  }
+
+  acaoAdicionarNode(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedTreeNode = node;
+    if (node?.data?.tipo === 'MATERIA') {
+      this.adicionarTopicoNaArvore();
+      return;
+    }
+    if (node?.data?.tipo === 'TOPICO') {
+      this.adicionarSubtopicoNaArvore();
+    }
+  }
+
+  acaoExcluirNode(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedTreeNode = node;
+    this.excluirNodeSelecionado();
+  }
+
+  adicionarTopicoNaArvore(): void {
+    const targetNode = this.currentTreeNode;
+    if (!targetNode?.data || targetNode.data.tipo !== 'MATERIA') {
+      alert('Selecione uma materia para adicionar um topico.');
+      return;
+    }
+    const novo = this.criarTopicoTemporario(targetNode.data.id, targetNode);
+    targetNode.children = targetNode.children || [];
+    targetNode.children.push(novo);
+    targetNode.expanded = true;
+    this.selectedTreeNode = novo;
+    this.editingNodeKey = novo.key || null;
+    this.editingLabel = '';
+  }
+
+  adicionarSubtopicoNaArvore(): void {
+    const targetNode = this.currentTreeNode;
+    if (!targetNode?.data || targetNode.data.tipo !== 'TOPICO') {
+      alert('Selecione um topico para adicionar um subtopico.');
+      return;
+    }
+    const novo = this.criarTopicoTemporario(targetNode.data.materiaId, targetNode);
+    targetNode.children = targetNode.children || [];
+    targetNode.children.push(novo);
+    targetNode.expanded = true;
+    this.selectedTreeNode = novo;
+    this.editingNodeKey = novo.key || null;
+    this.editingLabel = '';
+  }
+
+  private criarTopicoTemporario(materiaId: number, parent?: TreeNode): TreeNode {
+    const id = this.nextTempId();
+    const node: TreeNode = {
+      key: this.nodeKey('TOPICO', id),
+      data: {
+        tipo: 'TOPICO',
+        id,
+        materiaId,
+        label: '',
+        temp: true
+      } as CadastroTreeRow,
+      children: [],
+      expanded: true,
+      parent
+    };
+    return node;
+  }
+
+  excluirNodeSelecionado(): void {
+    const node = this.currentTreeNode;
+    if (!node?.data) return;
+
+    if (node.data.tipo === 'MATERIA') {
+      const ok = confirm(`Excluir a materia "${node.data.label}"?`);
+      if (!ok) return;
+      if (!node.data.id) return;
+      this.materiaService.excluirMateria(node.data.id).subscribe({
+        next: () => {
+          this.selectedTreeNode = null;
+          this.carregarMaterias();
+        },
+        error: () => {
+          this.mensagemErro = 'Nao foi possivel excluir a materia.';
+        }
+      });
+      return;
+    }
+
+    if (node.data.tipo === 'TOPICO') {
+      const ok = confirm(`Excluir o topico "${node.data.label}" e seus filhos?`);
+      if (!ok) return;
+      const materiaId = node.data.materiaId as number;
+      if (!node.data.id) return;
+      this.materiaService.excluirTopico(materiaId, node.data.id).subscribe({
+        next: () => {
+          this.selectedTreeNode = null;
+          this.carregarMaterias();
+        },
+        error: (err) => {
+          this.mensagemErro = this.getMensagemErroExcluirTopico(err);
+        }
+      });
+    }
+  }
+
+  onNodeDrop(event: any): void {
+    const dragNode = event?.dragNode as TreeNode | undefined;
+    const dropNode = event?.dropNode as TreeNode | undefined;
+    const dropPosition = event?.dropPosition as string | undefined;
+    if (!dragNode?.data || dragNode.data.tipo !== 'TOPICO') {
+      this.carregarMaterias();
+      return;
+    }
+
+    const origemMateriaId = dragNode.data.materiaId as number;
+    const destinoMateriaId = dropNode?.data?.tipo === 'MATERIA'
+      ? dropNode.data.id
+      : dropNode?.data?.materiaId;
+
+    if (!destinoMateriaId || destinoMateriaId !== origemMateriaId) {
+      alert('Nao e possivel mover topicos entre materias.');
+      this.carregarMaterias();
+      return;
+    }
+
+    let novoPaiId: number | null = null;
+    if (dropPosition === 'inside') {
+      if (dropNode?.data?.tipo === 'TOPICO') {
+        novoPaiId = dropNode.data.id;
+      }
+    } else {
+      const parentNode = dropNode?.parent as TreeNode | undefined;
+      if (parentNode?.data?.tipo === 'TOPICO') {
+        novoPaiId = parentNode.data.id;
+      }
+    }
+
+    const payload: any = {
+      id: dragNode.data.id,
+      descricao: dragNode.data.label,
+      ativo: true
+    };
+    if (novoPaiId) {
+      payload.topicoPaiId = novoPaiId;
+    }
+
+    this.materiaService.salvarTopico(origemMateriaId, payload).subscribe({
+      next: () => this.carregarMaterias(),
+      error: () => {
+        this.mensagemErro = 'Erro ao mover topico.';
+        this.carregarMaterias();
       }
     });
   }
@@ -800,6 +1192,7 @@ if (desc.length > 255) {
         this.materiaSelecionada = salva;
         this.materiaExpandida = salva;
         this.carregarTopicos(salva);
+        this.carregarMaterias();
 
         this.materiaForm.reset({ id: null, nome: '' });
         this.submeteuMateria = false;
@@ -825,6 +1218,7 @@ if (desc.length > 255) {
     this.materiaService.excluirMateria(m.id).subscribe({
       next: () => {
         this.materias = this.materias.filter(x => x.id !== m.id);
+        this.carregarMaterias();
 
         if (this.materiaSelecionada?.id === m.id) {
           this.novaMateria();
@@ -1107,6 +1501,22 @@ if (desc.length > 255) {
     });
 
     return pior;
+  }
+
+  private getStatusRevisaoTopicoId(topicoId?: number): StatusRevisao {
+    if (!topicoId) return 'SEM';
+    const info = this.revisoesPorTopico.get(topicoId);
+    return info?.status ?? 'SEM';
+  }
+
+  classeSemaforoRevisaoId(topicoId?: number) {
+    const status = this.getStatusRevisaoTopicoId(topicoId);
+    return {
+      'badge-sem-revisao': status === 'SEM',
+      'badge-revisao-futura': status === 'FUTURA',
+      'badge-revisao-hoje': status === 'HOJE',
+      'badge-revisao-atrasada': status === 'ATRASADA'
+    };
   }
 
   classeSemaforoRevisao(topico: TopicoComRevisao) {
@@ -1436,3 +1846,6 @@ async importarEditalCompleto(): Promise<void> {
 
 
 }
+
+
+

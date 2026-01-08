@@ -137,17 +137,38 @@
 
         <ng-container *ngIf="getResumoMateriaLinha(m) as resumo">
           <div class="curso-resumo" *ngIf="resumo.total">
-            <span class="curso-resumo-item curso-resumo-item--atrasadas">
-              Atrasadas <span class="curso-resumo-num curso-resumo-num--bad">{{ resumo.atrasadas }}</span>
-            </span>
-            <span class="curso-resumo-item curso-resumo-item--hoje">
-              Hoje <span class="curso-resumo-num curso-resumo-num--hoje">{{ resumo.hoje }}</span>
-            </span>
+            <ng-container *ngIf="resumo.atrasadas > 0; else resumoAtrasadasStatic">
+              <button
+                type="button"
+                class="curso-resumo-item curso-resumo-item--atrasadas curso-resumo-link"
+                (click)="irParaRevisaoMateria(m, 'ATRASADA'); $event.stopPropagation()">
+                Atrasadas <span class="curso-resumo-num curso-resumo-num--bad">{{ resumo.atrasadas }}</span>
+              </button>
+            </ng-container>
+            <ng-template #resumoAtrasadasStatic>
+              <span class="curso-resumo-item curso-resumo-item--atrasadas">
+                Atrasadas <span class="curso-resumo-num curso-resumo-num--bad">{{ resumo.atrasadas }}</span>
+              </span>
+            </ng-template>
+
+            <ng-container *ngIf="resumo.hoje > 0; else resumoHojeStatic">
+              <button
+                type="button"
+                class="curso-resumo-item curso-resumo-item--hoje curso-resumo-link"
+                (click)="irParaRevisaoMateria(m, 'HOJE'); $event.stopPropagation()">
+                Hoje <span class="curso-resumo-num curso-resumo-num--hoje">{{ resumo.hoje }}</span>
+              </button>
+            </ng-container>
+            <ng-template #resumoHojeStatic>
+              <span class="curso-resumo-item curso-resumo-item--hoje">
+                Hoje <span class="curso-resumo-num curso-resumo-num--hoje">{{ resumo.hoje }}</span>
+              </span>
+            </ng-template>
             <span class="curso-resumo-item curso-resumo-item--em-dia">
               Em dias <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.emDia }}</span>
             </span>
             <span class="curso-resumo-item curso-resumo-item--concluidas">
-              <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.concluidas }}/{{ resumo.total }}</span> concluidas
+              <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.concluidas }}/{{ resumo.total }}</span> T&oacute;picos conclu&iacute;dos
             </span>
           </div>
         </ng-container>
@@ -199,7 +220,7 @@
 
                 <div class="secao-right">
                   <span class="mini-ring" [ngStyle]="{'--p': getPercentSecao(s)}" aria-hidden="true"></span>
-                  <span class="secao-meta">{{ getConcluidasSecao(s) }}/{{ getTotalSecao(s) }} aulas</span>
+                  <span class="secao-meta">{{ getConcluidasSecao(s) }}/{{ getTotalSecao(s) }} subt&oacute;picos</span>
                 </div>
               </button>
 
@@ -213,8 +234,8 @@
                   <button type="button"
                           class="topico-check"
                           [class.is-done]="isTopicoConcluido(t)"
-                          (click)="abrirMenuConcluir($event, t, opConcluir)"
-                          aria-label="Opções de conclusão">
+                          (click)="onToggleConcluido(t); $event.stopPropagation()"
+                          aria-label="Marcar como concluido">
                     <i class="pi pi-check" aria-hidden="true"></i>
                   </button>
 
@@ -254,8 +275,8 @@
                 <button type="button"
                         class="topico-check"
                         [class.is-done]="isTopicoConcluido(s)"
-                        (click)="abrirMenuConcluir($event, s, opConcluir)"
-                        aria-label="Opções de conclusão">
+                        (click)="onToggleConcluido(s); $event.stopPropagation()"
+                        aria-label="Marcar como concluido">
                   <i class="pi pi-check" aria-hidden="true"></i>
                 </button>
 
@@ -290,23 +311,9 @@
   </div>
 </div>
 
-<p-overlayPanel #opConcluir styleClass="op-concluir" [showCloseIcon]="true">
-  <div class="op-box">
-    <div class="op-title">{{ topicoMenu?.descricao }}</div>
 
-    <button type="button"
-            class="op-btn"
-            (click)="marcarComoConcluido(topicoMenu); opConcluir.hide()">
-      Marcar como concluído
-    </button>
 
-    <button type="button"
-            class="op-btn op-btn--ghost"
-            (click)="desmarcarConcluido(topicoMenu); opConcluir.hide()">
-      Desmarcar
-    </button>
-  </div>
-</p-overlayPanel>
+
 
 
 

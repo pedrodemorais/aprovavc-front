@@ -1,6 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { OverlayPanel } from 'primeng/overlaypanel';
 
 import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
@@ -55,7 +54,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   secaoAbertaId: number | null = null;
   topicoAtivoId: number | null = null;
 
-  topicoMenu: Topico | null = null;
 
   private concluidosPorTopico = new Set<number>();
   private materiasPorEdital = new Map<number, Set<number>>();
@@ -72,6 +70,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   resumoExpandida: ResumoMateriaExpandida | null = null;
 
   private revisoesPorTopico = new Map<number, InfoRevisaoTopico>();
+  private topicosFinalizadosPendentes = new Map<number, boolean>();
 
   constructor(
     private materiaService: MateriaService,
@@ -87,6 +86,12 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.carregarMaterias();
     this.carregarEditais();
     this.carregarRevisoesDashboard();
+    this.carregarTopicosFinalizados();
+  }
+
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    this.carregarTopicosFinalizados();
   }
 
   ngOnDestroy(): void {
@@ -292,6 +297,20 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       ['/area-restrita/sala-estudo', materiaId],
       { queryParams: (topicoId && Number.isFinite(topicoId)) ? { topicoId } : undefined }
     );
+  }
+
+  irParaRevisaoMateria(m: Materia, status: StatusRevisao): void {
+    const materiaId = this.asId((m as any)?.id ?? (m as any)?.materiaId);
+    if (!materiaId) {
+      return;
+    }
+
+    const topicoId = this.obterTopicoRevisaoPorStatus(materiaId, status);
+    const queryParams: any = { modo: 'revisar' };
+    if (topicoId) {
+      queryParams.topicoId = topicoId;
+    }
+    this.router.navigate(['/area-restrita/sala-estudo', materiaId], { queryParams });
   }
 
   toggleMateria(m: Materia): void {
@@ -685,6 +704,35 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     return data;
   }
 
+  private obterTopicoRevisaoPorStatus(materiaId: number, status: StatusRevisao): number | null {
+    let escolhidoTopicoId: number | null = null;
+    let escolhidoData: Date | null = null;
+
+    this.revisoesPorTopico.forEach((info, topicoId) => {
+      if (info.materiaId !== materiaId || info.status !== status) {
+        return;
+      }
+
+      const data = info.proximaRevisao ? this.construirDataLocal(info.proximaRevisao) : undefined;
+      if (escolhidoTopicoId === null) {
+        escolhidoTopicoId = topicoId;
+        escolhidoData = data ?? null;
+        return;
+      }
+      if (!escolhidoData) {
+        escolhidoTopicoId = topicoId;
+        escolhidoData = data ?? null;
+        return;
+      }
+      if (data && data.getTime() < escolhidoData.getTime()) {
+        escolhidoTopicoId = topicoId;
+        escolhidoData = data;
+      }
+    });
+
+    return escolhidoTopicoId;
+  }
+
   // ✅ Filtra E ordena por urgência (ação)
   get materiasFiltradas(): Materia[] {
     const t = (this.termoBusca || '').trim().toLowerCase();
@@ -744,29 +792,85 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // CONCLUSÃO local + overlay
   // ==========================
   isTopicoConcluido(t: Topico): boolean {
-    const id = (t as any)?.id;
+    const id = this.getTopicoId(t);
     if (!id) return false;
     return this.concluidosPorTopico.has(id);
   }
 
-  abrirMenuConcluir(event: Event, topico: Topico, op: OverlayPanel): void {
-    event.stopPropagation();
-    this.topicoMenu = topico;
-    op.toggle(event);
+  onToggleConcluido(topico: Topico): void {
+    const id = this.getTopicoId(topico);
+    if (!id) {
+      return;
+    }
+
+    if (this.isTopicoConcluido(topico)) {
+      const confirmado = window.confirm('Deseja desmarcar este topico como concluido?');
+      if (!confirmado) {
+        return;
+      }
+      this.topicosFinalizadosPendentes.set(id, false);
+      this.concluidosPorTopico.delete(id);
+      this.atualizarResumoExpandida();
+      this.salaEstudoService.desfinalizarTopico(id).subscribe({
+        next: () => {
+          this.topicosFinalizadosPendentes.delete(id);
+        },
+        error: () => {
+          this.topicosFinalizadosPendentes.delete(id);
+          this.concluidosPorTopico.add(id);
+          this.atualizarResumoExpandida();
+          this.mensagemErro = 'Nao foi possivel desfazer o finalizado.';
+        }
+      });
+      return;
+    }
+
+    const confirmado = window.confirm('Deseja marcar este topico como concluido?');
+    if (!confirmado) {
+      return;
+    }
+    this.topicosFinalizadosPendentes.set(id, true);
+    this.concluidosPorTopico.add(id);
+    this.atualizarResumoExpandida();
+    this.salaEstudoService.finalizarTopico(id).subscribe({
+      next: () => {
+        this.topicosFinalizadosPendentes.delete(id);
+      },
+      error: () => {
+        this.topicosFinalizadosPendentes.delete(id);
+        this.concluidosPorTopico.delete(id);
+        this.atualizarResumoExpandida();
+        this.mensagemErro = 'Nao foi possivel finalizar o topico.';
+      }
+    });
   }
 
   marcarComoConcluido(topico: Topico | null): void {
-    const id = (topico as any)?.id;
+    const id = this.getTopicoId(topico);
     if (!id) return;
-    this.concluidosPorTopico.add(id);
-    this.atualizarResumoExpandida();
+    this.salaEstudoService.finalizarTopico(id).subscribe({
+      next: () => {
+        this.concluidosPorTopico.add(id);
+        this.atualizarResumoExpandida();
+      },
+      error: () => {
+        this.mensagemErro = 'Nao foi possivel finalizar o topico.';
+      }
+    });
   }
 
   desmarcarConcluido(topico: Topico | null): void {
-    const id = (topico as any)?.id;
+    const id = this.getTopicoId(topico);
     if (!id) return;
-    this.concluidosPorTopico.delete(id);
-    this.atualizarResumoExpandida();
+    this.salaEstudoService.desfinalizarTopico(id).subscribe({
+      next: () => {
+        this.concluidosPorTopico.delete(id);
+        this.atualizarResumoExpandida();
+      },
+      error: () => {
+        this.mensagemErro = 'Nao foi possivel desfazer o finalizado.';
+      }
+    });
   }
 
   // ==========================
@@ -871,5 +975,36 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     });
 
     this.resumoExpandida = { total, concluidas, atrasadas, hoje, emDia };
+  }
+
+  private carregarTopicosFinalizados(): void {
+    this.salaEstudoService.listarTopicosFinalizados().subscribe({
+      next: (lista) => {
+        const concluido = new Set((lista || [])
+          .map((item) => this.getTopicoId(item))
+          .filter((id): id is number => Number.isFinite(id)));
+
+        this.topicosFinalizadosPendentes.forEach((finalizado, id) => {
+          if (finalizado) {
+            concluido.add(id);
+          } else {
+            concluido.delete(id);
+          }
+        });
+
+        this.concluidosPorTopico = concluido;
+        this.atualizarResumoExpandida();
+      },
+      error: () => {
+        this.concluidosPorTopico = new Set();
+        this.atualizarResumoExpandida();
+      }
+    });
+  }
+
+  private getTopicoId(topico: any): number | null {
+    const raw = topico?.id ?? topico?.topicoId ?? null;
+    const id = Number(raw);
+    return Number.isFinite(id) && id > 0 ? id : null;
   }
 }

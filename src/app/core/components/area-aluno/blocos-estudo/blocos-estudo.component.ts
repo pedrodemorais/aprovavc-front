@@ -44,6 +44,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   blocos: BlocoEstudoDTO[] = [];
   abaAtiva = 0;
+  selectedDayIndex = 0;
+  showWeekly = false;
+  weeklyOrderedBlocos: Array<{ bloco: BlocoEstudoDTO; index: number }> = [];
 
   form!: BlocoForm;
 
@@ -97,8 +100,10 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     });
 
     this.blocos = this.criarBlocosPadrao();
-    this.abaAtiva = 0;
-    this.montarForm(this.blocos[0]);
+    this.selectedDayIndex = this.getDiaAtualIndex();
+    this.abaAtiva = this.selectedDayIndex;
+    this.montarForm(this.blocos[this.abaAtiva]);
+    this.atualizarOrdemSemanal();
     this.sincronizarInputsPorBloco();
     this.inicializarLinhasFixas();
 
@@ -114,6 +119,75 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   get itensFormArray(): FormArray<BlocoItemForm> {
     return this.form.controls.itens;
+  }
+
+  getDiaAtualIndex(): number {
+    const hoje = new Date();
+    const dia = hoje.getDay(); // 0=Domingo ... 6=Sabado
+    return dia === 0 ? 6 : dia - 1;
+  }
+
+  getCarouselOffsetPercent(): number {
+    const total = this.blocos.length || 1;
+    const idx = Math.max(0, Math.min(total - 1, this.selectedDayIndex));
+    return idx * (100 / total);
+  }
+
+  getModuloLabel(index: number): string {
+    const modulo = ((index + 1) % 7) + 1;
+    return `Modulo ${modulo}`;
+  }
+
+  getNomeDiaSemana(index: number): string {
+    return this.diasSemana[index] || `Dia ${index + 1}`;
+  }
+
+  getNomeDiaSemanaSemFeira(index: number): string {
+    const nome = this.getNomeDiaSemana(index);
+    return nome.replace(/\s*Feira$/i, '').trim();
+  }
+
+  getCardBgColor(index: number): string {
+    const cores = [
+      'rgba(191, 230, 220, 0.3)',
+      'rgba(185, 215, 242, 0.3)',
+      'rgba(208, 193, 242, 0.3)',
+      'rgba(242, 201, 166, 0.3)',
+      'rgba(203, 230, 168, 0.3)',
+      'rgba(184, 226, 238, 0.3)',
+      'rgba(242, 180, 199, 0.3)'
+    ];
+    const idx = Math.abs(index) % cores.length;
+    return cores[idx];
+  }
+
+  getBlocosOrdenadosSemana(): Array<{ bloco: BlocoEstudoDTO; index: number }> {
+    return this.weeklyOrderedBlocos;
+  }
+
+  private atualizarOrdemSemanal(): void {
+    this.weeklyOrderedBlocos = this.blocos
+      .map((bloco, index) => ({ bloco, index }))
+      .sort((a, b) => {
+        const aIsDomingo = a.index === 6 ? 1 : 0;
+        const bIsDomingo = b.index === 6 ? 1 : 0;
+        if (aIsDomingo !== bIsDomingo) return bIsDomingo - aIsDomingo;
+        return a.index - b.index;
+      });
+  }
+
+  navegarDia(delta: number): void {
+    if (!this.blocos.length) return;
+    const total = this.blocos.length;
+    const atual = Math.max(0, Math.min(total - 1, this.selectedDayIndex));
+    const novo = (atual + delta + total) % total;
+    this.selectedDayIndex = novo;
+    this.abaAtiva = novo;
+    this.montarForm(this.blocos[novo]);
+  }
+
+  toggleWeeklyView(): void {
+    this.showWeekly = !this.showWeekly;
   }
 
   get salvarDisabled(): boolean {
@@ -374,26 +448,32 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
           if (lista.length === 0) {
             this.blocos = this.criarBlocosPadrao();
-            this.abaAtiva = 0;
-            this.montarForm(this.blocos[0]);
+            this.selectedDayIndex = this.getDiaAtualIndex();
+            this.abaAtiva = this.selectedDayIndex;
+            this.montarForm(this.blocos[this.abaAtiva]);
             this.sincronizarInputsPorBloco();
             this.inicializarLinhasFixas();
+            this.atualizarOrdemSemanal();
             this.setMensagem('warn', 'Nenhum bloco veio do backend. Exibindo 7 blocos padrao.');
             return;
           }
 
           this.blocos = lista;
-          this.abaAtiva = Math.min(this.abaAtiva, this.blocos.length - 1);
+          this.selectedDayIndex = Math.min(this.getDiaAtualIndex(), this.blocos.length - 1);
+          this.abaAtiva = this.selectedDayIndex;
           this.montarForm(this.blocos[this.abaAtiva]);
           this.sincronizarInputsPorBloco();
           this.inicializarLinhasFixas();
+          this.atualizarOrdemSemanal();
         },
         error: () => {
           this.blocos = this.criarBlocosPadrao();
-          this.abaAtiva = 0;
-          this.montarForm(this.blocos[0]);
+          this.selectedDayIndex = this.getDiaAtualIndex();
+          this.abaAtiva = this.selectedDayIndex;
+          this.montarForm(this.blocos[this.abaAtiva]);
           this.sincronizarInputsPorBloco();
           this.inicializarLinhasFixas();
+          this.atualizarOrdemSemanal();
           this.setMensagem('error', 'Falha ao carregar blocos. Mostrando blocos padrao.');
         }
       });
@@ -460,6 +540,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   selecionarBloco(index: number): void {
     this.abaAtiva = index;
+    this.selectedDayIndex = index;
     const bloco = this.blocos[this.abaAtiva];
     if (bloco) this.montarForm(bloco);
   }
