@@ -7,8 +7,15 @@
 export interface EditalTemplateDTO {
   id: number;
   nome: string;
+  orgaoId?: number;
+  orgaoNome?: string;
+  orgao?: string;
+  areaId?: number;
+  areaNome?: string;
   area?: string;
-  abrangencia?: string;
+  abrangencia?: AbrangenciaEnum | string;
+  cargoId?: number;
+  cargoNome?: string;
   cargo?: string;
 
   publicado?: boolean;
@@ -17,19 +24,48 @@ export interface EditalTemplateDTO {
   dataPublicacao?: string | null; // ✅ pra parar erro no template
 }
 
+export type AbrangenciaEnum = 'FEDERAL' | 'ESTADUAL' | 'MUNICIPAL';
+
+export interface OrgaoDTO {
+  id: number;
+  nome: string;
+}
+
+export interface AreaDTO {
+  id: number;
+  nome: string;
+}
+
+export interface CargoDTO {
+  id: number;
+  nome: string;
+}
+
+export interface PageDTO<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 // requests
 export interface CriarEditalTemplateRequestDTO {
   nome: string;
-  area: string;
-  abrangencia: string;
-  cargo: string;
+  orgaoId: number;
+  areaId: number;
+  abrangencia: AbrangenciaEnum | string;
+  cargoId: number;
+  dataPublicacao?: string | null;
 }
 
 export interface AtualizarEditalTemplateRequestDTO {
   nome: string;
-  area: string;
-  abrangencia: string;
-  cargo: string;
+  orgaoId: number;
+  areaId: number;
+  abrangencia: AbrangenciaEnum | string;
+  cargoId: number;
+  dataPublicacao?: string | null;
 }
 
 // =========================

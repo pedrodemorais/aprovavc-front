@@ -132,6 +132,38 @@
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.14);
 }
 
+.textarea-lote,
+.area-lote {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  outline: none;
+  background: var(--surface);
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.area-lote {
+  min-height: 240px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.textarea-lote {
+  min-height: 170px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.textarea-lote:focus,
+.area-lote:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.25);
+  background: var(--surface-2);
+}
+
 .form-acoes {
   display: flex;
   align-items: center;
@@ -205,8 +237,7 @@
   display: block;
   justify-self: start;
   align-self: center;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+
   background: #ffffff;
   object-fit: contain;
 }
@@ -309,6 +340,18 @@
   cursor: pointer;
 }
 
+.edital-tree-wrap {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.edital-tree-wrap .tree-node-line {
+  padding: 4px 6px;
+}
+
 .item-materia:first-child {
   border-top: none;
 }
@@ -323,9 +366,71 @@
   gap: 10px;
 }
 
+.edital-toggle {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4b5563;
+  padding: 0;
+}
+
+.edital-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.materia-acoes {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.template-acoes {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-acao-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+}
+
+.btn-acao-icon--add {
+  background: #ecfdf3;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.btn-acao-icon--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
 .materia-textos {
   display: flex;
   flex-direction: column;
+}
+
+.bloco-templates-lista .materia-textos {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .materia-nome {
@@ -465,11 +570,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .topico-descricao {
   font-size: 0.86rem;
   color: #111827;
+}
+
+.topico-acoes {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
 }
 
 .lista-topicos-filhos {
@@ -490,6 +603,165 @@
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.tree-area {
+  min-height: 320px;
+}
+
+.materia-tree {
+  width: 100%;
+}
+
+.tree-node-line {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+}
+
+.tree-node-line:hover {
+  background: var(--surface-2);
+}
+
+.tree-node-line.is-selected {
+  background: #e5e7eb;
+  box-shadow: none;
+}
+
+.tree-node-line.is-materia {
+  font-weight: 600;
+  color: #2b2b2c9c;
+}
+
+.tree-node-text {
+  font-size: 0.88rem;
+  color: rgba(0, 0, 0, 0.6);
+  flex: 1;
+  min-width: 0;
+}
+
+.tree-edit-input {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  font-size: 0.86rem;
+  outline: none;
+  background: var(--surface);
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.tree-edit-input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2);
+}
+
+:host ::ng-deep .materia-tree .p-tree {
+  border: 0;
+  background: transparent;
+}
+
+:host ::ng-deep .materia-tree .p-tree-container {
+  border: 0;
+  background: transparent;
+}
+
+:host ::ng-deep .materia-tree .p-treenode {
+  padding: 2px 0;
+}
+
+:host ::ng-deep .materia-tree .p-treenode-content {
+  width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+  background: transparent;
+  box-shadow: none;
+}
+
+:host ::ng-deep .materia-tree .p-treenode-content.p-highlight {
+  background: transparent;
+  box-shadow: none;
+}
+
+:host ::ng-deep .materia-tree .p-treenode-content {
+  display: flex;
+  width: 100%;
+}
+
+:host ::ng-deep .materia-tree .p-treenode-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.tree-node-actions {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tree-header-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tree-header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-tree-toggle {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.tree-action-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.tree-action-btn:hover {
+  transform: scale(1.1);
+}
+
+.tree-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
+.tree-action-btn.danger {
+  color: #dc2626;
+}
+
+.tree-action-btn.add {
+  color: #16a34a;
+  font-weight: 700;
 }
 
 .modal-overlay {
@@ -517,6 +789,10 @@
   gap: 12px;
 }
 
+.modal-importar-edital {
+  min-height: 520px;
+}
+
 .modal-body {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -524,6 +800,49 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.modal-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.055);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+.modal-tab {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+}
+
+.modal-tab.ativa {
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.importar-cadastro-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lote-preview-wrap {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--surface);
 }
 
 .modal-header {

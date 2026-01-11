@@ -119,7 +119,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe({
       next: ({ revisoes, materias, editais, plano, blocos }) => {
-        this.revisoes = revisoes || [];
+        this.revisoes = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
         this.materias = materias || [];
         this.editais = editais || [];
         this.planoDoDia = plano;
@@ -998,6 +998,49 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     this.materiasConcluidasNoPlanner = Array.from(concluidas.entries())
       .filter(([id]) => idsPlanner.has(id))
       .map(([materiaId, nome]) => ({ materiaId, nome }));
+  }
+
+  private filtrarRevisoesPorTopicosAtivos(
+    revisoes: RevisaoDashboardItem[],
+    editais: Edital[]
+  ): RevisaoDashboardItem[] {
+    const editaisAtivos = (editais || []).filter((e) => e?.ativo);
+    if (!editaisAtivos.length) return revisoes;
+
+    const statusPorTopico = new Map<number, boolean>();
+    for (const edital of editaisAtivos) {
+      for (const materia of edital.materias || []) {
+        const topicos = this.flattenTopicos(materia.topicos || []);
+        for (const topico of topicos) {
+          const id =
+            Number(
+              (topico as any).id ??
+                (topico as any).topicoId ??
+                (topico as any).idTopico ??
+                (topico as any).subtopicoId ??
+                (topico as any).idSubtopico
+            ) || null;
+          if (!id) continue;
+          const ativo = (topico as any).ativo !== false;
+          if (ativo) {
+            statusPorTopico.set(id, true);
+            continue;
+          }
+          if (!statusPorTopico.has(id)) {
+            statusPorTopico.set(id, false);
+          }
+        }
+      }
+    }
+
+    if (!statusPorTopico.size) return revisoes;
+
+    return (revisoes || []).filter((item) => {
+      const topicoId = item?.topicoId;
+      if (!topicoId) return true;
+      const status = statusPorTopico.get(topicoId);
+      return status !== false;
+    });
   }
 
   private obterEditalPlano(): Edital | null {

@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 
 import {
   EditalTemplateDTO,
+  EstruturaTemplateDTO,
   ClonarEditalRequestDTO,
   ClonarEditalResponseDTO
 } from 'src/app/core/area-admin/dto/edital-admin.dto';
@@ -32,6 +33,14 @@ export class EditalTemplateService {
 
   listarTemplates(): Observable<EditalTemplateDTO[]> {
     return this.http.get<EditalTemplateDTO[]>(this.templateBase, this.options());
+  }
+
+  buscarEstrutura(templateId: number): Observable<EstruturaTemplateDTO> {
+    return this.http.get<EstruturaTemplateDTO>(`${this.templateBase}/${templateId}/estrutura`, this.options());
+  }
+
+  buscarTemplate(templateId: number): Observable<EditalTemplateDTO> {
+    return this.http.get<EditalTemplateDTO>(`${this.templateBase}/${templateId}`, this.options());
   }
 
   buscarImagemArquivo(id: number): Observable<HttpResponse<Blob>> {

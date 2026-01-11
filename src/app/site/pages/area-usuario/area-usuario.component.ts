@@ -283,9 +283,16 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       icon: 'pi pi-shield',
       items: [
         {
-          label: 'Template Edital',
+          label: 'Cadastrar Consurso',
           icon: 'pi pi-file-edit',
-          routerLink: ['/admin/painel']
+          routerLink: ['/area-restrita/admin/painel'],
+          command: () => this.router.navigate(['/area-restrita/admin/painel'])
+        },
+        {
+          label: 'Cadastros base',
+          icon: 'pi pi-database',
+          routerLink: ['/area-restrita/admin/cadastro-base'],
+          command: () => this.router.navigate(['/area-restrita/admin/cadastro-base'])
         }
       ]
     };
@@ -336,7 +343,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       icon: 'pi pi-th-large',
       items: [
         {
-           label: 'Meus editais',
+           label: 'Gerenciar Editais',
               icon: 'pi pi-folder-open',
               routerLink: ['/area-restrita/editais'],
               disabled: isLocked

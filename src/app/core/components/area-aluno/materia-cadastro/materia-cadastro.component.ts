@@ -128,6 +128,7 @@ previewDuplicadosIgnorados = 0;
     });
   }
 
+
   // ==========================
   // ✅ HOTKEYS
   // ==========================
@@ -607,42 +608,8 @@ if (desc.length > 255) {
   }
 
   /** Status consolidado da MATÉRIA (pior status entre todos os tópicos) */
-  private getStatusRevisaoMateria(m: Materia): StatusRevisao {
-    if (!m.id) return 'SEM';
 
-    if (this.materiaExpandida && this.materiaExpandida.id === m.id && this.topicos?.length) {
-      let pior: StatusRevisao = 'SEM';
 
-      const acumulaStatus = (t: Topico) => {
-        const st = this.getStatusRevisaoTopicoComFilhos(t);
-        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) pior = st;
-        (t.filhos || []).forEach(acumulaStatus);
-      };
-
-      this.topicos.forEach(acumulaStatus);
-      return pior;
-    }
-
-    let pior: StatusRevisao = 'SEM';
-    this.revisoesPorTopico.forEach((info) => {
-      if (info.materiaId === m.id) {
-        const st = info.status;
-        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) pior = st;
-      }
-    });
-
-    return pior;
-  }
-
-  classeSemaforoMateria(m: Materia) {
-    const status = this.getStatusRevisaoMateria(m);
-    return {
-      'badge-sem-revisao': status === 'SEM',
-      'badge-revisao-futura': status === 'FUTURA',
-      'badge-revisao-hoje': status === 'HOJE',
-      'badge-revisao-atrasada': status === 'ATRASADA'
-    };
-  }
 
   campoInvalido(campo: string): boolean {
     const control = this.materiaForm.get(campo);
@@ -1460,74 +1427,16 @@ if (desc.length > 255) {
     return sair;
   }
 
-  private getStatusRevisaoTopico(topico: Topico): StatusRevisao {
-    if ((topico as any).id && this.revisoesPorTopico.has((topico as any).id)) {
-      return this.revisoesPorTopico.get((topico as any).id)!.status;
-    }
+ 
 
-    if ((topico as any).proximaRevisao) {
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
 
-      const proxima = String((topico as any).proximaRevisao);
-      const dataRev = this.construirDataLocal(proxima);
 
-      if (dataRev.getTime() < hoje.getTime()) return 'ATRASADA';
-      if (dataRev.getTime() === hoje.getTime()) return 'HOJE';
-      return 'FUTURA';
-    }
 
-    return 'SEM';
-  }
 
-  private prioridadeStatus(status: StatusRevisao): number {
-    switch (status) {
-      case 'ATRASADA': return 3;
-      case 'HOJE': return 2;
-      case 'FUTURA': return 1;
-      case 'SEM':
-      default: return 0;
-    }
-  }
 
-  private getStatusRevisaoTopicoComFilhos(topico: Topico): StatusRevisao {
-    let pior: StatusRevisao = this.getStatusRevisaoTopico(topico);
 
-    (topico.filhos || []).forEach((filho) => {
-      const stFilho = this.getStatusRevisaoTopicoComFilhos(filho);
-      if (this.prioridadeStatus(stFilho) > this.prioridadeStatus(pior)) {
-        pior = stFilho;
-      }
-    });
 
-    return pior;
-  }
 
-  private getStatusRevisaoTopicoId(topicoId?: number): StatusRevisao {
-    if (!topicoId) return 'SEM';
-    const info = this.revisoesPorTopico.get(topicoId);
-    return info?.status ?? 'SEM';
-  }
-
-  classeSemaforoRevisaoId(topicoId?: number) {
-    const status = this.getStatusRevisaoTopicoId(topicoId);
-    return {
-      'badge-sem-revisao': status === 'SEM',
-      'badge-revisao-futura': status === 'FUTURA',
-      'badge-revisao-hoje': status === 'HOJE',
-      'badge-revisao-atrasada': status === 'ATRASADA'
-    };
-  }
-
-  classeSemaforoRevisao(topico: TopicoComRevisao) {
-    const status = this.getStatusRevisaoTopicoComFilhos(topico);
-    return {
-      'badge-sem-revisao': status === 'SEM',
-      'badge-revisao-futura': status === 'FUTURA',
-      'badge-revisao-hoje': status === 'HOJE',
-      'badge-revisao-atrasada': status === 'ATRASADA'
-    };
-  }
 
   private construirDataLocal(isoDate: string): Date {
     const [anoStr, mesStr, diaStr] = isoDate.split('-');

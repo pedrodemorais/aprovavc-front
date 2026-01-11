@@ -90,6 +90,11 @@ export interface ConstanciaEstudoDiaDTO {
   teveEstudo?: boolean;
   materias?: string[];
 }
+export interface MateriaTopicosDTO {
+  materiaId: number;
+  materiaNome: string;
+  topicos: any[];
+}
 export interface SplitSubtopicoRequest {
   novosSubtopicos: string[];
   novoTituloPai?: string;
@@ -201,6 +206,11 @@ export class SalaEstudoService {
     if (mes != null) params.push(`mes=${mes}`);
     const query = params.length ? `?${params.join('&')}` : '';
     return this.http.get<ConstanciaEstudoDiaDTO[]>(`${this.apiUrl}/estudos/constancia-mes${query}`);
+  }
+
+  listarMateriasParaEstudo(escopo: string): Observable<MateriaTopicosDTO[]> {
+    const query = `?escopo=${encodeURIComponent(escopo || 'todas')}`;
+    return this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias${query}`);
   }
   splitSubtopico(subtopicoId: number, payload: SplitSubtopicoRequest): Observable<SplitSubtopicoResponse> {
     return this.http.post<SplitSubtopicoResponse>(`${this.topicosApiUrl}/${subtopicoId}/split`, payload);

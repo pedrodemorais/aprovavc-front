@@ -8,25 +8,47 @@
         <!-- Cabeçalho do formulário -->
         <div class="form-header">
           <div class="titulo-botoes">
-            <h2 class="titulo-form">
-              {{ tituloFormulario }}
+             <div>
+            <h2 class="titulo-bloco">
+              Meus editais / provas
 
               <i class="pi pi-info-circle info-icon"
-                pTooltip="Cadastre um edital/prova e vincule as matérias da sua biblioteca." tooltipPosition="right"
+                pTooltip="Crie novos editais a partir das suas matérias ou de templates prontos. Para excluir disciplinas ou tópicos que não serão estudados neste edital, basta marcar ou desmarcar a caixa de seleção ao lado do título do assunto." tooltipPosition="right"
                 [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
             </h2>
+          </div>
             <div class="acoes-form">
               <div class="segmented-group">
-                <button type="button" class="segmented-btn" [disabled]="salvando" (click)="salvar()">
-                  {{ salvando ? 'Salvando...' : 'Salvar edital' }}
+                <button type="button" class="segmented-btn" [disabled]="salvando" (click)="acaoPrincipal()">
+                  {{ labelAcaoPrincipal }}
                 </button>
 
                 <button type="button" class="segmented-btn" (click)="novoEdital()">
                   Limpar
                 </button>
-                <button type="button" class="segmented-btn" (click)="abrirModalTemplates()">
-                  + Novo edital
-                </button>
+                 <button
+                type="button"
+                class="segmented-btn"
+                [disabled]="!editalSelecionado || definindoAtivoId === editalSelecionado?.id"
+                (click)="acaoDefinirComoEmEstudoSelecionado()"
+                title="Definir como edital em estudo"
+              >
+                {{ definindoAtivoId === editalSelecionado?.id ? 'Salvando...' : (editalSelecionado?.ativo ? 'Desativar' : 'Estudar este edital') }}
+              </button>
+              <button type="button" class="segmented-btn" [disabled]="!editalSelecionado"
+                (click)="acaoEditarSelecionado()" title="Editar edital">
+                Editar
+              </button>
+              <button type="button" class="segmented-btn" [disabled]="!editalSelecionado" title="Duplicar edital">
+                Duplicar
+              </button>
+              <button type="button" class="segmented-btn" [disabled]="!editalSelecionado" title="Arquivar edital">
+                Arquivar
+              </button>
+              <button type="button" class="segmented-btn segmented-btn--danger" [disabled]="!editalSelecionado"
+                (click)="acaoExcluirSelecionado()" title="Excluir edital">
+                Excluir
+              </button>
               </div>
             </div>
           </div>
@@ -39,8 +61,79 @@
           <p *ngIf="mensagemSucesso" class="msg msg-sucesso">{{ mensagemSucesso }}</p>
         </section>
 
-        <!-- FORMULÁRIO -->
-        <form [formGroup]="form" (ngSubmit)="salvar()" class="form-edital">
+        <!-- LISTA DE EDITAIS -->
+        <section class="card painel-lista">
+
+
+        <!-- ESTADOS -->
+        <div *ngIf="carregando" class="estado estado-carregando">
+          Carregando editais...
+        </div>
+
+        <div *ngIf="!carregando && !editais.length" class="estado estado-vazio">
+          <p>Você ainda não cadastrou nenhum edital.</p>
+          <div class="segmented-group">
+            <button type="button" class="segmented-btn" (click)="abrirModalTemplates()">
+              + Criar meu primeiro edital
+            </button>
+          </div>
+        </div>
+
+        <!-- LISTA -->
+          <p-tree
+            *ngIf="!carregando && editais.length"
+            class="edital-tree"
+            [value]="editalTreeNodes"
+            selectionMode="checkbox"
+            [selection]="selectedEditalNodes"
+            (selectionChange)="onEditalTreeSelectionChange($event)"
+            [propagateSelectionDown]="false"
+            [propagateSelectionUp]="false"
+          (onNodeSelect)="onEditalTreeSelect($event)"
+          (onNodeUnselect)="onEditalTreeUnselect($event)"
+        >
+          <ng-template pTemplate="default" let-node>
+            <div
+              class="edital-tree-line"
+              [class.selected]="node.data?.tipo === 'EDITAL' && editalSelecionado?.id === node.data?.editalId"
+              [class.is-edital]="node.data?.tipo === 'EDITAL'"
+              [class.is-materia]="node.data?.tipo === 'MATERIA'"
+              [class.is-inativo]="node.data?.tipo === 'MATERIA' && node.data?.ativo === false"
+              (click)="onEditalTreeClick(node, $event)"
+            >
+              <span class="edital-tree-left">
+                <span class="edital-tree-title">{{ node.label }}
+                  <span *ngIf="node.data?.tipo === 'EDITAL' && node.data?.ativo" class="badge-edital-ativo">
+                  Em estudo
+                </span>
+                </span>
+                
+              </span>
+              <span *ngIf="node.data?.tipo === 'EDITAL'" class="edital-tree-meta">
+                <span class="meta-chip">
+                  <span class="meta-label">Data</span>
+                  <span class="meta-valor">{{ formatData(node.data?.dataProva) || 'Não definida' }}</span>
+                </span>
+                <span class="meta-chip">
+                  <span class="meta-label">Progresso</span>
+                  <span class="meta-pill pill-progresso">{{ formatPercent(node.data?.percentualEstudadoGeral) }}</span>
+                </span>
+                <span class="meta-chip">
+                  <span class="meta-label">Domínio</span>
+                  <span class="meta-pill pill-dominio">{{ formatPercent(node.data?.nivelDominioGeral) }}</span>
+                </span>
+              </span>
+              <span *ngIf="node.data?.tipo === 'MATERIA' && node.data?.ativo === false" class="edital-tree-status">
+                Inativa
+              </span>
+            </div>
+          </ng-template>
+        </p-tree>
+
+      </section>
+      <!-- FORMULARIO -->
+      <div class="form-separador" *ngIf="mostrarFormulario"></div>
+        <form *ngIf="mostrarFormulario" [formGroup]="form" (ngSubmit)="salvar()" class="form-edital">
           <!-- BOTÕES -->
 
           <!-- NOME + DATA NA MESMA LINHA -->
@@ -62,22 +155,44 @@
             </div>
           </div>
 
+          <div class="campo campo-cargo">
+            <label for="cargo">Cargo</label>
+            <input
+              id="cargo"
+              type="text"
+              class="input-text"
+              formControlName="cargo"
+              placeholder="Ex: Agente da Polícia Federal"
+            />
+          </div>
+
           <!-- MATÉRIAS -->
           <div class="form-group">
             <label class="label-com-info">
-              Matérias da biblioteca <span class="obrigatorio">*</span>
+              Vincule as matérias ao edital<span class="obrigatorio">*</span>
 
               <i class="pi pi-info-circle info-icon" pTooltip="Clique nas matérias para adicionar ou remover do edital."
                 tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
             </label>
 
 
-            <div class="chips-materias-wrapper">
-              <button type="button" class="chip-materia" *ngFor="let m of materias"
-                [class.chip-materia-ativa]="isMateriaSelecionada(m.id)" (click)="toggleMateriaSelecionada(m.id)">
-                {{ m.nome }}
-              </button>
-            </div>
+            <p-pickList
+              [source]="materiasDisponiveis"
+              [target]="materiasSelecionadas"
+              sourceHeader="Biblioteca"
+              targetHeader="No edital"
+              [dragdrop]="true"
+              [responsive]="true"
+              [sourceStyle]="{ height: '240px' }"
+              [targetStyle]="{ height: '240px' }"
+              (onMoveToTarget)="onPickListMateriasChange()"
+              (onMoveToSource)="onPickListMateriasChange()"
+              (onTargetReorder)="onPickListMateriasChange()"
+            >
+              <ng-template let-materia pTemplate="item">
+                <div class="picklist-item">{{ materia.nome }}</div>
+              </ng-template>
+            </p-pickList>
 
             <div class="erro" *ngIf="campoInvalido('materiasIds')">
               Selecione pelo menos uma matéria.
@@ -89,191 +204,9 @@
         </form>
       </section>
 
-      <!-- ========== CARD 2 – LISTA DE EDITAIS ========== -->
+      <!-- ========== CARD 2 – FORMULÁRIO DO EDITAL ========== -->
 
-      <section class="card painel-lista">
-
-        <div class="lista-header">
-          <div>
-            <h2 class="titulo-bloco">
-              Meus editais / provas
-
-              <i class="pi pi-info-circle info-icon"
-                pTooltip="Visualize seus editais, acompanhe o progresso e o nível de domínio." tooltipPosition="right"
-                [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
-            </h2>
-          </div>
-
-
-
-        </div>
-
-        <!-- ESTADOS -->
-        <div *ngIf="carregando" class="estado estado-carregando">
-          Carregando editais...
-        </div>
-
-        <div *ngIf="!carregando && !editais.length" class="estado estado-vazio">
-          <p>Você ainda não cadastrou nenhum edital.</p>
-          <div class="segmented-group">
-            <button type="button" class="segmented-btn" (click)="abrirModalTemplates()">
-              + Criar meu primeiro edital
-            </button>
-          </div>
-        </div>
-
-        <!-- LISTA -->
-        <div class="lista-editais" *ngIf="!carregando && editais.length">
-
-          <!-- CARD DE CADA EDITAL -->
-          <article class="edital-card" *ngFor="let e of editais">
-
-            <!-- CABEÇALHO DO EDITAL -->
-            <div class="edital-card-header" [class.aberto]="isEditalAberto(e.id)" (click)="toggleEdital(e.id)"
-              role="button" tabindex="0">
-              <div class="edital-header-col-esq">
-              <div class="edital-header-linha">
-                <h2 class="edital-nome">{{ e.nome }}</h2>
-                <span *ngIf="e.ativo" class="badge-edital-ativo" aria-label="Edital em estudo">Em estudo</span>
-
-                <span class="edital-desc" *ngIf="e.descricao">
-                  {{ e.descricao }}
-                </span>
-
-                  <div class="edital-meta">
-                    <div class="meta-chip">
-                      <span class="meta-label">Data da prova</span>
-                      <span class="meta-valor">
-                        {{ formatData(e.dataProva) || 'Não definida' }}
-                      </span>
-                    </div>
-
-                    <div class="meta-chip">
-                      <span class="meta-label">Progresso</span>
-                      <span class="meta-pill pill-progresso">
-                        {{ formatPercent(e.percentualEstudadoGeral) }}
-                      </span>
-                    </div>
-
-                    <div class="meta-chip">
-                      <span class="meta-label">Domínio</span>
-                      <span class="meta-pill pill-dominio">
-                        {{ formatPercent(getDominioEdital(e)) }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="acoes">
-                <div class="edital-acoes segmented-group">
-                  <button
-                    type="button"
-                    class="segmented-btn"
-                    [disabled]="definindoAtivoId === e.id"
-                    (click)="definirComoEmEstudo(e); $event.stopPropagation()"
-                    title="Definir como edital em estudo"
-                  >
-                    {{ definindoAtivoId === e.id ? 'Salvando...' : (e.ativo ? 'Desativar' : 'Estudar este edital') }}
-                  </button>
-                  <button type="button" class="segmented-btn" (click)="editar(e); $event.stopPropagation()"
-                    title="Editar edital">
-                    Editar
-                  </button>
-                  <button type="button" class="segmented-btn" title="Duplicar edital">
-                    Duplicar
-                  </button>
-                  <button type="button" class="segmented-btn" title="Arquivar edital">
-                    Arquivar
-                  </button>
-                  <button type="button" class="segmented-btn segmented-btn--danger"
-                    (click)="excluir(e); $event.stopPropagation()" title="Excluir edital">
-                    Excluir
-                  </button>
-                </div>
-
-                <span class="chevron" [class.aberto]="isEditalAberto(e.id)">
-                  ▾
-                </span>
-              </div>
-            </div>
-
-            <!-- CORPO EXPANSÍVEL: MATÉRIAS + TÓPICOS -->
-            <section class="edital-card-body" *ngIf="isEditalAberto(e.id)">
-
-              <div *ngIf="!e.materias || !e.materias.length" class="estado estado-vazio-menor">
-                Nenhuma matéria vinculada a este edital.
-              </div>
-
-              <ul class="lista-materias" *ngIf="e.materias && e.materias.length">
-
-                <li *ngFor="let m of e.materias; let i = index" class="materia-item">
-
-                  <!-- CABEÇALHO DA MATÉRIA -->
-                  <div class="materia-header" (click)="toggleMateria(e.id, m.materiaId)">
-                    <div class="materia-info">
-                      <span class="materia-indice">{{ i + 1 }}.</span>
-                      <span class="materia-nome">{{ m.materiaNome }}</span>
-                    </div>
-
-                    <div class="materia-meta">
-                      <span class="materia-legenda">Ver tópicos</span>
-                      <span class="chevron chevron-menor" [class.aberto]="isMateriaAberta(e.id, m.materiaId)">
-                        ▾
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- ÁRVORE DE TÓPICOS -->
-                  <div class="materia-topicos-wrapper" *ngIf="isMateriaAberta(e.id, m.materiaId)">
-                    <div *ngIf="carregandoTopicos[m.materiaId]" class="estado estado-carregando-menor">
-                      Carregando tópicos...
-                    </div>
-
-                    <div *ngIf="erroTopicos[m.materiaId]" class="msg msg-erro msg-erro-menor">
-                      {{ erroTopicos[m.materiaId] }}
-                    </div>
-
-                    <ng-container *ngIf="topicosPorMateria[m.materiaId] && !carregandoTopicos[m.materiaId]">
-
-                      <!-- Template recursivo para árvore de tópicos -->
-                      <ng-template #renderTopicos let-lista let-nivel="nivel">
-                        <ul class="lista-topicos">
-                          <li *ngFor="let t of lista" [ngClass]="'topico-nivel-' + nivel">
-                            <div class="topico-linha">
-                              <span class="topico-bullet"></span>
-                              <span class="topico-descricao">
-                                {{ t.descricao }}
-                              </span>
-                            </div>
-
-                            <ng-container *ngIf="t.subtopicos && t.subtopicos.length">
-                              <ng-template [ngTemplateOutlet]="renderTopicos" [ngTemplateOutletContext]="{
-                                $implicit: t.subtopicos,
-                                nivel: nivel + 1
-                              }"></ng-template>
-                            </ng-container>
-                          </li>
-                        </ul>
-                      </ng-template>
-
-                      <ng-template [ngTemplateOutlet]="renderTopicos" [ngTemplateOutletContext]="{
-                        $implicit: topicosPorMateria[m.materiaId],
-                        nivel: 1
-                      }"></ng-template>
-
-                    </ng-container>
-                  </div>
-                </li>
-              </ul>
-
-            </section>
-
-          </article>
-
-        </div>
-
-      </section>
+      
 
     </div>
 
@@ -328,7 +261,7 @@
                 />
               </div>
               <div class="template-name">{{ t.nome }}</div>
-              <div class="template-cargo">{{ t.cargo || 'Cargo nao informado' }}</div>
+              <div class="template-cargo">{{ t.cargoNome || t.cargo || 'Cargo nao informado' }}</div>
             </div>
           </button>
         </div>
@@ -348,6 +281,7 @@
             placeholder="Ex: Edital PM 2025"
           />
           <button
+            *ngIf="!modoImportacao"
             type="button"
             class="step-action"
             [disabled]="clonandoTemplate || !templateSelecionadoId"
@@ -355,7 +289,99 @@
           >
             {{ clonandoTemplate ? 'Criando...' : 'Criar edital pelo template' }}
           </button>
+          <button
+            *ngIf="modoImportacao"
+            type="button"
+            class="step-action"
+            [disabled]="importandoTemplate || !templateSelecionadoId"
+            (click)="importarTemplateSelecionado()"
+          >
+            {{ importandoTemplate ? 'Importando...' : 'Importar edital' }}
+          </button>
           <div class="template-ok" *ngIf="mensagemTemplateOk">{{ mensagemTemplateOk }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="vinculo-modal" *ngIf="mostrarModalVincularMaterias" (click)="fecharModalVincularMaterias()">
+      <div class="vinculo-modal-card" (click)="$event.stopPropagation()">
+        <div class="vinculo-modal-head">
+          <div>
+            <h3>Vincule as matérias ao edital</h3>
+            <p>Escolha quais disciplinas entrarão neste edital.</p>
+          </div>
+          <button type="button" class="btn-ghost" (click)="fecharModalVincularMaterias()">X</button>
+        </div>
+
+        <form [formGroup]="form" class="vinculo-modal-body">
+          <div class="campo-edital">
+            <label for="nomeEditalModal">Nome do edital / prova <span class="obrigatorio">*</span></label>
+            <input
+              id="nomeEditalModal"
+              type="text"
+              class="input-text"
+              formControlName="nome"
+              placeholder="Ex: Concurso Polícia Federal 2025"
+            />
+            <div class="erro" *ngIf="campoInvalido('nome')">
+              Informe o nome do edital.
+            </div>
+          </div>
+
+          <div class="campo-edital">
+            <label for="cargoEditalModal">Cargo</label>
+            <input
+              id="cargoEditalModal"
+              type="text"
+              class="input-text"
+              formControlName="cargo"
+              placeholder="Ex: Agente da Polícia Federal"
+            />
+          </div>
+
+          <div class="campo-edital">
+            <label for="dataProvaModal">Data da prova</label>
+            <input id="dataProvaModal" type="date" class="input-text" formControlName="dataProva" />
+          </div>
+
+          <div class="vinculo-info">
+            <p>Use as setas ou arraste os itens entre as listas para selecionar as matérias.</p>
+          </div>
+
+          <p-pickList
+            [source]="materiasDisponiveis"
+            [target]="materiasSelecionadas"
+            sourceHeader="Biblioteca"
+            targetHeader="No edital"
+            [dragdrop]="true"
+            [responsive]="true"
+            [sourceStyle]="{ height: '240px' }"
+            [targetStyle]="{ height: '240px' }"
+            (onMoveToTarget)="onPickListMateriasChange()"
+            (onMoveToSource)="onPickListMateriasChange()"
+            (onTargetReorder)="onPickListMateriasChange()"
+          >
+            <ng-template let-materia pTemplate="item">
+              <div class="picklist-item">{{ materia.nome }}</div>
+            </ng-template>
+          </p-pickList>
+
+          <div class="erro" *ngIf="campoInvalido('materiasIds')">
+            Selecione pelo menos uma matéria.
+          </div>
+        </form>
+
+          <div class="vinculo-acoes">
+            <button type="button" class="segmented-btn" (click)="fecharModalVincularMaterias()">Cancelar</button>
+            <button
+              type="button"
+              class="segmented-btn segmented-btn--ghost"
+              (click)="fecharModalVincularMaterias(); abrirModalTemplates(true)"
+            >
+              Importar edital
+            </button>
+            <button type="button" class="segmented-btn" [disabled]="salvando || form.invalid" (click)="salvar()">
+            {{ salvando ? 'Salvando...' : 'Salvar alterações' }}
+          </button>
         </div>
       </div>
     </div>
@@ -395,3 +421,8 @@
     </div>
   </ng-template>
 </div>
+
+
+
+
+

@@ -3,4 +3,6 @@ export interface EditalMateriaResumo {
   materiaNome: string;
   percentualEstudado: number;
   nivelDominio: number;
+  ativo?: boolean;
+  topicos?: any[];
 }

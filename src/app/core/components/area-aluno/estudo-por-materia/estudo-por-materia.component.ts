@@ -3,8 +3,7 @@ import { Router } from '@angular/router';
 
 import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
-import { MateriaService } from '../services/materia.service';
-import { SalaEstudoService  } from '../services/sala-estudo.service';
+import { SalaEstudoService, MateriaTopicosDTO } from '../services/sala-estudo.service';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 import { Edital } from '../models/Edital';
 import { EditalService } from '../services/edital.service';
@@ -58,6 +57,8 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   private concluidosPorTopico = new Set<number>();
   private materiasPorEdital = new Map<number, Set<number>>();
   private materiasComEdital = new Set<number>();
+  private topicosPorMateria = new Map<number, Topico[]>();
+  private materiasFiltradasPorEscopo = false;
 
   materiaSelecionada?: Materia;
   materiaExpandida?: Materia | null;
@@ -73,7 +74,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   private topicosFinalizadosPendentes = new Map<number, boolean>();
 
   constructor(
-    private materiaService: MateriaService,
     private salaEstudoService: SalaEstudoService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
@@ -83,7 +83,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.carregarParametroEscopo();
-    this.carregarMaterias();
     this.carregarEditais();
     this.carregarRevisoesDashboard();
     this.carregarTopicosFinalizados();
@@ -116,10 +115,41 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // ==========================
   // MATÉRIAS
   // ==========================
-  carregarMaterias(): void {
+  carregarMateriasParaEstudo(): void {
     this.carregandoMaterias = true;
     this.mensagemErro = undefined;
 
+    this.materiasFiltradasPorEscopo = false;
+    const escopo = this.escopoValor || 'todas';
+    this.salaEstudoService.listarMateriasParaEstudo(escopo).subscribe({
+      next: (lista) => {
+        const materias: Materia[] = [];
+        this.topicosPorMateria.clear();
+
+        (lista || []).forEach((item: MateriaTopicosDTO) => {
+          const materiaId = Number(item?.materiaId);
+          const materiaNome = String(item?.materiaNome || '').trim();
+          if (!Number.isFinite(materiaId) || materiaId <= 0 || !materiaNome) {
+            return;
+          }
+          materias.push({ id: materiaId, nome: materiaNome });
+          const topicos = (item?.topicos || []).map((dto: any) => this.converterDtoParaTopico(dto, 0));
+          this.topicosPorMateria.set(materiaId, topicos);
+        });
+
+        this.materias = materias;
+        this.materiasFiltradasPorEscopo = true;
+        this.carregandoMaterias = false;
+      },
+      error: (err) => {
+        console.error('[MATERIAS] Erro ao carregar matÇ¸rias:', err);
+        this.mensagemErro = 'Erro ao carregar matÇ¸rias.';
+        this.materiasFiltradasPorEscopo = false;
+        this.carregandoMaterias = false;
+      }
+    });
+
+    /*
     this.materiaService.listarMaterias().subscribe({
       next: (lista) => {
         this.materias = lista || [];
@@ -131,6 +161,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         this.carregandoMaterias = false;
       }
     });
+    */
   }
 
   carregarEditais(): void {
@@ -184,6 +215,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.topicoAtivoId = null;
     this.resumoExpandida = null;
     this.persistirEscopo();
+    this.carregarMateriasParaEstudo();
     this.atualizarImagemEditalSelecionado();
   }
 
@@ -250,9 +282,13 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         if (valor) {
           this.escopoValor = valor;
         }
+        this.carregarMateriasParaEstudo();
+        this.atualizarImagemEditalSelecionado();
       },
       error: (err) => {
         console.error('[PARAMETRO] Erro ao carregar filtro do centro de estudo:', err);
+        this.carregarMateriasParaEstudo();
+        this.atualizarImagemEditalSelecionado();
       }
     });
   }
@@ -336,12 +372,21 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // TÓPICOS
   // ==========================
   private carregarTopicos(m: Materia): void {
-    if (!m?.id) return;
+    const materiaId = this.asId((m as any)?.id ?? (m as any)?.materiaId);
+    if (!materiaId) return;
 
     this.carregandoTopicos = true;
     this.topicos = [];
     this.mensagemErro = undefined;
 
+    const lista = this.topicosPorMateria.get(materiaId) || [];
+    this.topicos = lista;
+    this.carregandoTopicos = false;
+
+    // ƒo. mÇ¸tricas sÇü no expandir
+    this.atualizarResumoExpandida();
+
+    /*
     this.materiaService.listarTopicos(m.id).subscribe({
       next: (lista) => {
         const listaSegura = lista || [];
@@ -357,6 +402,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         this.carregandoTopicos = false;
       }
     });
+    */
   }
 
   private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
@@ -740,7 +786,9 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       ? (this.materias || [])
       : (this.materias || []).filter(m => (m?.nome || '').toLowerCase().includes(t));
 
-    const filtradas = base.filter((m) => this.materiaNoEscopo(m));
+    const filtradas = this.materiasFiltradasPorEscopo
+      ? base
+      : base.filter((m) => this.materiaNoEscopo(m));
 
     return [...filtradas].sort((a, b) => {
       const pa = this.prioridadeStatus(this.getStatusRevisaoMateria(a));

@@ -1,10 +1,10 @@
-﻿<div class="page-materias">
-  
+<div class="page-materias">
+
   <div class="page-materias-header">
-    
+
     <div class="nome-e-botoes">
       <h1 class="page-title">
-        Painel administrativo
+        Cadastrar Concurso/Edital
         <i class="pi pi-info-circle info-icon" pTooltip="Gerencie templates, materias e topicos do sistema."
           tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
       </h1>
@@ -15,90 +15,105 @@
       </div>
     </div>
 
-    <div class="botoes">
-      <div class="timer-modos">
-        <button type="button" class="btn-modo-timer" (click)="recarregar()">
-          Recarregar templates
-        </button>
-        <button type="button" class="btn-modo-timer" (click)="limparMensagens()">
-          Limpar mensagens
-        </button>
-      </div>
-    </div>
    
+
   </div>
 
 
 
   <div class="page-materias-content">
-    
+
     <section class="col-esquerda">
 
 
       <section class="card bloco-template-form">
         <div class="card-header">
-          <div>
-            <h2 class="card-title">Cadastrar Edital</h2>
-
-          </div>
+        
           <div class="form-acoes">
             <div class="timer-modos">
-              <button type="button" class="btn-modo-timer"
-                (click)="editandoTemplate ? atualizar() : criarTemplate()"
+              <button type="button" class="btn-modo-timer" (click)="editandoTemplate ? atualizar() : criarTemplate()"
                 [disabled]="!novoNome?.trim() || (editandoTemplate && !selecionadoId)">
                 {{ editandoTemplate ? 'Salvar' : 'Criar Edital' }}
               </button>
             </div>
             <div class="timer-modos">
               <button type="button" class="btn-modo-timer" (click)="buscarEstrutura()" [disabled]="!selecionadoId">
-                Buscar estrutura
+                Mostrar Json
               </button>
               <button type="button" class="btn-modo-timer" (click)="limparEstrutura()" [disabled]="!estruturaTemplate">
                 Limpar
               </button>
             </div>
+             <div class="timer-modos">
+             
+                <button type="button" class="btn-modo-timer" (click)="preencherClone(selecionadoId!)"
+                  [disabled]="!selecionadoId">
+                  Usar no clone
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)"
+                  [disabled]="!selecionadoId" *ngIf="!templateSelecionado?.publicado; else btnDespublicar">
+                  Publicar
+                </button>
+                <ng-template #btnDespublicar>
+                  <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)"
+                    [disabled]="!selecionadoId">
+                    Despublicar
+                  </button>
+                </ng-template>
+              
+              </div>
+            
+           
+            
           </div>
+             <div class="template-image-input-wrap">
+                <img *ngIf="orgaoLogoUrl" class="template-image-preview" [src]="orgaoLogoUrl"
+                  (error)="onLogoOrgaoErro()" alt="Logo do orgao selecionado" />
+             
+              </div>
         </div>
 
-        <div class="template-image-row">
-          <div class="template-image-label">Logo do orgao</div>
-          <div class="template-image-input-wrap">
-            <label class="template-image-button" for="templateImagemInput">Escolher arquivo</label>
-            <span class="template-image-name">
-              {{ imagemArquivo?.name || 'Nenhum arquivo selecionado' }}
-            </span>
-            <input id="templateImagemInput" type="file" class="template-image-input" accept="image/*"
-              (change)="onImagemSelecionada($event)" />
-          </div>
-          <img
-            *ngIf="imagemPreviewUrl"
-            class="template-image-preview"
-            [src]="imagemPreviewUrl"
-            (error)="onImagemErro()"
-            alt="Preview da imagem do orgao"
-          />
-        </div>
+
 
         <div class="form-materia template-form-grid">
           <div class="form-campo">
-            <label class="label">Descricao</label>
-            <input class="input-text" [(ngModel)]="novoNome" (ngModelChange)="editarNome = $event"
+            <label class="label">Nome do edital</label>
+            <input class="input-text" [(ngModel)]="novoNome" (ngModelChange)="onNomeEditalChange($event)"
               placeholder="Ex: PF - Agente - 2026 (v1)" />
           </div>
           <div class="form-campo">
+            <label class="label">Orgao</label>
+            <select class="input-text" [(ngModel)]="novoOrgaoId" (ngModelChange)="onOrgaoChange($event)">
+              <option [ngValue]="null">Selecione um orgao</option>
+              <option *ngFor="let o of orgaos" [ngValue]="o.id">{{ o.nome }}</option>
+            </select>
+          </div>
+
+          <div class="form-campo">
             <label class="label">Area</label>
-            <input class="input-text" [(ngModel)]="novoArea" (ngModelChange)="editarArea = $event"
-              placeholder="Area (ex: Policial, Bancaria, Fiscal...)" />
+            <select class="input-text" [(ngModel)]="novoAreaId" (ngModelChange)="onAreaChange($event)">
+              <option [ngValue]="null">Selecione a area</option>
+              <option *ngFor="let a of areasFiltradas" [ngValue]="a.id">{{ a.nome }}</option>
+            </select>
           </div>
           <div class="form-campo">
             <label class="label">Abrangencia</label>
-            <input class="input-text" [(ngModel)]="novoAbrangencia" (ngModelChange)="editarAbrangencia = $event"
-              placeholder="Abrangencia (ex: Federal, Estadual, Municipal)" />
+            <select class="input-text" [(ngModel)]="novoAbrangencia" (ngModelChange)="editarAbrangencia = $event">
+              <option value="">Selecione a abrangencia</option>
+              <option *ngFor="let a of abrangencias" [value]="a.value">{{ a.label }}</option>
+            </select>
           </div>
           <div class="form-campo">
             <label class="label">Cargo</label>
-            <input class="input-text" [(ngModel)]="novoCargo" (ngModelChange)="editarCargo = $event"
-              placeholder="Cargo (ex: Agente, Delegado, Escrivao...)" />
+            <select class="input-text" [(ngModel)]="novoCargoId" (ngModelChange)="onCargoChange($event)">
+              <option [ngValue]="null">Selecione o cargo</option>
+              <option *ngFor="let c of cargosFiltrados" [ngValue]="c.id">{{ c.nome }}</option>
+            </select>
+          </div>
+          <div class="form-campo">
+            <label class="label">Data de publicacao</label>
+            <input class="input-text" type="date" [(ngModel)]="novoDataPublicacao"
+              (ngModelChange)="onDataPublicacaoChange($event)" />
           </div>
 
 
@@ -116,33 +131,13 @@
             <div class="editais-acoes">
               <div class="editais-busca">
                 <input type="text" class="input-text" [(ngModel)]="editaisFiltro"
+                  (ngModelChange)="onFiltroEditaisChange($event)"
                   placeholder="Pesquisar edital por nome ou ID..." />
               </div>
-              <div class="timer-modos">
-                <button type="button" class="btn-modo-timer" (click)="iniciarEdicaoTemplate()"
-                  [disabled]="!selecionadoId">
-                  Editar
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="preencherClone(selecionadoId!)"
-                  [disabled]="!selecionadoId">
-                  Usar no clone
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="publicar(selecionadoId!)"
-                  [disabled]="!selecionadoId || templateSelecionado?.publicado">
-                  Publicar
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="despublicar(selecionadoId!)"
-                  [disabled]="!selecionadoId || !templateSelecionado?.publicado">
-                  Despublicar
-                </button>
-                <button type="button" class="btn-modo-timer" (click)="excluir(selecionadoId!)"
-                  [disabled]="!selecionadoId">
-                  Excluir
-                </button>
-              </div>
+             
             </div>
           </div>
-      
+
           <ng-template #semTemplateSelecionado>
 
           </ng-template>
@@ -153,241 +148,99 @@
         </p>
 
         <ul class="lista-materias" *ngIf="templates?.length">
-          <li class="item-materia" *ngFor="let t of templatesFiltrados" [class.ativa]="selecionadoId === t.id"
+          <li class="item-materia" *ngFor="let t of templatesPagina" [class.ativa]="selecionadoId === t.id"
             (click)="selecionar(t.id)">
 
             <div class="materia-info">
+              <button
+                type="button"
+                class="edital-toggle"
+                (click)="toggleEditalTree(t, $event)"
+                [attr.aria-label]="expandedEditalId === t.id ? 'Recolher edital' : 'Expandir edital'"
+              >
+                <i class="pi" [ngClass]="expandedEditalId === t.id ? 'pi-angle-down' : 'pi-angle-right'"></i>
+              </button>
               <span class="badge-nivel" [class.badge-template-ok]="t.publicado"
                 [class.badge-template-no]="!t.publicado"></span>
-              <span class="materia-nome">{{ t.nome }}</span>
-              <span class="template-meta">ID {{ t.id }} | Versao {{ t.versao ?? '-' }}</span>
-
-
-            </div>
-
-          </li>
-        </ul>
-      </section>
-
-      <section class="card bloco-materia-form">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Passo 1 - Cadastrar materia</h2>
-
-          </div>
-          <div class="form-acoes">
-            <div class="timer-modos">
-              <button type="submit" class="btn-modo-timer" [disabled]="!selecionadoId">Salvar</button>
-              <button type="button" class="btn-modo-timer" (click)="limparMateriaForm()"
-                [disabled]="!selecionadoId">Novo</button>
-            </div>
-
-            <div class="timer-modos">
-              <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()"
-                [disabled]="!selecionadoId">
-                Importar Matérias
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <form (ngSubmit)="criarMateria()" class="form-materia">
-          <div class="form-campo">
-            <label class="label">Nome da materia <span class="obrigatorio">*</span></label>
-            <input #nomeMateriaInput type="text" class="input-text" [(ngModel)]="novaMateriaNome" name="novaMateriaNome"
-              placeholder="Ex: Direito Constitucional" [disabled]="!selecionadoId" />
-
-            <div class="erro" *ngIf="campoMateriaInvalida()">
-              Informe o nome da materia.
-            </div>
-          </div>
-
-
-        </form>
-      </section>
-
-      <section class="card bloco-materias-lista">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Materias do template</h2>
-
-            <div class="card-toolbar">
-              <div class="toolbar-left" *ngIf="materiaExpandida; else semMateriaSelecionada">
-                <span class="toolbar-label">Selecionada:</span>
-                <strong class="toolbar-strong">
-                  {{ materiaExpandida?.nome || materiaExpandida?.descricao }}
-                </strong>
-              </div>
-
-              <ng-template #semMateriaSelecionada>
-                <div class="toolbar-left">
-                  <span class="toolbar-muted">Selecione uma materia para cadastrar topicos.</span>
-                </div>
-              </ng-template>
-
-              <div class="toolbar-actions">
-                <div class="timer-modos">
-                  <button type="button" class="btn-modo-timer" (click)="carregarMaterias()" [disabled]="!selecionadoId">
-                    Recarregar
-                  </button>
-                  <button type="button" class="btn-modo-timer"
-                    (click)="materiaExpandida && excluirMateria(materiaExpandida.id)" [disabled]="!materiaExpandida">
-                    Excluir
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div *ngIf="carregandoMaterias" class="loading">Carregando materias...</div>
-
-        <p *ngIf="!carregandoMaterias && selecionadoId && !materias.length" class="estado-vazio">
-          Nenhuma materia cadastrada neste template ainda.
-        </p>
-
-        <p *ngIf="!selecionadoId" class="estado-vazio">
-          Selecione um template para listar materias.
-        </p>
-
-        <ul class="lista-materias" *ngIf="!carregandoMaterias && selecionadoId && materias.length">
-          <li class="item-materia" *ngFor="let m of materias" [class.ativa]="materiaExpandida?.id === m.id"
-            (click)="toggleMateria(m)">
-
-            <div class="materia-info">
-              <span class="badge-nivel badge-template-ok"></span>
-
               <div class="materia-textos">
-                <span class="materia-nome">{{ m.nome || m.descricao }}</span>
-                <span class="template-meta">ID {{ m.id }} | Ordem {{ m.ordem ?? '-' }}</span>
+                <span class="materia-nome">{{ t.nome }}</span>
+                <span class="template-meta">ID {{ t.id }} | Versao {{ t.versao ?? '-' }}</span>
               </div>
+              <div class="template-acoes" *ngIf="selecionadoId === t.id">
+                <button
+                  type="button"
+                  class="btn-acao-icon"
+                  pTooltip="Editar edital"
+                  tooltipPosition="top"
+                  (click)="selecionar(t.id); iniciarEdicaoTemplate(); $event.stopPropagation()"
+                  aria-label="Editar edital"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn-acao-icon btn-acao-icon--add"
+                  pTooltip="Vincular materias"
+                  tooltipPosition="top"
+                  (click)="irParaMaterias(t, $event); abrirModalImportarEdital('importar')"
+                  aria-label="Importar materias"
+                >
+                  <i class="pi pi-book"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn-acao-icon btn-acao-icon--danger"
+                  pTooltip="Excluir edital"
+                  tooltipPosition="top"
+                  (click)="excluir(t.id); $event.stopPropagation()"
+                  aria-label="Excluir edital"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="edital-tree-wrap" *ngIf="expandedEditalId === t.id" (click)="$event.stopPropagation()">
+              <div *ngIf="treeLoading" class="loading">Carregando arvore...</div>
+              <p *ngIf="!treeLoading && !treeNodes.length" class="estado-vazio">
+                Nenhuma materia cadastrada neste template ainda.
+              </p>
+
+              <p-tree
+                class="materia-tree"
+                [value]="treeNodes"
+                *ngIf="!treeLoading && treeNodes.length"
+              >
+                <ng-template pTemplate="default" let-node>
+                  <div class="tree-node-line" [class.is-materia]="node.data?.tipo === 'MATERIA'">
+                    <span class="tree-node-text">
+                      {{ node.data?.label }}
+                    </span>
+                  </div>
+                </ng-template>
+              </p-tree>
             </div>
           </li>
         </ul>
+        <div class="paginacao-editais" *ngIf="totalPaginasEditais > 1">
+          <button type="button" class="btn-modo-timer" (click)="mudarPaginaEditais(editaisPagina - 1)"
+            [disabled]="editaisPagina === 0">
+            Anterior
+          </button>
+          <span class="template-meta">
+            Pagina {{ editaisPagina + 1 }} de {{ totalPaginasEditais }} ({{ totalEditaisFiltrados }})
+          </span>
+          <button type="button" class="btn-modo-timer" (click)="mudarPaginaEditais(editaisPagina + 1)"
+            [disabled]="editaisPagina + 1 >= totalPaginasEditais">
+            Proxima
+          </button>
+        </div>
       </section>
     </section>
 
-    <section class="col-direita">
 
-
-      <section class="card bloco-topicos">
-        <div class="card-header">
-          <div>
-            <div class="card-title">
-              Passo 2 - Topicos e subtopicos
-              <ng-container *ngIf="materiaExpandida">
-                de<strong class="card-subtitle">{{ materiaExpandida?.nome || materiaExpandida?.descricao }}</strong>
-              </ng-container>
-            </div>
-
-            <p class="card-subtitle" *ngIf="!materiaExpandida">
-              Selecione uma materia na coluna da esquerda para comecar a cadastrar topicos.
-            </p>
-          </div>
-
-         
-        </div>
-
-        <div *ngIf="!materiaExpandida" class="estado-vazio-topicos">
-          <p>
-            1. Selecione um template.<br />
-            2. Clique na materia para seleciona-la.<br />
-            3. Depois disso, o campo para criar topicos aparecera aqui.
-          </p>
-        </div>
-
-        <ng-container *ngIf="materiaExpandida">
-          <div class="novo-topico-card">
-            <label for="novoTopicoDescricao" class="label">Novo topico ou subtopico</label>
-
-            <div class="novo-topico-linha">
-              <input #novoTopicoInput id="novoTopicoDescricao" type="text" [(ngModel)]="novoTopicoDescricao"
-                name="novoTopicoDescricao" class="input-text"
-                placeholder="Ex: Morfologia, Pronomes, Lei 8.112/90 - Estabilidade..." (keyup.enter)="criarTopico()" />
-            </div>
-
-            <div class="novo-topico-hint">
-              <div class="mansagens-subtopicos">
-                <ng-container *ngIf="!topicoSelecionado">
-                  Nenhum topico pai selecionado: o novo item sera criado na <strong>raiz</strong> da materia.<br />
-                  Para criar um subtopico, clique primeiro no topico pai na lista abaixo.
-                </ng-container>
-
-                <ng-container *ngIf="topicoSelecionado">
-                  Topico pai selecionado:
-                  <strong [pTooltip]="topicoSelecionado?.descricao || topicoSelecionado?.nome" tooltipPosition="top">
-                    {{ topicoSelecionado?.descricao || topicoSelecionado?.nome }}
-                  </strong>.<br />
-                  O novo item sera criado como <strong>subtopico</strong>.
-                </ng-container>
-              </div>
-
-              <div class="novo-topico-acoes">
-                <button type="button" class="btn primario" (click)="criarTopico()"
-                  [disabled]="!novoTopicoDescricao?.trim()">
-                  Salvar topico
-                </button>
-
-                <button type="button" class="btn secundario" (click)="abrirModalLote()">
-                  Adicionar por lote
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="botoes-acoes-topicos">
-            <div class="tree-toolbar">
-
-
-              <ng-template #semTopicoSelecionado>
-                <div class="tree-left">
-                  <span class="toolbar-muted">Selecione um topico para excluir.</span>
-                </div>
-              </ng-template>
-
-              <div class="tree-actions">
-                <div class="timer-modos">
-                  <button type="button" class="btn-modo-timer" (click)="limparTopicoSelecionado()"
-                    [disabled]="!topicoSelecionado">
-                    Limpar
-                  </button>
-                </div>
-
-                <button type="button" class="btn perigo btn-sm" (click)="excluirTopicoSelecionado()"
-                  [disabled]="!topicoSelecionado">
-                  Excluir
-                </button>
-              </div>
-            </div>
-
-            <div class="arvore-card">
-              <div *ngIf="carregandoTopicos" class="loading">
-                Carregando topicos...
-              </div>
-
-              <ng-container *ngIf="!carregandoTopicos">
-                <ul class="lista-topicos" *ngIf="topicosArvore.length; else listaTopicosVazia">
-                  <ng-container *ngFor="let t of topicosArvore">
-                    <ng-container
-                      *ngTemplateOutlet="topicoTemplate; context: { $implicit: t, nivel: 0 }"></ng-container>
-                  </ng-container>
-                </ul>
-
-                <ng-template #listaTopicosVazia>
-                  <p class="estado-vazio">
-                    Nenhum topico cadastrado ainda para esta materia.
-                    Comece criando o primeiro topico acima.
-                  </p>
-                </ng-template>
-              </ng-container>
-            </div>
-          </div>
-        </ng-container>
-      </section>
-
-      <section class="card bloco-estrutura" *ngIf="false"></section>
-    </section>
   </div>
+
 </div>
 
 <!-- MODAL: ESTRUTURA -->
@@ -454,86 +307,216 @@ Direito Administrativo
   </div>
 </div>
 
-<!-- TEMPLATE RECURSIVO PARA ARVORE DE TOPICOS -->
-<ng-template #topicoTemplate let-topico let-nivel="nivel">
-  <li>
-    <div class="topico-linha" [style.paddingLeft.px]="nivel * 18" [class.selecionado]="topicoSelecionado === topico"
-      (click)="selecionarTopico(topico)">
-
-      <div class="topico-info">
-        <span class="badge-nivel badge-topico"></span>
-
-        <span class="topico-descricao" [pTooltip]="topico.descricao || topico.nome" tooltipPosition="top"
-          [showDelay]="150" [hideDelay]="80">
-          {{ topico.descricao || topico.nome }}
-        </span>
-      </div>
-    </div>
-
-    <ul class="lista-topicos-filhos" *ngIf="topico.filhos?.length">
-      <ng-container *ngFor="let filho of topico.filhos">
-        <ng-container
-          *ngTemplateOutlet="topicoTemplate; context: { $implicit: filho, nivel: nivel + 1 }"></ng-container>
-      </ng-container>
-    </ul>
-  </li>
-</ng-template>
-
 <!-- MODAL: IMPORTAR EDITAL (MATERIAS + TOPICOS) -->
 <div class="modal-overlay" *ngIf="mostrarModalEdital">
-  <div class="modal-card">
+  <div class="modal-card modal-importar-edital">
     <div class="modal-header">
-      <h3 class="modal-title">Importar edital</h3>
+      <h3 class="modal-title">Importar Materias</h3>
       <button type="button" class="btn-icone" (click)="fecharModalImportarEdital()" title="Fechar">X</button>
     </div>
 
     <div class="modal-body">
-      <p class="modal-sub">
-        Cole o conteudo do edital. O sistema cria as materias e monta topicos/subtopicos pela numeracao (1, 1.1,
-        1.1.1...).
-      </p>
-
-      <textarea class="textarea-lote" [(ngModel)]="textoEdital"
-        placeholder="Cole aqui o texto do edital (ex: LINGUA PORTUGUESA: 1 ... 1.1 ...  )" rows="10"></textarea>
-
-      <div class="lote-preview-wrap">
-        <div class="lote-preview-titulo">Previa</div>
-
-        <ng-container *ngIf="previewEdital?.length; else semPreviewEdital">
-          <div class="lote-preview-resumo">
-            <span class="lote-preview-bullet"></span>
-            <span class="lote-preview-materia">
-              {{ previewEdital.length }} materias identificadas
-            </span>
-          </div>
-
-          <div class="lote-preview-arvore">
-            <ul class="preview-ul">
-              <li class="preview-li" *ngFor="let m of previewEdital">
-                <span class="preview-dot"></span>
-
-                <span class="preview-txt">
-                  <strong>{{ m.nome }}</strong>
-                  <span style="opacity:.75;"> - {{ contarTopicosRecursivo(m.topicos) }} itens</span>
-                </span>
-
-                <ul class="preview-ul" style="margin-top:6px;">
-                  <ng-container *ngFor="let t of m.topicos">
-                    <ng-container
-                      *ngTemplateOutlet="previewTopicoTpl; context: { $implicit: t, nivel: 1 }"></ng-container>
-                  </ng-container>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </ng-container>
-
-        <ng-template #semPreviewEdital>
-          <div class="lote-preview-vazio">
-            Cole o conteudo do edital para ver a previa (materias + topicos).
-          </div>
-        </ng-template>
+      <div class="modal-tabs">
+        <button
+          type="button"
+          class="modal-tab"
+          [class.ativa]="importarMateriasAba === 'cadastro'"
+          (click)="setAbaImportarMaterias('cadastro')"
+        >
+          Cadastrar Materia
+        </button>
+        <button
+          type="button"
+          class="modal-tab"
+          [class.ativa]="importarMateriasAba === 'importar'"
+          (click)="setAbaImportarMaterias('importar')"
+        >
+          Importar Materias
+        </button>
       </div>
+
+      <ng-container *ngIf="importarMateriasAba === 'cadastro'">
+        <div class="importar-cadastro-panel">
+          <p class="modal-sub">
+            Cadastre a materia para este edital antes de vincular topicos.
+          </p>
+
+          <div class="form-materia">
+            <div class="form-campo">
+              <label for="modalNomeMateria" class="label">
+                Nome da materia <span class="obrigatorio">*</span>
+              </label>
+
+              <input #nomeMateriaInput id="modalNomeMateria" type="text" class="input-text" [(ngModel)]="novaMateriaNome"
+                placeholder="Ex: Direito Constitucional" />
+
+              <div class="erro" *ngIf="campoMateriaInvalida()">
+                Informe o nome da materia.
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn secundario" (click)="fecharModalImportarEdital()">
+              Cancelar
+            </button>
+            <button type="button" class="btn primario" (click)="criarMateria()"
+              [disabled]="!novaMateriaNome?.trim()">
+              Salvar materia
+            </button>
+          </div>
+        </div>
+
+        <section class="card bloco-arvore modal-materias-template">
+          <div class="card-header tree-header">
+            <div class="tree-header-left">
+              <h2 class="card-title">
+                Materias e topicos
+                <i class="pi pi-info-circle info-icon"
+                  pTooltip="Crie topicos e subtopicos para este edital."
+                  tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+              </h2>
+            </div>
+            <div class="tree-header-right">
+              <div class="timer-modos">
+                <button type="button" class="btn-modo-timer" (click)="carregarMaterias()"
+                  [disabled]="!selecionadoId">
+                  Recarregar
+                </button>
+                <button type="button" class="btn-modo-timer" (click)="abrirModalLote()"
+                  [disabled]="!materiaSelecionadaId">
+                  Importar por lote
+                </button>
+              </div>
+              <button
+                type="button"
+                class="btn-icone btn-tree-toggle"
+                [pTooltip]="arvoreExpandida ? 'Recolher topicos' : 'Expandir topicos'"
+                tooltipPosition="left"
+                (click)="toggleArvoreExpandida()"
+              >
+                <i class="pi" [ngClass]="arvoreExpandida ? 'pi-angle-up' : 'pi-angle-down'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="arvore-card tree-area">
+            <div *ngIf="treeLoading" class="loading">Carregando arvore...</div>
+            <p *ngIf="!selecionadoId" class="estado-vazio">
+              Selecione um template para listar materias.
+            </p>
+            <p *ngIf="!treeLoading && selecionadoId && !treeNodes.length" class="estado-vazio">
+              Nenhuma materia cadastrada neste template ainda.
+            </p>
+
+            <p-tree
+              class="materia-tree"
+              [value]="treeNodes"
+              selectionMode="single"
+              [(selection)]="selectedTreeNode"
+              (onNodeSelect)="onTreeSelect($event)"
+              *ngIf="!treeLoading && selecionadoId && treeNodes.length"
+            >
+              <ng-template pTemplate="default" let-node>
+                <div class="tree-node-line" [class.is-materia]="node.data?.tipo === 'MATERIA'"
+                  [class.is-selected]="currentTreeNode?.key === node.key">
+                  <input
+                    *ngIf="editingNodeKey === node.key"
+                    class="tree-edit-input"
+                    [(ngModel)]="editingLabel"
+                    [attr.data-edit-key]="node.key"
+                    (keydown)="onTreeEditKeydown($event)"
+                    (keyup.enter)="confirmarEdicao(node)"
+                    (blur)="confirmarEdicao(node)"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <span *ngIf="editingNodeKey !== node.key" class="tree-node-text">
+                    {{ node.data?.label }}
+                  </span>
+                  <span *ngIf="currentTreeNode?.key === node.key" class="tree-node-actions">
+                    <button
+                      type="button"
+                      class="tree-action-btn"
+                      pTooltip="Editar"
+                      tooltipPosition="top"
+                      (click)="acaoEditarNode(node, $event)"
+                    >
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="tree-action-btn add"
+                      [pTooltip]="node?.data?.tipo === 'MATERIA' ? 'Adicionar topico' : (node?.data?.tipo === 'TOPICO' ? 'Adicionar subtopico' : 'Adicionar')"
+                      tooltipPosition="top"
+                      (click)="acaoAdicionarNode(node, $event)"
+                    >
+                      <i class="pi pi-plus"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="tree-action-btn danger"
+                      pTooltip="Excluir"
+                      tooltipPosition="top"
+                      (click)="acaoExcluirNode(node, $event)"
+                    >
+                      <i class="pi pi-minus"></i>
+                    </button>
+                  </span>
+                </div>
+              </ng-template>
+            </p-tree>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-container *ngIf="importarMateriasAba === 'importar'">
+        <p class="modal-sub">
+          Cole o conteudo do edital. O sistema cria as materias e monta topicos/subtopicos pela numeracao (1, 1.1,
+          1.1.1...).
+        </p>
+
+        <textarea class="textarea-lote" [(ngModel)]="textoEdital"
+          placeholder="Cole aqui o texto do edital (ex: LINGUA PORTUGUESA: 1 ... 1.1 ...  )" rows="10"></textarea>
+
+        <div class="lote-preview-wrap">
+          <div class="lote-preview-titulo">Previa</div>
+
+          <ng-container *ngIf="previewEdital?.length; else semPreviewEdital">
+            <div class="lote-preview-resumo">
+              <span class="lote-preview-bullet"></span>
+              <span class="lote-preview-materia">
+                {{ previewEdital.length }} materias identificadas
+              </span>
+            </div>
+
+            <div class="lote-preview-arvore">
+              <ul class="preview-ul">
+                <li class="preview-li" *ngFor="let m of previewEdital">
+                  <span class="preview-dot"></span>
+
+                  <span class="preview-txt">
+                    <strong>{{ m.nome }}</strong>
+                    <span style="opacity:.75;"> - {{ contarTopicosRecursivo(m.topicos) }} itens</span>
+                  </span>
+
+                  <ul class="preview-ul" style="margin-top:6px;">
+                    <ng-container *ngFor="let t of m.topicos">
+                      <ng-container
+                        *ngTemplateOutlet="previewTopicoTpl; context: { $implicit: t, nivel: 1 }"></ng-container>
+                    </ng-container>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </ng-container>
+
+          <ng-template #semPreviewEdital>
+            <div class="lote-preview-vazio">
+              Cole o conteudo do edital para ver a previa (materias + topicos).
+            </div>
+          </ng-template>
+        </div>
+      </ng-container>
 
       <ng-template #previewTopicoTpl let-topico let-nivel="nivel">
         <li class="preview-li" [style.paddingLeft.px]="nivel * 16">
@@ -550,7 +533,7 @@ Direito Administrativo
       </ng-template>
     </div>
 
-    <div class="modal-actions">
+    <div class="modal-actions" *ngIf="importarMateriasAba === 'importar'">
       <button type="button" class="btn secundario" (click)="fecharModalImportarEdital()" [disabled]="salvandoEdital">
         Cancelar
       </button>

@@ -27,6 +27,7 @@ import { PerfilAlunoComponent } from './core/components/area-aluno/perfil-aluno/
 import { PlanoAtivoGuard } from './site/pages/guards/plano-ativo.guard';
 import { MateriaEstudoComponent } from './core/components/area-aluno/estudo-por-materia/estudo-por-materia.component';
 import { PainelAdminComponent } from './core/area-admin/pages/painel-admin/painel-admin.component';
+import { CadastroBaseComponent } from './core/area-admin/pages/painel-admin/cadastro-base/cadastro-base.component';
 import { AdminGuard } from './site/pages/guards/admin.guard';
 import { BlocosEstudoComponent } from './core/components/area-aluno/blocos-estudo/blocos-estudo.component';
 import { RevisoesComponent } from './core/components/area-aluno/revisoes/revisoes.component';
@@ -35,7 +36,8 @@ import { EstudoEmAndamentoGuard } from './core/components/area-aluno/guards/estu
 
 
 const routes: Routes = [
-   { path: 'admin/painel', component: PainelAdminComponent, canActivate: [AuthGuard, AdminGuard] },
+  { path: 'admin/painel', redirectTo: 'area-restrita/admin/painel', pathMatch: 'full' },
+  { path: 'admin/cadastro-base', redirectTo: 'area-restrita/admin/cadastro-base', pathMatch: 'full' },
 
   { path: 'ativacao', component: AtivacaoComponent },
 
@@ -63,12 +65,14 @@ const routes: Routes = [
       { path: 'blocos-estudo', component: BlocosEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'progresso', component: ProgressoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'revisoes', component: RevisoesComponent },
-      { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
       { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
       { path: 'meu-cadastro', component: PerfilAlunoComponent },
       { path: 'suporte', component: SuporteComponent },
       { path: 'redefinir-senha-site', component: RedefinirSenhaSiteComponent },
       { path: 'assinatura', component: AssinaturaPlanosComponent },
+      { path: 'admin/painel', component: PainelAdminComponent, canActivate: [AdminGuard] },
+      { path: 'admin/cadastro-base', component: CadastroBaseComponent, canActivate: [AdminGuard] },
     ]
   },
 

@@ -1,6 +1,7 @@
 ﻿import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
+import { TreeNode } from 'primeng/api';
 
 import { EditalAdminService } from '../../services/edital-admin.service';
 import {
@@ -8,7 +9,11 @@ import {
   ClonarEditalResponseDTO,
   MateriaTemplateDTO,
   TopicoTemplateDTO,
-  EstruturaTemplateDTO
+  EstruturaTemplateDTO,
+  OrgaoDTO,
+  AreaDTO,
+  CargoDTO,
+  AbrangenciaEnum
 } from '../../dto/edital-admin.dto';
 
 type TopicoNode = Omit<TopicoTemplateDTO, 'id'> & {
@@ -33,26 +38,49 @@ export class PainelAdminComponent implements OnInit {
   templates: EditalTemplateDTO[] = [];
   templateSelecionado: EditalTemplateDTO | null = null;
   editaisFiltro = '';
+  editaisPagina = 0;
+  editaisPorPagina = 20;
+  expandedEditalId: number | null = null;
 
   mensagemOk = '';
   mensagemErro = '';
   ultimoStatus: number | null = null;
+  private mensagemOkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   // Template
   novoNome = '';
-  novoArea = '';
-  novoAbrangencia = '';
-  novoCargo = '';
+  novoOrgaoId: number | null = null;
+  novoAreaId: number | null = null;
+  novoAbrangencia: AbrangenciaEnum | '' = '';
+  novoCargoId: number | null = null;
+  novoDataPublicacao: string | null = null;
   selecionadoId: number | null = null;
   editarNome = '';
-  editarArea = '';
-  editarAbrangencia = '';
-  editarCargo = '';
+  editarOrgaoId: number | null = null;
+  editarAreaId: number | null = null;
+  editarAbrangencia: AbrangenciaEnum | '' = '';
+  editarCargoId: number | null = null;
+  editarDataPublicacao: string | null = null;
   editandoTemplate = false;
+  nomeEditadoManualmente = false;
   imagemArquivo: File | null = null;
   imagemPreviewUrl = '';
   imagemCarregando = false;
   private imagemObjectUrl = '';
+  orgaoLogoUrl = '';
+  private orgaoLogoObjectUrl = '';
+
+  // Cadastros base
+  orgaos: OrgaoDTO[] = [];
+  areas: AreaDTO[] = [];
+  cargos: CargoDTO[] = [];
+  areasFiltradas: AreaDTO[] = [];
+  cargosFiltrados: CargoDTO[] = [];
+  abrangencias: Array<{ label: string; value: AbrangenciaEnum }> = [
+    { label: 'Federal', value: 'FEDERAL' },
+    { label: 'Estadual', value: 'ESTADUAL' },
+    { label: 'Municipal', value: 'MUNICIPAL' }
+  ];
 
   // Clone
   cloneTemplateId: number | null = null;
@@ -71,6 +99,16 @@ export class PainelAdminComponent implements OnInit {
   topicosArvore: TopicoNode[] = [];
   topicoSelecionado: TopicoNode | null = null;
   novoTopicoDescricao = '';
+  treeNodes: TreeNode[] = [];
+  selectedTreeNode: TreeNode | TreeNode[] | null = null;
+  get currentTreeNode(): TreeNode | null {
+    return Array.isArray(this.selectedTreeNode) ? this.selectedTreeNode[0] : this.selectedTreeNode;
+  }
+  editingNodeKey: string | null = null;
+  editingLabel = '';
+  treeLoading = false;
+  arvoreExpandida = true;
+  private tempNodeId = -1;
 
   carregandoMaterias = false;
   carregandoTopicos = false;
@@ -86,6 +124,7 @@ export class PainelAdminComponent implements OnInit {
   textoEdital = '';
   salvandoEdital = false;
   mostrarModalEstrutura = false;
+  importarMateriasAba: 'cadastro' | 'importar' = 'importar';
 
   // Estrutura (debug)
   estruturaTemplate: EstruturaTemplateDTO | null = null;
@@ -105,6 +144,7 @@ export class PainelAdminComponent implements OnInit {
     this.roleDetectada = this.detectRoleFromToken(token);
 
     this.recarregar();
+    this.carregarCadastrosBase();
   }
 
   @HostListener('document:keydown.escape')
@@ -122,6 +162,23 @@ export class PainelAdminComponent implements OnInit {
     this.mensagemErro = '';
     this.ultimoStatus = null;
     this.resultadoClone = null;
+    this.limparMensagemOkTimeout();
+  }
+
+  private limparMensagemOkTimeout(): void {
+    if (this.mensagemOkTimeoutId) {
+      clearTimeout(this.mensagemOkTimeoutId);
+      this.mensagemOkTimeoutId = null;
+    }
+  }
+
+  private exibirMensagemOk(msg: string, ms = 5000): void {
+    this.mensagemOk = msg;
+    this.limparMensagemOkTimeout();
+    this.mensagemOkTimeoutId = setTimeout(() => {
+      this.mensagemOk = '';
+      this.mensagemOkTimeoutId = null;
+    }, ms);
   }
 
   get templatesFiltrados(): EditalTemplateDTO[] {
@@ -133,12 +190,37 @@ export class PainelAdminComponent implements OnInit {
     });
   }
 
+  get totalEditaisFiltrados(): number {
+    return this.templatesFiltrados.length;
+  }
+
+  get totalPaginasEditais(): number {
+    if (!this.editaisPorPagina) return 1;
+    return Math.max(1, Math.ceil(this.totalEditaisFiltrados / this.editaisPorPagina));
+  }
+
+  get templatesPagina(): EditalTemplateDTO[] {
+    const inicio = this.editaisPagina * this.editaisPorPagina;
+    return this.templatesFiltrados.slice(inicio, inicio + this.editaisPorPagina);
+  }
+
+  onFiltroEditaisChange(valor: string): void {
+    this.editaisFiltro = valor;
+    this.editaisPagina = 0;
+  }
+
+  mudarPaginaEditais(novaPagina: number): void {
+    const total = this.totalPaginasEditais;
+    if (novaPagina < 0 || novaPagina >= total) return;
+    this.editaisPagina = novaPagina;
+  }
+
   recarregar(): void {
     this.limparMensagens();
     this.editalAdminService.listarTemplates().subscribe({
       next: (res) => {
         this.templates = res || [];
-        this.mensagemOk = `Templates carregados: ${this.templates.length}`;
+        
 
         if (this.selecionadoId) {
           const found = this.templates.find(t => t.id === this.selecionadoId) || null;
@@ -152,11 +234,28 @@ export class PainelAdminComponent implements OnInit {
 
   selecionar(id: number): void {
     this.selecionadoId = id;
+    this.expandedEditalId = id;
     this.templateSelecionado = this.templates.find(t => t.id === id) || null;
-    this.editarNome = this.templateSelecionado?.nome || '';
-    this.editarArea = this.templateSelecionado?.area || '';
-    this.editarAbrangencia = this.templateSelecionado?.abrangencia || '';
-    this.editarCargo = this.templateSelecionado?.cargo || '';
+    if (this.editandoTemplate) {
+      this.editarNome = this.templateSelecionado?.nome || '';
+      this.editarOrgaoId = this.templateSelecionado?.orgaoId ?? null;
+      this.editarAreaId = this.templateSelecionado?.areaId ?? null;
+      this.editarAbrangencia = (this.templateSelecionado?.abrangencia as AbrangenciaEnum) || '';
+      this.editarCargoId = this.templateSelecionado?.cargoId ?? null;
+      this.editarDataPublicacao = this.normalizarDataParaInput(this.templateSelecionado?.dataPublicacao ?? null);
+      this.novoNome = this.editarNome;
+      this.novoOrgaoId = this.editarOrgaoId;
+      this.novoAreaId = this.editarAreaId;
+      this.novoAbrangencia = this.editarAbrangencia;
+      this.novoCargoId = this.editarCargoId;
+      this.novoDataPublicacao = this.editarDataPublicacao;
+      this.carregarAreasParaEdicao(this.novoOrgaoId, this.novoAreaId, this.novoCargoId);
+      if (this.novoOrgaoId) {
+        this.carregarLogoOrgao(this.novoOrgaoId);
+      } else {
+        this.limparLogoOrgao();
+      }
+    }
     this.imagemArquivo = null;
     this.imagemPreviewUrl = '';
 
@@ -164,13 +263,41 @@ export class PainelAdminComponent implements OnInit {
     this.estruturaTemplate = null;
     this.carregarImagemTemplate(id);
 
-    this.mensagemOk = `Selecionado template ID ${id}`;
+    this.mensagemOk = '';
+    this.treeNodes = [];
+    this.treeLoading = true;
     this.carregarMaterias();
+  }
+
+  toggleEditalTree(template: EditalTemplateDTO, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!template?.id) return;
+
+    if (this.expandedEditalId === template.id) {
+      this.expandedEditalId = null;
+      return;
+    }
+
+    this.selecionar(template.id);
+  }
+
+  irParaMaterias(template: EditalTemplateDTO, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!template?.id) return;
+    this.selecionar(template.id);
+    setTimeout(() => {
+      const alvo = document.getElementById('materias-section');
+      alvo?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   preencherClone(id: number): void {
     this.cloneTemplateId = id;
-    this.mensagemOk = `Template ${id} preenchido no clone`;
+    this.exibirMensagemOk(`Template ${id} preenchido no clone`);
   }
 
   buscarSelecionado(): void {
@@ -181,7 +308,12 @@ export class PainelAdminComponent implements OnInit {
       next: (res) => {
         this.templateSelecionado = res;
         this.editarNome = res.nome;
-        this.mensagemOk = `Template ${res.id} carregado`;
+    this.editarOrgaoId = res.orgaoId ?? null;
+    this.editarAreaId = res.areaId ?? null;
+    this.editarAbrangencia = (res.abrangencia as AbrangenciaEnum) || '';
+    this.editarCargoId = res.cargoId ?? null;
+    this.editarDataPublicacao = this.normalizarDataParaInput(res.dataPublicacao ?? null);
+        this.exibirMensagemOk(`Template ${res.id} carregado`);
       },
       error: (err) => this.tratarErro(err, 'Falha ao buscar template por ID.')
     });
@@ -192,30 +324,111 @@ export class PainelAdminComponent implements OnInit {
     const tpl = this.templates.find(t => t.id === this.selecionadoId) || null;
     this.templateSelecionado = tpl;
     this.editarNome = tpl?.nome || '';
-    this.editarArea = tpl?.area || '';
-    this.editarAbrangencia = tpl?.abrangencia || '';
-    this.editarCargo = tpl?.cargo || '';
+    this.editarOrgaoId = tpl?.orgaoId ?? null;
+    this.editarAreaId = tpl?.areaId ?? null;
+    this.editarAbrangencia = (tpl?.abrangencia as AbrangenciaEnum) || '';
+    this.editarCargoId = tpl?.cargoId ?? null;
+    this.editarDataPublicacao = this.normalizarDataParaInput(tpl?.dataPublicacao ?? null);
     this.novoNome = this.editarNome;
-    this.novoArea = this.editarArea;
+    this.novoOrgaoId = this.editarOrgaoId;
+    this.novoAreaId = this.editarAreaId;
     this.novoAbrangencia = this.editarAbrangencia;
-    this.novoCargo = this.editarCargo;
+    this.novoCargoId = this.editarCargoId;
+    this.novoDataPublicacao = this.editarDataPublicacao;
     this.editandoTemplate = true;
+    this.nomeEditadoManualmente = true;
+    this.carregarAreasParaEdicao(this.novoOrgaoId, this.novoAreaId, this.novoCargoId);
+    if (this.novoOrgaoId) {
+      this.carregarLogoOrgao(this.novoOrgaoId);
+    } else {
+      this.limparLogoOrgao();
+    }
   }
 
+  onNomeEditalChange(valor: string): void {
+    this.nomeEditadoManualmente = !!(valor || '').trim();
+    this.editarNome = valor;
+  }
+
+  onOrgaoChange(id: number | null): void {
+    this.novoOrgaoId = id;
+    this.editarOrgaoId = id;
+    this.novoAreaId = null;
+    this.editarAreaId = null;
+    this.novoCargoId = null;
+    this.editarCargoId = null;
+    this.cargosFiltrados = [];
+    if (id) {
+      this.carregarAreasPorOrgao(id);
+      this.carregarLogoOrgao(id);
+    } else {
+      this.areasFiltradas = [];
+      this.limparLogoOrgao();
+    }
+    this.atualizarNomePadrao();
+  }
+
+  onAreaChange(id: number | null): void {
+    this.novoAreaId = id;
+    this.editarAreaId = id;
+    this.novoCargoId = null;
+    this.editarCargoId = null;
+    if (id) {
+      this.carregarCargosPorArea(id);
+    } else {
+      this.cargosFiltrados = [];
+    }
+  }
+
+  onCargoChange(id: number | null): void {
+    this.novoCargoId = id;
+    this.editarCargoId = id;
+    this.atualizarNomePadrao();
+  }
+
+  onDataPublicacaoChange(valor: string | null): void {
+    this.novoDataPublicacao = valor;
+    this.editarDataPublicacao = valor;
+    this.atualizarNomePadrao();
+  }
+
+  private atualizarNomePadrao(): void {
+    if (this.nomeEditadoManualmente && (this.novoNome || '').trim()) {
+      return;
+    }
+
+    const orgao = this.orgaos.find(o => o.id === this.novoOrgaoId);
+    const cargo = this.cargos.find(c => c.id === this.novoCargoId);
+    const orgaoNome = orgao?.nome?.trim() || '';
+    const cargoNome = cargo?.nome?.trim() || '';
+    const anoPublicacao = this.obterAnoPublicacao(this.novoDataPublicacao);
+
+    if (!orgaoNome && !cargoNome) {
+      return;
+    }
+
+    const nome = [orgaoNome, cargoNome, anoPublicacao].filter(Boolean).join(' - ');
+    this.novoNome = nome;
+    this.editarNome = nome;
+  }
   criarTemplate(): void {
     if (!this.novoNome || !this.novoNome.trim()) {
       this.mensagemErro = 'Informe um nome para criar.';
       return;
     }
-    if (!this.novoArea || !this.novoArea.trim()) {
+    if (!this.novoOrgaoId) {
+      this.mensagemErro = 'Informe o orgao para criar.';
+      return;
+    }
+    if (!this.novoAreaId) {
       this.mensagemErro = 'Informe a area para criar.';
       return;
     }
-    if (!this.novoAbrangencia || !this.novoAbrangencia.trim()) {
+    if (!this.novoAbrangencia) {
       this.mensagemErro = 'Informe a abrangencia para criar.';
       return;
     }
-    if (!this.novoCargo || !this.novoCargo.trim()) {
+    if (!this.novoCargoId) {
       this.mensagemErro = 'Informe o cargo para criar.';
       return;
     }
@@ -223,17 +436,22 @@ export class PainelAdminComponent implements OnInit {
     this.limparMensagens();
     this.editalAdminService.criarTemplate({
       nome: this.novoNome.trim(),
-      area: this.novoArea.trim(),
-      abrangencia: this.novoAbrangencia.trim(),
-      cargo: this.novoCargo.trim()
+      orgaoId: this.novoOrgaoId,
+      areaId: this.novoAreaId,
+      abrangencia: this.novoAbrangencia,
+      cargoId: this.novoCargoId,
+      dataPublicacao: this.novoDataPublicacao || undefined
     }).subscribe({
       next: (res) => {
-        this.mensagemOk = `Criado: ID ${res.id}`;
+        this.exibirMensagemOk(`Criado: ID ${res.id}`);
         this.novoNome = '';
-        this.novoArea = '';
+        this.novoOrgaoId = null;
+        this.novoAreaId = null;
         this.novoAbrangencia = '';
-        this.novoCargo = '';
+        this.novoCargoId = null;
+        this.novoDataPublicacao = null;
         this.editandoTemplate = false;
+        this.nomeEditadoManualmente = false;
         if (this.imagemArquivo) {
           this.salvarImagemTemplateId(res.id, this.imagemArquivo);
         } else {
@@ -253,15 +471,19 @@ export class PainelAdminComponent implements OnInit {
       this.mensagemErro = 'Informe um nome novo.';
       return;
     }
-    if (!this.editarArea || !this.editarArea.trim()) {
+    if (!this.editarOrgaoId) {
+      this.mensagemErro = 'Informe o orgao.';
+      return;
+    }
+    if (!this.editarAreaId) {
       this.mensagemErro = 'Informe a area.';
       return;
     }
-    if (!this.editarAbrangencia || !this.editarAbrangencia.trim()) {
+    if (!this.editarAbrangencia) {
       this.mensagemErro = 'Informe a abrangencia.';
       return;
     }
-    if (!this.editarCargo || !this.editarCargo.trim()) {
+    if (!this.editarCargoId) {
       this.mensagemErro = 'Informe o cargo.';
       return;
     }
@@ -269,14 +491,17 @@ export class PainelAdminComponent implements OnInit {
     this.limparMensagens();
     this.editalAdminService.atualizarTemplate(this.selecionadoId, {
       nome: this.editarNome.trim(),
-      area: this.editarArea.trim(),
-      abrangencia: this.editarAbrangencia.trim(),
-      cargo: this.editarCargo.trim()
+      orgaoId: this.editarOrgaoId,
+      areaId: this.editarAreaId,
+      abrangencia: this.editarAbrangencia,
+      cargoId: this.editarCargoId,
+      dataPublicacao: this.editarDataPublicacao || undefined
     }).subscribe({
       next: (res) => {
         this.templateSelecionado = res;
-        this.mensagemOk = `Atualizado: ID ${res.id}`;
+        this.exibirMensagemOk(`Atualizado: ID ${res.id}`);
         this.editandoTemplate = false;
+        this.nomeEditadoManualmente = false;
         if (this.imagemArquivo) {
           this.salvarImagemTemplateId(res.id, this.imagemArquivo);
         } else {
@@ -320,7 +545,7 @@ export class PainelAdminComponent implements OnInit {
     this.editalAdminService.salvarImagem(templateId, arquivo).subscribe({
       next: (res) => {
         this.templateSelecionado = res;
-        this.mensagemOk = 'Imagem salva com sucesso.';
+        this.exibirMensagemOk('Imagem salva com sucesso.');
         this.imagemCarregando = false;
         this.imagemArquivo = null;
         this.imagemPreviewUrl = '';
@@ -378,12 +603,24 @@ export class PainelAdminComponent implements OnInit {
     this.limparImagemPreview();
   }
 
+  onLogoOrgaoErro(): void {
+    this.limparLogoOrgao();
+  }
+
   private limparImagemPreview(): void {
     if (this.imagemObjectUrl) {
       URL.revokeObjectURL(this.imagemObjectUrl);
       this.imagemObjectUrl = '';
     }
     this.imagemPreviewUrl = '';
+  }
+
+  private limparLogoOrgao(): void {
+    if (this.orgaoLogoObjectUrl) {
+      URL.revokeObjectURL(this.orgaoLogoObjectUrl);
+      this.orgaoLogoObjectUrl = '';
+    }
+    this.orgaoLogoUrl = '';
   }
 
   private lerBlobComoTexto(blob: Blob): Promise<string> {
@@ -413,11 +650,46 @@ export class PainelAdminComponent implements OnInit {
     return `${type}/${subtype}`;
   }
 
+  private carregarLogoOrgao(orgaoId: number): void {
+    this.limparLogoOrgao();
+    this.editalAdminService.buscarImagemOrgaoArquivo(orgaoId).subscribe({
+      next: (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        const blob = res.body;
+        if (!blob) {
+          return;
+        }
+
+        if (contentType.startsWith('image/')) {
+          this.orgaoLogoObjectUrl = URL.createObjectURL(blob);
+          this.orgaoLogoUrl = this.orgaoLogoObjectUrl;
+          return;
+        }
+
+        this.lerBlobComoTexto(blob)
+          .then((texto) => {
+            const payload = this.parseImagemResponse(texto);
+            if (!payload?.dados) {
+              return;
+            }
+            const tipo = this.normalizarContentType(payload.contentType);
+            this.orgaoLogoUrl = `data:${tipo};base64,${payload.dados}`;
+          })
+          .catch(() => {
+            this.limparLogoOrgao();
+          });
+      },
+      error: () => {
+        this.limparLogoOrgao();
+      }
+    });
+  }
+
   publicar(id: number): void {
     this.limparMensagens();
     this.editalAdminService.publicarTemplate(id).subscribe({
       next: (res) => {
-        this.mensagemOk = `Publicado: ID ${res.id}`;
+        this.exibirMensagemOk(`Publicado: ID ${res.id}`);
         if (this.selecionadoId === res.id) this.templateSelecionado = res;
         this.recarregar();
       },
@@ -429,7 +701,7 @@ export class PainelAdminComponent implements OnInit {
     this.limparMensagens();
     this.editalAdminService.despublicarTemplate(id).subscribe({
       next: (res) => {
-        this.mensagemOk = `Despublicado: ID ${res.id}`;
+        this.exibirMensagemOk(`Despublicado: ID ${res.id}`);
         if (this.selecionadoId === res.id) this.templateSelecionado = res;
         this.recarregar();
       },
@@ -451,7 +723,7 @@ export class PainelAdminComponent implements OnInit {
   private excluirTemplateAposImagem(id: number): void {
     this.editalAdminService.excluirTemplate(id).subscribe({
       next: () => {
-        this.mensagemOk = `Excluido: ID ${id}`;
+        this.exibirMensagemOk(`Excluido: ID ${id}`);
         if (this.selecionadoId === id) {
           this.selecionadoId = null;
           this.templateSelecionado = null;
@@ -462,6 +734,112 @@ export class PainelAdminComponent implements OnInit {
         this.recarregar();
       },
       error: (err) => this.tratarErro(err, 'Falha ao excluir template.')
+    });
+  }
+
+  // =========================
+  // CADASTROS BASE
+  // =========================
+
+  carregarCadastrosBase(): void {
+    this.carregarOrgaos();
+    this.carregarAreas();
+    this.carregarCargos();
+  }
+
+  carregarOrgaos(): void {
+    this.editalAdminService.listarOrgaosPaginado('', 0, 500).subscribe({
+      next: (res) => {
+        const lista = (res?.content || []) as OrgaoDTO[];
+        this.orgaos = lista.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao listar orgaos.')
+    });
+  }
+
+  carregarAreas(): void {
+    this.editalAdminService.listarAreasPaginado('', 0, 500).subscribe({
+      next: (res) => {
+        const lista = (res?.content || []) as AreaDTO[];
+        this.areas = lista.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao listar areas.')
+    });
+  }
+
+  carregarCargos(): void {
+    this.editalAdminService.listarCargosPaginado('', 0, 500).subscribe({
+      next: (res) => {
+        const lista = (res?.content || []) as CargoDTO[];
+        this.cargos = lista.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao listar cargos.')
+    });
+  }
+
+  private carregarAreasPorOrgao(orgaoId: number): void {
+    this.editalAdminService.listarAreasPorOrgao(orgaoId).subscribe({
+      next: (res) => {
+        const lista = (res || []) as AreaDTO[];
+        this.areasFiltradas = lista.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao listar areas por orgao.')
+    });
+  }
+
+  private carregarCargosPorArea(areaId: number): void {
+    this.editalAdminService.listarCargosPorArea(areaId).subscribe({
+      next: (res) => {
+        const lista = (res || []) as CargoDTO[];
+        this.cargosFiltrados = lista.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao listar cargos por area.')
+    });
+  }
+
+  private carregarAreasParaEdicao(orgaoId: number | null, areaId: number | null, cargoId: number | null): void {
+    if (!orgaoId) {
+      this.areasFiltradas = [];
+      this.cargosFiltrados = [];
+      return;
+    }
+
+    this.editalAdminService.listarAreasPorOrgao(orgaoId).subscribe({
+      next: (res) => {
+        const lista = (res || []) as AreaDTO[];
+        this.areasFiltradas = lista.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+        if (areaId && this.areasFiltradas.some(a => a.id === areaId)) {
+          this.novoAreaId = areaId;
+          this.editarAreaId = areaId;
+          this.carregarCargosParaEdicao(areaId, cargoId);
+        } else {
+          this.novoAreaId = null;
+          this.editarAreaId = null;
+          this.novoCargoId = null;
+          this.editarCargoId = null;
+          this.cargosFiltrados = [];
+        }
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao listar areas por orgao.')
+    });
+  }
+
+  private carregarCargosParaEdicao(areaId: number, cargoId: number | null): void {
+    this.editalAdminService.listarCargosPorArea(areaId).subscribe({
+      next: (res) => {
+        const lista = (res || []) as CargoDTO[];
+        this.cargosFiltrados = lista.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+        if (cargoId && this.cargosFiltrados.some(c => c.id === cargoId)) {
+          this.novoCargoId = cargoId;
+          this.editarCargoId = cargoId;
+        } else {
+          this.novoCargoId = null;
+          this.editarCargoId = null;
+        }
+      },
+      error: (err) => this.tratarErro(err, 'Falha ao listar cargos por area.')
     });
   }
 
@@ -487,15 +865,42 @@ export class PainelAdminComponent implements OnInit {
       next: (res) => {
         this.materias = res || [];
         this.carregandoMaterias = false;
-        this.mensagemOk = `Materias carregadas: ${this.materias.length}`;
+        this.mensagemOk = '';
 
         if (this.materiaSelecionadaId && !this.materias.some(m => m.id === this.materiaSelecionadaId)) {
           this.limparSelecaoMateria();
         }
+        this.carregarArvoreMaterias();
       },
       error: (err) => {
         this.carregandoMaterias = false;
         this.tratarErro(err, 'Falha ao listar materias.');
+      }
+    });
+  }
+
+  private carregarArvoreMaterias(): void {
+    if (!this.selecionadoId) return;
+
+    if (!this.materias.length) {
+      this.treeNodes = [];
+      this.treeLoading = false;
+      return;
+    }
+
+    this.treeLoading = true;
+
+    const requisicoes = this.materias.map(m => this.editalAdminService.listarTopicos(this.selecionadoId!, m.id!));
+
+    forkJoin(requisicoes).subscribe({
+      next: (listas) => {
+        this.treeNodes = this.buildTreeFromMaterias(this.materias, listas);
+        this.treeLoading = false;
+        this.setTreeExpanded(this.treeNodes, this.arvoreExpandida);
+      },
+      error: () => {
+        this.treeLoading = false;
+        this.mensagemErro = 'Erro ao carregar topicos das materias.';
       }
     });
   }
@@ -516,6 +921,9 @@ export class PainelAdminComponent implements OnInit {
     this.topicosArvore = [];
     this.topicoSelecionado = null;
     this.novoTopicoDescricao = '';
+    this.selectedTreeNode = null;
+    this.editingNodeKey = null;
+    this.editingLabel = '';
   }
 
   selecionarMateria(m: MateriaTemplateDTO): void {
@@ -525,8 +933,10 @@ export class PainelAdminComponent implements OnInit {
     this.topicosArvore = [];
     this.topicoSelecionado = null;
     this.novoTopicoDescricao = '';
+    this.editingNodeKey = null;
+    this.editingLabel = '';
 
-    this.mensagemOk = `Materia selecionada: ${m.id}`;
+    this.mensagemOk = '';
     this.carregarTopicos();
   }
 
@@ -550,7 +960,7 @@ export class PainelAdminComponent implements OnInit {
     this.limparMensagens();
     this.editalAdminService.criarMateria(this.selecionadoId, payload).subscribe({
       next: (res) => {
-        this.mensagemOk = `Materia criada: ID ${res.id}`;
+        this.exibirMensagemOk(`Materia criada: ID ${res.id}`);
         this.novaMateriaNome = '';
         this.submeteuMateria = false;
         this.carregarMaterias();
@@ -568,7 +978,7 @@ export class PainelAdminComponent implements OnInit {
     this.limparMensagens();
     this.editalAdminService.excluirMateria(this.selecionadoId, materiaId).subscribe({
       next: () => {
-        this.mensagemOk = `Materia excluida: ID ${materiaId}`;
+        this.exibirMensagemOk(`Materia excluida: ID ${materiaId}`);
         if (this.materiaSelecionadaId === materiaId) {
           this.limparSelecaoMateria();
         }
@@ -592,7 +1002,7 @@ export class PainelAdminComponent implements OnInit {
         this.topicosArvore = this.buildTopicosArvore(this.topicos);
         this.topicoSelecionado = null;
         this.carregandoTopicos = false;
-        this.mensagemOk = `Topicos carregados: ${this.topicos.length}`;
+        this.mensagemOk = '';
       },
       error: (err) => {
         this.carregandoTopicos = false;
@@ -627,6 +1037,336 @@ export class PainelAdminComponent implements OnInit {
     return roots;
   }
 
+  private buildTreeFromMaterias(materias: MateriaTemplateDTO[], topicosPorMateria: TopicoTemplateDTO[][]): TreeNode[] {
+    return (materias || []).map((materia, index) => {
+      const materiaId = materia.id as number;
+      const topicosDto = (topicosPorMateria[index] || []) as TopicoTemplateDTO[];
+      const topicosArvore = this.buildTopicosArvore(topicosDto);
+
+      const node: TreeNode = {
+        key: this.nodeKey('MATERIA', materiaId),
+        data: {
+          tipo: 'MATERIA',
+          id: materiaId,
+          label: materia.nome || materia.descricao || '',
+          ordem: materia.ordem ?? 1
+        },
+        children: this.buildTopicoNodes(topicosArvore, materiaId)
+      };
+
+      return node;
+    });
+  }
+
+  private buildTopicoNodes(topicos: TopicoNode[], materiaId: number, parent?: TreeNode): TreeNode[] {
+    return (topicos || []).map((topico) => this.toTopicoNode(topico, materiaId, parent));
+  }
+
+  private toTopicoNode(topico: TopicoNode, materiaId: number, parent?: TreeNode): TreeNode {
+    const id = (topico as any).id ?? this.nextTempId();
+    const node: TreeNode = {
+      key: this.nodeKey('TOPICO', id),
+      data: {
+        tipo: 'TOPICO',
+        id,
+        materiaId,
+        label: topico.descricao || topico.nome || '',
+        ordem: topico.ordem ?? 1,
+        temp: !(topico as any).id
+      },
+      parent
+    };
+
+    const filhos = (topico.filhos || []) as TopicoNode[];
+    node.children = filhos.map((f) => this.toTopicoNode(f, materiaId, node));
+    return node;
+  }
+
+  toggleArvoreExpandida(): void {
+    this.arvoreExpandida = !this.arvoreExpandida;
+    this.setTreeExpanded(this.treeNodes, this.arvoreExpandida);
+  }
+
+  private setTreeExpanded(nodes: TreeNode[], expanded: boolean): void {
+    (nodes || []).forEach((node) => {
+      node.expanded = expanded;
+      if (node.children?.length) {
+        this.setTreeExpanded(node.children, expanded);
+      }
+    });
+  }
+
+  onTreeSelect(event: any): void {
+    const node = event?.node as TreeNode | undefined;
+    this.selectedTreeNode = node || null;
+
+    if (!node?.data) return;
+
+    if (this.editingNodeKey) {
+      if (node.key === this.editingNodeKey) {
+        return;
+      }
+      this.cancelarEdicao();
+    }
+
+    if (node.data.tipo === 'MATERIA') {
+      const materia = this.materias.find(m => m.id === node.data.id) || null;
+      if (materia) {
+        this.selecionarMateria(materia);
+      }
+      this.topicoSelecionado = null;
+      return;
+    }
+
+    if (node.data.tipo === 'TOPICO') {
+      const materiaNode = this.encontrarMateriaNode(node);
+      if (materiaNode?.data?.id) {
+        this.materiaSelecionadaId = materiaNode.data.id;
+        this.materiaExpandida = this.materias.find(m => m.id === materiaNode.data.id) || null;
+        this.topicosArvore = (materiaNode.children || []).map((child) => this.treeNodeToTopico(child));
+      }
+
+      this.topicoSelecionado = this.treeNodeToTopico(node);
+    }
+  }
+
+  onTreeEditKeydown(event: KeyboardEvent): void {
+    event.stopPropagation();
+  }
+
+  acaoEditarNode(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedTreeNode = node;
+    this.editingNodeKey = node.key || null;
+    this.editingLabel = String(node.data?.label || '');
+    this.focarInputEdicao(node.key || '');
+  }
+
+  acaoAdicionarNode(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedTreeNode = node;
+    if (node?.data?.tipo === 'MATERIA') {
+      this.adicionarTopicoNaArvore();
+      return;
+    }
+    if (node?.data?.tipo === 'TOPICO') {
+      this.adicionarSubtopicoNaArvore();
+    }
+  }
+
+  acaoExcluirNode(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedTreeNode = node;
+    this.excluirNodeSelecionado();
+  }
+
+  private adicionarTopicoNaArvore(): void {
+    const targetNode = this.currentTreeNode;
+    if (!targetNode?.data || targetNode.data.tipo !== 'MATERIA') {
+      alert('Selecione uma materia para adicionar um topico.');
+      return;
+    }
+
+    const novo = this.criarTopicoTemporario(targetNode.data.id, targetNode);
+    targetNode.children = targetNode.children || [];
+    targetNode.children.push(novo);
+    targetNode.expanded = true;
+    this.selectedTreeNode = novo;
+    this.editingNodeKey = novo.key || null;
+    this.editingLabel = '';
+    this.focarInputEdicao(novo.key || '');
+  }
+
+  private adicionarSubtopicoNaArvore(): void {
+    const targetNode = this.currentTreeNode;
+    if (!targetNode?.data || targetNode.data.tipo !== 'TOPICO') {
+      alert('Selecione um topico para adicionar um subtopico.');
+      return;
+    }
+
+    const novo = this.criarTopicoTemporario(targetNode.data.materiaId, targetNode);
+    targetNode.children = targetNode.children || [];
+    targetNode.children.push(novo);
+    targetNode.expanded = true;
+    this.selectedTreeNode = novo;
+    this.editingNodeKey = novo.key || null;
+    this.editingLabel = '';
+    this.focarInputEdicao(novo.key || '');
+  }
+
+  private criarTopicoTemporario(materiaId: number, parent?: TreeNode): TreeNode {
+    const id = this.nextTempId();
+    return {
+      key: this.nodeKey('TOPICO', id),
+      data: {
+        tipo: 'TOPICO',
+        id,
+        materiaId,
+        label: '',
+        ordem: 1,
+        temp: true
+      },
+      parent
+    };
+  }
+
+  cancelarEdicao(): void {
+    this.editingNodeKey = null;
+    this.editingLabel = '';
+  }
+
+  confirmarEdicao(node: TreeNode): void {
+    const label = (this.editingLabel || '').trim();
+    if (!label || !node?.data) {
+      this.removerTempNode(node);
+      this.cancelarEdicao();
+      return;
+    }
+
+    if (node.data.tipo === 'MATERIA') {
+      this.atualizarMateriaTree(node.data.id, label, node.data.ordem ?? 1);
+      return;
+    }
+
+    if (node.data.tipo === 'TOPICO') {
+      const parentNode = node.parent as TreeNode | undefined;
+      const topicoPaiId = parentNode?.data?.tipo === 'TOPICO' ? parentNode.data.id : null;
+
+      if (node.data.temp) {
+        this.salvarTopicoTree(node.data.materiaId, label, topicoPaiId);
+        return;
+      }
+
+      this.atualizarTopicoTree(
+        node.data.materiaId,
+        node.data.id,
+        label,
+        topicoPaiId,
+        node.data.ordem ?? 1
+      );
+      return;
+    }
+
+    this.cancelarEdicao();
+  }
+
+  private removerTempNode(node: TreeNode): void {
+    if (!node?.parent?.children?.length) return;
+    const idx = node.parent.children.indexOf(node);
+    if (idx >= 0) {
+      node.parent.children.splice(idx, 1);
+    }
+  }
+
+  private salvarTopicoTree(materiaId: number, descricao: string, topicoPaiId: number | null): void {
+    if (!this.selecionadoId) return;
+    const payload: any = {
+      descricao,
+      ordem: 1
+    };
+    if (topicoPaiId) {
+      payload.topicoPaiId = topicoPaiId;
+    }
+
+    this.limparMensagens();
+    this.editalAdminService.criarTopico(this.selecionadoId, materiaId, payload).subscribe({
+      next: () => {
+        this.cancelarEdicao();
+        this.carregarMaterias();
+      },
+      error: (err) => {
+        this.removerTempNode(this.currentTreeNode as TreeNode);
+        this.cancelarEdicao();
+        this.tratarErro(err, 'Falha ao criar topico.');
+      }
+    });
+  }
+
+  private atualizarMateriaTree(materiaId: number, nome: string, ordem: number): void {
+    if (!this.selecionadoId) return;
+
+    this.limparMensagens();
+    this.editalAdminService.atualizarMateria(this.selecionadoId, materiaId, { nome, ordem }).subscribe({
+      next: () => {
+        this.cancelarEdicao();
+        this.carregarMaterias();
+      },
+      error: (err) => {
+        this.cancelarEdicao();
+        this.tratarErro(err, 'Falha ao atualizar materia.');
+      }
+    });
+  }
+
+  private atualizarTopicoTree(
+    materiaId: number,
+    topicoId: number,
+    descricao: string,
+    topicoPaiId: number | null,
+    ordem: number
+  ): void {
+    if (!this.selecionadoId) return;
+
+    const payload: any = { descricao, ordem, ativo: true };
+    if (topicoPaiId) {
+      payload.topicoPaiId = topicoPaiId;
+    }
+
+    this.limparMensagens();
+    this.editalAdminService.atualizarTopico(this.selecionadoId, materiaId, topicoId, payload).subscribe({
+      next: () => {
+        this.cancelarEdicao();
+        this.carregarMaterias();
+      },
+      error: (err) => {
+        this.cancelarEdicao();
+        this.tratarErro(err, 'Falha ao atualizar topico.');
+      }
+    });
+  }
+
+  private nodeKey(tipo: string, id: number): string {
+    return `${tipo}-${id}`;
+  }
+
+  private nextTempId(): number {
+    this.tempNodeId -= 1;
+    return this.tempNodeId;
+  }
+
+  private focarInputEdicao(nodeKey: string): void {
+    if (!nodeKey) return;
+    setTimeout(() => {
+      const input = document.querySelector(
+        `[data-edit-key="${nodeKey}"]`
+      ) as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    });
+  }
+
+  private treeNodeToTopico(node: TreeNode): TopicoNode {
+    const filhos = (node.children || []).map((child) => this.treeNodeToTopico(child));
+    return {
+      id: node.data?.id,
+      descricao: node.data?.label,
+      filhos
+    } as TopicoNode;
+  }
+
+  private encontrarMateriaNode(node: TreeNode): TreeNode | null {
+    let atual: TreeNode | null = node;
+    while (atual) {
+      if (atual.data?.tipo === 'MATERIA') {
+        return atual;
+      }
+      atual = (atual.parent as TreeNode) || null;
+    }
+    return null;
+  }
+
   selecionarTopico(topico: TopicoNode): void {
     if (this.topicoSelecionado === topico) {
       this.limparTopicoSelecionado();
@@ -639,6 +1379,38 @@ export class PainelAdminComponent implements OnInit {
 
   limparTopicoSelecionado(): void {
     this.topicoSelecionado = null;
+  }
+
+  excluirNodeSelecionado(): void {
+    const node = this.currentTreeNode;
+    if (!node?.data || !this.selecionadoId) return;
+
+    if (node.data.tipo === 'MATERIA') {
+      const ok = confirm(`Excluir a materia "${node.data.label}"?`);
+      if (!ok) return;
+      this.editalAdminService.excluirMateria(this.selecionadoId, node.data.id).subscribe({
+        next: () => {
+          this.selectedTreeNode = null;
+          this.limparSelecaoMateria();
+          this.carregarMaterias();
+        },
+        error: (err) => this.tratarErro(err, 'Falha ao excluir materia.')
+      });
+      return;
+    }
+
+    if (node.data.tipo === 'TOPICO') {
+      const ok = confirm(`Excluir o topico "${node.data.label}"?`);
+      if (!ok) return;
+      this.editalAdminService.excluirTopico(this.selecionadoId, node.data.materiaId, node.data.id).subscribe({
+        next: () => {
+          this.selectedTreeNode = null;
+          this.topicoSelecionado = null;
+          this.carregarMaterias();
+        },
+        error: (err) => this.tratarErro(err, 'Falha ao excluir topico.')
+      });
+    }
   }
 
   criarTopico(): void {
@@ -662,7 +1434,7 @@ export class PainelAdminComponent implements OnInit {
     this.limparMensagens();
     this.editalAdminService.criarTopico(this.selecionadoId, this.materiaSelecionadaId, payload).subscribe({
       next: (res) => {
-        this.mensagemOk = `Topico criado: ID ${res.id}`;
+        this.exibirMensagemOk(`Topico criado: ID ${res.id}`);
         this.novoTopicoDescricao = '';
         this.carregarTopicos();
       },
@@ -680,7 +1452,7 @@ export class PainelAdminComponent implements OnInit {
     this.limparMensagens();
     this.editalAdminService.excluirTopico(this.selecionadoId, this.materiaSelecionadaId, this.topicoSelecionado.id).subscribe({
       next: () => {
-        this.mensagemOk = `Topico excluido: ID ${this.topicoSelecionado?.id}`;
+        this.exibirMensagemOk(`Topico excluido: ID ${this.topicoSelecionado?.id}`);
         this.topicoSelecionado = null;
         this.carregarTopicos();
       },
@@ -1000,19 +1772,44 @@ export class PainelAdminComponent implements OnInit {
     return this.parseEditalParaMaterias(this.textoEdital);
   }
 
-  abrirModalImportarEdital(): void {
+  abrirModalImportarEdital(aba: 'cadastro' | 'importar' = 'importar'): void {
     if (!this.selecionadoId) {
       alert('Selecione um template antes de importar.');
       return;
     }
 
     this.mostrarModalEdital = true;
+    this.importarMateriasAba = aba;
     this.textoEdital = '';
+    this.submeteuMateria = false;
+    this.selectedTreeNode = null;
+    this.editingNodeKey = null;
+    this.editingLabel = '';
+
+    if (aba === 'cadastro') {
+      this.carregarMaterias();
+    }
   }
 
   fecharModalImportarEdital(): void {
     this.mostrarModalEdital = false;
     this.textoEdital = '';
+    this.importarMateriasAba = 'importar';
+    this.submeteuMateria = false;
+    this.treeLoading = false;
+  }
+
+  setAbaImportarMaterias(aba: 'cadastro' | 'importar'): void {
+    this.importarMateriasAba = aba;
+    this.submeteuMateria = false;
+    if (aba === 'cadastro') {
+      this.focarNomeMateria();
+      if (this.materias.length) {
+        this.carregarArvoreMaterias();
+      } else {
+        this.carregarMaterias();
+      }
+    }
   }
 
   contarTopicosRecursivo(lista: TopicoNode[]): number {
@@ -1240,7 +2037,7 @@ export class PainelAdminComponent implements OnInit {
     this.editalAdminService.buscarEstrutura(this.selecionadoId).subscribe({
       next: (res) => {
         this.estruturaTemplate = res;
-        this.mensagemOk = 'Estrutura carregada';
+        this.exibirMensagemOk('Estrutura carregada');
         this.mostrarModalEstrutura = true;
       },
       error: (err) => this.tratarErro(err, 'Falha ao buscar estrutura.')
@@ -1249,7 +2046,7 @@ export class PainelAdminComponent implements OnInit {
 
   limparEstrutura(): void {
     this.estruturaTemplate = null;
-    this.mensagemOk = 'Estrutura limpa';
+    this.exibirMensagemOk('Estrutura limpa');
     this.mostrarModalEstrutura = false;
   }
 
@@ -1345,7 +2142,7 @@ export class PainelAdminComponent implements OnInit {
     }).subscribe({
       next: (res) => {
         this.resultadoClone = res;
-        this.mensagemOk = `Clone realizado. Edital criado: ID ${res}`;
+        this.exibirMensagemOk(`Clone realizado. Edital criado: ID ${res}`);
       },
       error: (err) => this.tratarErro(err, 'Falha ao clonar (possivel rota diferente ou permissao).')
     });
@@ -1357,6 +2154,19 @@ export class PainelAdminComponent implements OnInit {
 
   private normalizarTexto(texto: string | undefined | null): string {
     return (texto || '').trim().toLowerCase();
+  }
+
+  private normalizarDataParaInput(valor: string | null | undefined): string | null {
+    const raw = (valor || '').trim();
+    if (!raw) return null;
+    const data = raw.split('T')[0].split(' ')[0];
+    return data || null;
+  }
+
+  private obterAnoPublicacao(valor: string | null | undefined): string {
+    if (!valor) return '';
+    const ano = String(valor).trim().slice(0, 4);
+    return /^\d{4}$/.test(ano) ? ano : '';
   }
 
   private focarNomeMateria(): void {

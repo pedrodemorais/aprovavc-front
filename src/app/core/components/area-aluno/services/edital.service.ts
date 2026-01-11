@@ -6,6 +6,7 @@ import { Edital } from '../models/Edital';
 
 export interface EditalFormPayload {
   nome: string;
+  cargo?: string | null;
   descricao?: string | null;
   dataProva?: string | null;   // yyyy-MM-dd
   materiasIds: number[];
@@ -49,5 +50,19 @@ export class EditalService {
 
   desmarcarEdital(editalId: number): Observable<any> {
     return this.http.post<any>(`${this.alunosUrl}/${editalId}/desmarcar-edital`, {});
+  }
+
+  atualizarStatusMateria(editalId: number, materiaId: number, ativo: boolean): Observable<void> {
+    return this.http.patch<void>(
+      `${this.apiUrl}/${editalId}/materias/${materiaId}`,
+      { ativo }
+    );
+  }
+
+  atualizarStatusTopico(editalId: number, topicoId: number, ativo: boolean): Observable<void> {
+    return this.http.patch<void>(
+      `${this.apiUrl}/${editalId}/topicos/${topicoId}`,
+      { ativo }
+    );
   }
 }

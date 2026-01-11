@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EditalService } from '../services/edital.service';
 import { EditalFormPayload } from '../services/edital.service';
@@ -6,14 +6,18 @@ import { Edital } from '../models/Edital';
 import { Materia } from '../models/materia.model';
 import { MateriaService } from '../services/materia.service';
 import { EditalTemplateService } from '../services/edital-template.service';
-import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto';
+import { EditalTemplateDTO, EstruturaTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto';
+import { TreeNode } from 'primeng/api';
+import { CanComponentDeactivate } from '../guards/estudo-em-andamento.guard';
+import { forkJoin, of, Subscription } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-editais',
   templateUrl: './editais.component.html',
   styleUrls: ['./editais.component.css']
 })
-export class EditaisComponent implements OnInit, OnDestroy {
+export class EditaisComponent implements OnInit, OnDestroy, CanComponentDeactivate {
 
   carregando = false;
   salvando = false;
@@ -24,9 +28,19 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
   editais: Edital[] = [];
   materias: Materia[] = [];
+  editalTreeNodes: TreeNode[] = [];
+  selectedEditalNodes: TreeNode[] | null = [];
+  materiasDisponiveis: Materia[] = [];
+  materiasSelecionadas: Materia[] = [];
 
   form!: FormGroup;
   editalEmEdicao?: Edital | null;
+  editalSelecionado?: Edital | null;
+  mostrarFormulario = false;
+  mostrarModalVincularMaterias = false;
+  temMudancasNaoSalvas = false;
+  private ignorarMudancasFormulario = false;
+  private formChangesSub?: Subscription;
 
   // ====== TEMPLATES (NOVO EDITAL)
   mostrarModalTemplates = false;
@@ -45,6 +59,9 @@ private mensagemTimeout: any; // para guardar o setTimeout
   abrangenciaFiltro = 'todas';
   areasDisponiveis: string[] = [];
   abrangenciasDisponiveis: string[] = [];
+  modoImportacao = false;
+  importandoTemplate = false;
+  private materiasImportadasPendentes?: string[];
 
   // ====== ESTADO DE UI (COLAPSE) ======
   // quais editais estão abertos
@@ -75,16 +92,46 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
   ngOnDestroy(): void {
     this.limparImagensTemplates();
+    this.formChangesSub?.unsubscribe();
   }
 
   private montarForm(): void {
     this.form = this.fb.group({
       id: [null],
       nome: ['', [Validators.required, Validators.maxLength(150)]],
+      cargo: ['', [Validators.maxLength(150)]],
       descricao: [''],
       dataProva: [null],
       materiasIds: [[], [Validators.required]]
     });
+    this.monitorarMudancasFormulario();
+  }
+
+  private monitorarMudancasFormulario(): void {
+    this.formChangesSub?.unsubscribe();
+    this.formChangesSub = this.form.valueChanges.subscribe(() => {
+      if (this.ignorarMudancasFormulario) {
+        return;
+      }
+      this.marcarMudancasPendentes();
+    });
+  }
+
+  private aplicarSemRastrearMudancas<T>(acao: () => T): T {
+    this.ignorarMudancasFormulario = true;
+    try {
+      return acao();
+    } finally {
+      this.ignorarMudancasFormulario = false;
+    }
+  }
+
+  private marcarMudancasPendentes(): void {
+    this.temMudancasNaoSalvas = true;
+  }
+
+  private resetarMudancasPendentes(): void {
+    this.temMudancasNaoSalvas = false;
   }
 
   // ============= LOADS =============
@@ -93,6 +140,8 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.materiaService.listarMaterias().subscribe({
       next: (lista) => {
         this.materias = lista || [];
+        this.atualizarPickListMaterias();
+        this.aplicarMateriasImportadasPendentes();
       },
       error: (err) => {
         console.error('[EDITAIS] Erro ao carregar matérias:', err);
@@ -108,6 +157,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.editalService.listar().subscribe({
       next: (lista) => {
         this.editais = lista || [];
+        this.montarArvoreEditais();
         this.carregando = false;
       },
       error: (err) => {
@@ -167,8 +217,9 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
   get templatesFiltrados(): EditalTemplateDTO[] {
     return (this.templates || []).filter((t) => {
-      const areaOk = this.areaFiltro === 'todas' || t.area === this.areaFiltro;
-      const abrangenciaOk = this.abrangenciaFiltro === 'todas' || t.abrangencia === this.abrangenciaFiltro;
+      const areaOk = this.areaFiltro === 'todas' || this.getTemplateArea(t) === this.areaFiltro;
+      const abrangenciaOk =
+        this.abrangenciaFiltro === 'todas' || this.getTemplateAbrangencia(t) === this.abrangenciaFiltro;
       return areaOk && abrangenciaOk;
     });
   }
@@ -181,7 +232,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
   private extrairValoresUnicos(templates: EditalTemplateDTO[], campo: 'area' | 'abrangencia'): string[] {
     const valores = new Set<string>();
     for (const t of templates || []) {
-      const valor = (t as any)?.[campo];
+      const valor = campo === 'area' ? this.getTemplateArea(t) : this.getTemplateAbrangencia(t);
       if (valor) {
         valores.add(valor);
       }
@@ -319,19 +370,46 @@ private mensagemTimeout: any; // para guardar o setTimeout
   }
 
   novoEdital(): void {
-    this.form.reset({
-      id: null,
-      nome: '',
-      descricao: '',
-      dataProva: null,
-      materiasIds: []
+    this.aplicarSemRastrearMudancas(() => {
+      this.form.reset({
+        id: null,
+        nome: '',
+        cargo: '',
+        descricao: '',
+        dataProva: null,
+        materiasIds: []
+      });
     });
     this.editalEmEdicao = null;
+    this.editalSelecionado = undefined;
+    this.selectedEditalNodes = [];
     this.mensagemSucesso = undefined;
     this.erro = undefined;
+    this.mostrarFormulario = true;
+    this.atualizarPickListMaterias();
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+    this.resetarMudancasPendentes();
+    this.materiasImportadasPendentes = undefined;
   }
 
-  abrirModalTemplates(): void {
+  get labelAcaoPrincipal(): string {
+    if (this.salvando) {
+      return 'Salvando...';
+    }
+    return this.temMudancasNaoSalvas ? 'Salvar edital' : '+ Novo edital';
+  }
+
+  acaoPrincipal(): void {
+    if (this.temMudancasNaoSalvas) {
+      this.salvar();
+      return;
+    }
+    this.abrirModalVincularMateriasParaNovoEdital();
+  }
+
+  abrirModalTemplates(importacao = false): void {
+    this.modoImportacao = importacao;
     this.mostrarModalTemplates = true;
     this.mensagemTemplateOk = undefined;
     this.templatesErro = undefined;
@@ -344,23 +422,34 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.mensagemTemplateOk = undefined;
     this.templatesErro = undefined;
     this.limparImagensTemplates();
+    this.modoImportacao = false;
+    this.importandoTemplate = false;
   }
 
-  editar(edital: Edital): void {
+  editar(edital: Edital, mostrarFormularioAoEditar = true): void {
     this.editalEmEdicao = edital;
+    this.editalSelecionado = edital;
+    this.mostrarFormulario = mostrarFormularioAoEditar;
 
     const materiasIds = edital.materias?.map(m => m.materiaId) || [];
 
-    this.form.patchValue({
-      id: edital.id,
-      nome: edital.nome,
-      descricao: edital.descricao,
-      dataProva: edital.dataProva,
-      materiasIds
+    this.aplicarSemRastrearMudancas(() => {
+      this.form.patchValue({
+        id: edital.id,
+        nome: edital.nome,
+        cargo: edital.cargo || '',
+        descricao: edital.descricao,
+        dataProva: edital.dataProva,
+        materiasIds
+      });
     });
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+    this.resetarMudancasPendentes();
 
     this.mensagemSucesso = undefined;
     this.erro = undefined;
+    this.atualizarPickListMaterias();
   }
 
   excluir(edital: Edital): void {
@@ -420,11 +509,558 @@ private mensagemTimeout: any; // para guardar o setTimeout
     });
   }
 
+  importarTemplateSelecionado(): void {
+    if (!this.templateSelecionadoId) {
+      return;
+    }
+    this.importandoTemplate = true;
+    forkJoin({
+      estrutura: this.editalTemplateService.buscarEstrutura(this.templateSelecionadoId),
+      template: this.editalTemplateService.buscarTemplate(this.templateSelecionadoId)
+    })
+      .pipe(
+        switchMap(({ estrutura, template }) =>
+          this.garantirMateriasTemplate(estrutura).pipe(
+            switchMap(() => this.materiaService.listarMaterias()),
+            tap((lista) => {
+              this.materias = lista || [];
+              this.atualizarPickListMaterias();
+            }),
+            tap(() => this.aplicarEstruturaImportada(estrutura, template))
+          )
+        )
+      )
+      .subscribe({
+        next: () => {
+          this.importandoTemplate = false;
+          this.fecharModalTemplates();
+          this.mostrarModalVincularMaterias = true;
+        },
+        error: (err) => {
+          console.error('[EDITAIS] Erro ao importar template:', err);
+          this.templatesErro = 'Não foi possível importar este edital.';
+          this.importandoTemplate = false;
+        }
+      });
+  }
+
+  private aplicarEstruturaImportada(estrutura: EstruturaTemplateDTO, template?: EditalTemplateDTO): void {
+    const nomeTemplate = estrutura.nomeTemplate?.trim() || '';
+    const nomeBase = nomeTemplate || template?.nome?.trim() || this.form.get('nome')?.value;
+    const dataProvaTemplate =
+      (template as any)?.dataProva ||
+      (template as any)?.dataProvaEdital ||
+      (estrutura as any)?.dataProva ||
+      null;
+    const nomesTemplate = this.obterMateriasTemplate(estrutura)
+      .map((m) => this.normalizarTexto(this.extrairNomeMateriaTemplate(m)))
+      .filter((nome): nome is string => !!nome);
+
+    const ids = (this.materias || [])
+      .filter((materia) => this.correspondeMateriaTemplate(materia.nome || '', nomesTemplate))
+      .map((materia) => materia.id as number);
+
+    this.form.patchValue({
+      id: null,
+      nome: nomeBase,
+      cargo: this.getTemplateCargo(template) || this.form.get('cargo')?.value || '',
+      dataProva: dataProvaTemplate,
+      materiasIds: ids
+    });
+
+    if (!this.materias.length && nomesTemplate.length) {
+      this.materiasImportadasPendentes = nomesTemplate;
+    }
+
+    this.form.markAsDirty();
+    this.marcarMudancasPendentes();
+    this.atualizarPickListMaterias();
+  }
+
+  private aplicarMateriasImportadasPendentes(): void {
+    if (!this.materiasImportadasPendentes?.length) {
+      return;
+    }
+    const nomesTemplate = this.materiasImportadasPendentes;
+    this.materiasImportadasPendentes = undefined;
+
+    const ids = (this.materias || [])
+      .filter((materia) => this.correspondeMateriaTemplate(materia.nome || '', nomesTemplate))
+      .map((materia) => materia.id as number);
+
+    this.form.patchValue({ materiasIds: ids });
+    this.form.markAsDirty();
+    this.marcarMudancasPendentes();
+    this.atualizarPickListMaterias();
+  }
+
+  private garantirMateriasTemplate(estrutura: EstruturaTemplateDTO) {
+    const materiasTemplate = this.obterMateriasTemplate(estrutura)
+      .map((m) => {
+        const nome = this.extrairNomeMateriaTemplate(m).trim();
+        return {
+          normal: this.normalizarTexto(nome),
+          original: nome
+        };
+      })
+      .filter((item) => item.normal);
+
+    if (!materiasTemplate.length) {
+      return of(void 0);
+    }
+
+    const nomesUnicos = new Map<string, string>();
+    for (const item of materiasTemplate) {
+      if (!nomesUnicos.has(item.normal)) {
+        nomesUnicos.set(item.normal, item.original);
+      }
+    }
+
+    const criarFaltantes = (materias: Materia[]) => {
+      const existentes = new Set(
+        (materias || []).map((m) => this.normalizarTexto(m.nome || ''))
+      );
+      const faltantes = Array.from(nomesUnicos.entries())
+        .filter(([normal]) => !existentes.has(normal))
+        .map(([, original]) => original)
+        .filter((nome) => !!nome);
+
+      if (!faltantes.length) {
+        return of(void 0);
+      }
+
+      return forkJoin(
+        faltantes.map((nome) => this.materiaService.salvarMateria({ nome }))
+      ).pipe(map(() => void 0));
+    };
+
+    if (!this.materias.length) {
+      return this.materiaService.listarMaterias().pipe(
+        tap((lista) => {
+          this.materias = lista || [];
+        }),
+        switchMap((lista) => criarFaltantes(lista || []))
+      );
+    }
+
+    return criarFaltantes(this.materias);
+  }
+
+  private obterMateriasTemplate(estrutura: EstruturaTemplateDTO): any[] {
+    return (
+      estrutura.materias ||
+      (estrutura as any).materiasTemplate ||
+      (estrutura as any).disciplinas ||
+      (estrutura as any).materiasEdital ||
+      []
+    );
+  }
+
+  private extrairNomeMateriaTemplate(materia: any): string {
+    if (!materia) {
+      return '';
+    }
+    if (typeof materia === 'string') {
+      return materia;
+    }
+    return (
+      materia.nome ||
+      materia.descricao ||
+      materia.materiaNome ||
+      materia.nomeMateria ||
+      materia.titulo ||
+      materia.name ||
+      materia.label ||
+      materia.materia?.nome ||
+      materia.materia?.descricao ||
+      ''
+    );
+  }
+
+  private normalizarTexto(valor: string): string {
+    return (valor || '')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  private getTemplateArea(template?: EditalTemplateDTO | null): string {
+    if (!template) return '';
+    return template.areaNome || template.area || '';
+  }
+
+  private getTemplateAbrangencia(template?: EditalTemplateDTO | null): string {
+    if (!template) return '';
+    return (template.abrangencia as any) || '';
+  }
+
+  private getTemplateCargo(template?: EditalTemplateDTO | null): string {
+    if (!template) return '';
+    return template.cargoNome || template.cargo || '';
+  }
+
+  private correspondeMateriaTemplate(nomeMateria: string, nomesTemplate: string[]): boolean {
+    const normal = this.normalizarTexto(nomeMateria);
+    if (!normal || !nomesTemplate.length) {
+      return false;
+    }
+
+    return nomesTemplate.some((nomeTemplate) => {
+      if (!nomeTemplate) {
+        return false;
+      }
+      return (
+        normal === nomeTemplate ||
+        normal.includes(nomeTemplate) ||
+        nomeTemplate.includes(normal)
+      );
+    });
+  }
+
+  selecionarEdital(edital: Edital): void {
+    this.editalSelecionado = edital;
+  }
+
+  onEditalTreeClick(node: TreeNode, event?: Event): void {
+    const target = event?.target as HTMLElement | null;
+    const clicouCheckbox = !!target?.closest('.p-checkbox, .p-checkbox-box');
+    if (!clicouCheckbox) {
+      event?.stopPropagation();
+    }
+
+    const editalId = node?.data?.editalId as number | undefined;
+    if (!editalId) return;
+    const encontrado = this.editais.find(e => e.id === editalId);
+    if (encontrado) {
+      this.editalSelecionado = encontrado;
+      this.editar(encontrado, false);
+    }
+  }
+
+  onEditalTreeSelect(event: any): void {
+    const node = event?.node as TreeNode | undefined;
+    if (!node?.data) return;
+    this.definirEditalSelecionadoPorNode(node);
+    if (node.data.tipo === 'MATERIA') {
+      this.atualizarStatusMateriaNode(node, true);
+      return;
+    }
+    if (node.data.tipo === 'TOPICO') {
+      this.marcarTopicoComFilhos(node);
+    }
+  }
+
+  onEditalTreeSelectionChange(value: TreeNode[] | TreeNode | null): void {
+    if (Array.isArray(value)) {
+      this.selectedEditalNodes = value;
+      return;
+    }
+    if (value) {
+      this.selectedEditalNodes = [value];
+      return;
+    }
+    this.selectedEditalNodes = [];
+  }
+
+  onEditalTreeUnselect(event: any): void {
+    const node = event?.node as TreeNode | undefined;
+    if (!node?.data) return;
+    this.definirEditalSelecionadoPorNode(node);
+    if (node.data.tipo === 'MATERIA') {
+      this.atualizarStatusMateriaNode(node, false);
+      return;
+    }
+    if (node.data.tipo === 'TOPICO') {
+      this.desmarcarTopicoComFilhos(node);
+    }
+  }
+
+  private desmarcarTopicoComFilhos(node: TreeNode): void {
+    this.marcarMudancasPendentes();
+    this.removerNodeDaSelecao(node);
+    this.atualizarStatusTopicoNode(node, false);
+
+    if (!node.children?.length) {
+      return;
+    }
+
+    for (const child of node.children) {
+      if (child?.data?.tipo === 'TOPICO') {
+        this.desmarcarTopicoComFilhos(child);
+      }
+    }
+  }
+
+  private removerNodeDaSelecao(node?: TreeNode): void {
+    if (!node?.key) {
+      return;
+    }
+    const selecionados = this.selectedEditalNodes || [];
+    if (!selecionados.length) {
+      return;
+    }
+    this.selectedEditalNodes = selecionados.filter((item) => item.key !== node.key);
+  }
+
+  private marcarTopicoComFilhos(node: TreeNode): void {
+    this.marcarMudancasPendentes();
+    this.adicionarNodeNaSelecao(node);
+    this.atualizarStatusTopicoNode(node, true);
+
+    if (!node.children?.length) {
+      return;
+    }
+
+    for (const child of node.children) {
+      if (child?.data?.tipo === 'TOPICO') {
+        this.marcarTopicoComFilhos(child);
+      }
+    }
+  }
+
+  private adicionarNodeNaSelecao(node?: TreeNode): void {
+    if (!node?.key) {
+      return;
+    }
+    const selecionados = this.selectedEditalNodes || [];
+    if (selecionados.some((item) => item.key === node.key)) {
+      return;
+    }
+    this.selectedEditalNodes = [...selecionados, node];
+  }
+
+  onEditalTreeExpand(event: any): void {
+    const node = event?.node as TreeNode | undefined;
+    if (!node?.data || node.data.tipo !== 'MATERIA') return;
+    if (node.children && node.children.length) return;
+
+    const materiaId = node.data.materiaId as number;
+    if (!materiaId) return;
+
+    this.materiaService.listarTopicos(materiaId).subscribe({
+      next: (lista) => {
+        const selecionados: TreeNode[] = [];
+        node.children = this.construirTopicosTreeNodes(
+          lista || [],
+          node.data.editalId,
+          materiaId,
+          '',
+          selecionados
+        );
+        if (selecionados.length) {
+          const atual = this.selectedEditalNodes || [];
+          const mapa = new Map<string, TreeNode>();
+          atual.forEach(item => {
+            if (item.key) {
+              mapa.set(item.key, item);
+            }
+          });
+          selecionados.forEach(item => {
+            if (item.key && !mapa.has(item.key)) {
+              mapa.set(item.key, item);
+            }
+          });
+          this.selectedEditalNodes = Array.from(mapa.values());
+        }
+      },
+      error: () => {
+        node.children = [];
+      }
+    });
+  }
+
+  acaoDefinirComoEmEstudoSelecionado(): void {
+    if (!this.editalSelecionado) return;
+    this.definirComoEmEstudo(this.editalSelecionado);
+  }
+
+  acaoEditarSelecionado(): void {
+    if (!this.editalSelecionado) return;
+    this.abrirModalVincularMaterias();
+  }
+
+  acaoExcluirSelecionado(): void {
+    if (!this.editalSelecionado) return;
+    this.excluir(this.editalSelecionado);
+  }
+
+  abrirModalVincularMaterias(): void {
+    if (!this.editalSelecionado) return;
+    this.editar(this.editalSelecionado, false);
+    this.erro = undefined;
+    this.mensagemSucesso = undefined;
+    this.mostrarModalVincularMaterias = true;
+  }
+
+  abrirModalVincularMateriasParaNovoEdital(): void {
+    this.novoEdital();
+    this.erro = undefined;
+    this.mensagemSucesso = undefined;
+    this.mostrarModalVincularMaterias = true;
+  }
+
+  fecharModalVincularMaterias(): void {
+    this.mostrarModalVincularMaterias = false;
+  }
+
+  private montarArvoreEditais(): void {
+    const nodes: TreeNode[] = [];
+    const selecionados: TreeNode[] = [];
+
+    (this.editais || []).forEach((edital) => {
+      const editalId = edital.id as number;
+      const materias = edital.materias || [];
+
+      const materiaNodes = materias.map((m) => {
+        const topicos = m.topicos || [];
+        const node: TreeNode = {
+          key: `edital-${editalId}-materia-${m.materiaId}`,
+          label: m.materiaNome,
+          styleClass: 'materia-node',
+          data: {
+            tipo: 'MATERIA',
+            editalId,
+            materiaId: m.materiaId,
+            ativo: m.ativo === undefined ? true : m.ativo,
+            percentualEstudado: m.percentualEstudado,
+            nivelDominio: m.nivelDominio
+          },
+          selectable: false,
+          leaf: topicos.length === 0,
+          children: this.construirTopicosTreeNodes(topicos, editalId, m.materiaId, '', selecionados)
+        };
+
+        return node;
+      });
+
+      const editalNode: TreeNode = {
+        key: `edital-${editalId}`,
+        label: edital.nome,
+        styleClass: 'edital-node',
+        data: {
+          tipo: 'EDITAL',
+          editalId,
+          ativo: edital.ativo,
+          dataProva: edital.dataProva,
+          percentualEstudadoGeral: edital.percentualEstudadoGeral,
+          nivelDominioGeral: edital.nivelDominioGeral
+        },
+        selectable: false,
+        expanded: false,
+        children: materiaNodes
+      };
+
+      nodes.push(editalNode);
+    });
+
+    this.editalTreeNodes = nodes;
+    this.selectedEditalNodes = selecionados;
+  }
+
+  private atualizarStatusMateriaNode(node: TreeNode, ativo: boolean): void {
+    const editalId = node.data?.editalId as number | undefined;
+    const materiaId = node.data?.materiaId as number | undefined;
+    if (!editalId || !materiaId) return;
+
+    this.editalService.atualizarStatusMateria(editalId, materiaId, ativo).subscribe({
+      next: () => {
+        node.data.ativo = ativo;
+        const edital = this.editais.find(e => e.id === editalId);
+        const materia = edital?.materias?.find(m => m.materiaId === materiaId);
+        if (materia) {
+          (materia as any).ativo = ativo;
+        }
+      },
+      error: () => {
+        if (ativo) {
+          this.selectedEditalNodes = (this.selectedEditalNodes || []).filter(n => n.key !== node.key);
+        } else {
+          const atual = this.selectedEditalNodes || [];
+          if (!atual.some(n => n.key === node.key)) {
+            this.selectedEditalNodes = [...atual, node];
+          }
+        }
+      }
+    });
+  }
+
+  private atualizarStatusTopicoNode(node: TreeNode, ativo: boolean): void {
+    const editalId = node.data?.editalId as number | undefined;
+    const topicoId = node.data?.topicoId as number | undefined;
+    if (!editalId || !topicoId) return;
+
+    this.editalService.atualizarStatusTopico(editalId, topicoId, ativo).subscribe({
+      next: () => {
+        node.data.ativo = ativo;
+      },
+      error: () => {
+        if (ativo) {
+          this.selectedEditalNodes = (this.selectedEditalNodes || []).filter(n => n.key !== node.key);
+        } else {
+          const atual = this.selectedEditalNodes || [];
+          if (!atual.some(n => n.key === node.key)) {
+            this.selectedEditalNodes = [...atual, node];
+          }
+        }
+      }
+    });
+  }
+
+  private definirEditalSelecionadoPorNode(node?: TreeNode): void {
+    const editalId = node?.data?.editalId as number | undefined;
+    if (!editalId) return;
+    const encontrado = this.editais.find(e => e.id === editalId);
+    if (!encontrado) return;
+    this.editalSelecionado = encontrado;
+    const formId = this.form.get('id')?.value as number | null;
+    if (formId !== editalId) {
+      this.editar(encontrado, false);
+    }
+  }
+
+  private construirTopicosTreeNodes(
+    topicos: any[],
+    editalId: number,
+    materiaId: number,
+    caminho: string,
+    selecionados: TreeNode[] = []
+  ): TreeNode[] {
+    return (topicos || []).map((t, index) => {
+      const id =
+        t.id ?? t.topicoId ?? t.subtopicoId ?? t.idTopico ?? t.idSubtopico ?? index;
+      const novoCaminho = caminho ? `${caminho}.${index}` : String(index);
+      const filhos = t.subtopicos || t.filhos || [];
+      const ativo = t.ativo === undefined ? true : t.ativo;
+      const node: TreeNode = {
+        key: `topico-${editalId}-${materiaId}-${novoCaminho}-${id}`,
+        label: t.descricao,
+        styleClass: 'topico-node',
+        data: {
+          tipo: 'TOPICO',
+          materiaId,
+          topicoId: id,
+          editalId,
+          ativo
+        },
+        selectable: true,
+        children: this.construirTopicosTreeNodes(filhos, editalId, materiaId, novoCaminho, selecionados)
+      };
+      if (ativo) {
+        selecionados.push(node);
+      }
+      return node;
+    });
+  }
+
   // ============= SUBMIT =============
 
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.erro = 'Preencha os campos obrigat\u00f3rios para salvar.';
+      this.mensagemSucesso = undefined;
+      this.iniciarTimeoutMensagem();
       return;
     }
 
@@ -439,12 +1075,14 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
     const payload: EditalFormPayload = {
       nome: raw.nome,
+      cargo: raw.cargo,
       descricao: raw.descricao,
       dataProva: raw.dataProva,   // já vem 'yyyy-MM-dd'
       materiasIds
     };
 
-    const id = raw.id as number | null;
+    const rawId = raw.id as number | null | undefined;
+    const id = rawId ?? (this.editalSelecionado?.id ?? null);
 
     const obs = id
       ? this.editalService.atualizar(id, payload)
@@ -455,9 +1093,13 @@ private mensagemTimeout: any; // para guardar o setTimeout
         this.salvando = false;
         this.mensagemSucesso = 'Edital salvo com sucesso.';
         this.iniciarTimeoutMensagem();
+        this.resetarMudancasPendentes();
         this.carregarEditais();
+        this.mostrarModalVincularMaterias = false;
+        this.mostrarFormulario = false;
         if (!id) {
           this.novoEdital();
+          this.mostrarFormulario = false;
         }
       },
       error: (err) => {
@@ -466,6 +1108,22 @@ private mensagemTimeout: any; // para guardar o setTimeout
         this.erro = 'Erro ao salvar edital. Tente novamente.';
       }
     });
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  beforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.temMudancasNaoSalvas) {
+      return;
+    }
+    event.preventDefault();
+    event.returnValue = 'Você possui alterações não salvas.';
+  }
+
+  canDeactivate(): boolean {
+    if (!this.temMudancasNaoSalvas) {
+      return true;
+    }
+    return window.confirm('Você possui alterações não salvas. Deseja sair sem salvar?');
   }
   
   private iniciarTimeoutMensagem(): void {
@@ -606,7 +1264,7 @@ isMateriaSelecionada(id?: number): boolean {
 }
 
 // Alterna seleção ao clicar no chip
-toggleMateriaSelecionada(id?: number): void {
+  toggleMateriaSelecionada(id?: number): void {
   // se não tiver id, não faz nada
   if (id == null) {
     return;
@@ -631,5 +1289,27 @@ toggleMateriaSelecionada(id?: number): void {
   control.markAsDirty();
   control.updateValueAndValidity();
 }
+
+  onPickListMateriasChange(): void {
+    const ids = (this.materiasSelecionadas || []).map(m => m.id).filter((id): id is number => !!id);
+    const control = this.form.get('materiasIds');
+    if (!control) return;
+    control.setValue(ids);
+    control.markAsDirty();
+    control.updateValueAndValidity();
+  }
+
+  private atualizarPickListMaterias(): void {
+    const ids = (this.form?.get('materiasIds')?.value as number[] | null) ?? [];
+    const idsSet = new Set(ids);
+
+    this.materiasSelecionadas = [];
+    ids.forEach((id) => {
+      const materia = this.materias.find(m => m.id === id);
+      if (materia) this.materiasSelecionadas.push(materia);
+    });
+
+    this.materiasDisponiveis = (this.materias || []).filter(m => !idsSet.has(m.id as number));
+  }
 
 }

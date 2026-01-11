@@ -1,0 +1,701 @@
+﻿<div class="page-cadastro-base">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Cadastros base</h1>
+      <p class="page-subtitle">Gerencie órgãos, áreas e cargos usados nos editais.</p>
+    </div>
+    <div class="orgao-logo-header">
+      <img
+        *ngIf="orgaoLogoUrl"
+        class="orgao-logo-img"
+        [src]="orgaoLogoUrl"
+        alt="Logo do órgão"
+        (error)="onLogoOrgaoErro()"
+      />
+      <div *ngIf="!orgaoLogoUrl" class="orgao-logo-placeholder">
+        Sem logo
+      </div>
+    </div>
+  </div>
+
+  <div class="mensagens-linha" *ngIf="mensagemOk || mensagemErro">
+    <div class="mensagem-ok" *ngIf="mensagemOk">{{ mensagemOk }}</div>
+    <div class="mensagem-erro" *ngIf="mensagemErro">{{ mensagemErro }}</div>
+  </div>
+
+  <p-tabView (onChange)="onTabChange($event)" styleClass="cadastro-tabs">
+    <p-tabPanel header="Órgãos">
+      <p-table
+        #tOrgaos
+        [value]="orgaos"
+        [lazy]="true"
+        [paginator]="true"
+        [rows]="orgaosSize"
+        [totalRecords]="orgaosTotal"
+        [loading]="orgaosLoading"
+        (onLazyLoad)="onLazyLoad($event, 'orgaos')"
+        (onFilter)="onFiltroTabela($event, 'orgaos')"
+        [globalFilterFields]="['nome']"
+        styleClass="cadastro-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="col-selecao">
+              <input
+                type="checkbox"
+                class="checkbox-select"
+                [checked]="todosSelecionadosOrgaos()"
+                (click)="$event.stopPropagation()"
+                (change)="toggleSelecionarTodosOrgaos($event)"
+                aria-label="Selecionar todos os órgãos"
+              />
+            </th>
+            <th colspan="2">
+              <div class="table-header-inline">
+                <span class="table-header-title">Nome</span>
+                <div class="table-header-search">
+                  <input
+                    class="input-text input-text--compact"
+                    [(ngModel)]="orgaoEditandoNome"
+                    [placeholder]="orgaosModoConsulta ? 'Pesquisar órgão' : 'Nome do órgão'"
+                    (keyup.enter)="executarAcaoOrgao(tOrgaos)"
+                  />
+                  <button
+                    type="button"
+                    class="btn primario btn-sm"
+                    (click)="executarAcaoOrgao(tOrgaos)"
+                    [title]="orgaosModoConsulta ? 'Pesquisar' : 'Salvar'"
+                    [attr.aria-label]="orgaosModoConsulta ? 'Pesquisar' : 'Salvar'"
+                  >
+                    <i class="pi" [ngClass]="orgaosModoConsulta ? 'pi-search' : 'pi-save'"></i>
+                  </button>
+                  <div class="modo-toggle modo-toggle--discreto">
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.primario]="!orgaosModoConsulta"
+                      (click)="orgaosModoConsulta = false"
+                    >
+                      Cadastro
+                    </button>
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.primario]="orgaosModoConsulta"
+                      (click)="orgaosModoConsulta = true"
+                    >
+                      Consulta
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn secundario btn-sm"
+                    (click)="mostrarImportOrgaos = !mostrarImportOrgaos"
+                  >
+                    Importar lista
+                  </button>
+                  <button
+                    type="button"
+                    class="btn secundario btn-sm btn-danger-outline"
+                    (click)="excluirOrgaosSelecionados()"
+                    [disabled]="!orgaoSelecionados.length"
+                  >
+                    Excluir selecionados
+                  </button>
+                </div>
+                <span class="table-header-title">Ações</span>
+              </div>
+            </th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-orgao>
+          <tr
+            [class.row-selecionada]="orgaoSelecionadoId === orgao.id"
+            (click)="selecionarLinhaOrgao(orgao)"
+            (dblclick)="orgaoEditandoId === orgao.id ? salvarOrgao() : selecionarOrgaoCadastro(orgao)"
+          >
+            <td class="col-selecao">
+              <input
+                type="checkbox"
+                class="checkbox-select"
+                [checked]="isOrgaoSelecionado(orgao.id)"
+                (click)="$event.stopPropagation()"
+                (change)="onSelecionarOrgaoItem(orgao, $event)"
+                aria-label="Selecionar órgão"
+              />
+            </td>
+            <td class="cell-nome">
+              <ng-container *ngIf="orgaoEditandoId === orgao.id; else orgaoNome">
+                <input
+                  class="input-text cell-edit-input"
+                  [id]="'orgao-edit-' + orgao.id"
+                  [(ngModel)]="orgaoEditandoNome"
+                  (keyup.enter)="salvarOrgao()"
+                />
+              </ng-container>
+              <ng-template #orgaoNome>{{ orgao.nome }}</ng-template>
+            </td>
+            <td class="col-acoes">
+              <ng-container *ngIf="orgaoSelecionadoId === orgao.id">
+                <button
+                  type="button"
+                  class="btn-acao-icon"
+                  (click)="orgaoEditandoId === orgao.id ? salvarOrgao() : selecionarOrgaoCadastro(orgao); $event.stopPropagation()"
+                  [title]="orgaoEditandoId === orgao.id ? 'Salvar' : 'Editar'"
+                  [attr.aria-label]="orgaoEditandoId === orgao.id ? 'Salvar' : 'Editar'"
+                >
+                  <i class="pi" [ngClass]="orgaoEditandoId === orgao.id ? 'pi-save' : 'pi-pencil'"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn-acao-icon btn-acao-icon--add"
+                  pTooltip="Adicionar área"
+                  tooltipPosition="top"
+                  (click)="abrirModalVincularArea(orgao); $event.stopPropagation()"
+                  aria-label="Adicionar área"
+                >
+                  <i class="pi pi-plus"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn-acao-icon"
+                  pTooltip="Enviar logo"
+                  tooltipPosition="top"
+                  (click)="abrirUploadLogoOrgao(orgao.id); $event.stopPropagation()"
+                  [disabled]="orgaoLogoCarregandoId === orgao.id"
+                  aria-label="Enviar logo"
+                >
+                  <i class="pi pi-image"></i>
+                </button>
+                <input
+                  type="file"
+                  class="input-file-hidden"
+                  [id]="'orgao-logo-' + orgao.id"
+                  accept="image/*"
+                  (change)="onLogoOrgaoSelecionada(orgao, $event)"
+                />
+                <button
+                  type="button"
+                  class="btn-acao-icon btn-acao-icon--danger"
+                  (click)="excluirOrgao(orgao); $event.stopPropagation()"
+                  title="Excluir"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </ng-container>
+            </td>
+          </tr>
+          <tr *ngIf="orgaoSelecionadoId === orgao.id" class="row-arvore">
+            <td class="cell-arvore" colspan="3">
+              <p-tree
+                [value]="orgaoArvore"
+                selectionMode="single"
+                [(selection)]="orgaoArvoreSelecionada"
+                [metaKeySelection]="false"
+                emptyMessage="Nenhuma área vinculada."
+                styleClass="vinculos-tree"
+              >
+                <ng-template pTemplate="default" let-node>
+                  <div class="vinculos-tree-row">
+                    <span class="vinculos-tree-label">{{ node.label }}</span>
+                    <div class="vinculos-tree-actions" *ngIf="node?.data?.tipo === 'area' && isAreaSelecionadaNaArvore(node)">
+                      <button
+                        type="button"
+                        class="btn-acao-icon btn-acao-icon--danger"
+                        pTooltip="Remover área"
+                        tooltipPosition="top"
+                        (click)="removerVinculoArea(node); $event.stopPropagation()"
+                        aria-label="Remover área"
+                      >
+                        <i class="pi pi-minus"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-acao-icon btn-acao-icon--add"
+                        pTooltip="Vincular cargo"
+                        tooltipPosition="top"
+                        (click)="abrirModalVincularCargoPorId(node.data.id); $event.stopPropagation()"
+                        aria-label="Vincular cargo"
+                      >
+                        <i class="pi pi-plus"></i>
+                      </button>
+                    </div>
+                  </div>
+                </ng-template>
+              </p-tree>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      <p-dialog
+        header="Importar órgãos"
+        [(visible)]="mostrarImportOrgaos"
+        [modal]="true"
+        [draggable]="false"
+        [style]="{ width: '560px' }"
+      >
+        <div class="import-dialog-body">
+          <label class="label">Cole os nomes separados por linha ou por vírgula</label>
+          <textarea
+            class="input-text import-textarea"
+            [(ngModel)]="textoImportOrgaos"
+            placeholder="Ex: Secretário Escolar, Secretário Executivo, Serralheiro"
+          ></textarea>
+        </div>
+        <ng-template pTemplate="footer">
+          <button type="button" class="btn secundario btn-sm" (click)="mostrarImportOrgaos = false">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn primario btn-sm"
+            (click)="importarListaOrgaos()"
+            [disabled]="importandoOrgaos"
+          >
+            {{ importandoOrgaos ? 'Importando...' : 'Importar' }}
+          </button>
+        </ng-template>
+      </p-dialog>
+
+      <p-dialog
+        header="Vincular área ao órgão"
+        [(visible)]="mostrarModalVinculoArea"
+        [modal]="true"
+        [draggable]="false"
+        [style]="{ width: '520px' }"
+      >
+        <div class="vinculo-dialog-body">
+          <label class="label">Buscar área</label>
+          <div class="vinculo-busca">
+            <input
+              class="input-text"
+              [(ngModel)]="termoBuscaAreaVinculo"
+              placeholder="Digite para buscar"
+              (keyup.enter)="carregarAreasVinculo()"
+            />
+            <button type="button" class="btn secundario btn-sm" (click)="carregarAreasVinculo()">
+              Buscar
+            </button>
+          </div>
+          <label class="label">Selecione a área</label>
+          <p-dropdown
+            class="input-text"
+            [options]="areasVinculoOpcoes"
+            optionLabel="nome"
+            optionValue="id"
+            [filter]="true"
+            filterBy="nome"
+            [showClear]="true"
+            placeholder="Selecione a área"
+            [(ngModel)]="areaParaVincularId"
+            appendTo="body"
+          ></p-dropdown>
+        </div>
+        <ng-template pTemplate="footer">
+          <button type="button" class="btn secundario btn-sm" (click)="mostrarModalVinculoArea = false">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn primario btn-sm"
+            (click)="vincularAreaAoOrgao()"
+            [disabled]="!areaParaVincularId"
+          >
+            Vincular
+          </button>
+        </ng-template>
+      </p-dialog>
+    </p-tabPanel>
+
+    <p-tabPanel header="Áreas">
+      <p-table
+        #tAreas
+        [value]="areas"
+        [lazy]="true"
+        [paginator]="true"
+        [rows]="areasSize"
+        [totalRecords]="areasTotal"
+        [loading]="areasLoading"
+        (onLazyLoad)="onLazyLoad($event, 'areas')"
+        (onFilter)="onFiltroTabela($event, 'areas')"
+        [globalFilterFields]="['nome']"
+        styleClass="cadastro-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="col-selecao">
+              <input
+                type="checkbox"
+                class="checkbox-select"
+                [checked]="todosSelecionadosAreas()"
+                (click)="$event.stopPropagation()"
+                (change)="toggleSelecionarTodosAreas($event)"
+                aria-label="Selecionar todas as áreas"
+              />
+            </th>
+            <th colspan="2">
+              <div class="table-header-inline">
+                <span class="table-header-title">Nome</span>
+                <div class="table-header-search">
+                  <input
+                    class="input-text input-text--compact"
+                    [(ngModel)]="areaEditandoNome"
+                    [placeholder]="areasModoConsulta ? 'Pesquisar área' : 'Nome da área'"
+                    (keyup.enter)="executarAcaoArea(tAreas)"
+                  />
+                  <button
+                    type="button"
+                    class="btn primario btn-sm"
+                    (click)="executarAcaoArea(tAreas)"
+                    [title]="areasModoConsulta ? 'Pesquisar' : 'Salvar'"
+                    [attr.aria-label]="areasModoConsulta ? 'Pesquisar' : 'Salvar'"
+                  >
+                    <i class="pi" [ngClass]="areasModoConsulta ? 'pi-search' : 'pi-save'"></i>
+                  </button>
+                  <div class="modo-toggle modo-toggle--discreto">
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.primario]="!areasModoConsulta"
+                      (click)="areasModoConsulta = false"
+                    >
+                      Cadastro
+                    </button>
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.primario]="areasModoConsulta"
+                      (click)="areasModoConsulta = true"
+                    >
+                      Consulta
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn secundario btn-sm"
+                    (click)="mostrarImportAreas = !mostrarImportAreas"
+                  >
+                    Importar lista
+                  </button>
+                  <button
+                    type="button"
+                    class="btn secundario btn-sm btn-danger-outline"
+                    (click)="excluirAreasSelecionadas()"
+                    [disabled]="!areaSelecionados.length"
+                  >
+                    Excluir selecionadas
+                  </button>
+                </div>
+                <span class="table-header-title">Ações</span>
+              </div>
+            </th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-area>
+          <tr
+            [class.row-selecionada]="areaSelecionadoId === area.id"
+            (click)="selecionarLinhaArea(area)"
+            (dblclick)="areaEditandoId === area.id ? salvarArea() : selecionarAreaCadastro(area)"
+          >
+            <td class="col-selecao">
+              <input
+                type="checkbox"
+                class="checkbox-select"
+                [checked]="isAreaSelecionada(area.id)"
+                (click)="$event.stopPropagation()"
+                (change)="onSelecionarAreaItem(area, $event)"
+                aria-label="Selecionar área"
+              />
+            </td>
+            <td class="cell-nome">
+              <ng-container *ngIf="areaEditandoId === area.id; else areaNome">
+                <input
+                  class="input-text cell-edit-input"
+                  [id]="'area-edit-' + area.id"
+                  [(ngModel)]="areaEditandoNome"
+                  (keyup.enter)="salvarArea()"
+                />
+              </ng-container>
+              <ng-template #areaNome>{{ area.nome }}</ng-template>
+            </td>
+            <td class="col-acoes">
+              <ng-container *ngIf="areaSelecionadoId === area.id">
+                <button
+                  type="button"
+                  class="btn-acao-icon"
+                  (click)="areaEditandoId === area.id ? salvarArea() : selecionarAreaCadastro(area); $event.stopPropagation()"
+                  [title]="areaEditandoId === area.id ? 'Salvar' : 'Editar'"
+                  [attr.aria-label]="areaEditandoId === area.id ? 'Salvar' : 'Editar'"
+                >
+                  <i class="pi" [ngClass]="areaEditandoId === area.id ? 'pi-save' : 'pi-pencil'"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn-acao-icon btn-acao-icon--add"
+                  pTooltip="Adicionar cargo"
+                  tooltipPosition="top"
+                  (click)="abrirModalVincularCargo(area); $event.stopPropagation()"
+                  aria-label="Adicionar cargo"
+                >
+                  <i class="pi pi-plus"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn-acao-icon btn-acao-icon--danger"
+                  (click)="excluirArea(area); $event.stopPropagation()"
+                  title="Excluir"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </ng-container>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      <p-dialog
+        header="Importar áreas"
+        [(visible)]="mostrarImportAreas"
+        [modal]="true"
+        [draggable]="false"
+        [style]="{ width: '560px' }"
+      >
+        <div class="import-dialog-body">
+          <label class="label">Cole os nomes separados por linha ou por vírgula</label>
+          <textarea
+            class="input-text import-textarea"
+            [(ngModel)]="textoImportAreas"
+            placeholder="Ex: Policial, Fiscal, Bancária"
+          ></textarea>
+        </div>
+        <ng-template pTemplate="footer">
+          <button type="button" class="btn secundario btn-sm" (click)="mostrarImportAreas = false">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn primario btn-sm"
+            (click)="importarListaAreas()"
+            [disabled]="importandoAreas"
+          >
+            {{ importandoAreas ? 'Importando...' : 'Importar' }}
+          </button>
+        </ng-template>
+      </p-dialog>
+    </p-tabPanel>
+
+    <p-tabPanel header="Cargos">
+      <p-table
+        #tCargos
+        [value]="cargos"
+        [lazy]="true"
+        [paginator]="true"
+        [rows]="cargosSize"
+        [totalRecords]="cargosTotal"
+        [loading]="cargosLoading"
+        (onLazyLoad)="onLazyLoad($event, 'cargos')"
+        (onFilter)="onFiltroTabela($event, 'cargos')"
+        [globalFilterFields]="['nome']"
+        styleClass="cadastro-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="col-selecao">
+              <input
+                type="checkbox"
+                class="checkbox-select"
+                [checked]="todosSelecionadosCargos()"
+                (click)="$event.stopPropagation()"
+                (change)="toggleSelecionarTodosCargos($event)"
+                aria-label="Selecionar todos os cargos"
+              />
+            </th>
+            <th colspan="2">
+              <div class="table-header-inline">
+                <span class="table-header-title">Nome</span>
+                <div class="table-header-search">
+                  <input
+                    class="input-text input-text--compact"
+                    [(ngModel)]="cargoEditandoNome"
+                    [placeholder]="cargosModoConsulta ? 'Pesquisar cargo' : 'Nome do cargo'"
+                    (keyup.enter)="executarAcaoCargo(tCargos)"
+                  />
+                  <button
+                    type="button"
+                    class="btn primario btn-sm"
+                    (click)="executarAcaoCargo(tCargos)"
+                    [title]="cargosModoConsulta ? 'Pesquisar' : 'Salvar'"
+                    [attr.aria-label]="cargosModoConsulta ? 'Pesquisar' : 'Salvar'"
+                  >
+                    <i class="pi" [ngClass]="cargosModoConsulta ? 'pi-search' : 'pi-save'"></i>
+                  </button>
+                  <div class="modo-toggle modo-toggle--discreto">
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.primario]="!cargosModoConsulta"
+                      (click)="cargosModoConsulta = false"
+                    >
+                      Cadastro
+                    </button>
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.primario]="cargosModoConsulta"
+                      (click)="cargosModoConsulta = true"
+                    >
+                      Consulta
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn secundario btn-sm"
+                    (click)="mostrarImportCargos = !mostrarImportCargos"
+                  >
+                    Importar lista
+                  </button>
+                  <button
+                    type="button"
+                    class="btn secundario btn-sm btn-danger-outline"
+                    (click)="excluirCargosSelecionados()"
+                    [disabled]="!cargoSelecionados.length"
+                  >
+                    Excluir selecionados
+                  </button>
+                </div>
+                <span class="table-header-title">Ações</span>
+              </div>
+            </th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-cargo>
+          <tr
+            [class.row-selecionada]="cargoSelecionadoId === cargo.id"
+            (click)="selecionarLinhaCargo(cargo)"
+            (dblclick)="cargoEditandoId === cargo.id ? salvarCargo() : selecionarCargoCadastro(cargo)"
+          >
+            <td class="col-selecao">
+              <input
+                type="checkbox"
+                class="checkbox-select"
+                [checked]="isCargoSelecionado(cargo.id)"
+                (click)="$event.stopPropagation()"
+                (change)="onSelecionarCargoItem(cargo, $event)"
+                aria-label="Selecionar cargo"
+              />
+            </td>
+            <td class="cell-nome">
+              <ng-container *ngIf="cargoEditandoId === cargo.id; else cargoNome">
+                <input
+                  class="input-text cell-edit-input"
+                  [id]="'cargo-edit-' + cargo.id"
+                  [(ngModel)]="cargoEditandoNome"
+                  (keyup.enter)="salvarCargo()"
+                />
+              </ng-container>
+              <ng-template #cargoNome>{{ cargo.nome }}</ng-template>
+            </td>
+            <td class="col-acoes">
+              <ng-container *ngIf="cargoSelecionadoId === cargo.id">
+                <button
+                  type="button"
+                  class="btn-acao-icon"
+                  (click)="cargoEditandoId === cargo.id ? salvarCargo() : selecionarCargoCadastro(cargo); $event.stopPropagation()"
+                  [title]="cargoEditandoId === cargo.id ? 'Salvar' : 'Editar'"
+                  [attr.aria-label]="cargoEditandoId === cargo.id ? 'Salvar' : 'Editar'"
+                >
+                  <i class="pi" [ngClass]="cargoEditandoId === cargo.id ? 'pi-save' : 'pi-pencil'"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn-acao-icon btn-acao-icon--danger"
+                  (click)="excluirCargo(cargo); $event.stopPropagation()"
+                  title="Excluir"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </ng-container>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      <p-dialog
+        header="Importar cargos"
+        [(visible)]="mostrarImportCargos"
+        [modal]="true"
+        [draggable]="false"
+        [style]="{ width: '560px' }"
+      >
+        <div class="import-dialog-body">
+          <label class="label">Cole os nomes separados por linha ou por vírgula</label>
+          <textarea
+            class="input-text import-textarea"
+            [(ngModel)]="textoImportCargos"
+            placeholder="Ex: Delegado, Agente, Escrivão"
+          ></textarea>
+        </div>
+        <ng-template pTemplate="footer">
+          <button type="button" class="btn secundario btn-sm" (click)="mostrarImportCargos = false">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn primario btn-sm"
+            (click)="importarListaCargos()"
+            [disabled]="importandoCargos"
+          >
+            {{ importandoCargos ? 'Importando...' : 'Importar' }}
+          </button>
+        </ng-template>
+      </p-dialog>
+    </p-tabPanel>
+  </p-tabView>
+  <p-dialog
+    header="Vincular cargo a area"
+    [(visible)]="mostrarModalVinculoCargo"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: '520px' }"
+  >
+    <div class="vinculo-dialog-body">
+      <label class="label">Buscar cargo</label>
+      <div class="vinculo-busca">
+        <input
+          class="input-text"
+          [(ngModel)]="termoBuscaCargoVinculo"
+          placeholder="Digite para buscar"
+          (keyup.enter)="carregarCargosVinculo()"
+        />
+        <button type="button" class="btn secundario btn-sm" (click)="carregarCargosVinculo()">
+          Buscar
+        </button>
+      </div>
+      <label class="label">Selecione o cargo</label>
+      <p-dropdown
+        class="input-text"
+        [options]="cargosVinculoOpcoes"
+        optionLabel="nome"
+        optionValue="id"
+        [filter]="true"
+        filterBy="nome"
+        [showClear]="true"
+        placeholder="Selecione o cargo"
+        [(ngModel)]="cargoParaVincularId"
+        appendTo="body"
+      ></p-dropdown>
+    </div>
+    <ng-template pTemplate="footer">
+      <button type="button" class="btn secundario btn-sm" (click)="mostrarModalVinculoCargo = false">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn primario btn-sm"
+        (click)="vincularCargoNaArea()"
+        [disabled]="!cargoParaVincularId"
+      >
+        Vincular
+      </button>
+    </ng-template>
+  </p-dialog>
+</div>
+

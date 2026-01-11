@@ -29,6 +29,8 @@ import { EditorModule } from 'primeng/editor';
 import { ToastModule } from 'primeng/toast';
 import { TreeTableModule } from 'primeng/treetable';
 import { TreeModule } from 'primeng/tree';
+import { PickListModule } from 'primeng/picklist';
+import { DataViewModule } from 'primeng/dataview';
 
 import { QuillModule } from 'ngx-quill';
 import { NgxMaskModule } from 'ngx-mask';
@@ -55,6 +57,7 @@ import { BlocosEstudoComponent } from './components/area-aluno/blocos-estudo/blo
 import { PlanoDoDiaWidgetComponent } from './components/area-aluno/plano-do-dia-widget/plano-do-dia-widget.component';
 import { RevisoesComponent } from './components/area-aluno/revisoes/revisoes.component';
 import { ProgressoComponent } from './components/area-aluno/progresso/progresso.component';
+import { CadastroBaseComponent } from './area-admin/pages/painel-admin/cadastro-base/cadastro-base.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -78,6 +81,7 @@ registerLocaleData(localePt);
     PlanoDoDiaWidgetComponent,
     RevisoesComponent,
     ProgressoComponent,
+    CadastroBaseComponent,
 
   ],
   imports: [
@@ -110,6 +114,8 @@ registerLocaleData(localePt);
     ToastModule,
     TreeTableModule,
     TreeModule,
+    PickListModule,
+    DataViewModule,
 
     QuillModule.forRoot(),
     NgxMaskModule.forChild(),

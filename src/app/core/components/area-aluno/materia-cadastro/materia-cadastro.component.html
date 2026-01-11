@@ -28,19 +28,18 @@
 
   <div class="page-materias-content single-column">
     <section class="card bloco-materia-form">
-     
-
       <form id="materiaForm" [formGroup]="materiaForm" (ngSubmit)="salvarMateria()" class="form-materia">
         <div class="form-campo">
           <label for="nome" class="label">
-            Nome da matéria <span class="obrigatorio">*</span>
+            Nome da materia <span class="obrigatorio">*</span>
           </label>
 
-          <input #nomeMateriaInput id="nome" type="text" class="input-text" formControlName="nome" (focus)="onNomeMateriaFocus()" (blur)="onNomeMateriaBlur()"
-            placeholder="Ex: Português, Direito Penal, Raciocínio Lógico..." />
+          <input #nomeMateriaInput id="nome" type="text" class="input-text" formControlName="nome"
+            (focus)="onNomeMateriaFocus()" (blur)="onNomeMateriaBlur()"
+            placeholder="Ex: Portugues, Direito Penal, Raciocinio Logico..." />
 
           <div class="erro" *ngIf="campoInvalido('nome')">
-            Informe o nome da matéria (máx. 100 caracteres).
+            Informe o nome da materia (max. 100 caracteres).
           </div>
         </div>
       </form>
@@ -91,8 +90,6 @@
           <ng-template pTemplate="default" let-node>
             <div class="tree-node-line" [class.is-materia]="node.data?.tipo === 'MATERIA'"
             [class.is-selected]="currentTreeNode?.key === node.key">
-              <span class="badge-nivel" *ngIf="node.data?.tipo === 'TOPICO'"
-                [ngClass]="classeSemaforoRevisaoId(node.data?.id)"></span>
               <input
                 *ngIf="editingNodeKey === node.key"
                 class="tree-edit-input"
@@ -152,21 +149,21 @@
 
     <div class="modal-header">
       <div>
-        <h3 class="modal-title">Adicionar tópicos por lote</h3>
+        <h3 class="modal-title">Adicionar topicos por lote</h3>
         <p class="modal-subtitle">
-          Cole um tópico por linha. Use tab ou espaços para criar subtópicos.
+          Cole um topico por linha. Use tab ou espacos para criar subtopicos.
           <br />
           <span *ngIf="topicoSelecionado">
             Importando dentro de: <strong>{{ topicoSelecionado?.descricao }}</strong>
           </span>
           <span *ngIf="!topicoSelecionado">
-            Importando na raiz da matéria.
+            Importando na raiz da materia.
           </span>
         </p>
       </div>
 
       <button type="button" class="btn-icone modal-fechar" (click)="fecharModalLote()" title="Fechar">
-        ×
+        X
       </button>
     </div>
 
@@ -178,7 +175,7 @@ Direito Constitucional
 Direito Administrativo
   Atos Administrativos
     Elementos do ato
-    Anulação e revogação"></textarea>
+    Anulacao e revogacao"></textarea>
 
     <div class="modal-acoes">
       <button type="button" class="btn secundario" (click)="fecharModalLote()">Cancelar</button>
@@ -196,25 +193,25 @@ Direito Administrativo
 <div class="modal-overlay" *ngIf="mostrarModalEdital">
   <div class="modal-card">
     <div class="modal-header">
-      <h3 class="modal-title">Importar edital</h3>
-      <button type="button" class="btn-icone" (click)="fecharModalImportarEdital()" title="Fechar">×</button>
+      <h3 class="modal-title">Importar Materias</h3>
+      <button type="button" class="btn-icone" (click)="fecharModalImportarEdital()" title="Fechar">X</button>
     </div>
 
     <p class="modal-sub">
-      Cole o conteúdo do edital. O sistema cria as matérias e monta tópicos/subtópicos pela numeração (1, 1.1, 1.1.1).
+      Cole o conteudo do edital. O sistema cria as materias e monta topicos/subtopicos pela numeracao (1, 1.1, 1.1.1).
     </p>
 
     <textarea class="textarea-lote" [(ngModel)]="textoEdital"
-      placeholder="Cole aqui o texto do edital (ex: LÍNGUA PORTUGUESA: 1 ... 1.1 ... )" rows="10"></textarea>
+      placeholder="Cole aqui o texto do edital (ex: LINGUA PORTUGUESA: 1 ... 1.1 ... )" rows="10"></textarea>
 
     <div class="lote-preview-wrap">
-      <div class="lote-preview-titulo">Prévia</div>
+      <div class="lote-preview-titulo">Previa</div>
 
       <ng-container *ngIf="previewEdital?.length; else semPreviewEdital">
         <div class="lote-preview-resumo">
           <span class="lote-preview-bullet"></span>
           <span class="lote-preview-materia">
-            {{ previewEdital.length }} matérias identificadas
+            {{ previewEdital.length }} materias identificadas
           </span>
         </div>
 
@@ -225,7 +222,7 @@ Direito Administrativo
 
               <span class="preview-txt">
                 <strong>{{ m.nome }}</strong>
-                <span style="opacity:.75;"> — {{ contarTopicosRecursivo(m.topicos) }} itens</span>
+                <span style="opacity:.75;"> - {{ contarTopicosRecursivo(m.topicos) }} itens</span>
               </span>
 
               <ul class="preview-ul" style="margin-top:6px;">
@@ -241,24 +238,10 @@ Direito Administrativo
 
       <ng-template #semPreviewEdital>
         <div class="lote-preview-vazio">
-          Cole o conteúdo do edital para ver a prévia (matérias + tópicos).
+          Cole o conteudo do edital para ver a previa (materias + topicos).
         </div>
       </ng-template>
     </div>
-
-    <ng-template #previewTopicoTpl let-topico let-nivel="nivel">
-      <li class="preview-li" [style.paddingLeft.px]="nivel * 16">
-        <span class="preview-dot"></span>
-        <span class="preview-txt">{{ topico.descricao }}</span>
-      </li>
-
-      <ng-container *ngIf="topico.filhos?.length">
-        <ng-container *ngFor="let f of topico.filhos">
-          <ng-container
-            *ngTemplateOutlet="previewTopicoTpl; context: { $implicit: f, nivel: nivel + 1 }"></ng-container>
-        </ng-container>
-      </ng-container>
-    </ng-template>
 
     <div class="modal-actions">
       <button type="button" class="btn secundario" (click)="fecharModalImportarEdital()" [disabled]="salvandoEdital">
@@ -272,3 +255,17 @@ Direito Administrativo
     </div>
   </div>
 </div>
+
+<ng-template #previewTopicoTpl let-topico let-nivel="nivel">
+  <li class="preview-li" [style.paddingLeft.px]="nivel * 16">
+    <span class="preview-dot"></span>
+    <span class="preview-txt">{{ topico.descricao }}</span>
+  </li>
+
+  <ng-container *ngIf="topico.filhos?.length">
+    <ng-container *ngFor="let f of topico.filhos">
+      <ng-container
+        *ngTemplateOutlet="previewTopicoTpl; context: { $implicit: f, nivel: nivel + 1 }"></ng-container>
+    </ng-container>
+  </ng-container>
+</ng-template>
