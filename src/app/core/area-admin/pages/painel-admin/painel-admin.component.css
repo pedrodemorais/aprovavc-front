@@ -1,7 +1,8 @@
-﻿/* estilos isolados do painel admin (sem importar outros componentes) */
+/* estilos isolados do painel admin (sem importar outros componentes) */
 
 .page-materias {
   width: 100%;
+  padding-top: 16px;
 }
 
 .page-materias-content {
@@ -68,6 +69,20 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.titulo-e-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.titulo-e-acoes .form-acoes {
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .card-title {
@@ -315,7 +330,18 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(17, 24, 39, 0.28) transparent;
+  flex: 1 1 auto;
 }
+.bloco-templates-lista {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.bloco-templates-lista.tem-edital-aberto .lista-materias {
+  max-height:100%;
+}
+
 
 .lista-materias::-webkit-scrollbar {
   width: 8px;
@@ -350,6 +376,23 @@
 
 .edital-tree-wrap .tree-node-line {
   padding: 4px 6px;
+}
+
+.alert-topico {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #fbbf24;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.alert-topico .pi {
+  font-size: 1rem;
 }
 
 .item-materia:first-child {
@@ -764,6 +807,35 @@
   font-weight: 700;
 }
 
+.tree-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 22px;
+}
+
+.tree-add-input {
+  flex: 1;
+  min-width: 0;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  font-size: 0.86rem;
+  background: #eef0f3;
+  outline: none;
+}
+
+.tree-add-input:focus {
+  border-color: rgba(22, 163, 74, 0.6);
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.18);
+}
+
+.tree-add-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -935,8 +1007,9 @@
 
 .nome-e-botoes {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   width: 100%;
 }
 

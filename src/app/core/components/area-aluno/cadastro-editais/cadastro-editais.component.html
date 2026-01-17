@@ -1,0 +1,110 @@
+<div class="page-edital">
+  <div class="layout">
+    <section class="card painel-form">
+      <div class="form-header">
+        <div class="titulo-botoes">
+          <div>
+            <h2 class="titulo-bloco">Cadastrar edital</h2>
+          </div>
+        </div>
+      </div>
+
+      <section class="mensagens">
+        <p *ngIf="erro" class="msg msg-erro">{{ erro }}</p>
+        <p *ngIf="mensagemSucesso" class="msg msg-sucesso">{{ mensagemSucesso }}</p>
+      </section>
+
+      <form [formGroup]="form" (ngSubmit)="salvar()" class="form-edital">
+        <div class="nome-data">
+          <div class="campo campo-nome">
+            <label for="nome">
+              Nome do edital / prova <span class="obrigatorio">*</span>
+            </label>
+            <input
+              id="nome"
+              type="text"
+              class="input-text"
+              formControlName="nome"
+              placeholder="Ex: Polícia Federal – Agente, TJ-SP, Receita Federal..."
+            />
+            <div class="erro" *ngIf="campoInvalido('nome')">
+              Informe o nome do edital (máx. 150 caracteres).
+            </div>
+          </div>
+
+          <div class="campo campo-data">
+            <label for="dataProva">Data da prova (se já tiver)</label>
+            <input id="dataProva" type="date" class="input-text" formControlName="dataProva" />
+          </div>
+        </div>
+
+        <div class="campo campo-cargo">
+          <label for="cargo">Cargo</label>
+          <input
+            id="cargo"
+            type="text"
+            class="input-text"
+            formControlName="cargo"
+            placeholder="Ex: Agente da Polícia Federal"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="label-com-info">
+            Vincule as matérias ao edital<span class="obrigatorio">*</span>
+            <i
+              class="pi pi-info-circle info-icon"
+              pTooltip="Clique nas matérias para adicionar ou remover do edital."
+              tooltipPosition="right"
+              [showDelay]="150"
+              [hideDelay]="80"
+              tabindex="0"
+              aria-label="Ajuda"
+            ></i>
+          </label>
+
+          <p-pickList
+            [source]="materiasDisponiveis"
+            [target]="materiasSelecionadas"
+            targetHeader="No edital"
+            [dragdrop]="true"
+            [responsive]="true"
+            [sourceStyle]="{ height: '240px' }"
+            [targetStyle]="{ height: '240px' }"
+            (onMoveToTarget)="onPickListMateriasChange()"
+            (onMoveToSource)="onPickListMateriasChange()"
+            (onTargetReorder)="onPickListMateriasChange()"
+          >
+            <ng-template pTemplate="sourceHeader">
+              <div class="picklist-header">
+                <span class="p-picklist-title">Biblioteca</span>
+                <a
+                  class="picklist-add-btn"
+                  routerLink="/area-restrita/cad-materias"
+                  aria-label="Adicionar matéria"
+                  title="Adicionar matéria"
+                >
+                  <i class="pi pi-plus"></i>
+                </a>
+              </div>
+            </ng-template>
+            <ng-template let-materia pTemplate="item">
+              <div class="picklist-item">{{ materia.nome }}</div>
+            </ng-template>
+          </p-pickList>
+
+          <div class="erro" *ngIf="campoInvalido('materiasIds')">
+            Selecione pelo menos uma matéria.
+          </div>
+        </div>
+
+        <div class="form-acoes">
+          <button type="button" class="segmented-btn" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="segmented-btn" [disabled]="salvando || form.invalid">
+            {{ salvando ? 'Salvando...' : 'Salvar edital' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

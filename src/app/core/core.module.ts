@@ -47,6 +47,7 @@ import { EmpresaCadastroComponent } from '../site/pages/empresa-cadastro/empresa
 import { MateriaCadastroComponent } from './components/area-aluno/materia-cadastro/materia-cadastro.component';
 import { SalaEstudoComponent } from './components/area-aluno/sala-estudo/sala-estudo.component';
 import { EditaisComponent } from './components/area-aluno/editais/editais.component';
+import { CadastroEditaisComponent } from './components/area-aluno/cadastro-editais/cadastro-editais.component';
 import { AssinaturaCanceladaComponent } from './components/area-aluno/assinatura-cancelada/assinatura-cancelada.component';
 import { AssinaturaPlanosComponent } from './components/area-aluno/assinatura-planos/assinatura-planos.component';
 import { PerfilAlunoComponent } from './components/area-aluno/perfil-aluno/perfil-aluno.component';
@@ -70,6 +71,7 @@ registerLocaleData(localePt);
     MateriaCadastroComponent,
     SalaEstudoComponent,
     EditaisComponent,
+    CadastroEditaisComponent,
     AssinaturaCanceladaComponent,
     AssinaturaPlanosComponent,
     PerfilAlunoComponent,

@@ -3,7 +3,7 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 12px 24px;
+  padding: 16px 12px 24px;
   box-sizing: border-box;
 }
 
@@ -21,12 +21,29 @@
   font-weight: 600;
   margin: 0 0 4px;
   color: #2b2b2c9c;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .page-subtitle {
   margin: 0;
   font-size: 0.9rem;
   color: var(--text-2);
+}
+
+.info-icon {
+  font-size: 14px;
+  color: var(--muted);
+  cursor: help;
+  line-height: 1;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.info-icon:hover,
+.info-icon:focus {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .card {

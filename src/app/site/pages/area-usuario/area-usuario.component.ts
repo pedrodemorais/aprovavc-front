@@ -322,7 +322,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
         
         {
-          label: 'Revisoes',
+          label: 'Revisar',
           icon: 'pi pi-undo',
            routerLink: ['/area-restrita/revisoes'],
          
@@ -343,14 +343,14 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       icon: 'pi pi-th-large',
       items: [
         {
-           label: 'Gerenciar Editais',
+           label: 'Meus Editais',
               icon: 'pi pi-folder-open',
               routerLink: ['/area-restrita/editais'],
               disabled: isLocked
          
         },
          {
-           label: 'Gerenciar Materias',
+           label: 'Minhas Matérias',
               icon: 'pi pi-book',
               routerLink: ['/area-restrita/cad-materias'],
               disabled: isLocked
@@ -359,7 +359,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
           
         },
               {
-     label: 'Planner Semanal',
+     label: 'Agenda de Estudos',
       icon: 'pi pi-table',
       routerLink: ['/area-restrita/blocos-estudo'],
       disabled: isLocked || !this.hasMaterias,

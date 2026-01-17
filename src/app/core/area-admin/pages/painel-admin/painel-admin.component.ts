@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, forkJoin } from 'rxjs';
 import { TreeNode } from 'primeng/api';
@@ -44,6 +44,7 @@ export class PainelAdminComponent implements OnInit {
 
   mensagemOk = '';
   mensagemErro = '';
+  mensagemErroTopico = '';
   ultimoStatus: number | null = null;
   private mensagemOkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -106,8 +107,10 @@ export class PainelAdminComponent implements OnInit {
   }
   editingNodeKey: string | null = null;
   editingLabel = '';
+  novoFilhoDescricao = '';
+  novoFilhoParentKey: string | null = null;
   treeLoading = false;
-  arvoreExpandida = true;
+  arvoreExpandida = false;
   private tempNodeId = -1;
 
   carregandoMaterias = false;
@@ -160,6 +163,7 @@ export class PainelAdminComponent implements OnInit {
   limparMensagens(): void {
     this.mensagemOk = '';
     this.mensagemErro = '';
+    this.mensagemErroTopico = '';
     this.ultimoStatus = null;
     this.resultadoClone = null;
     this.limparMensagemOkTimeout();
@@ -1099,6 +1103,7 @@ export class PainelAdminComponent implements OnInit {
   onTreeSelect(event: any): void {
     const node = event?.node as TreeNode | undefined;
     this.selectedTreeNode = node || null;
+    this.mensagemErroTopico = '';
 
     if (!node?.data) return;
 
@@ -1128,6 +1133,8 @@ export class PainelAdminComponent implements OnInit {
 
       this.topicoSelecionado = this.treeNodeToTopico(node);
     }
+    this.novoFilhoDescricao = '';
+    this.novoFilhoParentKey = null;
   }
 
   onTreeEditKeydown(event: KeyboardEvent): void {
@@ -1269,6 +1276,7 @@ export class PainelAdminComponent implements OnInit {
     }
 
     this.limparMensagens();
+    this.mensagemErroTopico = '';
     this.editalAdminService.criarTopico(this.selecionadoId, materiaId, payload).subscribe({
       next: () => {
         this.cancelarEdicao();
@@ -1334,11 +1342,59 @@ export class PainelAdminComponent implements OnInit {
     return this.tempNodeId;
   }
 
+  iniciarNovoFilho(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    if (!node?.key) return;
+    this.selectedTreeNode = node;
+    this.novoFilhoDescricao = '';
+    this.novoFilhoParentKey = node.key;
+    this.focarInputNovoFilho(node.key);
+  }
+
+  criarFilhoDoNode(node: TreeNode): void {
+    const descricao = (this.novoFilhoDescricao || '').trim();
+    if (!descricao || !this.selecionadoId || !node?.data) return;
+
+    const filhos = (node.children || []) as TreeNode[];
+    const chaveNova = this.chaveTopico(descricao);
+    const jaExiste = filhos.some((filho) => {
+      const label = String(filho.data?.label || '');
+      return this.chaveTopico(label) === chaveNova;
+    });
+    if (jaExiste) {
+      this.mensagemErroTopico = 'Esse topico ja existe neste nivel.';
+      return;
+    }
+
+    const materiaId = node.data.tipo === 'MATERIA' ? node.data.id : node.data.materiaId;
+    const topicoPaiId = node.data.tipo === 'TOPICO' ? node.data.id : null;
+
+    this.salvarTopicoTree(materiaId, descricao, topicoPaiId);
+    this.novoFilhoDescricao = '';
+  }
+
+  cancelarNovoFilho(): void {
+    this.novoFilhoDescricao = '';
+    this.novoFilhoParentKey = null;
+  }
+
   private focarInputEdicao(nodeKey: string): void {
     if (!nodeKey) return;
     setTimeout(() => {
       const input = document.querySelector(
         `[data-edit-key="${nodeKey}"]`
+      ) as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    });
+  }
+
+  private focarInputNovoFilho(nodeKey: string): void {
+    setTimeout(() => {
+      const input = document.querySelector(
+        `[data-add-key="${nodeKey}"]`
       ) as HTMLInputElement | null;
       if (input) {
         input.focus();
@@ -1786,6 +1842,11 @@ export class PainelAdminComponent implements OnInit {
     this.editingNodeKey = null;
     this.editingLabel = '';
 
+    this.arvoreExpandida = false;
+    if (this.treeNodes.length) {
+      this.setTreeExpanded(this.treeNodes, false);
+    }
+
     if (aba === 'cadastro') {
       this.carregarMaterias();
     }
@@ -1803,6 +1864,10 @@ export class PainelAdminComponent implements OnInit {
     this.importarMateriasAba = aba;
     this.submeteuMateria = false;
     if (aba === 'cadastro') {
+      this.arvoreExpandida = false;
+      if (this.treeNodes.length) {
+        this.setTreeExpanded(this.treeNodes, false);
+      }
       this.focarNomeMateria();
       if (this.materias.length) {
         this.carregarArvoreMaterias();
@@ -2187,3 +2252,4 @@ export class PainelAdminComponent implements OnInit {
     });
   }
 }
+

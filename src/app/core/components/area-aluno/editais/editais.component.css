@@ -133,6 +133,13 @@
   gap: 10px;
 }
 
+.form-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
 /* Grupo de campos padrão */
 .form-group {
   margin-bottom: 6px;
@@ -273,6 +280,11 @@
   border: 1px solid rgba(55, 65, 81, 0.4);
 }
 
+.vinculo-acoes .segmented-btn:hover:not(:disabled) {
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  color: rgba(0, 0, 0, 0.85);
+}
+
 .segmented-group .segmented-btn:hover:not(:disabled){
   transform: none;
   color: rgba(0, 0, 0, 0.85);
@@ -346,6 +358,55 @@
   color: var(--text);
 }
 
+.picklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  box-shadow: none;
+  width: 100%;
+}
+
+:host ::ng-deep .p-picklist .p-picklist-header {
+  border: 0;
+  box-shadow: none;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+:host ::ng-deep .p-picklist .p-picklist-title {
+  margin: 0;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+}
+
+.picklist-add-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid rgba(55, 65, 81, 0.25);
+  color: rgba(55, 65, 81, 0.8);
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.picklist-add-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(55, 65, 81, 1);
+  border-color: rgba(55, 65, 81, 0.45);
+}
+
 :host ::ng-deep .p-picklist{
   border: 0;
   background: transparent;
@@ -353,7 +414,14 @@
 }
 
 :host ::ng-deep .p-picklist .p-picklist-list-wrapper{
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+:host ::ng-deep .p-picklist .p-picklist-source-wrapper,
+:host ::ng-deep .p-picklist .p-picklist-target-wrapper {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 :host ::ng-deep .p-picklist .p-picklist-buttons .p-button{
@@ -657,6 +725,14 @@
   background: rgba(129, 230, 109, 0.14);
   color: #229c12;
   border: 1px solid rgba(27, 129, 18, 0.35);
+  cursor: pointer;
+}
+
+.badge-edital-ativo.is-inativo {
+  background: transparent;
+  color: #374151;
+  border-color: rgba(55, 65, 81, 0.35);
+  font-weight: 600;
 }
 
 .edital-desc {
@@ -1055,6 +1131,11 @@
   color: rgba(255, 255, 255, 0.95) !important;
 }
 
+:host-context(body.theme-dark) .vinculo-acoes .segmented-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
 :host-context(body.theme-dark) .segmented-group .segmented-btn + .segmented-btn::before{
   background: rgba(255, 255, 255, 0.22) !important;
 }
@@ -1127,6 +1208,12 @@
   background: rgba(59, 130, 246, 0.18) !important;
   border-color: rgba(59, 130, 246, 0.45) !important;
   color: #bfdbfe !important;
+}
+
+:host-context(body.theme-dark) .badge-edital-ativo.is-inativo {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 :host-context(body.theme-dark) .meta-chip {

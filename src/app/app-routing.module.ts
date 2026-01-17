@@ -20,6 +20,7 @@ import { MateriaCadastroComponent } from './core/components/area-aluno/materia-c
 import { SalaEstudoComponent } from './core/components/area-aluno/sala-estudo/sala-estudo.component';
 import { DashboardRevisaoComponent } from './core/components/area-aluno/dashboard-revisao/dashboard-revisao.component';
 import { EditaisComponent } from './core/components/area-aluno/editais/editais.component';
+import { CadastroEditaisComponent } from './core/components/area-aluno/cadastro-editais/cadastro-editais.component';
 import { AssinaturaSucessoComponent } from './core/components/area-aluno/assinatura/assinatura-sucesso/assinatura-sucesso.component';
 import { AssinaturaCanceladaComponent } from './core/components/area-aluno/assinatura-cancelada/assinatura-cancelada.component';
 import { AssinaturaPlanosComponent } from './core/components/area-aluno/assinatura-planos/assinatura-planos.component';
@@ -64,8 +65,9 @@ const routes: Routes = [
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'blocos-estudo', component: BlocosEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'progresso', component: ProgressoComponent, canActivate: [PlanoAtivoGuard] },
-      { path: 'revisoes', component: RevisoesComponent },
-      { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
+        { path: 'revisoes', component: RevisoesComponent },
+        { path: 'cadastro-editais', component: CadastroEditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
+        { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
       { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
       { path: 'meu-cadastro', component: PerfilAlunoComponent },
       { path: 'suporte', component: SuporteComponent },

@@ -13,7 +13,7 @@
           <div class="card-actions">
             <div class="timer-modos">
               <button type="button" class="btn-modo-timer" (click)="acaoBotaoMateria($event)" [disabled]="salvando">
-                {{ salvando ? 'Salvando...' : (deveExibirBotaoNovo() ? 'Novo' : (materiaForm.get('id')?.value ? 'Alterar' : 'Salvar')) }}
+                {{ salvando ? 'Salvando...' : (deveExibirBotaoNovo() ? '+ Nova Matéria' : (materiaForm.get('id')?.value ? 'Alterar' : 'Salvar')) }}
               </button>
               <button type="button" class="btn-modo-timer" (click)="abrirModalImportarEdital()">
                 Importar
@@ -193,13 +193,14 @@ Direito Administrativo
 <div class="modal-overlay" *ngIf="mostrarModalEdital">
   <div class="modal-card">
     <div class="modal-header">
-      <h3 class="modal-title">Importar Materias</h3>
+      <h3 class="modal-title">
+        Importar Matérias
+        <i class="pi pi-info-circle info-icon"
+          pTooltip="Cole o conteúdo do edital. O sistema cria as matérias e monta tópicos/subtópicos pela numeração (1, 1.1, 1.1.1)."
+          tooltipPosition="right" [showDelay]="150" [hideDelay]="80" tabindex="0" aria-label="Ajuda"></i>
+      </h3>
       <button type="button" class="btn-icone" (click)="fecharModalImportarEdital()" title="Fechar">X</button>
     </div>
-
-    <p class="modal-sub">
-      Cole o conteudo do edital. O sistema cria as materias e monta topicos/subtopicos pela numeracao (1, 1.1, 1.1.1).
-    </p>
 
     <textarea class="textarea-lote" [(ngModel)]="textoEdital"
       placeholder="Cole aqui o texto do edital (ex: LINGUA PORTUGUESA: 1 ... 1.1 ... )" rows="10"></textarea>

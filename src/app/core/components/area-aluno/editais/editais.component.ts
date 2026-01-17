@@ -1,4 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EditalService } from '../services/edital.service';
 import { EditalFormPayload } from '../services/edital.service';
@@ -81,7 +82,8 @@ private mensagemTimeout: any; // para guardar o setTimeout
     private editalService: EditalService,
     private materiaService: MateriaService,
     private editalTemplateService: EditalTemplateService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -393,19 +395,39 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.materiasImportadasPendentes = undefined;
   }
 
+  limparFormulario(): void {
+    this.aplicarSemRastrearMudancas(() => {
+      this.form.reset({
+        id: null,
+        nome: '',
+        cargo: '',
+        descricao: '',
+        dataProva: null,
+        materiasIds: []
+      });
+    });
+    this.editalEmEdicao = null;
+    this.editalSelecionado = undefined;
+    this.selectedEditalNodes = [];
+    this.mensagemSucesso = undefined;
+    this.erro = undefined;
+    this.mostrarFormulario = false;
+    this.atualizarPickListMaterias();
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+    this.resetarMudancasPendentes();
+    this.materiasImportadasPendentes = undefined;
+  }
+
   get labelAcaoPrincipal(): string {
     if (this.salvando) {
       return 'Salvando...';
     }
-    return this.temMudancasNaoSalvas ? 'Salvar edital' : '+ Novo edital';
+    return '+ Novo edital';
   }
 
   acaoPrincipal(): void {
-    if (this.temMudancasNaoSalvas) {
-      this.salvar();
-      return;
-    }
-    this.abrirModalVincularMateriasParaNovoEdital();
+    this.router.navigate(['/area-restrita/cadastro-editais']);
   }
 
   abrirModalTemplates(importacao = false): void {
@@ -446,6 +468,42 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.form.markAsPristine();
     this.form.markAsUntouched();
     this.resetarMudancasPendentes();
+
+    if (!edital?.id) {
+      return;
+    }
+
+    this.editalService.buscarPorId(edital.id).subscribe({
+      next: (detalhe) => {
+        if (!detalhe || this.temMudancasNaoSalvas) {
+          return;
+        }
+
+        const materiasDetalhe = (detalhe.materias?.length ? detalhe.materias : edital.materias) || [];
+        const materiasIdsDetalhe = materiasDetalhe.map(m => m.materiaId);
+
+        this.editalSelecionado = { ...edital, ...detalhe, materias: materiasDetalhe };
+        this.editalEmEdicao = this.editalSelecionado;
+
+        this.aplicarSemRastrearMudancas(() => {
+          this.form.patchValue({
+            id: detalhe.id,
+            nome: detalhe.nome ?? edital.nome,
+            cargo: detalhe.cargo ?? edital.cargo ?? '',
+            descricao: detalhe.descricao ?? edital.descricao,
+            dataProva: detalhe.dataProva ?? edital.dataProva,
+            materiasIds: materiasIdsDetalhe
+          });
+        });
+
+        this.form.markAsPristine();
+        this.form.markAsUntouched();
+        this.resetarMudancasPendentes();
+      },
+      error: (err) => {
+        console.error('[EDITAIS] Erro ao carregar edital por ID:', err);
+      }
+    });
 
     this.mensagemSucesso = undefined;
     this.erro = undefined;
@@ -494,7 +552,16 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
     acao$.subscribe({
       next: () => {
-        edital.ativo = !edital.ativo;
+        const novoAtivo = !edital.ativo;
+        edital.ativo = novoAtivo;
+        if (novoAtivo) {
+          (this.editais || []).forEach((e) => {
+            if (e.id !== edital.id) {
+              e.ativo = false;
+            }
+          });
+        }
+        this.atualizarEditalAtivoLocal(edital.id!, novoAtivo);
         this.mensagemSucesso = edital.ativo
           ? `Edital "${edital.nome}" marcado como em estudo.`
           : `Edital "${edital.nome}" desmarcado.`;
@@ -505,6 +572,25 @@ private mensagemTimeout: any; // para guardar o setTimeout
         console.error('[EDITAIS] Erro ao alterar edital em estudo:', err);
         this.definindoAtivoId = null;
         this.erro = 'Erro ao atualizar o edital. Tente novamente.';
+      }
+    });
+  }
+
+  private atualizarEditalAtivoLocal(editalId: number, ativo: boolean): void {
+    const encontrado = (this.editais || []).find(e => e.id === editalId);
+    if (encontrado) {
+      encontrado.ativo = ativo;
+    }
+    (this.editalTreeNodes || []).forEach((node) => {
+      if (node.data?.tipo !== 'EDITAL') {
+        return;
+      }
+      if (node.data?.editalId === editalId) {
+        node.data.ativo = ativo;
+        return;
+      }
+      if (ativo) {
+        node.data.ativo = false;
       }
     });
   }
@@ -875,6 +961,15 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.definirComoEmEstudo(this.editalSelecionado);
   }
 
+  toggleEditalEmEstudo(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    const editalId = node?.data?.editalId as number | undefined;
+    if (!editalId) return;
+    const encontrado = (this.editais || []).find(e => e.id === editalId);
+    if (!encontrado) return;
+    this.definirComoEmEstudo(encontrado);
+  }
+
   acaoEditarSelecionado(): void {
     if (!this.editalSelecionado) return;
     this.abrirModalVincularMaterias();
@@ -902,6 +997,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
   fecharModalVincularMaterias(): void {
     this.mostrarModalVincularMaterias = false;
+    this.mostrarFormulario = false;
   }
 
   private montarArvoreEditais(): void {
