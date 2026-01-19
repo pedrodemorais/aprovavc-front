@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: /area-restrita/
 Disallow: /api/
-Sitemap: https://aprovavc.com.br/sitemap.xml
+Sitemap: https://revizo.com.br/sitemap.xml

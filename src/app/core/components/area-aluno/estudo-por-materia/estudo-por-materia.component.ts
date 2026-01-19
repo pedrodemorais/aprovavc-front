@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Materia } from '../models/materia.model';
@@ -38,7 +38,7 @@ interface ResumoMateriaExpandida {
 })
 export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
-  // ✅ regra de clean: lista sem “número” por default
+  // âœ… regra de clean: lista sem â€œnÃºmeroâ€ por default
   mostrarPercentNaLista = false;
 
   termoBusca = '';
@@ -113,7 +113,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // MATÉRIAS
+  // MATÃ‰RIAS
   // ==========================
   carregarMateriasParaEstudo(): void {
     this.carregandoMaterias = true;
@@ -142,8 +142,8 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         this.carregandoMaterias = false;
       },
       error: (err) => {
-        console.error('[MATERIAS] Erro ao carregar matÇ¸rias:', err);
-        this.mensagemErro = 'Erro ao carregar matÇ¸rias.';
+        console.error('[MATERIAS] Erro ao carregar matérias:', err);
+        this.mensagemErro = 'Erro ao carregar matérias.';
         this.materiasFiltradasPorEscopo = false;
         this.carregandoMaterias = false;
       }
@@ -325,7 +325,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     const topicoId = topicoIdRaw != null ? Number(topicoIdRaw) : null;
 
     if (!Number.isFinite(materiaId) || materiaId <= 0) {
-      console.warn('[NAVEGACAO] materiaId inválido:', materiaIdRaw, m);
+      console.warn('[NAVEGACAO] materiaId invÃ¡lido:', materiaIdRaw, m);
       return;
     }
 
@@ -369,7 +369,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // TÓPICOS
+  // TÃ“PICOS
   // ==========================
   private carregarTopicos(m: Materia): void {
     const materiaId = this.asId((m as any)?.id ?? (m as any)?.materiaId);
@@ -383,7 +383,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.topicos = lista;
     this.carregandoTopicos = false;
 
-    // ƒo. mÇ¸tricas sÇü no expandir
+    // Æ’o. mÃ‡Â¸tricas sÃ‡Ã¼ no expandir
     this.atualizarResumoExpandida();
 
     /*
@@ -393,12 +393,12 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         this.topicos = listaSegura.map((dto: any) => this.converterDtoParaTopico(dto, 0));
         this.carregandoTopicos = false;
 
-        // ✅ métricas só no expandir
+        // âœ… mÃ©tricas sÃ³ no expandir
         this.atualizarResumoExpandida();
       },
       error: (err) => {
-        console.error('[TOPICOS] Erro ao carregar tópicos:', err);
-        this.mensagemErro = 'Erro ao carregar tópicos da matéria.';
+        console.error('[TOPICOS] Erro ao carregar tÃ³picos:', err);
+        this.mensagemErro = 'Erro ao carregar tÃ³picos da matÃ©ria.';
         this.carregandoTopicos = false;
       }
     });
@@ -434,7 +434,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // DASHBOARD / SEMÁFORO
+  // DASHBOARD / SEMÃFORO
   // ==========================
   private carregarRevisoesDashboard(): void {
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
@@ -471,7 +471,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
           });
         });
       },
-      error: (err) => console.error('[DASHBOARD-REVISAO] Erro ao carregar revisões:', err)
+      error: (err) => console.error('[DASHBOARD-REVISAO] Erro ao carregar revisÃµes:', err)
     });
   }
 
@@ -645,7 +645,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   private getStatusRevisaoMateria(m: Materia): StatusRevisao {
     if (!m?.id) return 'SEM';
 
-    // Se estiver expandida, calcula com a árvore em tela
+    // Se estiver expandida, calcula com a Ã¡rvore em tela
     if (this.materiaExpandida && this.materiaExpandida.id === m.id && this.topicos?.length) {
       let pior: StatusRevisao = 'SEM';
 
@@ -659,7 +659,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       return pior;
     }
 
-    // Caso não esteja expandida, usa o dashboard
+    // Caso nÃ£o esteja expandida, usa o dashboard
     let pior: StatusRevisao = 'SEM';
     this.revisoesPorTopico.forEach((info) => {
       if (info.materiaId === m.id) {
@@ -735,7 +735,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       case 'HOJE': return 'Vence hoje';
       case 'FUTURA': return 'Em dia';
       case 'SEM':
-      default: return 'Sem revisão';
+      default: return 'Sem revisÃ£o';
     }
   }
 
@@ -779,7 +779,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     return escolhidoTopicoId;
   }
 
-  // ✅ Filtra E ordena por urgência (ação)
+  // âœ… Filtra E ordena por urgÃªncia (aÃ§Ã£o)
   get materiasFiltradas(): Materia[] {
     const t = (this.termoBusca || '').trim().toLowerCase();
     const base = !t
@@ -820,7 +820,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // UI: SEÇÕES / SELEÇÃO
+  // UI: SEÃ‡Ã•ES / SELEÃ‡ÃƒO
   // ==========================
   toggleSecao(secao: Topico): void {
     const id = (secao as any)?.id;
@@ -837,7 +837,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // CONCLUSÃO local + overlay
+  // CONCLUSÃƒO local + overlay
   // ==========================
   isTopicoConcluido(t: Topico): boolean {
     const id = this.getTopicoId(t);
@@ -922,7 +922,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // Contadores seção
+  // Contadores seÃ§Ã£o
   // ==========================
   getTotalSecao(secao: Topico): number {
     return (secao?.filhos?.length ?? 0);
@@ -940,7 +940,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // % na lista (se você ativar)
+  // % na lista (se vocÃª ativar)
   // ==========================
   getPercentMateria(m: Materia): number {
     if (!m?.id) return 0;
@@ -985,7 +985,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   // ==========================
-  // ✅ Resumo do expandir (métricas no lugar certo)
+  // âœ… Resumo do expandir (mÃ©tricas no lugar certo)
   // ==========================
   private folhasTopicos(lista: Topico[]): Topico[] {
     const out: Topico[] = [];
@@ -1056,3 +1056,4 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     return Number.isFinite(id) && id > 0 ? id : null;
   }
 }
+

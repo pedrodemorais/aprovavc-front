@@ -85,7 +85,7 @@ export class LoginSiteComponent implements OnInit {
 
         if (!resp.assinaturaValida) {
           this.mensagem =
-            'Sua assinatura está expirada. Atualize seu plano para continuar usando o AprovaVC.';
+            'Sua assinatura está expirada. Atualize seu plano para continuar usando o Revizo.';
 
           this.router.navigate(['/area-restrita/meu-cadastro'], {
             queryParams: { expirado: true },

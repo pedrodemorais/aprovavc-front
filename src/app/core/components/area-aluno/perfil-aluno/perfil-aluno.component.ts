@@ -1,22 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { AlunoDTO } from '../models/AlunoParametroDTO';
-import { UsuarioConsultaDTO } from '../models/AlunoParametroDTO';
- import { AlunoParametroDTO } from '../models/AlunoParametroDTO';
-import { UsuarioUpdateDTO } from '../models/AlunoParametroDTO';
+import {
+  AlunoDTO,
+  AlunoParametroDTO,
+  UsuarioConsultaDTO,
+  UsuarioUpdateDTO
+} from '../models/AlunoParametroDTO';
 
 import { PerfilAlunoService } from 'src/app/core/components/area-aluno/services/perfil-aluno.service';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { UsuarioService } from 'src/app/site/services/usuario.service';
 import { AssinaturaService } from '../services/assinatura.service';
+
 @Component({
   selector: 'app-perfil-aluno',
   templateUrl: './perfil-aluno.component.html',
   styleUrls: ['./perfil-aluno.component.css']
 })
 export class PerfilAlunoComponent implements OnInit {
-
   carregando = true;
+  salvando = false;
   erro?: string;
   mensagemSucesso?: string;
 
@@ -63,106 +66,106 @@ export class PerfilAlunoComponent implements OnInit {
     });
   }
 
-private carregarDados(): void {
-  this.carregando = true;
-  this.erro = undefined;
+  private carregarDados(mostrarLoading = true): void {
+    if (mostrarLoading) {
+      this.carregando = true;
+    }
+    this.erro = undefined;
 
-  this.usuarioService.getUsuarioLogado().subscribe({
-    next: (usuario) => {
-      console.log('📥 [PerfilAluno] Usuario recebido do backend:', usuario);
-      this.usuario = usuario;
-      this.aluno = usuario.aluno;
+    this.usuarioService.getUsuarioLogado().subscribe({
+      next: (usuario) => {
+        this.usuario = usuario;
+        this.aluno = usuario.aluno;
 
-      this.authService.atualizarStatusAssinaturaFromUser(usuario);
+        this.authService.atualizarStatusAssinaturaFromUser(usuario);
 
-      const parametros: AlunoParametroDTO[] = this.aluno?.parametros || [];
-      const mapa = new Map<string, string>();
-      parametros.forEach(p => {
-        if (p.chave) {
-          mapa.set(p.chave, p.valor ?? '');
-        }
-      });
-
-      const planoParam = mapa.get('PLANO_ATUAL');
-      const statusParam = mapa.get('STATUS_ASSINATURA');
-
-      const backendStatus = usuario.statusAssinatura ?? null;
-      const backendPlano = usuario.planoAtual ?? null;
-      const backendAssinaturaValida = usuario.assinaturaValida ?? null;
-      const backendDataExp = usuario.dataExpiracaoLicenca ?? null;
-
-      this.planoAtual = backendPlano || planoParam || undefined;
-      this.statusAssinatura = backendStatus || statusParam || undefined;
-      this.assinaturaAtiva = backendAssinaturaValida ?? false;
-      this.dataExpiracaoLicenca = backendDataExp ?? undefined;
-      this.diasRestantes = this.calcularDiasRestantes(this.dataExpiracaoLicenca);
-
-      if (this.aluno) {
-        this.perfilForm.patchValue({
-          nomeAluno: this.aluno.nomeAluno,
-          email: this.aluno.email,
-          telefone: this.aluno.telefone,
-          endereco: {
-            logradouro: this.aluno.endereco?.logradouro,
-            numero: this.aluno.endereco?.numero,
-            complemento: this.aluno.endereco?.complemento,
-            bairro: this.aluno.endereco?.bairro,
-            cep: this.aluno.endereco?.cep,
-            municipio: {
-              municipioIbge: this.aluno.endereco?.municipio?.municipioIbge,
-              uf: this.aluno.endereco?.municipio?.uf
-            }
+        const parametros: AlunoParametroDTO[] = this.aluno?.parametros || [];
+        const mapa = new Map<string, string>();
+        parametros.forEach((p) => {
+          if (p.chave) {
+            mapa.set(p.chave, p.valor ?? '');
           }
         });
+
+        const planoParam = mapa.get('PLANO_ATUAL');
+        const statusParam = mapa.get('STATUS_ASSINATURA');
+
+        const backendStatus = usuario.statusAssinatura ?? null;
+        const backendPlano = usuario.planoAtual ?? null;
+        const backendAssinaturaValida = usuario.assinaturaValida ?? null;
+        const backendDataExp = usuario.dataExpiracaoLicenca ?? null;
+
+        this.planoAtual = backendPlano || planoParam || undefined;
+        this.statusAssinatura = backendStatus || statusParam || undefined;
+        this.assinaturaAtiva = backendAssinaturaValida ?? false;
+        this.dataExpiracaoLicenca = backendDataExp ?? undefined;
+        this.diasRestantes = this.calcularDiasRestantes(this.dataExpiracaoLicenca);
+
+        if (this.aluno) {
+          this.perfilForm.patchValue({
+            nomeAluno: this.aluno.nomeAluno,
+            email: this.aluno.email,
+            telefone: this.aluno.telefone,
+            endereco: {
+              logradouro: this.aluno.endereco?.logradouro,
+              numero: this.aluno.endereco?.numero,
+              complemento: this.aluno.endereco?.complemento,
+              bairro: this.aluno.endereco?.bairro,
+              cep: this.aluno.endereco?.cep,
+              municipio: {
+                municipioIbge: this.aluno.endereco?.municipio?.municipioIbge,
+                uf: this.aluno.endereco?.municipio?.uf
+              }
+            }
+          });
+        }
+
+        if (mostrarLoading) {
+          this.carregando = false;
+        }
+      },
+      error: (err) => {
+        console.error('[PerfilAluno] Erro ao carregar usuário:', err);
+        this.erro = 'Erro ao carregar seus dados. Tente novamente.';
+        if (mostrarLoading) {
+          this.carregando = false;
+        }
       }
-
-      this.carregando = false;
-    },
-    error: (err) => {
-      console.error('❌ [PerfilAluno] Erro ao carregar usuário:', err);
-      this.erro = 'Erro ao carregar seus dados. Tente novamente.';
-      this.carregando = false;
-    }
-  });
-}
-
-
-private calcularDiasRestantes(dataExpiracao?: string): number | null {
-  if (!dataExpiracao) {
-    return null;
+    });
   }
 
-  const hoje = new Date();
-  const exp = new Date(dataExpiracao);
+  private calcularDiasRestantes(dataExpiracao?: string): number | null {
+    if (!dataExpiracao) {
+      return null;
+    }
 
-  // 🔹 Zera horas, minutos, segundos e ms (compara só a DATA)
-  hoje.setHours(0, 0, 0, 0);
-  exp.setHours(0, 0, 0, 0);
+    const hoje = new Date();
+    const exp = new Date(dataExpiracao);
 
-  const diffMs = exp.getTime() - hoje.getTime();
-  const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    // Zera horas para comparar apenas a data.
+    hoje.setHours(0, 0, 0, 0);
+    exp.setHours(0, 0, 0, 0);
 
-  return diffDias;
-}
+    const diffMs = exp.getTime() - hoje.getTime();
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    return diffDias;
+  }
 
   // Rotulo do plano atual (plano unico)
   get planoAtualLabel(): string {
-    console.log('[Getter] planoAtualLabel -> status:', this.statusAssinatura, 'plano:', this.planoAtual);
-
     if (this.statusAssinatura === 'TRIAL') {
-      return 'Periodo de teste';
+      return 'Período de teste';
     }
 
     if (this.assinaturaAtiva) {
-      return 'Plano padrao';
+      return 'Plano padrão';
     }
 
     return 'Sem plano ativo';
   }
 
   get statusAssinaturaLabel(): string {
-    console.log('🎯 [Getter] statusAssinaturaLabel ->', this.statusAssinatura);
-
     if (this.statusAssinatura === 'EXPIRADA') {
       return 'Licença expirada';
     }
@@ -188,72 +191,70 @@ private calcularDiasRestantes(dataExpiracao?: string): number | null {
     }
   }
 
-salvar(): void {
-  this.erro = undefined;
-  this.mensagemSucesso = undefined;
+  salvar(): void {
+    this.erro = undefined;
+    this.mensagemSucesso = undefined;
 
-  if (this.perfilForm.invalid) {
-    this.erro = 'Verifique os dados antes de salvar.';
-    return;
-  }
-
-  if (!this.usuario || !this.aluno) {
-    this.erro = 'Não foi possível identificar o aluno logado.';
-    return;
-  }
-
-  const formValue = this.perfilForm.getRawValue();
-
-  const alunoAtualizado: AlunoDTO = {
-    id: this.aluno.id,
-    nomeAluno: this.aluno.nomeAluno, // se no futuro você quiser editar, pega do form
-    email: formValue.email || this.aluno.email,
-    telefone: formValue.telefone || this.aluno.telefone,
-    exigeDocNoCadastro: this.aluno.exigeDocNoCadastro,
-    dataCriacao: this.aluno.dataCriacao,
-    dataAtualizacao: this.aluno.dataAtualizacao,
-    endereco: {
-      id: this.aluno.endereco?.id,
-      logradouro: formValue.endereco.logradouro,
-      numero: formValue.endereco.numero,
-      complemento: formValue.endereco.complemento,
-      bairro: formValue.endereco.bairro,
-      cep: formValue.endereco.cep,
-      municipio: {
-        id: this.aluno.endereco?.municipio?.id,
-        municipioIbge: formValue.endereco.municipio.municipioIbge,
-        uf: formValue.endereco.municipio.uf
-      }
-    },
-    parametros: this.aluno.parametros // não vai ser usado no update, mas não atrapalha
-  };
-
-  const dto: UsuarioUpdateDTO = {
-    nome: this.usuario.nome,
-    email: this.usuario.email,
-    aluno: alunoAtualizado
-  };
-
-  this.carregando = true;
-
-  this.usuarioService.atualizarUsuario(dto).subscribe({
-    next: (resp) => {
-      console.log('✅ [PerfilAluno] Dados atualizados com sucesso:', resp);
-      this.mensagemSucesso = 'Dados salvos com sucesso.';
-      this.carregando = false;
-
-      // Recarrega para atualizar `this.usuario`/`this.aluno` e o form
-      this.carregarDados();
-    },
-    error: (err) => {
-      console.error('❌ [PerfilAluno] Erro ao atualizar perfil:', err);
-      this.erro = err?.error?.error || err?.error?.message || 'Erro ao salvar seus dados.';
-      this.carregando = false;
+    if (this.perfilForm.invalid) {
+      this.erro = 'Verifique os dados antes de salvar.';
+      return;
     }
-  });
-}
 
+    if (!this.usuario || !this.aluno) {
+      this.erro = 'Não foi possível identificar o aluno logado.';
+      return;
+    }
 
+    const formValue = this.perfilForm.getRawValue();
+
+    const alunoAtualizado: AlunoDTO = {
+      id: this.aluno.id,
+      nomeAluno: this.aluno.nomeAluno, // se no futuro quiser editar, pega do form
+      email: formValue.email || this.aluno.email,
+      telefone: formValue.telefone || this.aluno.telefone,
+      exigeDocNoCadastro: this.aluno.exigeDocNoCadastro,
+      dataCriacao: this.aluno.dataCriacao,
+      dataAtualizacao: this.aluno.dataAtualizacao,
+      endereco: {
+        id: this.aluno.endereco?.id,
+        logradouro: formValue.endereco.logradouro,
+        numero: formValue.endereco.numero,
+        complemento: formValue.endereco.complemento,
+        bairro: formValue.endereco.bairro,
+        cep: formValue.endereco.cep,
+        municipio: {
+          id: this.aluno.endereco?.municipio?.id,
+          municipioIbge: formValue.endereco.municipio.municipioIbge,
+          uf: formValue.endereco.municipio.uf
+        }
+      },
+      parametros: this.aluno.parametros // nao vai ser usado no update, mas nao atrapalha
+    };
+
+    const dto: UsuarioUpdateDTO = {
+      nome: this.usuario.nome,
+      email: this.usuario.email,
+      aluno: alunoAtualizado
+    };
+
+    this.salvando = true;
+
+    this.usuarioService.atualizarUsuario(dto).subscribe({
+      next: (resp) => {
+        console.log('[PerfilAluno] Dados atualizados com sucesso:', resp);
+        this.mensagemSucesso = 'Dados salvos com sucesso.';
+        this.salvando = false;
+
+        // Recarrega para atualizar `this.usuario`/`this.aluno` e o form sem piscar a tela
+        this.carregarDados(false);
+      },
+      error: (err) => {
+        console.error('[PerfilAluno] Erro ao atualizar perfil:', err);
+        this.erro = err?.error?.error || err?.error?.message || 'Erro ao salvar seus dados.';
+        this.salvando = false;
+      }
+    });
+  }
 
   abrirCheckout(plano: 'BASIC' | 'PREMIUM'): void {
     this.perfilAlunoService.criarCheckout(plano).subscribe({
@@ -263,7 +264,7 @@ salvar(): void {
         }
       },
       error: (err) => {
-        console.error('❌ [PerfilAluno] Erro ao abrir checkout:', err);
+        console.error('[PerfilAluno] Erro ao abrir checkout:', err);
         this.erro = 'Erro ao abrir tela de pagamento.';
       }
     });

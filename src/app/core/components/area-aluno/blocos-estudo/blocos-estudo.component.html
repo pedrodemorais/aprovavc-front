@@ -22,12 +22,13 @@
           </button>
         </div>
       </div>
+       <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
+      {{ mensagemTexto }}
+    </div>
       <div class="header-badge">Total semanal: {{ totalCicloTexto }}</div>
     </div>
 
-    <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
-      {{ mensagemTexto }}
-    </div>
+   
 
     <div class="planner-edital-card" *ngIf="temEditalAtivo; else plannerEditalVazio">
       <div class="planner-edital-title">Edital ativo</div>
@@ -70,7 +71,7 @@
         class="validation-link"
         *ngFor="let invalido of blocosInvalidos"
         (click)="focoNoBlocoInvalido(invalido.index)">
-        Bloco {{ invalido.numero }} - {{ invalido.mensagem }}
+        {{ getNomeDiaSemanaSemFeira(invalido.index) }} - {{ getModuloLabel(invalido.index) }} - {{ invalido.mensagem }}
       </button>
     </div>
 

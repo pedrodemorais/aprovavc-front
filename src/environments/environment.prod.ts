@@ -1,5 +1,5 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://aprovavc.com.br/api'  // URL da API em produção
+    apiUrl: 'https://revizo.com.br/api'  // URL da API em produção
   };
   

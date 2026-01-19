@@ -21,7 +21,7 @@ export class FullWidthSliderComponent implements OnInit, OnDestroy {
     {
       image: 'assets/img/dyn.png',
       titleHtml: 'Clareza no plano.<br/>Constância no estudo.<br/>Resultado na aprovação.',
-      description: 'O AprovaVC organiza sua rotina, acompanha seu progresso e transforma esforço em aprovação real.',
+      description: 'O Revizo organiza sua rotina, acompanha seu progresso e transforma esforço em aprovação real.',
       link: '/configurador',
       buttonText: 'Começar agora'
     },

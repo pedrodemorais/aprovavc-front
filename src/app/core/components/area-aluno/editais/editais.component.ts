@@ -971,8 +971,8 @@ private mensagemTimeout: any; // para guardar o setTimeout
   }
 
   acaoEditarSelecionado(): void {
-    if (!this.editalSelecionado) return;
-    this.abrirModalVincularMaterias();
+    if (!this.editalSelecionado?.id) return;
+    this.router.navigate(['/area-restrita/cadastro-editais', this.editalSelecionado.id]);
   }
 
   acaoExcluirSelecionado(): void {

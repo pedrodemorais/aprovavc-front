@@ -4,7 +4,7 @@
       <div class="form-header">
         <div class="titulo-botoes">
           <div>
-            <h2 class="titulo-bloco">Cadastrar edital</h2>
+            <h2 class="titulo-bloco">{{ editalId ? 'Editar edital' : 'Cadastrar edital' }}</h2>
           </div>
         </div>
       </div>
@@ -73,6 +73,8 @@
             [targetStyle]="{ height: '240px' }"
             (onMoveToTarget)="onPickListMateriasChange()"
             (onMoveToSource)="onPickListMateriasChange()"
+            (onMoveAllToTarget)="onPickListMateriasChange()"
+            (onMoveAllToSource)="onPickListMateriasChange()"
             (onTargetReorder)="onPickListMateriasChange()"
           >
             <ng-template pTemplate="sourceHeader">

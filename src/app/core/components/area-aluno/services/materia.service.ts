@@ -6,6 +6,20 @@ import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
 import { environment } from 'src/environments/environment';
 
+export interface MateriaExclusaoPreview {
+  materiaId: number;
+  materiaNome: string;
+  totalTopicos: number;
+  totalRevisoesTopico: number;
+  totalEstudosTopico: number;
+  totalAnotacoesTopico: number;
+  totalFlashcards: number;
+  totalRevisoesFlashcard: number;
+  totalVinculosEditalMateria: number;
+  totalVinculosEditalTopico: number;
+  totalTopicosFinalizados: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,6 +47,10 @@ export class MateriaService {
   excluirMateria(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`)
       .pipe(tap(() => this.materiasChangedSubject.next()));
+  }
+
+  excluirMateriaPreview(id: number): Observable<MateriaExclusaoPreview> {
+    return this.http.get<MateriaExclusaoPreview>(`${this.apiUrl}/${id}/exclusao-preview`);
   }
 
   notificarMateriasAlteradas(): void {

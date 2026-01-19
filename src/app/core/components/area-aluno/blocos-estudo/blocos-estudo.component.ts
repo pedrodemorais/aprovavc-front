@@ -82,6 +82,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   private editalAtivoImagemObjectUrl: string | null = null;
   mensagemTexto = '';
   mensagemTipo: 'success' | 'error' | 'warn' | null = null;
+  private mensagemTimeoutId: number | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -115,6 +116,10 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.limparImagemEditalAtivo();
+    if (this.mensagemTimeoutId != null) {
+      window.clearTimeout(this.mensagemTimeoutId);
+      this.mensagemTimeoutId = null;
+    }
   }
 
   get itensFormArray(): FormArray<BlocoItemForm> {
@@ -191,11 +196,19 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
 
   get salvarDisabled(): boolean {
-    return this.salvando || this.form.invalid || this.temBlocosInvalidos;
+    return this.salvando || this.temBlocosInvalidos || !this.temBlocoPreenchido;
   }
 
   get temBlocosInvalidos(): boolean {
     return this.blocosInvalidos.length > 0;
+  }
+
+  get temBlocoPreenchido(): boolean {
+    return this.blocos.some((bloco) => {
+      const minutos = bloco.minutosDisponiveis ?? 0;
+      const itens = bloco.itens || [];
+      return minutos > 0 || itens.length > 0;
+    });
   }
 
   get blocosInvalidos(): Array<{ index: number; numero: number; mensagem: string }> {
@@ -575,7 +588,14 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.blocoHoraErrors[index] = null;
       return;
     }
-    this.blocoHoraInputs[index] = this.formatMinutosParaHora(resultado.minutos ?? 0);
+    const minutos = resultado.minutos ?? 0;
+    this.blocoHoraInputs[index] = this.formatMinutosParaHora(minutos);
+    this.blocoHoraErrors[index] = null;
+    bloco.minutosDisponiveis = minutos;
+    if (index === this.abaAtiva) {
+      this.form.controls.minutosDisponiveis.setValue(minutos);
+      this.form.markAsDirty();
+    }
   }
 
   formatMinutosParaHora(minutos: number): string {
@@ -718,7 +738,15 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
     this.atualizarBlocoAtualComForm();
 
-    const requests = this.blocos.map((bloco) => {
+    const blocosParaSalvar = this.blocos.filter(
+      (bloco) => (bloco.minutosDisponiveis ?? 0) > 0
+    );
+    if (blocosParaSalvar.length === 0) {
+      this.setMensagem('warn', 'Informe as horas de pelo menos um bloco.');
+      return;
+    }
+
+    const requests = blocosParaSalvar.map((bloco) => {
       const itens = this.obterItensOrdenados(bloco);
       const itensPayload = itens.map((it, idx) => ({
         id: it.id ?? undefined,
@@ -796,6 +824,14 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   private setMensagem(tipo: 'success' | 'error' | 'warn', texto: string): void {
     this.mensagemTipo = tipo;
     this.mensagemTexto = texto;
+    if (this.mensagemTimeoutId != null) {
+      window.clearTimeout(this.mensagemTimeoutId);
+    }
+    this.mensagemTimeoutId = window.setTimeout(() => {
+      this.mensagemTipo = null;
+      this.mensagemTexto = '';
+      this.mensagemTimeoutId = null;
+    }, 5000);
   }
 
   obterItensOrdenados(bloco: BlocoEstudoDTO): BlocoEstudoItemDTO[] {
@@ -828,8 +864,11 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   blocoErroMensagem(index: number): string {
     const erroFormato = this.blocoHoraErrors[index];
     if (erroFormato) return erroFormato;
-    const minutos = this.blocos[index]?.minutosDisponiveis ?? 0;
-    if (minutos <= 0) return 'Informe as horas deste bloco.';
+    const bloco = this.blocos[index];
+    if (!bloco) return '';
+    const minutos = bloco.minutosDisponiveis ?? 0;
+    const itens = bloco.itens || [];
+    if (minutos <= 0 && itens.length > 0) return 'Informe as horas deste bloco.';
     return '';
   }
 

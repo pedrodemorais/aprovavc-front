@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
-import { tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 
 
 
@@ -209,8 +209,18 @@ export class SalaEstudoService {
   }
 
   listarMateriasParaEstudo(escopo: string): Observable<MateriaTopicosDTO[]> {
-    const query = `?escopo=${encodeURIComponent(escopo || 'todas')}`;
-    return this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias${query}`);
+    const escopoFinal = (escopo || '').trim().toLowerCase();
+    if (escopoFinal && escopoFinal !== 'todas') {
+      const query = `?escopo=${encodeURIComponent(escopoFinal)}`;
+      return this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias${query}`);
+    }
+
+    return this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias`)
+      .pipe(
+        catchError(() =>
+          this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias?escopo=todas`)
+        )
+      );
   }
   splitSubtopico(subtopicoId: number, payload: SplitSubtopicoRequest): Observable<SplitSubtopicoResponse> {
     return this.http.post<SplitSubtopicoResponse>(`${this.topicosApiUrl}/${subtopicoId}/split`, payload);

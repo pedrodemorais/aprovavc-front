@@ -2,7 +2,7 @@ import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { SalaEstudoService } from '../services/sala-estudo.service';
+import { MateriaTopicosDTO, SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
 import { EditalService  } from '../services/edital.service';
 import { EditalTemplateService } from '../services/edital-template.service';
@@ -25,6 +25,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
   revisoes: RevisaoDashboardItem[] = [];
   materias: Materia[] = [];
+  materiasParaEstudoCount = 0;
   editais: Edital[] = [];
   activeEditais: Edital[] = [];
   mostrarGuia = false;
@@ -114,13 +115,16 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     forkJoin({
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
       materias: this.materiaService.listarMaterias(),
+      materiasParaEstudo: this.salaEstudoService.listarMateriasParaEstudo('todas')
+        .pipe(catchError(() => of([] as MateriaTopicosDTO[]))),
       editais: this.editalService.listar(),
       plano: this.blocosEstudoService.planoDoDia().pipe(catchError(() => of(null))),
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe({
-      next: ({ revisoes, materias, editais, plano, blocos }) => {
+      next: ({ revisoes, materias, materiasParaEstudo, editais, plano, blocos }) => {
         this.revisoes = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
         this.materias = materias || [];
+        this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
         this.editais = editais || [];
         this.planoDoDia = plano;
         this.atualizarTotais();
@@ -147,6 +151,17 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         this.carregando = false;
       }
     });
+  }
+
+  private contarMateriasParaEstudo(lista: MateriaTopicosDTO[] | null | undefined): number {
+    const ids = new Set<number>();
+    (lista || []).forEach((item) => {
+      const id = Number(item?.materiaId);
+      if (Number.isFinite(id) && id > 0) {
+        ids.add(id);
+      }
+    });
+    return ids.size;
   }
 
   get editalPrincipal(): Edital | null {
@@ -661,6 +676,35 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
   getEditalCargo(edital: Edital): string {
     return String((edital as any)?.cargo || '').trim();
+  }
+
+  getSiglaEdital(nome?: string | null): string {
+    const texto = String(nome || '').trim();
+    if (!texto) {
+      return '-';
+    }
+
+    const ignorar = new Set([
+      'de', 'da', 'do', 'das', 'dos',
+      'e', 'em', 'no', 'na', 'nos', 'nas',
+      'por', 'para', 'ao', 'a', 'o'
+    ]);
+
+    const partes = texto
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const sigla = partes
+      .filter((p) => !ignorar.has(p.toLowerCase()))
+      .map((p) => p[0])
+      .join('');
+
+    if (sigla) {
+      return sigla.toUpperCase();
+    }
+
+    return texto[0].toUpperCase();
   }
 
   abrirGuia(): void {

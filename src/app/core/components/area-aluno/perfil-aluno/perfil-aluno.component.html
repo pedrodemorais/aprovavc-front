@@ -1,38 +1,40 @@
 <div class="page-perfil" *ngIf="!carregando; else loadingTpl">
   <div class="conteudo">
+    <!-- CABECALHO -->
 
-    <!-- CABEÇALHO -->
-   
-
-    <!-- CONTEÚDO PRINCIPAL -->
+    <!-- CONTEUDO PRINCIPAL -->
     <div class="perfil-layout">
-
       <!-- DADOS DO ALUNO -->
       <section class="card card-perfil">
-        <!-- CARTÃO DE ASSINATURA -->
- <div class="perfil-header">
-      <div>
-        <div class="perfil-title-row">
-          <h1 class="perfil-titulo">Meus dados</h1>
-          <i
-            class="pi pi-info-circle info-icon"
-            pTooltip="Veja e atualize suas informaÇõÇæes de cadastro e acompanhe o status da sua assinatura."
-            tooltipPosition="right"
-            [showDelay]="150"
-            [hideDelay]="80"
-            tabindex="0"
-            aria-label="Ajuda"
-          ></i>
+        <!-- CARTAO DE ASSINATURA -->
+        <div class="perfil-header">
+          <div>
+            <div class="perfil-title-row">
+              <h1 class="perfil-titulo">Meus dados</h1>
+              <i
+                class="pi pi-info-circle info-icon"
+                pTooltip="Veja e atualize suas informações de cadastro e acompanhe o status da sua assinatura."
+                tooltipPosition="right"
+                [showDelay]="150"
+                [hideDelay]="80"
+                tabindex="0"
+                aria-label="Ajuda"
+              ></i>
+              <span *ngIf="erro" class="msg msg-erro msg-inline">
+                {{ erro }}
+              </span>
+              <span *ngIf="mensagemSucesso" class="msg msg-sucesso msg-inline">
+                {{ mensagemSucesso }}
+              </span>
+            </div>
+            <p class="perfil-sub">
+              Veja e atualize suas informações de cadastro e acompanhe o status da sua assinatura.
+            </p>
+          </div>
         </div>
-        <p class="perfil-sub">
-          Veja e atualize suas informações de cadastro e acompanhe o status da sua assinatura.
-        </p>
-      </div>
-    </div>
-   <!-- MENSAGENS -->
-        
-        <div class="assinatura">
+        <!-- MENSAGENS -->
 
+        <div class="assinatura">
           <aside *ngIf="usuario">
             <div class="nome-botoes">
               <div class="assinatura-titulo">
@@ -67,9 +69,9 @@
             </div>
 
             <div class="linha-assinatura" *ngIf="statusAssinatura === 'TRIAL' && dataExpiracaoLicenca">
-              <span class="label">Periodo de teste</span>
+              <span class="label">Período de teste</span>
               <span class="valor">
-                ate {{ dataExpiracaoLicenca | date:'dd/MM/yyyy' }}
+                até {{ dataExpiracaoLicenca | date:'dd/MM/yyyy' }}
                 <ng-container *ngIf="diasRestantes !== null">
                   ({{ diasRestantes }} dia{{ diasRestantes === 1 ? '' : 's' }} restante{{ diasRestantes === 1 ? '' : 's' }})
                 </ng-container>
@@ -85,16 +87,13 @@
               Sua assinatura expirou. Fale com o suporte para reativar o plano.
             </p>
             <p class="texto-ajuda">
-              Sua assinatura e processada com seguranca via Stripe.
+              Sua assinatura é processada com segurança via Stripe.
             </p>
             <div class="separador"></div>
-
-
           </aside>
-
         </div>
-        <form [formGroup]="perfilForm" (ngSubmit)="salvar()" class="perfil-form">
 
+        <form [formGroup]="perfilForm" (ngSubmit)="salvar()" class="perfil-form">
           <div class="linha-form">
             <div class="campo">
               <label>Nome</label>
@@ -112,9 +111,6 @@
             </div>
           </div>
 
-
-
-
           <h3 class="subtitulo-secao">Endereço</h3>
 
           <div formGroupName="endereco">
@@ -123,7 +119,6 @@
                 <label>Logradouro</label>
                 <input type="text" formControlName="logradouro" />
               </div>
-
             </div>
 
             <div class="linha-form">
@@ -158,31 +153,19 @@
               </div>
             </div>
           </div>
+
           <div class="separador"></div>
           <div class="acoes-form">
-            <span *ngIf="erro" class="msg msg-erro msg-inline">
-              {{ erro }}
-            </span>
-            <span *ngIf="mensagemSucesso" class="msg msg-sucesso msg-inline">
-              {{ mensagemSucesso }}
-            </span>
             <div class="segmented-group">
-              <button type="submit" class="segmented-btn">
-                Salvar alterações
+              <button type="submit" class="segmented-btn" [disabled]="salvando || perfilForm.invalid">
+                {{ salvando ? 'Salvando...' : 'Salvar' }}
               </button>
             </div>
           </div>
-
         </form>
       </section>
-
-
-
     </div>
-
   </div>
-
-
 </div>
 
 <ng-template #loadingTpl>

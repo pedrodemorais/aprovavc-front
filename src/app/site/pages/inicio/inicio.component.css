@@ -391,13 +391,13 @@
   border-color: #bbf7d0;
 }
 
-.home-page .logo-aprovavc-diferente {
+.home-page .logo-revizo-diferente {
   display: flex;
   justify-content: center;
   margin-bottom: 12px;
 }
 
-.home-page .logo-aprovavc-diferente .logo-img {
+.home-page .logo-revizo-diferente .logo-img {
   height: 40px;
 }
 

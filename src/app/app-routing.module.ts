@@ -66,6 +66,7 @@ const routes: Routes = [
       { path: 'blocos-estudo', component: BlocosEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'progresso', component: ProgressoComponent, canActivate: [PlanoAtivoGuard] },
         { path: 'revisoes', component: RevisoesComponent },
+        { path: 'cadastro-editais/:id', component: CadastroEditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
         { path: 'cadastro-editais', component: CadastroEditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
         { path: 'editais', component: EditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
       { path: 'sala-estudo/:materiaId', component: SalaEstudoComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },

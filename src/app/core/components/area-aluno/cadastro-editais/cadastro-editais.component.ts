@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CanComponentDeactivate } from '../guards/estudo-em-andamento.guard';
 import { EditalFormPayload, EditalService } from '../services/edital.service';
@@ -24,6 +24,9 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
   materias: Materia[] = [];
   materiasDisponiveis: Materia[] = [];
   materiasSelecionadas: Materia[] = [];
+  editalId: number | null = null;
+  carregandoEdital = false;
+  private editalCarregado = false;
   temMudancasNaoSalvas = false;
   private ignorarMudancasFormulario = false;
   private formChangesSub?: Subscription;
@@ -32,11 +35,27 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
     private editalService: EditalService,
     private materiaService: MateriaService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.montarForm();
+    this.route.paramMap.subscribe((params) => {
+      const raw = params.get('id');
+      const id = raw ? Number(raw) : null;
+      const novoId = Number.isFinite(id) ? id : null;
+      if (novoId !== this.editalId) {
+        this.editalCarregado = false;
+      }
+      this.editalId = novoId;
+      if (this.editalId) {
+        this.carregarEdital();
+      } else {
+        this.editalCarregado = false;
+        this.resetarFormulario();
+      }
+    });
     this.carregarMaterias();
   }
 
@@ -84,11 +103,48 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
         this.materias = lista || [];
         this.atualizarPickListMaterias();
         this.carregandoMaterias = false;
+        if (this.editalId && !this.editalCarregado) {
+          this.carregarEdital();
+        }
       },
       error: (err) => {
         console.error('[CADASTRO-EDITAIS] Erro ao carregar matérias:', err);
         this.erro = 'Erro ao carregar suas matérias.';
         this.carregandoMaterias = false;
+      }
+    });
+  }
+
+  private carregarEdital(): void {
+    if (!this.editalId || this.carregandoEdital) {
+      return;
+    }
+    this.carregandoEdital = true;
+    this.editalService.buscarPorId(this.editalId).subscribe({
+      next: (edital) => {
+        const materiasIds = (edital?.materias || [])
+          .map((m) => m?.materiaId)
+          .filter((id): id is number => Number.isFinite(id as number));
+
+        this.aplicarSemRastrearMudancas(() => {
+          this.form.patchValue({
+            nome: edital?.nome || '',
+            cargo: edital?.cargo || '',
+            descricao: edital?.descricao || '',
+            dataProva: edital?.dataProva || null,
+            materiasIds
+          });
+        });
+
+        this.editalCarregado = true;
+        this.temMudancasNaoSalvas = false;
+        this.atualizarPickListMaterias();
+        this.carregandoEdital = false;
+      },
+      error: (err) => {
+        console.error('[CADASTRO-EDITAIS] Erro ao carregar edital:', err);
+        this.erro = 'Erro ao carregar o edital.';
+        this.carregandoEdital = false;
       }
     });
   }
@@ -117,12 +173,20 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
       materiasIds
     };
 
-    this.editalService.criar(payload).subscribe({
+    const obs = this.editalId
+      ? this.editalService.atualizar(this.editalId, payload)
+      : this.editalService.criar(payload);
+
+    obs.subscribe({
       next: () => {
         this.salvando = false;
-      this.mensagemSucesso = 'Edital salvo com sucesso.';
+        this.mensagemSucesso = this.editalId ? 'Edital atualizado com sucesso.' : 'Edital salvo com sucesso.';
         this.iniciarTimeoutMensagem();
-        this.resetarFormulario();
+        if (this.editalId) {
+          this.temMudancasNaoSalvas = false;
+        } else {
+          this.resetarFormulario();
+        }
       },
       error: (err) => {
         console.error('[CADASTRO-EDITAIS] Erro ao salvar edital:', err);
