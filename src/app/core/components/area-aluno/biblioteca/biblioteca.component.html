@@ -33,7 +33,8 @@
 
       <div class="controle controle-busca">
         <label for="buscaInput">Buscar</label>
-        <input id="buscaInput" type="text" [(ngModel)]="termoBusca" placeholder="Buscar por texto..." />
+        <input id="buscaInput" type="text" [(ngModel)]="termoBusca" (input)="onBuscaChange()"
+               placeholder="Buscar por texto..." />
       </div>
     </div>
   </header>
@@ -53,17 +54,17 @@
           Carregando resumos...
         </div>
 
-        <div class="lista-vazia" *ngIf="!carregandoResumos && !resumoFiltrado.length">
+        <div class="lista-vazia" *ngIf="!carregandoResumos && !resumosDisponiveis.length">
           Nenhum resumo encontrado para os filtros atuais.
         </div>
 
-        <ul class="resumo-lista" *ngIf="!carregandoResumos && resumoFiltrado.length">
-          <li class="resumo-item" *ngFor="let t of resumoFiltrado">
+        <ul class="resumo-lista" *ngIf="!carregandoResumos && resumosDisponiveis.length">
+          <li class="resumo-item" *ngFor="let t of resumosDisponiveis">
             <div class="resumo-info">
-              <strong>{{ t.descricao }}</strong>
-              <span>Resumo do topico</span>
+              <strong>{{ t.topicoDescricao }}</strong>
+              <span>Materia: {{ t.materiaNome }}</span>
             </div>
-            <button type="button" class="resumo-btn" (click)="abrirResumo(t.id)">Abrir resumo</button>
+            <button type="button" class="resumo-btn" (click)="abrirResumo(t)">Abrir resumo</button>
           </li>
         </ul>
       </ng-container>
@@ -73,12 +74,12 @@
           Carregando flashcards...
         </div>
 
-        <div class="lista-vazia" *ngIf="!carregandoFlashcards && !flashcardsFiltrados.length">
+        <div class="lista-vazia" *ngIf="!carregandoFlashcards && !flashcards.length">
           Nenhum flashcard encontrado para os filtros atuais.
         </div>
 
-        <ul class="flashcard-lista" *ngIf="!carregandoFlashcards && flashcardsFiltrados.length">
-          <li class="flashcard-item" *ngFor="let f of flashcardsFiltrados">
+        <ul class="flashcard-lista" *ngIf="!carregandoFlashcards && flashcards.length">
+          <li class="flashcard-item" *ngFor="let f of flashcards">
             <div class="flashcard-frente">{{ f.frente }}</div>
             <div class="flashcard-verso">{{ f.verso }}</div>
             <div class="flashcard-meta">

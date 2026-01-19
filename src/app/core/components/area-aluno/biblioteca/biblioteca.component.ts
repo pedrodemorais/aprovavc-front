@@ -2,10 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
-import { FlashcardDTO } from '../models/FlashcardDTO';
-import { SalaEstudoService, MateriaTopicosDTO } from '../services/sala-estudo.service';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { SalaEstudoService, MateriaTopicosDTO, BibliotecaFlashcardDTO, BibliotecaResumoDTO } from '../services/sala-estudo.service';
 
 type BibliotecaModo = 'resumos' | 'flashcards';
 
@@ -28,8 +25,9 @@ export class BibliotecaComponent implements OnInit {
   carregandoResumos = false;
   erro?: string;
 
-  flashcards: FlashcardDTO[] = [];
-  resumosDisponiveis: Array<Topico & { resumoTexto?: string }> = [];
+  flashcards: BibliotecaFlashcardDTO[] = [];
+  resumosDisponiveis: BibliotecaResumoDTO[] = [];
+  private buscaTimer?: any;
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -62,6 +60,11 @@ export class BibliotecaComponent implements OnInit {
 
         this.materias = materias;
         this.carregando = false;
+        if (this.modo === 'resumos') {
+          this.carregarResumosDisponiveis();
+        } else {
+          this.carregarFlashcards();
+        }
       },
       error: (err) => {
         console.error('[BIBLIOTECA] Erro ao carregar materias:', err);
@@ -85,9 +88,7 @@ export class BibliotecaComponent implements OnInit {
   }
 
   onTopicoChange(): void {
-    if (this.modo === 'flashcards') {
-      this.carregarFlashcards();
-    }
+    this.recarregarLista();
   }
 
   trocarModo(novoModo: BibliotecaModo): void {
@@ -95,18 +96,21 @@ export class BibliotecaComponent implements OnInit {
       return;
     }
     this.modo = novoModo;
-    if (this.modo === 'flashcards') {
-      this.carregarFlashcards();
-    } else {
-      this.carregarResumosDisponiveis();
-    }
+    this.recarregarLista();
   }
 
-  abrirResumo(topicoId?: number | null): void {
-    if (!topicoId) return;
-    const materiaId = this.materiaSelecionadaId;
+  onBuscaChange(): void {
+    if (this.buscaTimer) {
+      clearTimeout(this.buscaTimer);
+    }
+    this.buscaTimer = setTimeout(() => this.recarregarLista(), 350);
+  }
+
+  abrirResumo(item: BibliotecaResumoDTO): void {
+    if (!item?.topicoId) return;
+    const materiaId = item.materiaId;
     this.router.navigate(
-      ['/area-restrita/biblioteca/resumo', topicoId],
+      ['/area-restrita/biblioteca/resumo', item.topicoId],
       { queryParams: materiaId ? { materiaId } : undefined }
     );
   }
@@ -124,67 +128,17 @@ export class BibliotecaComponent implements OnInit {
     return this.folhasTopicos(this.topicosDisponiveis);
   }
 
-  get resumoFiltrado(): Array<Topico & { resumoTexto?: string }> {
-    const termo = (this.termoBusca || '').trim().toLowerCase();
-    let base = this.resumosDisponiveis;
-    if (this.topicoSelecionadoId) {
-      base = base.filter(t => t.id === this.topicoSelecionadoId);
-    }
-    if (!termo) return base;
-    return base.filter((t) => {
-      const desc = (t.descricao || '').toLowerCase();
-      const texto = (t.resumoTexto || '').toLowerCase();
-      return desc.includes(termo) || texto.includes(termo);
-    });
-  }
-
-  get flashcardsFiltrados(): FlashcardDTO[] {
-    const termo = (this.termoBusca || '').trim().toLowerCase();
-    if (!termo) return this.flashcards;
-    return (this.flashcards || []).filter((f) => {
-      const frente = (f.frente || '').toLowerCase();
-      const verso = (f.verso || '').toLowerCase();
-      const tags = (f.tags || '').toLowerCase();
-      return frente.includes(termo) || verso.includes(termo) || tags.includes(termo);
-    });
-  }
-
   private carregarFlashcards(): void {
     this.flashcards = [];
-
     this.carregandoFlashcards = true;
-    const topicos = this.folhasTopicos(this.topicosDisponiveis);
 
-    const topicoId = this.topicoSelecionadoId;
-    if (topicoId) {
-      this.salaEstudoService.listarFlashcardsPorTopico(topicoId).subscribe({
-        next: (lista) => {
-          this.flashcards = lista || [];
-          this.carregandoFlashcards = false;
-        },
-        error: (err) => {
-          console.error('[BIBLIOTECA] Erro ao carregar flashcards:', err);
-          this.carregandoFlashcards = false;
-        }
-      });
-      return;
-    }
-
-    const requisicoes = topicos
-      .map((t) => t.id)
-      .filter((id): id is number => Number.isFinite(id))
-      .map((id) =>
-        this.salaEstudoService.listarFlashcardsPorTopico(id).pipe(catchError(() => of([])))
-      );
-
-    if (!requisicoes.length) {
-      this.carregandoFlashcards = false;
-      return;
-    }
-
-    forkJoin(requisicoes).subscribe({
-      next: (listas) => {
-        this.flashcards = (listas || []).flat();
+    this.salaEstudoService.listarBibliotecaFlashcards({
+      materiaId: this.materiaSelecionadaId,
+      topicoId: this.topicoSelecionadoId,
+      termo: this.termoBusca
+    }).subscribe({
+      next: (lista) => {
+        this.flashcards = lista || [];
         this.carregandoFlashcards = false;
       },
       error: (err) => {
@@ -196,52 +150,30 @@ export class BibliotecaComponent implements OnInit {
 
   private carregarResumosDisponiveis(): void {
     this.resumosDisponiveis = [];
-
-    const folhas = this.folhasTopicos(this.topicosDisponiveis)
-      .filter((t) => Number.isFinite(t.id)) as Topico[];
-
-    if (!folhas.length) {
-      return;
-    }
-
     this.carregandoResumos = true;
 
-    const requisicoes = folhas.map((t) =>
-      this.salaEstudoService.buscarAnotacoes(t.id as number).pipe(
-        map((resp) => this.extrairResumo(resp?.anotacoes)),
-        catchError(() => of({ hasResumo: false, texto: '' }))
-      )
-    );
-
-    forkJoin(requisicoes).subscribe({
-      next: (infos) => {
-        this.resumosDisponiveis = folhas
-          .map((t, idx) => ({ ...t, resumoTexto: infos[idx]?.texto || '' }))
-          .filter((_, idx) => !!infos[idx]?.hasResumo);
+    this.salaEstudoService.listarBibliotecaResumos({
+      materiaId: this.materiaSelecionadaId,
+      topicoId: this.topicoSelecionadoId,
+      termo: this.termoBusca
+    }).subscribe({
+      next: (lista) => {
+        this.resumosDisponiveis = lista || [];
         this.carregandoResumos = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('[BIBLIOTECA] Erro ao carregar resumos:', err);
         this.carregandoResumos = false;
       }
     });
   }
 
-  private folhasTopicos(lista: Topico[]): Topico[] {
-    const out: Topico[] = [];
-    const walk = (t: Topico) => {
-      const filhos = t?.filhos || [];
-      if (filhos.length) filhos.forEach(walk);
-      else out.push(t);
-    };
-    (lista || []).forEach(walk);
-    return out;
-  }
-
-  private extrairResumo(anotacoes?: string | null): { hasResumo: boolean; texto: string } {
-    const raw = String(anotacoes || '');
-    const semTags = raw.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ');
-    const texto = semTags.replace(/\s+/g, ' ').trim();
-    return { hasResumo: texto.length > 0, texto };
+  private recarregarLista(): void {
+    if (this.modo === 'flashcards') {
+      this.carregarFlashcards();
+    } else {
+      this.carregarResumosDisponiveis();
+    }
   }
 
   private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {

@@ -1,6 +1,6 @@
 // src/app/core/services/sala-estudo.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FlashcardDTO } from '../models/FlashcardDTO';
@@ -94,6 +94,28 @@ export interface MateriaTopicosDTO {
   materiaId: number;
   materiaNome: string;
   topicos: any[];
+}
+export interface BibliotecaResumoDTO {
+  materiaId: number;
+  materiaNome: string;
+  topicoId: number;
+  topicoDescricao: string;
+  temResumo: boolean;
+  resumoTexto?: string;
+  updatedAt?: string;
+}
+
+export interface BibliotecaFlashcardDTO {
+  materiaId: number;
+  materiaNome: string;
+  topicoId: number;
+  topicoDescricao: string;
+  flashcardId: number;
+  frente: string;
+  verso: string;
+  tags?: string;
+  dificuldade: 'MUITO_FACIL' | 'FACIL' | 'MEDIA' | 'DIFICIL' | 'MUITO_DIFICIL';
+  updatedAt?: string;
 }
 export interface SplitSubtopicoRequest {
   novosSubtopicos: string[];
@@ -221,6 +243,36 @@ export class SalaEstudoService {
           this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias?escopo=todas`)
         )
       );
+  }
+
+  listarBibliotecaResumos(params?: { materiaId?: number | null; topicoId?: number | null; termo?: string | null })
+    : Observable<BibliotecaResumoDTO[]> {
+    let httpParams = new HttpParams();
+    if (params?.materiaId) {
+      httpParams = httpParams.set('materiaId', String(params.materiaId));
+    }
+    if (params?.topicoId) {
+      httpParams = httpParams.set('topicoId', String(params.topicoId));
+    }
+    if (params?.termo) {
+      httpParams = httpParams.set('termo', String(params.termo));
+    }
+    return this.http.get<BibliotecaResumoDTO[]>(`${this.apiUrl}/biblioteca/resumos`, { params: httpParams });
+  }
+
+  listarBibliotecaFlashcards(params?: { materiaId?: number | null; topicoId?: number | null; termo?: string | null })
+    : Observable<BibliotecaFlashcardDTO[]> {
+    let httpParams = new HttpParams();
+    if (params?.materiaId) {
+      httpParams = httpParams.set('materiaId', String(params.materiaId));
+    }
+    if (params?.topicoId) {
+      httpParams = httpParams.set('topicoId', String(params.topicoId));
+    }
+    if (params?.termo) {
+      httpParams = httpParams.set('termo', String(params.termo));
+    }
+    return this.http.get<BibliotecaFlashcardDTO[]>(`${this.apiUrl}/biblioteca/flashcards`, { params: httpParams });
   }
   splitSubtopico(subtopicoId: number, payload: SplitSubtopicoRequest): Observable<SplitSubtopicoResponse> {
     return this.http.post<SplitSubtopicoResponse>(`${this.topicosApiUrl}/${subtopicoId}/split`, payload);

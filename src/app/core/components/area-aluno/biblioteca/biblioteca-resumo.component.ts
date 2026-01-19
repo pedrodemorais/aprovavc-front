@@ -1,11 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { SalaEstudoService, MateriaTopicosDTO } from '../services/sala-estudo.service';
+import { SalaEstudoService, BibliotecaResumoDTO } from '../services/sala-estudo.service';
 import { Topico } from '../models/topico.model';
 import { Materia } from '../models/materia.model';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 
 type ResumoItem = {
   topicoId: number;
@@ -84,58 +82,24 @@ export class BibliotecaResumoComponent implements OnInit {
     this.resumos = [];
     this.resumoIndex = -1;
 
-    this.salaEstudoService.listarMateriasParaEstudo('todas').subscribe({
-      next: (lista) => {
-        const itens: ResumoItem[] = [];
-
-        (lista || []).forEach((item: MateriaTopicosDTO) => {
-          const materiaId = Number(item?.materiaId);
-          const materiaNome = String(item?.materiaNome || '').trim();
-          if (!Number.isFinite(materiaId) || materiaId <= 0 || !materiaNome) {
-            return;
-          }
-          if (this.materiaFiltroId && materiaId !== this.materiaFiltroId) {
-            return;
-          }
-          const folhas = this.folhasTopicos((item?.topicos || [])).filter((t) => Number.isFinite(t.id));
-          folhas.forEach((t) => {
-            itens.push({
-              topicoId: t.id as number,
-              topicoDescricao: t.descricao,
-              materiaId,
-              materiaNome
-            });
-          });
-        });
-
-        if (!itens.length) {
-          this.carregando = false;
+    this.salaEstudoService.listarBibliotecaResumos({
+      materiaId: this.materiaFiltroId
+    }).subscribe({
+      next: (lista: BibliotecaResumoDTO[]) => {
+        this.resumos = (lista || []).map((item) => ({
+          topicoId: item.topicoId,
+          topicoDescricao: item.topicoDescricao,
+          materiaId: item.materiaId,
+          materiaNome: item.materiaNome
+        }));
+        this.carregando = false;
+        if (!this.resumos.length) {
           return;
         }
-
-        const requisicoes = itens.map((item) =>
-          this.salaEstudoService.buscarAnotacoes(item.topicoId).pipe(
-            map((resp) => this.temResumo(resp?.anotacoes)),
-            catchError(() => of(false))
-          )
-        );
-
-        forkJoin(requisicoes).subscribe({
-          next: (flags) => {
-            this.resumos = itens.filter((_, idx) => !!flags[idx]);
-            this.carregando = false;
-            if (!this.resumos.length) {
-              return;
-            }
-            const idxInicial = this.topicoIdInicial
-              ? this.resumos.findIndex((r) => r.topicoId === this.topicoIdInicial)
-              : 0;
-            this.definirResumoAtual(idxInicial >= 0 ? idxInicial : 0);
-          },
-          error: () => {
-            this.carregando = false;
-          }
-        });
+        const idxInicial = this.topicoIdInicial
+          ? this.resumos.findIndex((r) => r.topicoId === this.topicoIdInicial)
+          : 0;
+        this.definirResumoAtual(idxInicial >= 0 ? idxInicial : 0);
       },
       error: () => {
         this.erro = 'Erro ao carregar resumos.';
@@ -166,37 +130,4 @@ export class BibliotecaResumoComponent implements OnInit {
     this.carregarResumo(item.topicoId);
   }
 
-  private folhasTopicos(lista: any[]): Topico[] {
-    const out: Topico[] = [];
-    const walk = (t: any) => {
-      const filhos = t?.subtopicos || t?.filhos || [];
-      if (filhos.length) filhos.forEach(walk);
-      else {
-        const idRaw =
-          t?.id ??
-          t?.topicoId ??
-          t?.subtopicoId ??
-          t?.idTopico ??
-          t?.idSubtopico ??
-          null;
-        const id = Number(idRaw);
-        if (!Number.isFinite(id) || id <= 0) return;
-        out.push({
-          id,
-          descricao: t?.descricao,
-          nivel: t?.nivel ?? 0,
-          ativo: t?.ativo ?? true,
-          filhos: []
-        } as Topico);
-      }
-    };
-    (lista || []).forEach(walk);
-    return out;
-  }
-
-  private temResumo(anotacoes?: string | null): boolean {
-    const raw = String(anotacoes || '');
-    const semTags = raw.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ');
-    return semTags.trim().length > 0;
-  }
 }
