@@ -101,15 +101,15 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // KPIs topo (baseado na lista filtrada)
   // ==========================
   get qtdAtrasadas(): number {
-    return this.materiasFiltradas.reduce((acc, m) => this.getStatusRevisaoMateria(m) === 'ATRASADA' ? acc + 1 : acc, 0);
+    return this.materiasFiltradas.reduce((acc, m) => acc + this.getResumoMateriaLinha(m).atrasadas, 0);
   }
 
   get qtdHoje(): number {
-    return this.materiasFiltradas.reduce((acc, m) => this.getStatusRevisaoMateria(m) === 'HOJE' ? acc + 1 : acc, 0);
+    return this.materiasFiltradas.reduce((acc, m) => acc + this.getResumoMateriaLinha(m).hoje, 0);
   }
 
   get qtdEmDia(): number {
-    return this.materiasFiltradas.reduce((acc, m) => this.getStatusRevisaoMateria(m) === 'FUTURA' ? acc + 1 : acc, 0);
+    return this.materiasFiltradas.reduce((acc, m) => acc + this.getResumoMateriaLinha(m).emDia, 0);
   }
 
   // ==========================
@@ -682,6 +682,11 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   private getStatusRevisaoTopico(topico: Topico): StatusRevisao {
+    const statusDto = (topico as any)?.statusRevisao;
+    if (statusDto === 'ATRASADA' || statusDto === 'HOJE' || statusDto === 'FUTURA' || statusDto === 'SEM') {
+      return statusDto;
+    }
+
     if ((topico as any).id && this.revisoesPorTopico.has((topico as any).id)) {
       return this.revisoesPorTopico.get((topico as any).id)!.status;
     }
@@ -963,6 +968,29 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     const materiaId = this.asId((m as any)?.id ?? (m as any)?.materiaId);
     if (!materiaId) {
       return { total: 0, concluidas: 0, atrasadas: 0, hoje: 0, emDia: 0 };
+    }
+
+    const topicosMateria = this.topicosPorMateria.get(materiaId) || [];
+    if (topicosMateria.length) {
+      const folhas = this.folhasTopicos(topicosMateria);
+      let total = 0;
+      let concluidas = 0;
+      let atrasadas = 0;
+      let hoje = 0;
+      let emDia = 0;
+
+      folhas.forEach((t) => {
+        const id = (t as any)?.id;
+        if (id && this.concluidosPorTopico.has(id)) concluidas++;
+        total++;
+
+        const st = this.getStatusRevisaoTopico(t);
+        if (st === 'ATRASADA') atrasadas++;
+        else if (st === 'HOJE') hoje++;
+        else if (st === 'FUTURA') emDia++;
+      });
+
+      return { total, concluidas, atrasadas, hoje, emDia };
     }
 
     let total = 0;

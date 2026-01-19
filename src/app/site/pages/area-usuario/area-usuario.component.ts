@@ -318,6 +318,13 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
          
           
         },
+        {
+          label: 'Biblioteca',
+          icon: 'pi pi-bookmark',
+          routerLink: ['/area-restrita/biblioteca'],
+          disabled: isLocked || !this.hasMaterias,
+          title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+        },
 
 
         
@@ -458,9 +465,21 @@ private atualizarAdminDoToken(): void {
   private inicializarAudioFoco(): void {
     if (!this.audioFoco) {
       this.audioFoco = new Audio();
+      this.audioFoco.preload = 'auto';
       this.audioFoco.loop = true;
       this.audioFoco.volume = this.volumeSomFoco;
     }
+  }
+
+  private pararSomFoco(): void {
+    if (!this.audioFoco) {
+      this.somAtivoId = null;
+      return;
+    }
+
+    this.audioFoco.pause();
+    this.audioFoco.currentTime = 0;
+    this.somAtivoId = null;
   }
 
   private tocarSom(somId: string): void {
@@ -476,15 +495,18 @@ private atualizarAdminDoToken(): void {
 
     // se já está tocando esse mesmo som, parar
     if (this.somAtivoId === somId) {
-      this.audioFoco.pause();
-      this.somAtivoId = null;
+      this.pararSomFoco();
       return;
     }
 
     // troca a fonte, garante loop e reseta o tempo
+    this.audioFoco.pause();
     this.audioFoco.src = som.arquivo;
     this.audioFoco.currentTime = 0;
     this.audioFoco.loop = true; // reforça o loop sempre que troca o som
+
+    this.audioFoco.load();
+    this.somAtivoId = somId;
 
     // fallback manual pro caso de algum navegador ignorar o loop
     this.audioFoco.onended = () => {
@@ -498,9 +520,6 @@ private atualizarAdminDoToken(): void {
 
     this.audioFoco
       .play()
-      .then(() => {
-        this.somAtivoId = somId;
-      })
       .catch(err => {
         console.error('Erro ao tocar áudio de foco:', err);
         this.somAtivoId = null;

@@ -1,5 +1,5 @@
 import { FlashcardDTO } from '../models/FlashcardDTO';
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MateriaService } from '../services/materia.service';
 import { Materia } from '../models/materia.model';
@@ -14,7 +14,7 @@ type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
   templateUrl: './sala-estudo.component.html',
   styleUrls: ['./sala-estudo.component.css']
 })
-export class SalaEstudoComponent implements OnInit {
+export class SalaEstudoComponent implements OnInit, OnDestroy {
   mensagemRevisao?: string;
   materiaId!: number;
   materia?: Materia;
@@ -29,6 +29,14 @@ export class SalaEstudoComponent implements OnInit {
   pausarAoSairDaAba = true;
   private readonly pausarAoSairDaAbaKey = 'sala-estudo:pausar-ao-sair-aba';
   private topicosFinalizados = new Set<number>();
+
+  @ViewChild('flashcardModal', { static: false }) flashcardModalRef?: ElementRef<HTMLElement>;
+  @ViewChild('flashcardOverlay', { static: false }) flashcardOverlayRef?: ElementRef<HTMLElement>;
+  flashcardModalPos = { x: 0, y: 0 };
+  flashcardModalDragging = false;
+  private flashcardDragOffset = { x: 0, y: 0 };
+  private quillEditor?: any;
+  private ultimoTrechoSelecionado = '';
 
   topicos: any[] = [];
   topicoSelecionado?: any | null;
@@ -153,7 +161,8 @@ export class SalaEstudoComponent implements OnInit {
     private materiaService: MateriaService,
     private salaEstudoService: SalaEstudoService,
     private blocosService: BlocosEstudoService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private ngZone: NgZone
   ) {}
 
   // ================================================================
@@ -186,10 +195,21 @@ export class SalaEstudoComponent implements OnInit {
 
   onEditorInit(event: any) {
     const quill = event?.editor || event;
+    this.quillEditor = quill;
 
     // Remove qualquer IMG que venha do clipboard (inclui base64)
     quill.clipboard.addMatcher('IMG', () => {
       return { ops: [] };
+    });
+
+    quill.on('selection-change', (range: { index: number; length: number } | null) => {
+      if (!range || range.length <= 0) {
+        return;
+      }
+      const texto = quill.getText(range.index, range.length);
+      if (texto) {
+        this.ultimoTrechoSelecionado = texto.trim();
+      }
     });
 
     // Bloqueia drop de imagem
@@ -912,6 +932,8 @@ ativarRevisaoFlashcards(): void {
 
     this.mostrarModalFlashcard = true;
     this.onFlashcardTipoChange(this.flashcardTipo);
+    setTimeout(() => this.centralizarModalFlashcard());
+    this.preencherFlashcardFrenteComSelecao();
 
     if (!this.flashcardTags && this.materia && this.topicoSelecionado) {
       this.flashcardTags =
@@ -921,6 +943,118 @@ ativarRevisaoFlashcards(): void {
 
   fecharModalFlashcard(): void {
     this.mostrarModalFlashcard = false;
+    this.encerrarArrasteFlashcard();
+  }
+
+  private obterTrechoSelecionado(): string {
+    if (this.quillEditor) {
+      const range = this.quillEditor.getSelection();
+      if (range && range.length > 0) {
+        const texto = this.quillEditor.getText(range.index, range.length);
+        return texto ? texto.trim() : '';
+      }
+    }
+
+    return this.ultimoTrechoSelecionado;
+  }
+
+  private preencherFlashcardFrenteComSelecao(): void {
+    const trecho = this.obterTrechoSelecionado();
+    if (!trecho) {
+      return;
+    }
+
+    this.flashcardFrente = trecho;
+  }
+
+  iniciarArrasteFlashcard(event: PointerEvent): void {
+    if (event.button !== 0) {
+      return;
+    }
+
+    const alvo = event.target as HTMLElement | null;
+    if (alvo?.closest('.flashcard-fechar')) {
+      return;
+    }
+
+    const modalEl = this.flashcardModalRef?.nativeElement;
+    const overlayEl = this.flashcardOverlayRef?.nativeElement;
+    if (!modalEl || !overlayEl) {
+      return;
+    }
+
+    const modalRect = modalEl.getBoundingClientRect();
+    this.flashcardDragOffset = {
+      x: event.clientX - modalRect.left,
+      y: event.clientY - modalRect.top
+    };
+    this.flashcardModalDragging = true;
+
+    this.ngZone.runOutsideAngular(() => {
+      document.addEventListener('pointermove', this.flashcardPointerMove);
+      document.addEventListener('pointerup', this.flashcardPointerUp);
+    });
+
+    event.preventDefault();
+  }
+
+  private flashcardPointerMove = (event: PointerEvent): void => {
+    if (!this.flashcardModalDragging) {
+      return;
+    }
+
+    const modalEl = this.flashcardModalRef?.nativeElement;
+    const overlayEl = this.flashcardOverlayRef?.nativeElement;
+    if (!modalEl || !overlayEl) {
+      return;
+    }
+
+    const overlayRect = overlayEl.getBoundingClientRect();
+    const modalRect = modalEl.getBoundingClientRect();
+    const rawX = event.clientX - overlayRect.left - this.flashcardDragOffset.x;
+    const rawY = event.clientY - overlayRect.top - this.flashcardDragOffset.y;
+    const maxX = Math.max(0, overlayRect.width - modalRect.width);
+    const maxY = Math.max(0, overlayRect.height - modalRect.height);
+    const nextX = Math.min(Math.max(0, rawX), maxX);
+    const nextY = Math.min(Math.max(0, rawY), maxY);
+
+    this.ngZone.run(() => {
+      this.flashcardModalPos = { x: nextX, y: nextY };
+    });
+  };
+
+  private flashcardPointerUp = (): void => {
+    if (!this.flashcardModalDragging) {
+      return;
+    }
+
+    this.flashcardModalDragging = false;
+    document.removeEventListener('pointermove', this.flashcardPointerMove);
+    document.removeEventListener('pointerup', this.flashcardPointerUp);
+  };
+
+  private encerrarArrasteFlashcard(): void {
+    this.flashcardModalDragging = false;
+    document.removeEventListener('pointermove', this.flashcardPointerMove);
+    document.removeEventListener('pointerup', this.flashcardPointerUp);
+  }
+
+  private centralizarModalFlashcard(): void {
+    const modalEl = this.flashcardModalRef?.nativeElement;
+    const overlayEl = this.flashcardOverlayRef?.nativeElement;
+    if (!modalEl || !overlayEl) {
+      return;
+    }
+
+    const overlayRect = overlayEl.getBoundingClientRect();
+    const modalRect = modalEl.getBoundingClientRect();
+    const x = Math.max(0, (overlayRect.width - modalRect.width) / 2);
+    const y = Math.max(0, (overlayRect.height - modalRect.height) / 2);
+    this.flashcardModalPos = { x, y };
+  }
+
+  ngOnDestroy(): void {
+    this.encerrarArrasteFlashcard();
   }
 
   abrirModalSplit(topico: any, event?: Event): void {

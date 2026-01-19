@@ -1,0 +1,93 @@
+<div class="biblioteca-page">
+  <header class="biblioteca-header">
+    <div class="biblioteca-title">
+      <h1>Biblioteca</h1>
+      <span>Acesse resumos e flashcards sem entrar na sala de estudo.</span>
+    </div>
+
+    <div class="biblioteca-controls">
+      <div class="controle">
+        <label for="materiaSelect">Materia</label>
+        <select id="materiaSelect" [(ngModel)]="materiaSelecionadaId" (change)="onMateriaChange()">
+          <option [ngValue]="null">Todas</option>
+          <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.nome }}</option>
+        </select>
+      </div>
+
+      <div class="controle">
+        <label for="topicoSelect">Topico</label>
+        <select id="topicoSelect" [(ngModel)]="topicoSelecionadoId" (change)="onTopicoChange()">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let t of folhasDisponiveis" [ngValue]="t.id">{{ t.descricao }}</option>
+        </select>
+      </div>
+
+      <div class="controle controle-modo">
+        <button type="button" class="modo-btn" [class.ativo]="modo === 'resumos'" (click)="trocarModo('resumos')">
+          Resumos
+        </button>
+        <button type="button" class="modo-btn" [class.ativo]="modo === 'flashcards'" (click)="trocarModo('flashcards')">
+          Flashcards
+        </button>
+      </div>
+
+      <div class="controle controle-busca">
+        <label for="buscaInput">Buscar</label>
+        <input id="buscaInput" type="text" [(ngModel)]="termoBusca" placeholder="Buscar por texto..." />
+      </div>
+    </div>
+  </header>
+
+  <div class="biblioteca-body">
+    <div class="estado estado-loading" *ngIf="carregando">
+      <span>Carregando biblioteca...</span>
+    </div>
+
+    <div class="estado estado-erro" *ngIf="!carregando && erro">
+      <span>{{ erro }}</span>
+    </div>
+
+    <ng-container *ngIf="!carregando && !erro">
+      <ng-container *ngIf="modo === 'resumos'">
+        <div class="lista-vazia" *ngIf="carregandoResumos">
+          Carregando resumos...
+        </div>
+
+        <div class="lista-vazia" *ngIf="!carregandoResumos && !resumoFiltrado.length">
+          Nenhum resumo encontrado para os filtros atuais.
+        </div>
+
+        <ul class="resumo-lista" *ngIf="!carregandoResumos && resumoFiltrado.length">
+          <li class="resumo-item" *ngFor="let t of resumoFiltrado">
+            <div class="resumo-info">
+              <strong>{{ t.descricao }}</strong>
+              <span>Resumo do topico</span>
+            </div>
+            <button type="button" class="resumo-btn" (click)="abrirResumo(t.id)">Abrir resumo</button>
+          </li>
+        </ul>
+      </ng-container>
+
+      <ng-container *ngIf="modo === 'flashcards'">
+        <div class="lista-vazia" *ngIf="carregandoFlashcards">
+          Carregando flashcards...
+        </div>
+
+        <div class="lista-vazia" *ngIf="!carregandoFlashcards && !flashcardsFiltrados.length">
+          Nenhum flashcard encontrado para os filtros atuais.
+        </div>
+
+        <ul class="flashcard-lista" *ngIf="!carregandoFlashcards && flashcardsFiltrados.length">
+          <li class="flashcard-item" *ngFor="let f of flashcardsFiltrados">
+            <div class="flashcard-frente">{{ f.frente }}</div>
+            <div class="flashcard-verso">{{ f.verso }}</div>
+            <div class="flashcard-meta">
+              <span class="flashcard-tag" *ngIf="f.tags">{{ f.tags }}</span>
+              <span class="flashcard-badge">{{ f.dificuldade }}</span>
+            </div>
+          </li>
+        </ul>
+      </ng-container>
+    </ng-container>
+  </div>
+</div>

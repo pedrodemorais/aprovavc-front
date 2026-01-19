@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom, forkJoin, of } from 'rxjs';
@@ -57,7 +57,7 @@ previewTotalItens = 0;
 previewDuplicadosIgnorados = 0;
 
 
-  // ediÃ§Ã£o de tÃ³pico
+  // edição de tópico
   modoEdicaoTopico: boolean = false;
   topicoEmEdicao: any | null = null;
 
@@ -80,14 +80,14 @@ previewDuplicadosIgnorados = 0;
   arvoreExpandida = false;
 
   // ==========================
-  // âœ… MODAL LOTE (NOME NOVO)
+  // ✅ MODAL LOTE (NOME NOVO)
   // ==========================
   mostrarModalLote = false;
   textoLoteTopicos: string = '';
   salvandoLote = false;
 
   // ==========================
-  // âœ… ALIASES (COMPAT) - se seu HTML usa nomes antigos
+  // ✅ ALIASES (COMPAT) - se seu HTML usa nomes antigos
   // ==========================
   get modalLoteAberto(): boolean { return this.mostrarModalLote; }
   set modalLoteAberto(v: boolean) { this.mostrarModalLote = v; }
@@ -95,7 +95,7 @@ previewDuplicadosIgnorados = 0;
   get loteTexto(): string { return this.textoLoteTopicos; }
   set loteTexto(v: string) { this.textoLoteTopicos = v; }
 
-  // se houver pai selecionado, importar como subtÃ³pico desse pai
+  // se houver pai selecionado, importar como subtópico desse pai
   loteComoSubtopico = true;
 
   topicoSelecionado?: Topico | null;
@@ -130,7 +130,7 @@ previewDuplicadosIgnorados = 0;
 
 
   // ==========================
-  // âœ… HOTKEYS
+  // ✅ HOTKEYS
   // ==========================
   @HostListener('document:keydown.escape')
   onEsc(): void {
@@ -140,18 +140,18 @@ previewDuplicadosIgnorados = 0;
   }
 
   // ==========================
-  // âœ… PREVIEW (se seu HTML mostra preview)
+  // ✅ PREVIEW (se seu HTML mostra preview)
   // ==========================
   get loteItensPreview(): string[] {
     return this.extrairItensDoLote(this.textoLoteTopicos);
   }
 
   // ==========================
-  // âœ… MODAL LOTE
+  // ✅ MODAL LOTE
   // ==========================
   abrirModalLote(): void {
     if (!this.materiaSelecionada?.id) {
-      alert('Selecione uma matÃ©ria antes de importar tÃ³picos.');
+      alert('Selecione uma matéria antes de importar tópicos.');
       return;
     }
     this.mostrarModalLote = true;
@@ -168,7 +168,7 @@ atualizarPreviewLote(): void {
     return;
   }
 
-  // 1) monta Ã¡rvore a partir do texto colado
+  // 1) monta árvore a partir do texto colado
   const arvore = this.parseTopicosHierarquicos(texto);
 
   // 2) remove duplicados contra o destino (raiz ou filhos do selecionado)
@@ -200,7 +200,7 @@ private removerDuplicadosArvore(
     for (const n of (nodos || [])) {
       const key = this.chaveTopico(n.descricao);
 
-      // duplicado no PRÃ“PRIO lote (mesmo nÃ­vel) OU jÃ¡ existe no destino desse nÃ­vel
+      // duplicado no PRÓPRIO lote (mesmo nível) OU já existe no destino desse nível
       if (vistos.has(key) || (destinoAqui || []).some(d => this.chaveTopico(d.descricao) === key) || existentesNoDestino.has(key)) {
         removidos++;
         continue;
@@ -215,8 +215,8 @@ private removerDuplicadosArvore(
 
       total++;
 
-      // filhos: o "destino" dos filhos Ã© o array de filhos do item existente (se existir),
-      // mas como esse Ã© preview, basta comparar com filhos do destino equivalente (se houver).
+      // filhos: o "destino" dos filhos é o array de filhos do item existente (se existir),
+      // mas como esse é preview, basta comparar com filhos do destino equivalente (se houver).
       const filhosEntrada = (n.filhos || []) as Topico[];
 
       // tenta achar item equivalente no destino para comparar filhos
@@ -244,7 +244,7 @@ private removerDuplicadosArvore(
   }
 
   // =========================================================
-  // âœ… LOTE: ORDEM EXATA + SEM DUPLICADAS (MESCLA)
+  // ✅ LOTE: ORDEM EXATA + SEM DUPLICADAS (MESCLA)
   // =========================================================
 
   /** Normaliza (chave) para comparar duplicados (mesmo pai) */
@@ -262,14 +262,14 @@ private removerDuplicadosArvore(
     return (array || []).find(t => this.chaveTopico((t as any).descricao) === chave);
   }
 
-  /** Remove bullets/numeraÃ§Ã£o e normaliza espaÃ§os */
+  /** Remove bullets/numeração e normaliza espaços */
   private limparLinhaTopico(linha: string): string {
     let s = (linha || '').replace(/\r/g, '');
 
     // bullets comuns
-    s = s.replace(/^\s*([\-*â€¢]+)\s+/, '');
+    s = s.replace(/^\s*([\-*•]+)\s+/, '');
 
-    // numeraÃ§Ã£o tipo "1.", "1.2", "01)", "01 -"
+    // numeração tipo "1.", "1.2", "01)", "01 -"
     s = s.replace(/^\s*(\d+(\.\d+)*[\)\.\-]?)\s+/, '');
 
     // romanos tipo "I)", "II."
@@ -282,8 +282,8 @@ private removerDuplicadosArvore(
   }
 
   /**
-   * Detecta unidade de indentaÃ§Ã£o (2 ou 4 espaÃ§os, etc) baseado no menor recuo encontrado.
-   * Aceita tabs (vira 2 espaÃ§os).
+   * Detecta unidade de indentação (2 ou 4 espaços, etc) baseado no menor recuo encontrado.
+   * Aceita tabs (vira 2 espaços).
    */
   private detectarUnidadeIndentacao(linhas: string[]): number {
     const indents: number[] = [];
@@ -302,9 +302,9 @@ private removerDuplicadosArvore(
   }
 
   /**
-   * Parseia texto em Ã¡rvore por indentaÃ§Ã£o.
-   * âœ… MantÃ©m ordem do texto
-   * âœ… NÃ£o cria duplicado no mesmo pai (mescla)
+   * Parseia texto em árvore por indentação.
+   * ✅ Mantém ordem do texto
+   * ✅ Não cria duplicado no mesmo pai (mescla)
    */
 private parseTopicosHierarquicos(texto: string): Topico[] {
   const linhasBrutas = (texto || '')
@@ -331,7 +331,7 @@ private parseTopicosHierarquicos(texto: string): Topico[] {
     }
 
     // =========================
-    // NÃVEL RAIZ (0)
+    // NÍVEL RAIZ (0)
     // =========================
     if (nivel <= 0) {
       const achado = this.encontrarPorDescricao(raiz, desc);
@@ -358,7 +358,7 @@ private parseTopicosHierarquicos(texto: string): Topico[] {
     }
 
     // =========================
-    // NÃVEL > 0 (FILHOS)
+    // NÍVEL > 0 (FILHOS)
     // =========================
     while (stack.length && stack[stack.length - 1].nivel >= nivel) {
       stack.pop();
@@ -366,7 +366,7 @@ private parseTopicosHierarquicos(texto: string): Topico[] {
 
     const pai = stack[stack.length - 1]?.node;
 
-    // se por algum motivo nÃ£o achou pai, volta pra raiz
+    // se por algum motivo não achou pai, volta pra raiz
     const destino = pai
       ? (((pai as any).filhos || ((pai as any).filhos = [])) as Topico[])
       : raiz;
@@ -394,7 +394,7 @@ private parseTopicosHierarquicos(texto: string): Topico[] {
 
   return raiz;
 }
-/** Salva Ã¡rvore em sequÃªncia (pai antes dos filhos) */
+/** Salva árvore em sequência (pai antes dos filhos) */
 private async salvarArvoreTopicos(nodos: Topico[], pai?: Topico): Promise<void> {
   for (const n of nodos) {
     await this.salvarTopicoAutomaticoPromise(n, pai);
@@ -405,7 +405,7 @@ private async salvarArvoreTopicos(nodos: Topico[], pai?: Topico): Promise<void> 
 }
 
 
-  /** Promisifica salvarTopico (pra salvar em sequÃªncia pai->filhos) */
+  /** Promisifica salvarTopico (pra salvar em sequência pai->filhos) */
   private salvarTopicoAutomaticoPromise(topico: Topico, pai?: Topico): Promise<void> {
     const desc = String((topico as any).descricao || '');
 if (desc.length > 255) {
@@ -413,7 +413,7 @@ if (desc.length > 255) {
 }
     return new Promise((resolve, reject) => {
       if (!this.materiaSelecionada?.id) {
-        reject('MatÃ©ria nÃ£o selecionada.');
+        reject('Matéria não selecionada.');
         return;
       }
 
@@ -440,10 +440,10 @@ if (desc.length > 255) {
   }
 
   /**
-   * Mescla Ã¡rvore colada no destino:
-   * âœ… nÃ£o duplica no mesmo pai
-   * âœ… mantÃ©m ordem exata do texto (para os novos que entram)
-   * âœ… salva apenas o que for novo, na sequÃªncia correta
+   * Mescla árvore colada no destino:
+   * ✅ não duplica no mesmo pai
+   * ✅ mantém ordem exata do texto (para os novos que entram)
+   * ✅ salva apenas o que for novo, na sequência correta
    */
   private async mesclarESalvar(destArray: Topico[], incoming: Topico[], pai?: Topico): Promise<void> {
     for (const inc of incoming) {
@@ -480,10 +480,10 @@ if (desc.length > 255) {
 
       destArray.push(novo);
 
-      // salva nÃ³ (pai->filho)
+      // salva nó (pai->filho)
       await this.salvarTopicoAutomaticoPromise(novo, pai);
 
-      // salva filhos (e mescla se necessÃ¡rio)
+      // salva filhos (e mescla se necessário)
       const filhosNovo: Topico[] = (novo as any).filhos || [];
       if (filhosNovo.length) {
         await this.mesclarESalvar((novo as any).filhos, filhosNovo, novo);
@@ -491,13 +491,13 @@ if (desc.length > 255) {
     }
   }
 
-  /** AÃ§Ã£o principal do botÃ£o do modal */
+  /** Ação principal do botão do modal */
   async importarTopicosEmLote(): Promise<void> {
     const texto = (this.textoLoteTopicos || '').trim();
     if (!texto) return;
 
     if (!this.materiaSelecionada?.id) {
-      alert('Selecione uma matÃ©ria antes de importar.');
+      alert('Selecione uma matéria antes de importar.');
       return;
     }
 
@@ -512,21 +512,21 @@ if (desc.length > 255) {
         ? (((paiDestino as any).filhos || ((paiDestino as any).filhos = [])) as Topico[])
         : this.topicos;
 
-      // âœ… mescla + salva (ordem do texto garantida para os novos)
+      // ✅ mescla + salva (ordem do texto garantida para os novos)
       await this.mesclarESalvar(destinoArray, arvore, paiDestino);
 
-      // âœ… NÃƒO recarrega aqui (pra nÃ£o perder a ordem colada na UI)
+      // ✅ NÃO recarrega aqui (pra não perder a ordem colada na UI)
       this.fecharModalLote();
       this.focarNovoTopico();
     } catch (err) {
       console.error('[LOTE-TOPICOS] Erro ao importar:', err);
-      this.mensagemErro = 'Erro ao importar tÃ³picos por lote.';
+      this.mensagemErro = 'Erro ao importar tópicos por lote.';
     } finally {
       this.salvandoLote = false;
     }
   }
 
-  // âœ… Se seu HTML antigo chama salvarLote(), mantÃ©m compatÃ­vel:
+  // ✅ Se seu HTML antigo chama salvarLote(), mantém compatível:
   async salvarLote(): Promise<void> {
     await this.importarTopicosEmLote();
   }
@@ -541,7 +541,7 @@ if (desc.length > 255) {
       .map(l => (l || '').trim())
       .filter(Boolean);
 
-    // remove duplicados dentro do prÃ³prio lote
+    // remove duplicados dentro do próprio lote
     const vistos = new Set<string>();
     const saida: string[] = [];
 
@@ -558,15 +558,15 @@ if (desc.length > 255) {
 
   private limparPrefixosLista(linha: string): string {
     let s = (linha || '').trim();
-    s = s.replace(/^(\s*[-â€¢*]+\s+)/, '');
-    s = s.replace(/^(\s*\d+(\.\d+)*\s*[-â€“â€”.)]?\s+)/, '');
-    s = s.replace(/^(\s*[IVXLCDM]+\s*[-â€“â€”.)]?\s+)/i, '');
-    s = s.replace(/^(\s*[a-zA-Z]\s*[-â€“â€”.)]\s+)/, '');
+    s = s.replace(/^(\s*[-•*]+\s+)/, '');
+    s = s.replace(/^(\s*\d+(\.\d+)*\s*[-–—.)]?\s+)/, '');
+    s = s.replace(/^(\s*[IVXLCDM]+\s*[-–—.)]?\s+)/i, '');
+    s = s.replace(/^(\s*[a-zA-Z]\s*[-–—.)]\s+)/, '');
     return s.trim();
   }
 
   // ==========================
-  // DASHBOARD REVISÃ•ES
+  // DASHBOARD REVISÕES
   // ==========================
   private carregarRevisoesDashboard(): void {
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
@@ -603,11 +603,11 @@ if (desc.length > 255) {
           });
         });
       },
-      error: (err) => console.error('[DASHBOARD-REVISAO] Erro ao carregar revisÃµes:', err)
+      error: (err) => console.error('[DASHBOARD-REVISAO] Erro ao carregar revisões:', err)
     });
   }
 
-  /** Status consolidado da MATÃ‰RIA (pior status entre todos os tÃ³picos) */
+  /** Status consolidado da MATÉRIA (pior status entre todos os tópicos) */
 
 
 
@@ -620,7 +620,7 @@ if (desc.length > 255) {
   // ---------- SALA DE ESTUDO ----------
   abrirSalaEstudoMateria(m: Materia): void {
     if (!m.id) {
-      alert('Salve a matÃ©ria antes de entrar na sala de estudo.');
+      alert('Salve a matéria antes de entrar na sala de estudo.');
       return;
     }
     this.router.navigate(['/area-restrita/sala-estudo', m.id]);
@@ -673,7 +673,7 @@ if (desc.length > 255) {
     });
   }
 
-  // ---------- MATÃ‰RIA ----------
+  // ---------- MATÉRIA ----------
   carregarMaterias(): void {
     this.carregandoMaterias = true;
     this.mensagemErro = undefined;
@@ -1136,7 +1136,7 @@ if (desc.length > 255) {
     );
 
     if (duplicado) {
-      this.mensagemErro = 'JÃ¡ existe uma matÃ©ria com esse nome.';
+      this.mensagemErro = 'Já existe uma matéria com esse nome.';
       this.materiaForm.get('nome')?.setErrors({ duplicado: true });
       this.focarNomeMateria();
       return;
@@ -1167,7 +1167,7 @@ if (desc.length > 255) {
       },
       error: () => {
         this.salvando = false;
-        this.mensagemErro = 'Erro ao salvar matÃ©ria.';
+        this.mensagemErro = 'Erro ao salvar matéria.';
         this.focarNomeMateria();
       }
     });
@@ -1244,7 +1244,7 @@ if (desc.length > 255) {
     ];
     return linhas.join('\n');
   }
-// ---------- TÃ“PICOS ----------
+// ---------- TÓPICOS ----------
   private carregarTopicos(m: Materia): void {
     if (!m.id) return;
 
@@ -1261,8 +1261,8 @@ if (desc.length > 255) {
       },
       error: (err) => {
         this.carregandoTopicos = false;
-        this.mensagemErro = 'Erro ao carregar tÃ³picos da matÃ©ria.';
-        console.error('[TOPICOS] Erro ao carregar tÃ³picos:', err);
+        this.mensagemErro = 'Erro ao carregar tópicos da matéria.';
+        console.error('[TOPICOS] Erro ao carregar tópicos:', err);
       }
     });
   }
@@ -1295,7 +1295,7 @@ if (desc.length > 255) {
 
   private salvarTopicoAutomatico(topico: Topico, pai?: Topico): void {
     if (!this.materiaSelecionada?.id) {
-      alert('Selecione e salve a matÃ©ria antes de adicionar tÃ³picos.');
+      alert('Selecione e salve a matéria antes de adicionar tópicos.');
       this.focarNomeMateria();
       return;
     }
@@ -1321,8 +1321,8 @@ if (desc.length > 255) {
       },
       error: (err) => {
         this.salvando = false;
-        this.mensagemErro = 'Erro ao salvar o tÃ³pico.';
-        console.error('[SALVAR-TOPICO] Erro ao salvar tÃ³pico:', err);
+        this.mensagemErro = 'Erro ao salvar o tópico.';
+        console.error('[SALVAR-TOPICO] Erro ao salvar tópico:', err);
       }
     });
   }
@@ -1332,11 +1332,11 @@ if (desc.length > 255) {
     if (!descricao) return;
 
     if (!this.materiaSelecionada?.id) {
-      alert('Selecione e salve a matÃ©ria antes de adicionar tÃ³picos.');
+      alert('Selecione e salve a matéria antes de adicionar tópicos.');
       return;
     }
 
-    // ediÃ§Ã£o
+    // edição
     if (this.modoEdicaoTopico && this.topicoEmEdicao) {
       this.topicoEmEdicao.descricao = descricao;
       this.salvarTopicoAutomatico(this.topicoEmEdicao);
@@ -1347,14 +1347,14 @@ if (desc.length > 255) {
       return;
     }
 
-    // âœ… evita duplicado no mesmo pai (manual tambÃ©m)
+    // ✅ evita duplicado no mesmo pai (manual também)
     const destino = this.topicoSelecionado
       ? (((this.topicoSelecionado as any).filhos || ((this.topicoSelecionado as any).filhos = [])) as Topico[])
       : this.topicos;
 
     const jaExiste = this.encontrarPorDescricao(destino, descricao);
     if (jaExiste) {
-      alert('Esse tÃ³pico jÃ¡ existe nesse nÃ­vel.');
+      alert('Esse tópico já existe nesse nível.');
       this.novoTopicoDescricao = '';
       this.focarNovoTopico();
       return;
@@ -1380,7 +1380,7 @@ if (desc.length > 255) {
   }
 
   excluirTopico(topico: Topico, parentArray: Topico[]): void {
-    const ok = confirm(`Excluir o tÃ³pico "${(topico as any).descricao}" e todos os subtÃ³picos?`);
+    const ok = confirm(`Excluir o tópico "${(topico as any).descricao}" e todos os subtópicos?`);
     if (!ok) return;
 
     const idx = parentArray.indexOf(topico);
@@ -1411,10 +1411,10 @@ if (desc.length > 255) {
       '';
 
     if (err?.status === 409 || /revisao_topico|chave estrangeira|foreign key/i.test(detalhe)) {
-      return 'NÃ£o Ã© possÃ­vel excluir este tÃ³pico porque hÃ¡ revisÃµes registradas para ele. Remova as revisÃµes antes de excluir.';
+      return 'Não é possível excluir este tópico porque há revisões registradas para ele. Remova as revisões antes de excluir.';
     }
 
-    return 'Erro ao excluir o tÃ³pico.';
+    return 'Erro ao excluir o tópico.';
   }
 
   private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
@@ -1453,7 +1453,7 @@ if (desc.length > 255) {
   private podeMudarContextoTopico(): boolean {
     if (!this.estaEditandoOuDigitandoTopico()) return true;
 
-    const sair = confirm('VocÃª estÃ¡ cadastrando um tÃ³pico/subtÃ³pico. Deseja sair sem salvar?');
+    const sair = confirm('Você está cadastrando um tópico/subtópico. Deseja sair sem salvar?');
 
     if (sair) {
       this.novoTopicoDescricao = '';
@@ -1487,9 +1487,9 @@ if (desc.length > 255) {
     return data;
   }
 
-  // (mantive o import do firstValueFrom porque vocÃª jÃ¡ tinha e pode usar em outras partes)
+  // (mantive o import do firstValueFrom porque você já tinha e pode usar em outras partes)
   private async salvarTopicoAutomaticoAsync(topico: Topico, pai?: Topico): Promise<void> {
-    if (!this.materiaSelecionada?.id) throw new Error('MatÃ©ria nÃ£o selecionada.');
+    if (!this.materiaSelecionada?.id) throw new Error('Matéria não selecionada.');
 
     const payload: any = {
       id: (topico as any).id ?? null,
@@ -1524,7 +1524,7 @@ fecharModalImportarEdital(): void {
   this.textoEdital = '';
 }
 
-// Conta itens na Ã¡rvore (pra preview)
+// Conta itens na árvore (pra preview)
 contarTopicosRecursivo(lista: Topico[]): number {
   let total = 0;
   for (const t of (lista || [])) {
@@ -1534,59 +1534,69 @@ contarTopicosRecursivo(lista: Topico[]): number {
   return total;
 }
 
-// Normaliza espaÃ§os e quebras
+// Normaliza espaços e quebras
 private normalizarTextoEdital(texto: string): string {
-  return (texto || '')
+  const linhas = (texto || '')
     .replace(/\r/g, '')
+    .split('\n')
+    .map((linha) =>
+      linha
+        .replace(/\t+\s*\d+\s*$/g, '')
+        .replace(/\t+/g, ' ')
+        .trimEnd()
+    );
+  return linhas
+    .join('\n')
     .replace(/[ ]{2,}/g, ' ')
     .replace(/\n+/g, '\n')
     .trim();
 }
 
-// Divide em blocos por "NOME DA MATÃ‰RIA:"
+// Divide em blocos por "NOME DA MATÉRIA:"
 private splitMateriasPorTitulo(texto: string): Array<{ nome: string; conteudo: string }> {
   const s = this.normalizarTextoEdital(texto);
-
-  // regex encontra tÃ­tulos tipo: "LÃNGUA PORTUGUESA:" "NOÃ‡Ã•ES DE DIREITO ADMINISTRATIVO:"
-  const re = /(^|\n|\s)([A-ZÃÃ€Ã‚ÃƒÃ‰ÃŠÃÃ“Ã”Ã•ÃšÃ‡0-9\/\-\(\)\s]{3,}):/g;
-
-  const matches: Array<{ nome: string; start: number; end: number }> = [];
-  let m: RegExpExecArray | null;
-
-  while ((m = re.exec(s)) !== null) {
-    const nome = (m[2] || '').trim().replace(/\s{2,}/g, ' ');
-    matches.push({ nome, start: m.index + (m[1]?.length ?? 0), end: re.lastIndex });
+  const linhas = s.split('\n');
+  const indices: Array<{ nome: string; linha: number }> = [];
+  for (let i = 0; i < linhas.length; i += 1) {
+    const raw = (linhas[i] || '').trim();
+    if (!raw) continue;
+    const chapterMatch = raw.match(/^Chapter\s+(\d+)\s*:\s*(.+)$/i);
+    if (chapterMatch) {
+      const numero = chapterMatch[1];
+      const titulo = chapterMatch[2].trim();
+      indices.push({ nome: `Chapter ${numero} - ${titulo}`, linha: i });
+      continue;
+    }
+    if (raw.endsWith(':') && raw === raw.toUpperCase()) {
+      const nome = raw.slice(0, -1).trim();
+      if (nome.length >= 3) {
+        indices.push({ nome, linha: i });
+      }
+    }
   }
-
-  if (!matches.length) return [];
-
+  if (!indices.length) return [];
   const blocos: Array<{ nome: string; conteudo: string }> = [];
-
-  for (let i = 0; i < matches.length; i++) {
-    const atual = matches[i];
-    const prox = matches[i + 1];
-
-    const inicioConteudo = atual.end;
-    const fimConteudo = prox ? prox.start : s.length;
-
-    const conteudo = s.substring(inicioConteudo, fimConteudo).trim();
-
+  for (let i = 0; i < indices.length; i += 1) {
+    const atual = indices[i];
+    const prox = indices[i + 1];
+    const inicio = atual.linha + 1;
+    const fim = prox ? prox.linha : linhas.length;
+    const conteudo = linhas.slice(inicio, fim).join('\n').trim();
     if (atual.nome && conteudo) {
       blocos.push({ nome: atual.nome, conteudo });
     }
   }
-
   return blocos;
 }
 
 // Extrai itens numerados "1", "1.1", "3.2.1" etc
 private extrairItensNumerados(conteudo: string): Array<{ num: string; desc: string }> {
-  // junta linhas quebradas em espaÃ§o (edital costuma quebrar no meio)
+  // junta linhas quebradas em espaço (edital costuma quebrar no meio)
   const texto = (conteudo || '').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
   const itens: Array<{ num: string; desc: string }> = [];
 
-  // pega: "4 DomÃ­nio..." "4.1 Emprego..." etc atÃ© antes do prÃ³ximo nÃºmero
+  // pega: "4 Domínio..." "4.1 Emprego..." etc até antes do próximo número
   const re = /(\d+(?:\.\d+)*)\s+(.+?)(?=\s+\d+(?:\.\d+)*\s+|$)/g;
 
   let m: RegExpExecArray | null;
@@ -1594,14 +1604,14 @@ private extrairItensNumerados(conteudo: string): Array<{ num: string; desc: stri
     const num = (m[1] || '').trim();
     let desc = (m[2] || '').trim();
 
-    // limpa espaÃ§os e pontas
+    // limpa espaços e pontas
     desc = desc.replace(/\s{2,}/g, ' ').trim();
     if (!num || !desc) continue;
 
     itens.push({ num, desc });
   }
 
-  // remove duplicadas pelo prÃ³prio nÃºmero (mantÃ©m a primeira ocorrÃªncia)
+  // remove duplicadas pelo próprio número (mantém a primeira ocorrência)
   const vistos = new Set<string>();
   const saida: typeof itens = [];
   for (const it of itens) {
@@ -1613,7 +1623,7 @@ private extrairItensNumerados(conteudo: string): Array<{ num: string; desc: stri
   return saida;
 }
 
-// Monta Ã¡rvore usando a numeraÃ§Ã£o
+// Monta árvore usando a numeração
 private montarArvorePorNumeracao(itens: Array<{ num: string; desc: string }>): Topico[] {
   const raiz: Topico[] = [];
   const map = new Map<string, Topico>(); // num -> node
@@ -1633,7 +1643,7 @@ private montarArvorePorNumeracao(itens: Array<{ num: string; desc: string }>): T
     map.set(it.num, node);
 
     if (nivel === 1) {
-      // evita duplicada por descriÃ§Ã£o na raiz
+      // evita duplicada por descrição na raiz
       const ja = this.encontrarPorDescricao(raiz, node.descricao);
       if (!ja) raiz.push(node);
       continue;
@@ -1648,7 +1658,7 @@ private montarArvorePorNumeracao(itens: Array<{ num: string; desc: string }>): T
       const ja = this.encontrarPorDescricao((pai as any).filhos, node.descricao);
       if (!ja) (pai as any).filhos.push(node);
     } else {
-      // fallback: se nÃ£o achou pai, joga na raiz
+      // fallback: se não achou pai, joga na raiz
       const ja = this.encontrarPorDescricao(raiz, node.descricao);
       if (!ja) raiz.push(node);
     }
@@ -1657,7 +1667,7 @@ private montarArvorePorNumeracao(itens: Array<{ num: string; desc: string }>): T
   return raiz;
 }
 
-// Converte texto completo do edital em lista de matÃ©rias + Ã¡rvore
+// Converte texto completo do edital em lista de matérias + árvore
 private parseEditalParaMaterias(texto: string): MateriaImport[] {
   const blocos = this.splitMateriasPorTitulo(texto);
 
@@ -1675,18 +1685,17 @@ private parseEditalParaMaterias(texto: string): MateriaImport[] {
   return saida;
 }
 
-// Promisifica salvar matÃ©ria
+// Promisifica salvar matéria
 private async salvarMateriaAsync(nome: string): Promise<Materia> {
   const dto: Materia = { id: null as any, nome } as any;
   return await firstValueFrom(this.materiaService.salvarMateria(dto));
 }
 
-// âœ… Importa tudo: cria matÃ©ria e salva tÃ³picos/subtÃ³picos em ordem
 async importarEditalCompleto(): Promise<void> {
   const materiasImport = this.parseEditalParaMaterias(this.textoEdital);
 
   if (!materiasImport.length) {
-    alert('NÃ£o consegui identificar matÃ©rias no texto. Verifique se os tÃ­tulos estÃ£o como "NOME DA MATÃ‰RIA:".');
+    alert("Nao consegui identificar materias no texto. Verifique se os titulos estao como \"NOME DA MATERIA:\" ou \"Chapter X: Titulo\".");
     return;
   }
 
@@ -1697,44 +1706,94 @@ async importarEditalCompleto(): Promise<void> {
   let okCount = 0;
 
   try {
-    // garante que lista atual estÃ¡ carregada
+    const nomeMateriaForm = (this.materiaForm?.get('nome')?.value || "").trim();
     if (!this.materias?.length) {
       const lista = await firstValueFrom(this.materiaService.listarMaterias());
       this.materias = lista || [];
     }
+    if (this.materiaSelecionada?.id || nomeMateriaForm) {
+            let materiaBase = this.materiaSelecionada;
+      if (!materiaBase && nomeMateriaForm) {
+        const existenteMateria = (this.materias || []).find(
+          m => this.normalizarTexto(m.nome) === this.normalizarTexto(nomeMateriaForm)
+        );
+        if (existenteMateria?.id) {
+          materiaBase = existenteMateria;
+        } else {
+          materiaBase = await this.salvarMateriaAsync(nomeMateriaForm);
+          this.materias = this.materias || [];
+          this.materias.push(materiaBase);
+        }
+        this.materiaSelecionada = materiaBase;
+      }
+      if (!materiaBase) {
+        this.mensagemErro = "Informe o nome da materia ou selecione uma materia.";
+        return;
+      }
+      this.materiaExpandida = materiaBase;
 
-    for (const imp of materiasImport) {
-      const nomeMateria = (imp.nome || '').trim();
-      if (!nomeMateria) continue;
+      const topicosRaiz: Topico[] = materiasImport
+        .map((imp) => ({
+          id: undefined as any,
+          descricao: (imp.nome || "").trim(),
+          ativo: true as any,
+          nivel: 0 as any,
+          filhos: imp.topicos || []
+        } as any))
+        .filter((t) => !!t.descricao);
+
+      if (!topicosRaiz.length) {
+        this.mensagemErro = "Nenhum topico identificado para importar.";
+        return;
+      }
 
       try {
-        // 1) cria/reusa matÃ©ria
-        const existenteMateria = this.materias.find(
-          m => this.normalizarTexto(m.nome) === this.normalizarTexto(nomeMateria)
-        );
-
-        let materiaFinal: Materia;
-
-        if (existenteMateria?.id) {
-          materiaFinal = existenteMateria;
-        } else {
-          materiaFinal = await this.salvarMateriaAsync(nomeMateria);
-          this.materias.push(materiaFinal);
-        }
-
-        // 2) muda contexto para salvar tÃ³picos nessa matÃ©ria
-        this.materiaSelecionada = materiaFinal;
-        this.materiaExpandida = materiaFinal;
-
-        // 3) salva Ã¡rvore (pai antes dos filhos)
-        await this.salvarArvoreTopicos(imp.topicos);
-
-        okCount++;
+        await this.salvarArvoreTopicos(topicosRaiz);
+        okCount = topicosRaiz.length;
       } catch (err) {
-        console.error('[IMPORTAR-EDITAL] Falha na matÃ©ria:', nomeMateria, err);
-        falhas.push({ materia: nomeMateria, erro: err });
-        // continua para a prÃ³xima matÃ©ria
-        continue;
+        console.error("[IMPORTAR-EDITAL] Falha na materia selecionada:", materiaBase.nome, err);
+        falhas.push({ materia: materiaBase.nome, erro: err });
+      }
+    } else {
+      // garante que lista atual esta carregada
+      if (!this.materias?.length) {
+        const lista = await firstValueFrom(this.materiaService.listarMaterias());
+        this.materias = lista || [];
+      }
+
+      for (const imp of materiasImport) {
+        const nomeMateria = (imp.nome || "").trim();
+        if (!nomeMateria) continue;
+
+        try {
+          // 1) cria/reusa materia
+          const existenteMateria = this.materias.find(
+            m => this.normalizarTexto(m.nome) === this.normalizarTexto(nomeMateria)
+          );
+
+          let materiaFinal: Materia;
+
+          if (existenteMateria?.id) {
+            materiaFinal = existenteMateria;
+          } else {
+            materiaFinal = await this.salvarMateriaAsync(nomeMateria);
+            this.materias.push(materiaFinal);
+          }
+
+          // 2) muda contexto para salvar topicos nessa materia
+          this.materiaSelecionada = materiaFinal;
+          this.materiaExpandida = materiaFinal;
+
+          // 3) salva arvore (pai antes dos filhos)
+          await this.salvarArvoreTopicos(imp.topicos);
+
+          okCount++;
+        } catch (err) {
+          console.error("[IMPORTAR-EDITAL] Falha na materia:", nomeMateria, err);
+          falhas.push({ materia: nomeMateria, erro: err });
+          // continua para a proxima materia
+          continue;
+        }
       }
     }
 
@@ -1744,18 +1803,22 @@ async importarEditalCompleto(): Promise<void> {
 
     if (falhas.length) {
       this.mensagemErro =
-        `ImportaÃ§Ã£o finalizada com falhas. OK: ${okCount}. Falharam: ${falhas.length}. ` +
+        `Importacao finalizada com falhas. OK: ${okCount}. Falharam: ${falhas.length}. ` +
         `Veja o console (F12) para detalhes.`;
     }
   } catch (e) {
-    console.error('[IMPORTAR-EDITAL] Erro geral:', e);
-    this.mensagemErro = 'Erro ao importar edital.';
+    console.error("[IMPORTAR-EDITAL] Erro geral:", e);
+    this.mensagemErro = "Erro ao importar edital.";
   } finally {
     this.salvandoEdital = false;
   }
 }
+
+
+// ✅ Importa tudo: cria matéria e salva tópicos/subtópicos em ordem
+
   // ==========================
-  // âœ… AÃ‡Ã•ES ÃšNICAS (TOPBAR) - TÃ“PICOS
+  // ✅ AÇÕES ÚNICAS (TOPBAR) - TÓPICOS
   // ==========================
   editarTopicoSelecionado(): void {
     if (!this.topicoSelecionado) return;
@@ -1767,8 +1830,8 @@ async importarEditalCompleto(): Promise<void> {
 
     const parentArray = this.encontrarParentArrayDoTopico(this.topicoSelecionado, this.topicos);
     if (!parentArray) {
-      // fallback seguro (nÃ£o faz nada se nÃ£o encontrar)
-      console.warn('[TOPICO] NÃ£o encontrei parentArray do tÃ³pico selecionado.');
+      // fallback seguro (não faz nada se não encontrar)
+      console.warn('[TOPICO] Não encontrei parentArray do tópico selecionado.');
       return;
     }
 
@@ -1778,10 +1841,10 @@ async importarEditalCompleto(): Promise<void> {
   private encontrarParentArrayDoTopico(alvo: Topico, lista: Topico[]): Topico[] | null {
     if (!alvo || !lista) return null;
 
-    // se o alvo estÃ¡ neste nÃ­vel, o parentArray Ã© "lista"
+    // se o alvo está neste nível, o parentArray é "lista"
     if (lista.includes(alvo)) return lista;
 
-    // senÃ£o, procura nos filhos
+    // senão, procura nos filhos
     for (const t of lista) {
       const filhos = (t as any).filhos || [];
       const achou = this.encontrarParentArrayDoTopico(alvo, filhos);
@@ -1793,6 +1856,16 @@ async importarEditalCompleto(): Promise<void> {
 
 
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

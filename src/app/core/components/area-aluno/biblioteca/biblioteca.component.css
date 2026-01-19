@@ -1,0 +1,167 @@
+.biblioteca-page {
+  padding: 18px 20px 30px;
+}
+
+.biblioteca-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.biblioteca-title h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+}
+
+.biblioteca-title span {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.biblioteca-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.controle {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.controle label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.controle select,
+.controle input {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.controle-modo {
+  flex-direction: row;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.modo-btn {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.modo-btn.ativo {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+.biblioteca-body {
+  margin-top: 18px;
+}
+
+.estado,
+.lista-vazia {
+  padding: 18px;
+  background: #f9fafb;
+  border-radius: 12px;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.resumo-lista,
+.flashcard-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.resumo-item,
+.flashcard-item {
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.resumo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resumo-info span {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.resumo-btn {
+  border: 1px solid #16a34a;
+  color: #16a34a;
+  background: transparent;
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  height: fit-content;
+}
+
+.flashcard-item {
+  flex-direction: column;
+}
+
+.flashcard-frente {
+  font-weight: 700;
+  color: #111827;
+}
+
+.flashcard-verso {
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.flashcard-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.flashcard-tag {
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  color: #374151;
+}
+
+.flashcard-badge {
+  background: #ecfeff;
+  color: #0f766e;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .biblioteca-controls {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,33 @@
+<div class="resumo-page">
+  <div class="resumo-shell">
+    <header class="resumo-header">
+      <button type="button" class="btn-voltar" (click)="voltar()">Voltar</button>
+      <div class="resumo-titulo">
+        <h1>{{ topico?.descricao || 'Resumo' }}</h1>
+        <span *ngIf="materia?.nome">Materia: {{ materia?.nome }}</span>
+      </div>
+      <div class="resumo-nav">
+        <button type="button" class="btn-nav" (click)="irAnterior()" [disabled]="resumoIndex <= 0">
+          Voltar pagina
+        </button>
+        <button type="button" class="btn-nav" (click)="irProximo()"
+                [disabled]="resumoIndex < 0 || resumoIndex >= resumos.length - 1">
+          Avancar pagina
+        </button>
+      </div>
+    </header>
+
+    <div class="resumo-body">
+      <div class="estado" *ngIf="carregando">Carregando resumos...</div>
+      <div class="estado" *ngIf="!carregando && carregandoResumo">Carregando resumo...</div>
+      <div class="estado estado-erro" *ngIf="!carregando && !carregandoResumo && erro">{{ erro }}</div>
+      <div class="estado" *ngIf="!carregando && !carregandoResumo && !erro && !anotacoesHtml">
+        Nenhum resumo encontrado.
+      </div>
+
+      <div class="resumo-conteudo"
+           *ngIf="!carregando && !carregandoResumo && !erro && anotacoesHtml"
+           [innerHTML]="anotacoesHtml"></div>
+    </div>
+  </div>
+</div>

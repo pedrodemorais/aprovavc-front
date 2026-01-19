@@ -59,6 +59,8 @@ import { PlanoDoDiaWidgetComponent } from './components/area-aluno/plano-do-dia-
 import { RevisoesComponent } from './components/area-aluno/revisoes/revisoes.component';
 import { ProgressoComponent } from './components/area-aluno/progresso/progresso.component';
 import { CadastroBaseComponent } from './area-admin/pages/painel-admin/cadastro-base/cadastro-base.component';
+import { BibliotecaComponent } from './components/area-aluno/biblioteca/biblioteca.component';
+import { BibliotecaResumoComponent } from './components/area-aluno/biblioteca/biblioteca-resumo.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -84,6 +86,8 @@ registerLocaleData(localePt);
     RevisoesComponent,
     ProgressoComponent,
     CadastroBaseComponent,
+    BibliotecaComponent,
+    BibliotecaResumoComponent,
 
   ],
   imports: [

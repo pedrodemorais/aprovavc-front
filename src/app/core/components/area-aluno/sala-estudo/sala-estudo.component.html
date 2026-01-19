@@ -689,9 +689,13 @@
   </section>
 
   <!-- =============== MODAL DE FLASHCARD =============== -->
-  <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard">
-    <div class="flashcard-modal">
-      <header class="flashcard-header">
+  <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard" #flashcardOverlay>
+    <div class="flashcard-modal"
+         #flashcardModal
+         [class.is-dragging]="flashcardModalDragging"
+         [style.left.px]="flashcardModalPos.x"
+         [style.top.px]="flashcardModalPos.y">
+      <header class="flashcard-header" (pointerdown)="iniciarArrasteFlashcard($event)">
         <div class="flashcard-header-titulo">
           <h2 class="flashcard-titulo">Criar Flashcard</h2>
           <i class="pi pi-info-circle info-icon"
