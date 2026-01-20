@@ -640,6 +640,14 @@
   color: #111827;
 }
 
+.plano-chip-num {
+  margin-left: 4px;
+}
+
+.plano-chip-label--short {
+  display: none;
+}
+
 .plan-note {
   font-size: 0.82rem;
   color: #6b7280;
@@ -1918,9 +1926,26 @@
   }
 
   .plan-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .plan-title-wrap {
+    min-width: 0;
+  }
+
+  .plan-value {
+    margin-left: auto;
+  }
+
+  .plano-chip-label--full {
+    display: none;
+  }
+
+  .plano-chip-label--short {
+    display: inline;
   }
 
   .plano-item {
@@ -1928,8 +1953,33 @@
     align-items: stretch;
   }
 
+  .plano-main {
+    align-items: stretch;
+  }
+
+  .plano-top {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .plano-nome {
+    text-align: center;
+    white-space: normal;
+  }
+
   .plano-chips {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 0;
+    gap: 8px;
     flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .plano-justificativa {
+    text-align: center;
   }
 
   .plano-btn {

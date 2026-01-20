@@ -268,8 +268,16 @@
               <div class="plano-top">
                 <span class="plano-nome">{{ item.materiaNome }}</span>
                 <div class="plano-chips">
-                  <span class="plano-chip plano-chip--atrasadas">Revisoes atrasadas <span class="plano-chip-num">{{ item.atrasadas }}</span></span>
-                  <span class="plano-chip plano-chip--hoje">Vence hoje <span class="plano-chip-num">{{ item.hoje }}</span></span>
+                  <span class="plano-chip plano-chip--atrasadas">
+                    <span class="plano-chip-label plano-chip-label--full">Revisoes atrasadas</span>
+                    <span class="plano-chip-label plano-chip-label--short">Atrasadas</span>
+                    <span class="plano-chip-num">{{ item.atrasadas }}</span>
+                  </span>
+                  <span class="plano-chip plano-chip--hoje">
+                    <span class="plano-chip-label plano-chip-label--full">Vence hoje</span>
+                    <span class="plano-chip-label plano-chip-label--short">Hoje</span>
+                    <span class="plano-chip-num">{{ item.hoje }}</span>
+                  </span>
                   <span class="plano-chip plano-chip--tempo">Minutos sugeridos <span class="plano-chip-num">{{ item.minutosSugeridos }}</span></span>
                 </div>
               </div>

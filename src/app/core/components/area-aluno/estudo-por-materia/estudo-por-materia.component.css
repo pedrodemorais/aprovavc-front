@@ -795,6 +795,20 @@
   .trilhas-topo{
     flex-direction: column;
   }
+  .topo-title-row{
+    justify-content: center;
+    width: 100%;
+  }
+  .topo-titulo{
+    font-size: 0.95rem;
+  }
+  .topo-left{
+    width: 100%;
+    text-align: center;
+  }
+  .topo-title-row .info-icon{
+    color: #2b2b2c9c;
+  }
   .topo-right{
     width: 100%;
     align-items: stretch;
@@ -811,6 +825,9 @@
   .topo-busca{
     width: 100%;
     max-width: 100%;
+  }
+  .topo-busca{
+    display: none;
   }
   .topo-legenda{
     display:none; /* ƒo. some no mobile pra ficar clean */
@@ -849,5 +866,13 @@
   .edital-dashboard-kpis{
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px){
+  .curso-header{
+    padding-left: 8px;
+    padding-right: 8px;
+    column-gap: 6px;
   }
 }
