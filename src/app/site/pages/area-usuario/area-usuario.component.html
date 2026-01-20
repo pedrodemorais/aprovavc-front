@@ -3,21 +3,21 @@
 
   <!-- 🔹 Topo da Dashboard -->
   <div class="topbar">
-
-    <!-- ESQUERDA: logo + menu -->
-    <div class="nome-site-area-usuario">
+    <div class="topbar-logo">
       <div class="logo">
-        <img src="assets/img/logo/revizo.png" alt="Logo" />
+        <img class="logo-full" src="assets/img/logo/revizo.png" alt="Logo" />
+        
       </div>
+    </div>
 
-      <!-- 🔹 Botão de menu hambúrguer -->
+    <div class="topbar-menu">
       <button #menuToggle class="menu-toggle" type="button" (click)="toggleMenu()" aria-label="Abrir menu">
         <i class="fas fa-bars" aria-hidden="true"></i>
       </button>
     </div>
 
-    <!-- DIREITA: modo escuro + som foco -->
-    <div class="son-e-modo-escuro">
+    <div class="topbar-actions">
+      <div class="son-e-modo-escuro">
 
       <!-- MODO ESCURO / CLARO -->
       <button class="btn-modo-leitura"
@@ -131,9 +131,9 @@
           >
             Sair
           </button>
-        </div>
       </div>
-
+    </div>
+  </div>
     </div>
   </div>
 
@@ -216,4 +216,6 @@
   </div>
 
 </div>
+
+
 

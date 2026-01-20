@@ -176,6 +176,17 @@ export class BibliotecaComponent implements OnInit {
     }
   }
 
+  private folhasTopicos(lista: Topico[]): Topico[] {
+    const out: Topico[] = [];
+    const walk = (t: Topico) => {
+      const filhos = t?.filhos || [];
+      if (filhos.length) filhos.forEach(walk);
+      else out.push(t);
+    };
+    (lista || []).forEach(walk);
+    return out;
+  }
+
   private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
     const idRaw =
       dto?.id ??

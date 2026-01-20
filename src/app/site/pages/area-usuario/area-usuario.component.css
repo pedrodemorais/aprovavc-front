@@ -146,10 +146,16 @@ body {
   animation: fadeInTopbar 0.25s ease-out;
 }
 
-.nome-site-area-usuario {
+.topbar-logo,
+.topbar-menu,
+.topbar-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  min-width: 0;
+}
+
+.topbar-actions {
+  margin-left: auto;
 }
 
 /* Logo */
@@ -162,6 +168,16 @@ body {
   width: 140px;
   height: auto;
   display: block;
+}
+
+.logo .logo-full {
+  display: block;
+}
+
+.logo .logo-mini {
+  display: none;
+  width: 34px;
+  height: 34px;
 }
 
 /* Bot+�o hamb+�rguer (mobile) */
@@ -433,6 +449,28 @@ body {
    RESPONSIVO
 ======================================= */
 @media (max-width: 768px) {
+  .topbar {
+    display: grid;
+
+    height: auto;
+    padding: 0.75rem 1rem;
+  }
+
+  .topbar-logo {
+    grid-column: 1 / 3;
+    justify-self: center;
+  }
+
+  .topbar-menu {
+    grid-column: 1 / 2;
+    justify-self: start;
+  }
+
+  .topbar-actions {
+    grid-column: 2 / 3;
+    justify-self: end;
+    margin-left: 0;
+  }
   .content {
   flex: 1 1 auto;
   min-width: 0;
@@ -441,8 +479,12 @@ body {
 }
 
 
-  .logo img {
-    width: 110px;
+  .logo .logo-full {
+    display: none;
+  }
+
+  .logo .logo-mini {
+    display: block;
   }
 
   .menu-toggle {
@@ -488,14 +530,12 @@ body {
 }
 
 
-  .topbar {
-    padding: 0 1rem;
-  }
+ 
 }
 
 @media (max-width: 480px) {
   .topbar {
-    height: 56px;
+    height: 60px;
   }
 
   .sidebar {

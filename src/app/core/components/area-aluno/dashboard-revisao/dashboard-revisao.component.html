@@ -132,17 +132,19 @@
               class="btn-modo-timer ativo btn-hero-primary hero-next-primary"
               (click)="comecarAgora()">
               <i class="pi pi-play"></i>
-              Come&ccedil;ar agora
+              Come&ccedil;ar
             </button>
           </div>
           <div class="hero-next-legend hero-next-legend--head">
             <span class="legend-item">
               <span class="legend-dot dot-vencida"></span>
-              Revisao vencida
+              <span class="legend-text legend-text--full">Revisao vencida</span>
+              <span class="legend-text legend-text--short">Vencidas</span>
             </span>
             <span class="legend-item">
               <span class="legend-dot dot-hoje"></span>
-              Revisao do dia
+              <span class="legend-text legend-text--full">Revisao do dia</span>
+              <span class="legend-text legend-text--short">Hoje</span>
             </span>
             <button
               type="button"
@@ -164,7 +166,7 @@
                     (click)="iniciarRevisao()"
                     [disabled]="!revisoesPrioritariasTotal">
                     <i class="pi pi-play"></i>
-                    Iniciar revisao
+                    Iniciar
                   </button>
                 </div>
               </div>
@@ -216,7 +218,7 @@
                     (click)="comecarEstudoProximo()"
                     [disabled]="!proximaMateriaEstudo">
                     <i class="pi pi-play"></i>
-                    Comecar estudo
+                    Iniciar
                   </button>
                 </div>
               </div>
@@ -405,7 +407,7 @@
           <span class="preview-value">--</span>
         </div>
         <div class="preview-card">
-          <span class="preview-label">Para hoje</span>
+          <span class="preview-label">Hoje</span>
           <span class="preview-value">--</span>
         </div>
         <div class="preview-card">

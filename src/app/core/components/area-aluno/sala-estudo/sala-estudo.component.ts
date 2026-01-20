@@ -179,6 +179,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       this.autoSelecionarUltimoNaoEstudado = this.getAutoTopicoFromQuery();
       this.modoPreferido = this.getModoFromQuery();
       this.modo = this.modoPreferido;
+      this.ajustarColunaEsquerdaParaModo();
 
       console.log('[SALA-ESTUDO] materiaId =', this.materiaId);
 
@@ -647,6 +648,9 @@ ativarRevisaoFlashcards(): void {
 
     this.timerAtivo = true;
     this.temTempoNaoSalvoFlag = true;
+    if (this.modo === 'estudar' && this.isSmallViewport()) {
+      this.colunaEsquerdaOculta = true;
+    }
     if (this.modo === 'revisar') {
       this.revisaoAutoExplicacaoAtiva = true;
     }
@@ -810,6 +814,7 @@ ativarRevisaoFlashcards(): void {
     this.modo = novoModo;
     this.mensagemRevisao = undefined;
     this.revisaoAutoExplicacaoAtiva = novoModo === 'revisar' && this.timerAtivo;
+    this.ajustarColunaEsquerdaParaModo();
     // quando entrar no modo revisar, se tiver tópico válido, carrega flashcards de revisão
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
@@ -818,6 +823,19 @@ ativarRevisaoFlashcards(): void {
 
   liberarRevisaoAutoExplicacao(): void {
     this.revisaoAutoExplicacaoAtiva = false;
+  }
+
+  private ajustarColunaEsquerdaParaModo(): void {
+    if (this.modo === 'estudar' && this.isSmallViewport()) {
+      this.colunaEsquerdaOculta = true;
+    }
+  }
+
+  private isSmallViewport(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.innerWidth <= 768;
   }
 
   // ================================================================
@@ -1324,7 +1342,18 @@ ativarRevisaoFlashcards(): void {
     if (!this.flashcards.length) {
       return;
     }
-    this.flashcardIndexAtual = (this.flashcardIndexAtual + 1) % this.flashcards.length;
+    const proximoIndex = this.flashcardIndexAtual + 1;
+    if (proximoIndex >= this.flashcards.length) {
+      const desejaRefazer = window.confirm(
+        'Voce chegou ao ultimo flashcard. Deseja refazer a revisao?'
+      );
+      if (!desejaRefazer) {
+        return;
+      }
+      this.flashcardIndexAtual = 0;
+    } else {
+      this.flashcardIndexAtual = proximoIndex;
+    }
     this.mostrarVersoAtual = false;
     this.avaliacaoFlashcardSelecionada = null;
     this.resetFlashcardFeedback();
@@ -1427,9 +1456,6 @@ ativarRevisaoFlashcards(): void {
     this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
       next: () => {
         this.proximoFlashcard();
-        if (this.podeIrParaProximaRevisao) {
-          this.irParaProximaRevisao();
-        }
         this.recarregarTopicosAposRevisao();
         this.avaliacaoFlashcardSelecionada = null;
         this.enviandoAvaliacaoFlashcard = false;

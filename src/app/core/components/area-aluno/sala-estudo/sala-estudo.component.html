@@ -12,6 +12,13 @@
       <span class="salvo-msg sala-avanco-msg" *ngIf="mensagemAvancoCiclo">{{ mensagemAvancoCiclo }}</span>
       <span class="salvo-msg sala-topico-finalizado-msg" *ngIf="mensagemTopicoFinalizado">{{ mensagemTopicoFinalizado }}</span>
     </span>
+    <button type="button" class="btn-toggle-coluna btn-toggle-coluna--titulo"
+      (click)="toggleColunaEsquerda()"
+      [attr.aria-label]="colunaEsquerdaOculta ? 'Mostrar coluna esquerda' : 'Esconder coluna esquerda'"
+      [attr.aria-pressed]="!colunaEsquerdaOculta">
+      <i class="pi" [ngClass]="colunaEsquerdaOculta ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
+      <span>{{ colunaEsquerdaOculta ? 'Mostrar' : 'Esconder' }}</span>
+    </button>
   </div>
 
   <section class="card sala-body">

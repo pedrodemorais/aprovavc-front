@@ -57,6 +57,10 @@
   text-overflow: ellipsis;
 }
 
+.sala-titulo .btn-toggle-coluna--titulo {
+  display: none;
+}
+
 .sala-salvo-msg {
   flex: 1 1 auto;
   margin-left: 6px;
@@ -1861,10 +1865,15 @@
     padding: 8px 10px 20px;
   }
 
+  .timer-toggle {
+    display: none;
+  }
+
   .timer-botoes {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    display: block;
+    justify-content: initial;
+    align-items: initial;
+    gap: 0;
   }
 
   .tipo-estudo {
@@ -1921,7 +1930,13 @@
 
   .bloco-anotacoes {
     height: auto;
-    min-height: 60vh;
+    min-height: 0;
+    gap: 0;
+  }
+
+  .bloco {
+    padding: 0;
+    border-left: none;
   }
 
   .editor-wrapper {
@@ -1934,17 +1949,46 @@
     font-size: 0.95rem;
   }
 
+
   .descricao-topico {
     font-size: 0.85rem;
   }
 
   .lista-de-topicos {
     max-height: 35vh;
+    border-top: none;
   }
 
   .flashcard-footer {
     gap: 6px;
   }
+
+  .sala-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0 6px;
+  }
+
+  .sala-titulo .titulo-materia {
+    font-size: 0.75rem;
+    gap: 6px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .sala-titulo .btn-toggle-coluna--titulo {
+    display: inline-flex;
+  }
+
+  .coluna-esquerda .btn-toggle-coluna {
+    display: none;
+  }
+
+  .btn-toggle-coluna-show {
+    display: none;
+  }
+
 }
 
 /* ============================
@@ -2313,6 +2357,13 @@
 /* só pra garantir que o UL não “empurre” */
 .lista-topicos{
   margin: 8px 0 0;
+}
+
+@media (max-width: 640px) {
+  .lista-de-topicos {
+    border-top: none;
+    padding-top: 0;
+  }
 }
 
 /* revisão dentro do mesmo frame */
