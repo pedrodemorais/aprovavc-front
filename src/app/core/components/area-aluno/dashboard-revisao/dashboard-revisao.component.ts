@@ -122,7 +122,8 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe({
       next: ({ revisoes, materias, materiasParaEstudo, editais, plano, blocos }) => {
-        this.revisoes = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
+        const revisoesAtivas = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
+        this.revisoes = this.filtrarRevisoesComTopicosFilhos(revisoesAtivas, materiasParaEstudo);
         this.materias = materias || [];
         this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
         this.editais = editais || [];
@@ -140,7 +141,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
         this.definirSugestaoEstudo();
         if (!plano?.materiasDoBloco?.length) {
-          this.carregarMateriasDoBloco(plano?.blocoNumero ?? null);
+          this.carregarMateriasDoBloco(plano?.blocoNumero ?? null, blocos);
         } else {
           this.materiasDoDiaFallback = [];
         }
@@ -189,6 +190,14 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
   get revisoesPrioritariasVisiveis(): RevisaoDashboardItem[] {
     return this.revisoesPrioritariasFiltradas.slice(0, 5);
+  }
+
+  get isPrimeiroAcesso(): boolean {
+    return !this.revisoes.length && !(this.materiasParaEstudoCount && this.editais.length);
+  }
+
+  get mostrarPlanoAtaque(): boolean {
+    return !!this.planoAtaqueSemana.length && !this.isPrimeiroAcesso;
   }
 
   get revisoesPrioritariasTotal(): number {
@@ -348,9 +357,12 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   }
 
   private carregarImagensEditaisAtivos(): void {
-    this.limparImagensEditaisAtivos();
+    this.removerImagensEditaisInativos();
     for (const edital of this.activeEditais || []) {
       if (!edital?.id) continue;
+      if (this.activeEditalImagemUrls[edital.id]) {
+        continue;
+      }
       if (this.definirImagemEditalAtivoPorBytes(edital)) {
         continue;
       }
@@ -359,6 +371,23 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       if (!templateId) continue;
       this.carregarImagemEditalAtivo(edital.id, templateId);
     }
+  }
+
+  private removerImagensEditaisInativos(): void {
+    const idsAtivos = new Set((this.activeEditais || []).map((e) => e?.id).filter((id): id is number => !!id));
+    for (const [editalId, objectUrl] of this.activeEditalImagemObjectUrls.entries()) {
+      if (!idsAtivos.has(editalId)) {
+        URL.revokeObjectURL(objectUrl);
+        this.activeEditalImagemObjectUrls.delete(editalId);
+        delete this.activeEditalImagemUrls[editalId];
+      }
+    }
+    Object.keys(this.activeEditalImagemUrls).forEach((idStr) => {
+      const id = Number(idStr);
+      if (!idsAtivos.has(id)) {
+        delete this.activeEditalImagemUrls[id];
+      }
+    });
   }
 
   private obterTemplateIdDoEdital(edital: Edital): number | null {
@@ -495,8 +524,11 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
   irParaSalaRevisao(item: RevisaoDashboardItem): void {
     if (!item?.materiaId) return;
-    const queryTopico = item.topicoId ? `topicoId=${item.topicoId}&` : '';
-    window.location.assign(`/area-restrita/sala-estudo/${item.materiaId}?${queryTopico}modo=revisao`);
+    const queryParams: any = { modo: 'revisao' };
+    if (item.topicoId) {
+      queryParams.topicoId = item.topicoId;
+    }
+    this.router.navigate(['/area-restrita/sala-estudo', item.materiaId], { queryParams });
   }
 
   @HostListener('document:pointerdown', ['$event'])
@@ -507,8 +539,11 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       const materiaId = Number((topic as HTMLElement).dataset?.['materiaId']);
       const topicoId = Number((topic as HTMLElement).dataset?.['topicoId']);
       if (Number.isFinite(materiaId) && materiaId > 0) {
-        const queryTopico = Number.isFinite(topicoId) && topicoId > 0 ? `topicoId=${topicoId}&` : '';
-        window.location.assign(`/area-restrita/sala-estudo/${materiaId}?${queryTopico}modo=revisao`);
+        const queryParams: any = { modo: 'revisao' };
+        if (Number.isFinite(topicoId) && topicoId > 0) {
+          queryParams.topicoId = topicoId;
+        }
+        this.router.navigate(['/area-restrita/sala-estudo', materiaId], { queryParams });
       }
     }
   }
@@ -798,6 +833,9 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   private carregarImagensTemplates(templates: EditalTemplateDTO[]): void {
     for (const t of templates || []) {
       if (!t?.id) continue;
+      if (this.templateImagemUrls[t.id]) {
+        continue;
+      }
       this.carregarImagemTemplate(t.id);
     }
   }
@@ -980,37 +1018,47 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       });
   }
 
-  private carregarMateriasDoBloco(blocoNumero: number | null): void {
+  private carregarMateriasDoBloco(blocoNumero: number | null, blocos?: BlocoEstudoDTO[] | null): void {
     if (!blocoNumero) {
       this.materiasDoDiaFallback = [];
       return;
     }
 
+    const listaBlocos = blocos || [];
+    if (listaBlocos.length) {
+      this.preencherMateriasDoBloco(listaBlocos, blocoNumero);
+      return;
+    }
+
     this.blocosEstudoService.listarBlocos().subscribe({
-      next: (blocos) => {
-        const bloco = (blocos || []).find((b) => b.numero === blocoNumero);
-        if (!bloco?.itens?.length) {
-          this.materiasDoDiaFallback = [];
-          return;
-        }
-
-        const nomePorId = new Map<number, string>(
-          (this.materias || [])
-            .filter((m): m is Materia & { id: number } => m?.id != null)
-            .map((m) => [m.id, m.nome])
-        );
-
-        const itensOrdenados = [...bloco.itens].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
-        this.materiasDoDiaFallback = itensOrdenados.map((item, index) => ({
-          materiaId: item.materiaEstudoId,
-          nome: item.materiaNome || nomePorId.get(item.materiaEstudoId) || `Materia ${item.materiaEstudoId}`,
-          ordem: item.ordem ?? index + 1
-        }));
+      next: (lista) => {
+        this.preencherMateriasDoBloco(lista || [], blocoNumero);
       },
       error: () => {
         this.materiasDoDiaFallback = [];
       }
     });
+  }
+
+  private preencherMateriasDoBloco(blocos: BlocoEstudoDTO[], blocoNumero: number): void {
+    const bloco = (blocos || []).find((b) => b.numero === blocoNumero);
+    if (!bloco?.itens?.length) {
+      this.materiasDoDiaFallback = [];
+      return;
+    }
+
+    const nomePorId = new Map<number, string>(
+      (this.materias || [])
+        .filter((m): m is Materia & { id: number } => m?.id != null)
+        .map((m) => [m.id, m.nome])
+    );
+
+    const itensOrdenados = [...bloco.itens].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+    this.materiasDoDiaFallback = itensOrdenados.map((item, index) => ({
+      materiaId: item.materiaEstudoId,
+      nome: item.materiaNome || nomePorId.get(item.materiaEstudoId) || `Materia ${item.materiaEstudoId}`,
+      ordem: item.ordem ?? index + 1
+    }));
   }
 
   private atualizarMateriasConcluidasNoPlanner(blocos: BlocoEstudoDTO[]): void {
@@ -1085,6 +1133,54 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       const status = statusPorTopico.get(topicoId);
       return status !== false;
     });
+  }
+
+  private filtrarRevisoesComTopicosFilhos(
+    revisoes: RevisaoDashboardItem[],
+    materiasParaEstudo: MateriaTopicosDTO[] | null | undefined
+  ): RevisaoDashboardItem[] {
+    const topicosComFilhos = this.obterTopicosComFilhos(materiasParaEstudo);
+    if (!topicosComFilhos.size) {
+      return revisoes;
+    }
+    return (revisoes || []).filter((item) => !topicosComFilhos.has(item.topicoId));
+  }
+
+  private obterTopicosComFilhos(materiasParaEstudo: MateriaTopicosDTO[] | null | undefined): Set<number> {
+    const resultado = new Set<number>();
+    for (const materia of materiasParaEstudo || []) {
+      const stack = [...(materia.topicos || [])];
+      while (stack.length) {
+        const atual = stack.shift();
+        if (!atual) continue;
+        const filhos = this.obterFilhosAtivos(atual);
+        if (filhos.length) {
+          const id = this.obterIdTopico(atual);
+          if (id) {
+            resultado.add(id);
+          }
+          stack.unshift(...filhos);
+        }
+      }
+    }
+    return resultado;
+  }
+
+  private obterIdTopico(topico: any): number | null {
+    const id =
+      Number(
+        topico?.id ??
+          topico?.topicoId ??
+          topico?.idTopico ??
+          topico?.subtopicoId ??
+          topico?.idSubtopico
+      ) || 0;
+    return id > 0 ? id : null;
+  }
+
+  private obterFilhosAtivos(topico: any): any[] {
+    const filhos = (topico?.filhos || topico?.subtopicos || []) as any[];
+    return filhos.filter((filho) => filho?.ativo !== false);
   }
 
   private obterEditalPlano(): Edital | null {

@@ -1,11 +1,11 @@
 // src/app/core/services/sala-estudo.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, finalize, shareReplay, tap } from 'rxjs/operators';
 
 
 
@@ -117,6 +117,16 @@ export interface BibliotecaFlashcardDTO {
   dificuldade: 'MUITO_FACIL' | 'FACIL' | 'MEDIA' | 'DIFICIL' | 'MUITO_DIFICIL';
   updatedAt?: string;
 }
+export interface VocabularioDTO {
+  id: number;
+  materiaId: number;
+  topicoId: number;
+  termo: string;
+  definicao: string;
+  tags?: string;
+  dataCriacao?: string;
+  dataAtualizacao?: string;
+}
 export interface SplitSubtopicoRequest {
   novosSubtopicos: string[];
   novoTituloPai?: string;
@@ -142,6 +152,11 @@ export class SalaEstudoService {
 
   private apiUrl = `${environment.apiUrl}/sala-estudo`;
   private topicosApiUrl = `${environment.apiUrl}/topicos`;
+  private readonly cacheTtlMs = 60000;
+  private revisoesDashboardCache?: { data: RevisaoDashboardItem[]; ts: number };
+  private revisoesDashboardRequest$?: Observable<RevisaoDashboardItem[]>;
+  private topicosFinalizadosCache?: { data: TopicoFinalizadoDTO[]; ts: number };
+  private topicosFinalizadosRequest$?: Observable<TopicoFinalizadoDTO[]>;
 
   constructor(private http: HttpClient) {}
 
@@ -160,7 +175,26 @@ export class SalaEstudoService {
   }
 
   listarTopicosFinalizados(): Observable<TopicoFinalizadoDTO[]> {
-    return this.http.get<TopicoFinalizadoDTO[]>(`${this.apiUrl}/topicos/finalizados`);
+    if (this.isCacheValido(this.topicosFinalizadosCache)) {
+      return of(this.topicosFinalizadosCache!.data);
+    }
+    if (this.topicosFinalizadosRequest$) {
+      return this.topicosFinalizadosRequest$;
+    }
+    this.topicosFinalizadosRequest$ = this.http.get<TopicoFinalizadoDTO[]>(`${this.apiUrl}/topicos/finalizados`).pipe(
+      tap((lista) => {
+        this.topicosFinalizadosCache = { data: lista || [], ts: Date.now() };
+      }),
+      shareReplay(1),
+      catchError((err) => {
+        this.topicosFinalizadosRequest$ = undefined;
+        return throwError(() => err);
+      }),
+      finalize(() => {
+        this.topicosFinalizadosRequest$ = undefined;
+      })
+    );
+    return this.topicosFinalizadosRequest$;
   }
 
   buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {
@@ -274,34 +308,58 @@ export class SalaEstudoService {
     }
     return this.http.get<BibliotecaFlashcardDTO[]>(`${this.apiUrl}/biblioteca/flashcards`, { params: httpParams });
   }
+
+  criarVocabulario(req: { materiaId: number; topicoId: number; termo: string; definicao: string; tags?: string })
+    : Observable<VocabularioDTO> {
+    return this.http.post<VocabularioDTO>(`${this.apiUrl}/vocabularios`, req);
+  }
+
+  listarVocabularios(topicoId: number): Observable<VocabularioDTO[]> {
+    const url = `${this.apiUrl}/vocabularios?topicoId=${topicoId}`;
+    return this.http.get<VocabularioDTO[]>(url);
+  }
+
+  atualizarVocabulario(
+    id: number,
+    req: { termo?: string; definicao?: string; tags?: string }
+  ): Observable<VocabularioDTO> {
+    return this.http.put<VocabularioDTO>(`${this.apiUrl}/vocabularios/${id}`, req);
+  }
+
+  excluirVocabulario(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/vocabularios/${id}`);
+  }
   splitSubtopico(subtopicoId: number, payload: SplitSubtopicoRequest): Observable<SplitSubtopicoResponse> {
     return this.http.post<SplitSubtopicoResponse>(`${this.topicosApiUrl}/${subtopicoId}/split`, payload);
   }
 
 listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
+  if (this.isCacheValido(this.revisoesDashboardCache)) {
+    return of(this.revisoesDashboardCache!.data);
+  }
+  if (this.revisoesDashboardRequest$) {
+    return this.revisoesDashboardRequest$;
+  }
   const url = `${this.apiUrl}/revisoes/dashboard`;
-
-  console.log('[SalaEstudoService] Chamando GET:', url);
-
-  return this.http.get<RevisaoDashboardItem[]>(url).pipe(
+  this.revisoesDashboardRequest$ = this.http.get<RevisaoDashboardItem[]>(url).pipe(
     tap((res) => {
-      console.log('========================================');
-      console.log('[SalaEstudoService] Resposta /revisoes/dashboard:');
-      console.log(res);
-      if (Array.isArray(res)) {
-        res.forEach((item, idx) => {
-          console.log(`-- Item #${idx} ----------------------`);
-          console.log(item);
-          // tenta logar campos que podem existir
-          // ajustamos depois conforme o que aparecer:
-          console.log('statusRevisao:', (item as any).statusRevisao);
-          console.log('proximaRevisao:', (item as any).proximaRevisao);
-          console.log('dataProximaRevisao:', (item as any).dataProximaRevisao);
-        });
-      }
-      console.log('========================================');
+      this.revisoesDashboardCache = { data: res || [], ts: Date.now() };
+    }),
+    shareReplay(1),
+    catchError((err) => {
+      this.revisoesDashboardRequest$ = undefined;
+      return throwError(() => err);
+    }),
+    finalize(() => {
+      this.revisoesDashboardRequest$ = undefined;
     })
   );
+  return this.revisoesDashboardRequest$;
+}
+
+private isCacheValido(cache?: { ts: number }): boolean {
+  if (!cache) return false;
+  return (Date.now() - cache.ts) < this.cacheTtlMs;
 }
 
 

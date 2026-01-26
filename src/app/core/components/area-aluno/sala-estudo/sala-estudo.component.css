@@ -294,6 +294,15 @@
   flex: 0 0 auto;
 }
 
+.topico-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-width: 28px;
+}
+
 .btn-split-topico {
   width: 24px;
   height: 24px;
@@ -331,6 +340,33 @@
 .descricao-topico {
   font-size: 0.9rem;
   color: #6b7280;
+}
+
+.item-topico.finalizado .descricao-topico {
+  color: #1f7a3a;
+}
+
+.topico-finalizado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.16);
+  color: #15803d;
+  font-size: 0.7rem;
+  flex: 0 0 auto;
+}
+
+.badge-finalizado {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.16);
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 /* ============================
@@ -1483,6 +1519,229 @@
 .flashcard-fechar:hover {
   background: #f3f4f6;
   color: #4b5563;
+}
+
+/* =========================
+   VOCABULARIO MODAL
+========================= */
+.vocabulario-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.vocabulario-modal {
+  width: min(680px, 95vw);
+  min-height: 420px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 85vh;
+  overflow: auto;
+}
+
+.vocabulario-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vocabulario-modo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vocabulario-modal--revisao {
+  background: #f8fafc;
+  height: 460px;
+}
+
+.vocabulario-modal--revisao .vocabulario-contexto,
+.vocabulario-modal--revisao .vocabulario-import,
+.vocabulario-modal--revisao .vocabulario-form,
+.vocabulario-modal--revisao .vocabulario-actions,
+.vocabulario-modal--revisao .vocabulario-lista,
+.vocabulario-modal--revisao .vocabulario-feedback {
+  display: none;
+}
+
+.vocabulario-modal--revisao .vocabulario-modo {
+  justify-content: center;
+  width: 100%;
+}
+
+.vocabulario-modal--revisao .vocabulario-card {
+  background: #ffffff;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+}
+
+.vocabulario-titulo {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.vocabulario-fechar {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vocabulario-contexto {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.vocabulario-contexto-linha {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.vocabulario-form {
+  display: grid;
+  gap: 8px;
+}
+
+.vocabulario-label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.vocabulario-input {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+.vocabulario-textarea {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.vocabulario-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vocabulario-feedback {
+  font-size: 0.85rem;
+  color: #166534;
+}
+
+.vocabulario-feedback--erro {
+  color: #b91c1c;
+}
+
+.vocabulario-import {
+  display: grid;
+  gap: 8px;
+}
+
+.vocabulario-import-dica {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.vocabulario-lista ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.vocabulario-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.vocabulario-item-texto {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.vocabulario-item-tags {
+  color: #6b7280;
+}
+
+.vocabulario-item-del {
+  border: none;
+  background: transparent;
+  color: #b91c1c;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.vocabulario-revisao {
+  display: grid;
+  gap: 10px;
+  height: 100%;
+}
+
+.vocabulario-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+  text-align: center;
+  height: 260px;
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
+
+.vocabulario-card-meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.vocabulario-card-termo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.vocabulario-card-def {
+  font-size: 0.95rem;
+  color: #374151;
+  min-height: 44px;
+}
+
+.vocabulario-reveal {
+  justify-self: center;
+}
+
+.vocabulario-revisao-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 .flashcard-contexto {

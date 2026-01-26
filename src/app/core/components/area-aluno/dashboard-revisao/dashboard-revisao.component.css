@@ -170,6 +170,16 @@
   gap: 8px;
 }
 
+.hero-head-legend {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  text-align: right;
+}
+
 .hero-info-btn {
   border: none;
   background: transparent;

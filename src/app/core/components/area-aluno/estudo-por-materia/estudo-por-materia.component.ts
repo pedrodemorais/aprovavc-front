@@ -46,6 +46,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   editais: Edital[] = [];
   activeEditalImagemUrl: string | null = null;
   private activeEditalImagemObjectUrl: string | null = null;
+  private activeEditalImagemTemplateId: number | null = null;
   carregandoEditais = false;
   escopoValor = 'todas';
   private readonly escopoParametroChave = 'centro_estudo_filtro_pro_prova';
@@ -483,6 +484,9 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
     const templateId = this.obterTemplateIdDoEdital(edital);
     if (!templateId) return;
+    if (this.activeEditalImagemTemplateId === templateId && this.activeEditalImagemUrl) {
+      return;
+    }
     this.carregarImagemEditalSelecionado(templateId);
   }
 
@@ -510,6 +514,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
           const objectUrl = URL.createObjectURL(blob);
           this.activeEditalImagemObjectUrl = objectUrl;
           this.activeEditalImagemUrl = objectUrl;
+          this.activeEditalImagemTemplateId = templateId;
           return;
         }
 
@@ -519,6 +524,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
             if (!payload?.dados) return;
             const tipo = this.normalizarContentType(payload.contentType);
             this.activeEditalImagemUrl = `data:${tipo};base64,${payload.dados}`;
+            this.activeEditalImagemTemplateId = templateId;
           })
           .catch(() => {
             this.removerImagemEditalSelecionado();
@@ -616,6 +622,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       this.activeEditalImagemObjectUrl = null;
     }
     this.activeEditalImagemUrl = null;
+    this.activeEditalImagemTemplateId = null;
   }
 
   private getRevisoesPorStatusEdital(edital: Edital | null | undefined, status: StatusRevisao): number {

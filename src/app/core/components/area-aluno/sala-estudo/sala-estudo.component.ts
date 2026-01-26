@@ -1,10 +1,11 @@
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { MateriaService } from '../services/materia.service';
 import { Materia } from '../models/materia.model';
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
-import {SalaEstudoService,  EstudoTopicoRequest,  FlashcardRevisaoRespostaRequest, TopicoRevisaoRespostaRequest, TopicoFinalizadoDTO
+import {SalaEstudoService,  EstudoTopicoRequest,  FlashcardRevisaoRespostaRequest, TopicoRevisaoRespostaRequest, TopicoFinalizadoDTO, VocabularioDTO
 } from '../services/sala-estudo.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
@@ -29,6 +30,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   pausarAoSairDaAba = true;
   private readonly pausarAoSairDaAbaKey = 'sala-estudo:pausar-ao-sair-aba';
   private topicosFinalizados = new Set<number>();
+  private topicosFinalizadosCarregados = false;
 
   @ViewChild('flashcardModal', { static: false }) flashcardModalRef?: ElementRef<HTMLElement>;
   @ViewChild('flashcardOverlay', { static: false }) flashcardOverlayRef?: ElementRef<HTMLElement>;
@@ -123,6 +125,22 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   // =============== FLASHCARD (ESTADO) ===============
   mostrarModalFlashcard: boolean = false;
 
+  // =============== VOCABULARIO (ESTADO) ===============
+  mostrarModalVocabulario: boolean = false;
+  vocabularioTermo: string = '';
+  vocabularioDefinicao: string = '';
+  vocabularioTags: string = '';
+  vocabularioListaTexto: string = '';
+  vocabularios: VocabularioDTO[] = [];
+  carregandoVocabularios: boolean = false;
+  erroVocabularios?: string;
+  salvandoVocabulario: boolean = false;
+  salvandoListaVocabulario: boolean = false;
+  mensagemVocabularioSucesso?: string;
+  vocabularioModo: 'lista' | 'revisar' = 'lista';
+  vocabularioIndexAtual: number = 0;
+  vocabularioMostrarDefinicao: boolean = false;
+
   mostrarModalSplit: boolean = false;
   splitTopico: any | null = null;
   splitNovos: string[] = [];
@@ -158,6 +176,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private materiaService: MateriaService,
     private salaEstudoService: SalaEstudoService,
     private blocosService: BlocosEstudoService,
@@ -449,6 +468,9 @@ ativarRevisaoFlashcards(): void {
 
     this.topicoSelecionado = t;
     this.salvarUltimoTopico(t);
+    if (t?.id) {
+      this.atualizarQueryTopico(t.id);
+    }
     if (this.modo === 'revisar') {
       this.iniciarContagemRevisaoItem();
     }
@@ -481,6 +503,10 @@ ativarRevisaoFlashcards(): void {
     // se já estiver no modo revisar, ao trocar de tópico recarrega os flashcards para revisão
     if (this.modo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
+    }
+
+    if (this.mostrarModalVocabulario && this.topicoPermiteEstudo) {
+      this.carregarVocabularios();
     }
   }
 
@@ -537,7 +563,7 @@ ativarRevisaoFlashcards(): void {
     return null;
   }
 
-  private isTopicoFinalizado(t: any): boolean {
+  isTopicoFinalizado(t: any): boolean {
     const id = t?.id;
     if (!id) {
       return false;
@@ -551,9 +577,13 @@ ativarRevisaoFlashcards(): void {
         this.topicosFinalizados = new Set((lista || [])
           .map((item) => item?.topicoId)
           .filter((id): id is number => Number.isFinite(id)));
+        this.topicosFinalizadosCarregados = true;
+        this.tentarSelecionarTopicoInicial();
       },
       error: () => {
         this.topicosFinalizados = new Set();
+        this.topicosFinalizadosCarregados = true;
+        this.tentarSelecionarTopicoInicial();
       }
     });
   }
@@ -962,6 +992,219 @@ ativarRevisaoFlashcards(): void {
   fecharModalFlashcard(): void {
     this.mostrarModalFlashcard = false;
     this.encerrarArrasteFlashcard();
+  }
+
+  abrirModalVocabulario(modo: 'lista' | 'revisar' = 'lista'): void {
+    if (!this.topicoPermiteEstudo) {
+      return;
+    }
+    this.mostrarModalVocabulario = true;
+    this.resetVocabularioForm();
+    this.vocabularioModo = modo;
+    this.carregarVocabularios();
+  }
+
+  fecharModalVocabulario(): void {
+    this.mostrarModalVocabulario = false;
+    this.erroVocabularios = undefined;
+    this.mensagemVocabularioSucesso = undefined;
+  }
+
+  private resetVocabularioForm(): void {
+    this.vocabularioTermo = '';
+    this.vocabularioDefinicao = '';
+    this.vocabularioTags = '';
+    this.vocabularioListaTexto = '';
+    this.vocabularioModo = 'lista';
+    this.vocabularioIndexAtual = 0;
+    this.vocabularioMostrarDefinicao = false;
+  }
+
+  private carregarVocabularios(): void {
+    if (!this.topicoSelecionado?.id) {
+      this.vocabularios = [];
+      return;
+    }
+    this.carregandoVocabularios = true;
+    this.erroVocabularios = undefined;
+    this.salaEstudoService.listarVocabularios(this.topicoSelecionado.id).subscribe({
+      next: (lista) => {
+        this.vocabularios = lista || [];
+        if (this.vocabularioIndexAtual >= this.vocabularios.length) {
+          this.vocabularioIndexAtual = 0;
+          this.vocabularioMostrarDefinicao = false;
+        }
+        this.carregandoVocabularios = false;
+      },
+      error: (err) => {
+        console.error('[VOCABULARIO] Erro ao carregar:', err);
+        this.erroVocabularios = 'Erro ao carregar vocabularios.';
+        this.carregandoVocabularios = false;
+      }
+    });
+  }
+
+  salvarVocabulario(): void {
+    if (!this.topicoSelecionado?.id || !this.materiaId) {
+      return;
+    }
+    const termo = this.vocabularioTermo.trim();
+    const definicao = this.vocabularioDefinicao.trim();
+    if (!termo || !definicao) {
+      return;
+    }
+    const payload = {
+      materiaId: this.materiaId,
+      topicoId: this.topicoSelecionado.id,
+      termo,
+      definicao,
+      tags: this.vocabularioTags?.trim() || undefined
+    };
+    this.salvandoVocabulario = true;
+    this.salaEstudoService.criarVocabulario(payload).subscribe({
+      next: () => {
+        this.salvandoVocabulario = false;
+        this.resetVocabularioForm();
+        this.carregarVocabularios();
+        this.mensagemVocabularioSucesso = 'Vocabulario salvo!';
+        setTimeout(() => (this.mensagemVocabularioSucesso = undefined), 3000);
+      },
+      error: (err) => {
+        console.error('[VOCABULARIO] Erro ao salvar:', err);
+        this.erroVocabularios = 'Erro ao salvar vocabulario.';
+        this.salvandoVocabulario = false;
+      }
+    });
+  }
+
+  salvarListaVocabulario(): void {
+    if (!this.topicoSelecionado?.id || !this.materiaId) {
+      return;
+    }
+    const itens = this.parseVocabularioLista(this.vocabularioListaTexto || '');
+    if (!itens.length) {
+      this.erroVocabularios = 'Nenhum item valido para importar.';
+      return;
+    }
+    this.salvandoListaVocabulario = true;
+    const requisicoes = itens.map((item) =>
+      this.salaEstudoService.criarVocabulario({
+        materiaId: this.materiaId,
+        topicoId: this.topicoSelecionado.id,
+        termo: item.termo,
+        definicao: item.definicao,
+        tags: this.vocabularioTags?.trim() || undefined
+      })
+    );
+    forkJoin(requisicoes).subscribe({
+      next: () => {
+        this.salvandoListaVocabulario = false;
+        this.vocabularioListaTexto = '';
+        this.carregarVocabularios();
+        this.mensagemVocabularioSucesso = 'Lista importada!';
+        setTimeout(() => (this.mensagemVocabularioSucesso = undefined), 3000);
+      },
+      error: (err) => {
+        console.error('[VOCABULARIO] Erro ao importar lista:', err);
+        this.erroVocabularios = 'Erro ao importar lista de vocabulario.';
+        this.salvandoListaVocabulario = false;
+      }
+    });
+  }
+
+  private parseVocabularioLista(texto: string): Array<{ termo: string; definicao: string }> {
+    const linhas = texto
+      .split(/\r?\n/)
+      .map((linha) => linha.trim())
+      .filter((linha) => linha.length > 0);
+    const separadores = [' – ', ' - ', ' : ', '–', '-', ':'];
+    const itens: Array<{ termo: string; definicao: string }> = [];
+
+    linhas.forEach((linha) => {
+      let termo = '';
+      let definicao = '';
+      for (const sep of separadores) {
+        const idx = linha.indexOf(sep);
+        if (idx > 0) {
+          termo = linha.slice(0, idx).trim();
+          definicao = linha.slice(idx + sep.length).trim();
+          break;
+        }
+      }
+      if (!termo || !definicao) {
+        return;
+      }
+      itens.push({ termo, definicao });
+    });
+
+    return itens;
+  }
+
+  excluirVocabulario(item: VocabularioDTO): void {
+    if (!item?.id) {
+      return;
+    }
+    const confirmou = window.confirm('Deseja realmente excluir este vocabulario?');
+    if (!confirmou) {
+      return;
+    }
+    this.salaEstudoService.excluirVocabulario(item.id).subscribe({
+      next: () => {
+        this.vocabularios = this.vocabularios.filter(v => v.id !== item.id);
+        if (this.vocabularioIndexAtual >= this.vocabularios.length) {
+          this.vocabularioIndexAtual = 0;
+          this.vocabularioMostrarDefinicao = false;
+        }
+      },
+      error: (err) => {
+        console.error('[VOCABULARIO] Erro ao excluir:', err);
+        this.erroVocabularios = 'Erro ao excluir vocabulario.';
+      }
+    });
+  }
+
+  get vocabularioAtual(): VocabularioDTO | null {
+    if (!this.vocabularios.length) {
+      return null;
+    }
+    if (this.vocabularioIndexAtual < 0 || this.vocabularioIndexAtual >= this.vocabularios.length) {
+      return null;
+    }
+    return this.vocabularios[this.vocabularioIndexAtual];
+  }
+
+  iniciarRevisaoVocabulario(): void {
+    if (!this.vocabularios.length) {
+      return;
+    }
+    this.vocabularioModo = 'revisar';
+    this.vocabularioIndexAtual = 0;
+    this.vocabularioMostrarDefinicao = false;
+  }
+
+  voltarListaVocabulario(): void {
+    this.vocabularioModo = 'lista';
+  }
+
+  toggleDefinicaoVocabulario(): void {
+    this.vocabularioMostrarDefinicao = !this.vocabularioMostrarDefinicao;
+  }
+
+  proximoVocabulario(): void {
+    if (!this.vocabularios.length) {
+      return;
+    }
+    this.vocabularioIndexAtual = (this.vocabularioIndexAtual + 1) % this.vocabularios.length;
+    this.vocabularioMostrarDefinicao = false;
+  }
+
+  anteriorVocabulario(): void {
+    if (!this.vocabularios.length) {
+      return;
+    }
+    this.vocabularioIndexAtual =
+      (this.vocabularioIndexAtual - 1 + this.vocabularios.length) % this.vocabularios.length;
+    this.vocabularioMostrarDefinicao = false;
   }
 
   private obterTrechoSelecionado(): string {
@@ -1777,41 +2020,39 @@ get podeIrParaProximaRevisao(): boolean {
     if (this.autoSelecionarUltimoNaoEstudado && !this.revisoesCarregadas) {
       return;
     }
+    if (!this.topicosFinalizadosCarregados) {
+      return;
+    }
 
     let alvo: any | undefined;
     if (this.topicoIdPreferido) {
       const candidato = this.topicos.find(t => t.id === this.topicoIdPreferido);
       if (candidato && !candidato.hasFilhos) {
-        alvo = candidato;
+        if (this.isTopicoFinalizado(candidato)) {
+          const folhas = this.topicos.filter(t => !t.hasFilhos && t.ativo !== false);
+          alvo = this.obterProximoTopicoApos(folhas, candidato.id) || candidato;
+        } else {
+          alvo = candidato;
+        }
       }
     }
 
     if (!alvo) {
       const folhas = this.topicos.filter(t => !t.hasFilhos && t.ativo !== false);
-      if (this.autoSelecionarUltimoNaoEstudado && folhas.length) {
-        const ultimoTopicoId = this.obterUltimoTopicoId();
-        if (ultimoTopicoId) {
-          const ultimoTopico = folhas.find(t => t.id === ultimoTopicoId);
-          if (ultimoTopico) {
-            const continuar = window.confirm('Continuar de onde parou?');
-            if (continuar) {
-              if (this.isTopicoFinalizado(ultimoTopico)) {
-                const proximo = this.obterProximoTopicoApos(folhas, ultimoTopico.id);
-                alvo = proximo || this.obterPrimeiroNaoEstudado(folhas) || ultimoTopico;
-              } else {
-                alvo = ultimoTopico;
-              }
-            }
+      const ultimoTopicoId = this.obterUltimoTopicoId();
+      if (ultimoTopicoId) {
+        const ultimoTopico = folhas.find(t => t.id === ultimoTopicoId);
+        if (ultimoTopico) {
+          if (this.isTopicoFinalizado(ultimoTopico)) {
+            const proximo = this.obterProximoTopicoApos(folhas, ultimoTopico.id);
+            alvo = proximo || this.obterPrimeiroNaoEstudado(folhas) || ultimoTopico;
+          } else {
+            alvo = ultimoTopico;
           }
         }
       }
 
-      if (alvo) {
-        this.selecionarTopico(alvo);
-        this.selecionouTopicoInicial = true;
-        return;
-      }
-      if (this.autoSelecionarUltimoNaoEstudado && folhas.length) {
+      if (!alvo && this.autoSelecionarUltimoNaoEstudado && folhas.length) {
         const primeiroNaoEstudado = this.obterPrimeiroNaoEstudado(folhas);
         if (primeiroNaoEstudado) {
           const proximoAposUltimoEstudado = this.obterProximoNaoEstudadoAposUltimoEstudado(folhas);
@@ -1830,7 +2071,14 @@ get podeIrParaProximaRevisao(): boolean {
         if (!alvo) {
           alvo = folhas[0];
         }
-      } else {
+      }
+
+      if (alvo) {
+        this.selecionarTopico(alvo);
+        this.selecionouTopicoInicial = true;
+        return;
+      }
+      if (!alvo) {
         alvo = folhas[0];
       }
     }
@@ -1861,11 +2109,14 @@ get podeIrParaProximaRevisao(): boolean {
     if (!topicoId) {
       return;
     }
+    const proximoPreferidoId = this.obterProximoTopicoIdAtual(topicoId);
     this.salaEstudoService.finalizarTopico(topicoId).subscribe({
       next: () => {
         this.topicosFinalizados.add(topicoId);
         this.mensagemTopicoFinalizado = 'Topico finalizado.';
         setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+        this.carregarTopicosFinalizados();
+        this.recarregarTopicosAposRevisao(topicoId, proximoPreferidoId);
       },
       error: () => {
         this.mensagemTopicoFinalizado = 'Nao foi possivel finalizar o topico.';
@@ -2009,7 +2260,7 @@ get podeIrParaProximaRevisao(): boolean {
 /** Recarrega revisões + árvore de tópicos para atualizar o semáforo,
  *  preservando o tópico selecionado.
  */
-private recarregarTopicosAposRevisao(): void {
+private recarregarTopicosAposRevisao(proximoAposId?: number | null, proximoPreferidoId?: number | null): void {
   if (!this.materiaId) {
     return;
   }
@@ -2027,6 +2278,22 @@ private recarregarTopicosAposRevisao(): void {
       this.arvoreTopicos = listaSegura;
       this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
 
+      if (proximoPreferidoId) {
+        const preferido = this.topicos.find(t => t.id === proximoPreferidoId);
+        if (preferido) {
+          this.selecionarTopico(preferido);
+          return;
+        }
+      }
+
+      if (proximoAposId) {
+        const candidato = this.obterProximoTopicoParaEstudo(proximoAposId);
+        if (candidato) {
+          this.selecionarTopico(candidato);
+          return;
+        }
+      }
+
       // tenta manter o mesmo t+�pico selecionado
       if (idSelecionado) {
         const encontrado = this.topicos.find(t => t.id === idSelecionado);
@@ -2038,6 +2305,58 @@ private recarregarTopicosAposRevisao(): void {
     error: (err) => {
       console.error('[SALA-ESTUDO] Erro ao recarregar tópicos após revisão:', err);
     }
+  });
+}
+
+private obterProximoTopicoParaEstudo(atualId: number): any | null {
+  const folhas = this.getTopicosFolha();
+  if (!folhas.length) {
+    return null;
+  }
+
+  const index = folhas.findIndex(t => t.id === atualId);
+  for (let i = index + 1; i < folhas.length; i += 1) {
+    if (!this.isTopicoFinalizado(folhas[i])) {
+      return folhas[i];
+    }
+  }
+
+  for (let i = 0; i < folhas.length; i += 1) {
+    if (!this.isTopicoFinalizado(folhas[i])) {
+      return folhas[i];
+    }
+  }
+
+  return null;
+}
+
+private obterProximoTopicoIdAtual(atualId: number): number | null {
+  const folhas = this.getTopicosFolha();
+  if (!folhas.length) {
+    return null;
+  }
+
+  const index = folhas.findIndex(t => t.id === atualId);
+  for (let i = index + 1; i < folhas.length; i += 1) {
+    if (!this.isTopicoFinalizado(folhas[i])) {
+      return folhas[i]?.id ?? null;
+    }
+  }
+
+  for (let i = 0; i < folhas.length; i += 1) {
+    if (!this.isTopicoFinalizado(folhas[i])) {
+      return folhas[i]?.id ?? null;
+    }
+  }
+
+  return null;
+}
+private atualizarQueryTopico(topicoId: number): void {
+  this.router.navigate([], {
+    relativeTo: this.route,
+    queryParams: { topicoId },
+    queryParamsHandling: 'merge',
+    replaceUrl: true
   });
 }
 private mostrarMensagemRevisao(texto: string): void {
