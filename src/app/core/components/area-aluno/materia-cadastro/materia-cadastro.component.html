@@ -222,7 +222,7 @@ Direito Administrativo
               <span class="preview-dot"></span>
 
               <span class="preview-txt">
-                <strong>{{ m.nome }}</strong>
+                <strong>{{ limparDescricaoTopico(m.nome) }}</strong>
                 <span style="opacity:.75;"> - {{ contarTopicosRecursivo(m.topicos) }} itens</span>
               </span>
 
@@ -260,7 +260,7 @@ Direito Administrativo
 <ng-template #previewTopicoTpl let-topico let-nivel="nivel">
   <li class="preview-li" [style.paddingLeft.px]="nivel * 16">
     <span class="preview-dot"></span>
-    <span class="preview-txt">{{ topico.descricao }}</span>
+    <span class="preview-txt">{{ limparDescricaoTopico(topico.descricao) }}</span>
   </li>
 
   <ng-container *ngIf="topico.filhos?.length">

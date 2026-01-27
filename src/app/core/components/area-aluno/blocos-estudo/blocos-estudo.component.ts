@@ -54,7 +54,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   materiasMap = new Map<number, string>();
   materiasTodas: Materia[] = [];
   get temEditalAtivo(): boolean {
-    return !!this.editalAtivo;
+    return !!this.activeEditais.length;
   }
   materiasFiltradasPorBloco: MateriaOption[][] = [];
   materiaSelecionadaPorBloco: Array<MateriaOption | null> = [];
@@ -75,6 +75,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   carregandoMaterias = false;
   carregandoEditais = false;
   editais: Edital[] = [];
+  activeEditais: Edital[] = [];
   editalAtivo: Edital | null = null;
   editalAtivoNome = 'Nenhum edital selecionado';
   materiasFiltroIds = new Set<number>();
@@ -277,17 +278,23 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (lista) => {
           this.editais = lista || [];
-          this.editalAtivo = this.editais.find((e) => e?.ativo) || null;
-          this.editalAtivoNome = this.editalAtivo?.nome || 'Nenhum edital selecionado';
-          this.materiasFiltroIds = new Set<number>(
-            (this.editalAtivo?.materias || [])
+          this.activeEditais = (this.editais || []).filter((e) => e?.ativo);
+          this.editalAtivo = this.activeEditais[0] || null;
+          const nomes = this.activeEditais.map((e) => e.nome).filter(Boolean);
+          this.editalAtivoNome = nomes.length ? nomes.join(' / ') : 'Nenhum edital selecionado';
+          const ids = new Set<number>();
+          this.activeEditais.forEach((e) => {
+            (e?.materias || [])
               .map((m) => m.materiaId)
               .filter((id) => Number.isFinite(id))
-          );
+              .forEach((id) => ids.add(id));
+          });
+          this.materiasFiltroIds = ids;
           this.carregarImagemEditalAtivo();
           this.atualizarMateriasOptions();
         },
         error: () => {
+          this.activeEditais = [];
           this.editalAtivo = null;
           this.editalAtivoNome = 'Nenhum edital selecionado';
           this.materiasFiltroIds = new Set<number>();
@@ -437,6 +444,30 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   getEditalCargo(edital?: Edital | null): string {
     const cargo = (edital as any)?.cargo || (edital as any)?.nomeCargo || '';
     return String(cargo || '').trim();
+  }
+
+  getSiglaEdital(nome?: string | null): string {
+    const texto = String(nome || '').trim();
+    if (!texto) {
+      return '-';
+    }
+    const ignorar = new Set([
+      'de', 'da', 'do', 'das', 'dos',
+      'e', 'em', 'no', 'na', 'nos', 'nas',
+      'por', 'para', 'ao', 'a', 'o'
+    ]);
+    const partes = texto
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+    const sigla = partes
+      .filter((p) => !ignorar.has(p.toLowerCase()))
+      .map((p) => p[0])
+      .join('');
+    if (sigla) {
+      return sigla.toUpperCase();
+    }
+    return texto[0].toUpperCase();
   }
 
   private atualizarMateriasOptions(): void {

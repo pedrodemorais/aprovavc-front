@@ -554,13 +554,6 @@ private mensagemTimeout: any; // para guardar o setTimeout
       next: () => {
         const novoAtivo = !edital.ativo;
         edital.ativo = novoAtivo;
-        if (novoAtivo) {
-          (this.editais || []).forEach((e) => {
-            if (e.id !== edital.id) {
-              e.ativo = false;
-            }
-          });
-        }
         this.atualizarEditalAtivoLocal(edital.id!, novoAtivo);
         this.mensagemSucesso = edital.ativo
           ? `Edital "${edital.nome}" marcado como em estudo.`
@@ -588,9 +581,6 @@ private mensagemTimeout: any; // para guardar o setTimeout
       if (node.data?.editalId === editalId) {
         node.data.ativo = ativo;
         return;
-      }
-      if (ativo) {
-        node.data.ativo = false;
       }
     });
   }
@@ -828,6 +818,14 @@ private mensagemTimeout: any; // para guardar o setTimeout
     const node = event?.node as TreeNode | undefined;
     if (!node?.data) return;
     this.definirEditalSelecionadoPorNode(node);
+    if (node.data.tipo === 'EDITAL') {
+      const editalId = node.data.editalId as number | undefined;
+      const encontrado = (this.editais || []).find(e => e.id === editalId);
+      if (encontrado && !encontrado.ativo) {
+        this.definirComoEmEstudo(encontrado);
+      }
+      return;
+    }
     if (node.data.tipo === 'MATERIA') {
       this.atualizarStatusMateriaNode(node, true);
       return;
@@ -853,6 +851,14 @@ private mensagemTimeout: any; // para guardar o setTimeout
     const node = event?.node as TreeNode | undefined;
     if (!node?.data) return;
     this.definirEditalSelecionadoPorNode(node);
+    if (node.data.tipo === 'EDITAL') {
+      const editalId = node.data.editalId as number | undefined;
+      const encontrado = (this.editais || []).find(e => e.id === editalId);
+      if (encontrado && encontrado.ativo) {
+        this.definirComoEmEstudo(encontrado);
+      }
+      return;
+    }
     if (node.data.tipo === 'MATERIA') {
       this.atualizarStatusMateriaNode(node, false);
       return;
@@ -866,6 +872,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.marcarMudancasPendentes();
     this.removerNodeDaSelecao(node);
     this.atualizarStatusTopicoNode(node, false);
+    this.desmarcarPaisSeNecessario(node);
 
     if (!node.children?.length) {
       return;
@@ -893,6 +900,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.marcarMudancasPendentes();
     this.adicionarNodeNaSelecao(node);
     this.atualizarStatusTopicoNode(node, true);
+    this.marcarPaisSeNecessario(node);
 
     if (!node.children?.length) {
       return;
@@ -914,6 +922,33 @@ private mensagemTimeout: any; // para guardar o setTimeout
       return;
     }
     this.selectedEditalNodes = [...selecionados, node];
+  }
+
+  private marcarPaisSeNecessario(node: TreeNode): void {
+    let parent = node.parent as TreeNode | undefined;
+    while (parent && parent.data?.tipo === 'TOPICO') {
+      this.adicionarNodeNaSelecao(parent);
+      this.atualizarStatusTopicoNode(parent, true);
+      parent = parent.parent as TreeNode | undefined;
+    }
+  }
+
+  private desmarcarPaisSeNecessario(node: TreeNode): void {
+    let parent = node.parent as TreeNode | undefined;
+    while (parent && parent.data?.tipo === 'TOPICO') {
+      const temFilhoSelecionado = (parent.children || []).some((child) => this.isNodeSelecionado(child));
+      if (temFilhoSelecionado) {
+        break;
+      }
+      this.removerNodeDaSelecao(parent);
+      this.atualizarStatusTopicoNode(parent, false);
+      parent = parent.parent as TreeNode | undefined;
+    }
+  }
+
+  private isNodeSelecionado(node?: TreeNode): boolean {
+    if (!node?.key) return false;
+    return (this.selectedEditalNodes || []).some((n) => n.key === node.key);
   }
 
   onEditalTreeExpand(event: any): void {
@@ -1010,6 +1045,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
       const materiaNodes = materias.map((m) => {
         const topicos = m.topicos || [];
+        const selecionadosAntes = selecionados.length;
         const node: TreeNode = {
           key: `edital-${editalId}-materia-${m.materiaId}`,
           label: m.materiaNome,
@@ -1022,11 +1058,15 @@ private mensagemTimeout: any; // para guardar o setTimeout
             percentualEstudado: m.percentualEstudado,
             nivelDominio: m.nivelDominio
           },
-          selectable: false,
+          selectable: true,
           leaf: topicos.length === 0,
           children: this.construirTopicosTreeNodes(topicos, editalId, m.materiaId, '', selecionados)
         };
-
+        const selecionadosDepois = selecionados.length;
+        if (selecionadosDepois > selecionadosAntes) {
+          node.data.ativo = true;
+          selecionados.push(node);
+        }
         return node;
       });
 
@@ -1042,10 +1082,14 @@ private mensagemTimeout: any; // para guardar o setTimeout
           percentualEstudadoGeral: edital.percentualEstudadoGeral,
           nivelDominioGeral: edital.nivelDominioGeral
         },
-        selectable: false,
+        selectable: true,
         expanded: false,
         children: materiaNodes
       };
+
+      if (edital.ativo) {
+        selecionados.push(editalNode);
+      }
 
       nodes.push(editalNode);
     });
@@ -1127,7 +1171,9 @@ private mensagemTimeout: any; // para guardar o setTimeout
         t.id ?? t.topicoId ?? t.subtopicoId ?? t.idTopico ?? t.idSubtopico ?? index;
       const novoCaminho = caminho ? `${caminho}.${index}` : String(index);
       const filhos = t.subtopicos || t.filhos || [];
-      const ativo = t.ativo === undefined ? true : t.ativo;
+      const filhosNodes = this.construirTopicosTreeNodes(filhos, editalId, materiaId, novoCaminho, selecionados);
+      const ativoFilhos = filhosNodes.some((f) => f?.data?.ativo);
+      const ativo = (t.ativo === undefined ? true : t.ativo) || ativoFilhos;
       const node: TreeNode = {
         key: `topico-${editalId}-${materiaId}-${novoCaminho}-${id}`,
         label: t.descricao,
@@ -1140,7 +1186,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
           ativo
         },
         selectable: true,
-        children: this.construirTopicosTreeNodes(filhos, editalId, materiaId, novoCaminho, selecionados)
+        children: filhosNodes
       };
       if (ativo) {
         selecionados.push(node);

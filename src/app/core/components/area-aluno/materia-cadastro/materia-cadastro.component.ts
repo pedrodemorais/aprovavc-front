@@ -407,7 +407,7 @@ private async salvarArvoreTopicos(nodos: Topico[], pai?: Topico): Promise<void> 
 
   /** Promisifica salvarTopico (pra salvar em sequência pai->filhos) */
   private salvarTopicoAutomaticoPromise(topico: Topico, pai?: Topico): Promise<void> {
-    const desc = String((topico as any).descricao || '');
+    const desc = this.limparDescricaoTopico(String((topico as any).descricao || ''));
 if (desc.length > 255) {
   console.warn('[TOPICO] Muito grande:', desc.length, desc);
 }
@@ -752,7 +752,7 @@ if (desc.length > 255) {
         tipo: 'TOPICO',
         id,
         materiaId,
-        label: topico.descricao,
+        label: this.limparDescricaoTopico(topico.descricao),
         temp: !(topico as any).id
       } as CadastroTreeRow,
       children: [],
@@ -1432,7 +1432,7 @@ if (desc.length > 255) {
 
     const topico: Topico = {
       id: idConvertido,
-      descricao: dto.descricao,
+      descricao: this.limparDescricaoTopico(dto.descricao),
       ativo: dto.ativo ?? true,
       nivel,
       filhos,
@@ -1535,6 +1535,22 @@ contarTopicosRecursivo(lista: Topico[]): number {
 }
 
 // Normaliza espaços e quebras
+// Limpa bullets/tracos no inicio do topico
+limparDescricaoTopico(descricao: string): string {
+  return (descricao || '')
+    .replace(/^[\s\u00A0]*[\-–—•·\u2010\u2011\u2212\u2022\u00B7]+[\s\u00A0]*/g, '')
+    .trim();
+}
+
+private limparArvoreTopicos(lista: Topico[]): void {
+  for (const t of (lista || [])) {
+    (t as any).descricao = this.limparDescricaoTopico(String((t as any).descricao || ''));
+    if ((t as any).filhos?.length) {
+      this.limparArvoreTopicos((t as any).filhos);
+    }
+  }
+}
+
 private normalizarTextoEdital(texto: string): string {
   const linhas = (texto || '')
     .replace(/\r/g, '')
@@ -1560,7 +1576,15 @@ private splitMateriasPorTitulo(texto: string): Array<{ nome: string; conteudo: s
   for (let i = 0; i < linhas.length; i += 1) {
     const raw = (linhas[i] || '').trim();
     if (!raw) continue;
-    const chapterMatch = raw.match(/^Chapter\s+(\d+)\s*:\s*(.+)$/i);
+    const nomeMateriaMatch = raw.match(/^(?:NOME\s+DA\s+MATERIA|NOME\s+DA\s+MATÉRIA|MATERIA|MATÉRIA|DISCIPLINA)\s*[:\-–]\s*(.+)$/i);
+    if (nomeMateriaMatch) {
+      const nome = nomeMateriaMatch[1].trim();
+      if (nome) {
+        indices.push({ nome, linha: i });
+      }
+      continue;
+    }
+    const chapterMatch = raw.match(/^Chapter\s+(\d+)\s*[:\-–]\s*(.+)$/i);
     if (chapterMatch) {
       const numero = chapterMatch[1];
       const titulo = chapterMatch[2].trim();
@@ -1675,9 +1699,67 @@ private parseEditalParaMaterias(texto: string): MateriaImport[] {
 
   for (const b of blocos) {
     const itens = this.extrairItensNumerados(b.conteudo);
-    const arvore = this.montarArvorePorNumeracao(itens);
+    let arvore: Topico[] = [];
+    if (itens.length) {
+      arvore = this.montarArvorePorNumeracao(itens);
+    } else {
+      const linhas = b.conteudo
+        .split('\n')
+        .map((linha) => linha.trim())
+        .filter(Boolean);
+
+      const modulos: Topico[] = [];
+      const modRe = /^(M[ÓO]DULO|MODULO|UNIDADE|BLOCO|PARTE|CAP[IÍ]TULO|CAPITULO)\s*(\d+)?\s*(?:[-–:]\s*(.+))?$/i;
+      let atualModulo: Topico | null = null;
+
+      for (const linha of linhas) {
+        const m = linha.match(modRe);
+        if (m) {
+          let titulo = (m[3] || linha).trim();
+          if (!m[3]) {
+            titulo = titulo.replace(/^(M[ÓO]DULO|MODULO|UNIDADE|BLOCO|PARTE|CAP[IÍ]TULO|CAPITULO)\s*\d*\s*[-–:]\s*/i, '');
+          }
+          titulo = titulo.replace(/^[\-–—:]\s*/g, '').trim();
+          const modulo: Topico = {
+            id: undefined as any,
+            descricao: titulo as any,
+            ativo: true as any,
+            nivel: 0 as any,
+            filhos: [] as any
+          } as any;
+          atualModulo = modulo;
+          modulos.push(modulo);
+          continue;
+        }
+
+        const desc = linha.trim().replace(/^[\-–—•·]\s*/g, '');
+        if (!desc) continue;
+
+        if (atualModulo) {
+          (atualModulo as any).filhos = (atualModulo as any).filhos || [];
+          (atualModulo as any).filhos.push({
+            id: undefined as any,
+            descricao: desc as any,
+            ativo: true as any,
+            nivel: 1 as any,
+            filhos: [] as any
+          } as any);
+        } else {
+          modulos.push({
+            id: undefined as any,
+            descricao: desc as any,
+            ativo: true as any,
+            nivel: 0 as any,
+            filhos: [] as any
+          } as any);
+        }
+      }
+
+      arvore = modulos;
+    }
 
     if (b.nome && arvore.length) {
+      this.limparArvoreTopicos(arvore);
       saida.push({ nome: b.nome, topicos: arvore });
     }
   }
@@ -1711,8 +1793,8 @@ async importarEditalCompleto(): Promise<void> {
       const lista = await firstValueFrom(this.materiaService.listarMaterias());
       this.materias = lista || [];
     }
-    if (this.materiaSelecionada?.id || nomeMateriaForm) {
-            let materiaBase = this.materiaSelecionada;
+    if (nomeMateriaForm) {
+      let materiaBase = this.materiaSelecionada;
       if (!materiaBase && nomeMateriaForm) {
         const existenteMateria = (this.materias || []).find(
           m => this.normalizarTexto(m.nome) === this.normalizarTexto(nomeMateriaForm)

@@ -169,22 +169,6 @@
                 <!-- Controles do REVISAR (encaixados no MESMO header/right) -->
                 <ng-container *ngSwitchCase="'revisar'">
                   <div class="timer-bar">
-                    <div class="timer-modos" role="tablist" aria-label="Tipo de revis&atilde;o">
-                      <button type="button" class="btn-modo-timer" [class.ativo]="modoRevisao === 'anotacoes'"
-                        (click)="modoRevisao = 'anotacoes'">
-                        <span>Anota&ccedil;&otilde;es</span>
-                      </button>
-
-                      <button type="button" class="btn-modo-timer" [class.ativo]="modoRevisao === 'flashcards'"
-                        (click)="ativarRevisaoFlashcards()">
-                        <span>Flashcards</span>
-                      </button>
-
-                      <button type="button" class="btn-modo-timer" (click)="abrirModalVocabulario('revisar')">
-                        <span>Vocabulário</span>
-                      </button>
-                    </div>
-
                     <div class="timer-modos" role="tablist" aria-label="Controle do cron&ocirc;metro">
                       <button type="button" class="btn-modo-timer" [class.ativo]="timerAtivo" (click)="toggleTimer()"
                         [disabled]="!timerAtivo || !topicoSelecionado || !topicoPermiteEstudo">
@@ -267,6 +251,9 @@
                     </span>
                   </ng-template>
                 </p-editor>
+                <div class="char-counter" *ngIf="modo === 'estudar'">
+                  {{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}
+                </div>
 
                 <!-- overlay bloqueio do estudar (mantem) -->
                 <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
@@ -347,7 +334,7 @@
                   <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
 
                     <div class="revisao-anotacoes-layout">
-                      <div class="anotacoes-renderizadas" [innerHTML]="anotacoesHtmlSeguras"></div>
+                      <div class="anotacoes-renderizadas ql-editor" [innerHTML]="anotacoesHtmlSeguras"></div>
                       <div class="revisao-footer">
                         <div class="revisao-anotacoes-feedback">
                           <div class="muted pequeno">Como foi revisar essas anota&ccedil;&otilde;es?</div>
@@ -663,7 +650,7 @@
                 <button type="button" class="btn-modo-timer" (click)="abrirModalVocabulario('lista')"
                   [disabled]="!topicoPermiteEstudo" pTooltip="Registre vocabulario" tooltipPosition="top">
                   <i class="pi pi-book"></i>
-                  <span>Vocabulário</span>
+                  <span>Vocabul&aacute;rio</span>
                 </button>
 
                 <button type="button" class="btn-modo-timer btn-salvar" [class.ativo]="topicoPermiteEstudo && timerAtivo"
@@ -706,11 +693,41 @@
 
           <div class="timer-header-linha" *ngIf="modo === 'revisar'">
             <div class="acoes-estudo">
-              <div class="timer-modos" role="tablist" aria-label="A&ccedil;&otilde;es da revis&atilde;o">
-                <button type="button" class="btn-modo-timer" (click)="abrirModalVocabulario('lista')"
-                  [disabled]="!topicoPermiteEstudo" pTooltip="Registre vocabulário" tooltipPosition="top">
-                  <i class="pi pi-book"></i>
+              <div class="timer-modos" role="tablist" aria-label="Tipo de revis&atilde;o">
+                <button type="button" class="btn-modo-timer" [class.ativo]="modoRevisao === 'anotacoes'"
+                  (click)="modoRevisao = 'anotacoes'">
+                  <span>Anota&ccedil;&otilde;es</span>
+                </button>
+
+                <button type="button" class="btn-modo-timer" [class.ativo]="modoRevisao === 'flashcards'"
+                  (click)="ativarRevisaoFlashcards()">
+                  <span>Flashcards</span>
+                </button>
+
+                <button type="button" class="btn-modo-timer" (click)="abrirModalVocabulario('revisar')">
                   <span>Vocabulário</span>
+                </button>
+              </div>
+              <div class="timer-modos separado" role="tablist" aria-label="Navegacao de topicos">
+                <button
+                  type="button"
+                  class="btn-modo-timer"
+                  (click)="voltarRevisao()"
+                  [disabled]="!podeVoltarRevisao"
+                  pTooltip="Topico anterior"
+                  tooltipPosition="top">
+                  <i class="pi pi-angle-left"></i>
+                  <span>Voltar</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn-modo-timer"
+                  (click)="irParaProximaRevisao()"
+                  [disabled]="!podeIrParaProximaRevisao"
+                  pTooltip="Proximo topico"
+                  tooltipPosition="top">
+                  <span>Avancar</span>
+                  <i class="pi pi-angle-right"></i>
                 </button>
               </div>
             </div>
@@ -786,7 +803,10 @@
         <label class="flashcard-label">
           Frente (pergunta)
           <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardFrente" name="flashcardFrente"
-            placeholder="Digite a pergunta..."></textarea>
+            [attr.maxlength]="maxFlashcardFrente" placeholder="Digite a pergunta..."></textarea>
+          <span class="flashcard-counter">
+            {{ (flashcardFrente?.length || 0) }}/{{ maxFlashcardFrente }}
+          </span>
         </label>
 
         <div class="flashcard-vf-selector" *ngIf="flashcardTipo === 'VERDADEIRO_FALSO'">
@@ -808,7 +828,10 @@
         <label class="flashcard-label">
           Verso (resposta)
           <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardVerso" name="flashcardVerso"
-            placeholder="Digite a resposta..." [disabled]="flashcardTipo === 'VERDADEIRO_FALSO'"></textarea>
+            [attr.maxlength]="maxFlashcardVerso" placeholder="Digite a resposta..." [disabled]="flashcardTipo === 'VERDADEIRO_FALSO'"></textarea>
+          <span class="flashcard-counter">
+            {{ (flashcardVerso?.length || 0) }}/{{ maxFlashcardVerso }}
+          </span>
         </label>
       </div>
 
@@ -931,11 +954,13 @@
         <label class="vocabulario-label">
           Termo
           <input type="text" class="vocabulario-input" [(ngModel)]="vocabularioTermo" name="vocabularioTermo"
+            [attr.maxlength]="maxVocabularioChars"
             placeholder="Ex.: Class" />
         </label>
         <label class="vocabulario-label">
           Definição
           <input type="text" class="vocabulario-input" [(ngModel)]="vocabularioDefinicao" name="vocabularioDefinicao"
+            [attr.maxlength]="maxVocabularioChars"
             placeholder="Ex.: Classe" />
         </label>
         <label class="vocabulario-label">
@@ -1035,6 +1060,9 @@
 <div *ngIf="erro" class="mensagem-erro">
   {{ erro }}
 </div>
+
+
+
 
 
 

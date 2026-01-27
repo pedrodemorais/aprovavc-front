@@ -203,16 +203,16 @@
 .hero-edital-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .hero-edital-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #111827;
   font-weight: 600;
-  padding-left: 10px;
+  padding-left: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -261,34 +261,32 @@
 .hero-edital-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: stretch;
 }
 
 .hero-edital-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hero-edital-row {
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: #ffffff;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .hero-edital-row:hover,
 .hero-edital-row:focus {
-  border-color: rgba(34, 197, 94, 0.45);
-  box-shadow: 0 12px 22px rgba(34, 197, 94, 0.16);
-  transform: translateY(-1px);
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
   outline: none;
 }
 
@@ -302,9 +300,9 @@
 }
 
 .hero-edital-logo {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   background: #f1f5f9;
   border: 1px solid rgba(15, 23, 42, 0.12);
   display: inline-flex;
@@ -313,7 +311,7 @@
   overflow: hidden;
   color: #475569;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 
 .hero-edital-logo img {
@@ -335,25 +333,39 @@
 .hero-edital-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
+  flex: 1;
+}
+
+.hero-edital-kpis-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
 }
 
 .hero-edital-title {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
+.hero-edital-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .hero-edital-nome {
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   color: #111827;
   font-weight: 700;
 }
 
 .hero-edital-cargo {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: #6b7280;
   font-weight: 500;
 }
@@ -361,37 +373,37 @@
 .hero-edital-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hero-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  gap: 8px;
   width: 100%;
 }
 
 .hero-kpi {
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: #ffffff;
-  padding: 16px 18px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   text-align: center;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
 }
 
 .hero-kpi-value {
-  font-size: 1.6rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #111827;
   line-height: 1.05;
 }
 
 .hero-kpi-label {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: #6b7280;
   text-transform: none;
   letter-spacing: 0.01em;
@@ -399,17 +411,17 @@
 }
 
 .metric-card {
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .metric-value {
-  font-size: 1.6rem;
+  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.05;
 }
 
 .metric-label {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   text-transform: none;

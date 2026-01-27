@@ -745,6 +745,27 @@
   min-height: 0;
 }
 
+.char-counter {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+  z-index: 5;
+}
+
+:host-context(body.theme-dark) .char-counter {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  color: #e2e8f0 !important;
+}
+
 /* container geral do editor */
 :host ::ng-deep .editor-wrapper .p-editor-container {
   flex: 1;
@@ -1806,6 +1827,13 @@
   gap: 4px;
   font-size: 0.85rem;
   color: #4b5563;
+}
+
+.flashcard-counter {
+  align-self: flex-end;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .flashcard-textarea {

@@ -366,7 +366,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
           
         },
               {
-     label: 'Agenda de Estudos',
+     label: 'Planejamento de Estudo',
       icon: 'pi pi-table',
       routerLink: ['/area-restrita/blocos-estudo'],
       disabled: isLocked || !this.hasMaterias,

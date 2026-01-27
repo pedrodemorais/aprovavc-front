@@ -83,6 +83,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   mostrarDialogDataProva = false;
   dataProvaInput = '';
   salvandoDataProva = false;
+  private editalDataProvaAtual: Edital | null = null;
   private blocosSubscription?: Subscription;
 
   constructor(
@@ -188,6 +189,32 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     return `Data da prova: ${this.formatData(data)} (editar)`;
   }
 
+  dataProvaLabelPorEdital(edital: Edital): string {
+    const data = this.obterDataProva(edital);
+    if (!data) {
+      return 'Definir data da prova';
+    }
+    return `Data da prova: ${this.formatData(data)} (editar)`;
+  }
+
+  getEditalProgresso(edital: Edital): number {
+    return Number(edital?.percentualEstudadoGeral ?? 0) || 0;
+  }
+
+  getEditalDominio(edital: Edital): number {
+    const dominio = Number(edital?.nivelDominioGeral ?? 0) || 0;
+    const progresso = Number(edital?.percentualEstudadoGeral ?? 0) || 0;
+    return Math.min(dominio, progresso);
+  }
+
+  getRevisoesVencidasEdital(edital: Edital): number {
+    return this.getRevisoesPorStatusEdital(edital, 'VENCIDA');
+  }
+
+  getRevisoesHojeEdital(edital: Edital): number {
+    return this.getRevisoesPorStatusEdital(edital, 'EM_DIA');
+  }
+
   get revisoesPrioritariasVisiveis(): RevisaoDashboardItem[] {
     return this.revisoesPrioritariasFiltradas.slice(0, 5);
   }
@@ -275,6 +302,19 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
 
     this.revisoesHoje = vencidas + vencemHoje;
     this.revisoesVencemHoje = vencemHoje;
+  }
+
+  private getRevisoesPorStatusEdital(edital: Edital, status: RevisaoDashboardItem['status']): number {
+    const materiaIds = this.getMateriaIdsEdital(edital);
+    if (!materiaIds.size) return 0;
+    return this.revisoes.filter((r) => materiaIds.has(r.materiaId) && r.status === status).length;
+  }
+
+  private getMateriaIdsEdital(edital: Edital): Set<number> {
+    const ids = (edital?.materias || [])
+      .map((m: any) => Number(m?.materiaId))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    return new Set(ids);
   }
 
   formatPercent(v?: number | null): string {
@@ -633,23 +673,27 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     this.router.navigate(['/area-restrita/blocos-estudo']);
   }
 
-  abrirModalDataProva(): void {
-    const data = this.obterDataProva(this.editalPrincipal);
+  abrirModalDataProva(edital?: Edital): void {
+    const alvo = edital ?? this.editalPrincipal;
+    this.editalDataProvaAtual = alvo ?? null;
+    const data = this.obterDataProva(alvo ?? null);
     this.dataProvaInput = data || '';
     this.mostrarDialogDataProva = true;
   }
 
   fecharModalDataProva(): void {
     this.mostrarDialogDataProva = false;
+    this.editalDataProvaAtual = null;
   }
 
   salvarDataProva(): void {
-    const edital = this.editalPrincipal;
+    const edital = this.editalDataProvaAtual ?? this.editalPrincipal;
     if (!this.dataProvaInput) {
       if (edital) {
         this.salvarDataProvaLocal(edital, null);
       }
       this.mostrarDialogDataProva = false;
+      this.editalDataProvaAtual = null;
       return;
     }
     if (!edital || !edital.id) {
@@ -657,6 +701,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         this.salvarDataProvaLocal(edital, this.dataProvaInput);
       }
       this.mostrarDialogDataProva = false;
+      this.editalDataProvaAtual = null;
       return;
     }
 
@@ -664,6 +709,7 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
     if (!edital.nome || !materiasIds.length) {
       this.salvarDataProvaLocal(edital, this.dataProvaInput);
       this.mostrarDialogDataProva = false;
+      this.editalDataProvaAtual = null;
       return;
     }
 
@@ -679,11 +725,13 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
         this.removerDataProvaLocal(edital);
         this.salvandoDataProva = false;
         this.mostrarDialogDataProva = false;
+        this.editalDataProvaAtual = null;
       },
       error: () => {
         this.salvarDataProvaLocal(edital, this.dataProvaInput);
         this.salvandoDataProva = false;
         this.mostrarDialogDataProva = false;
+        this.editalDataProvaAtual = null;
       }
     });
   }

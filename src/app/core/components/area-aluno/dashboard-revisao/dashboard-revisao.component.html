@@ -39,19 +39,11 @@
 
       <div class="hero-edital-card">
         <div class="hero-edital-label">
-          <ng-container *ngIf="editaisAtivosVisiveis.length; else heroEditalLabelVazio">
+          <ng-container *ngIf="activeEditais.length; else heroEditalLabelVazio">
             <div class="hero-edital-label__left">
-              <span class="hero-edital-label__nome">{{ editaisAtivosVisiveis[0].nome }}</span>
-              <ng-container *ngIf="getEditalCargo(editaisAtivosVisiveis[0])">
-                <span class="hero-edital-label__cargo"> - {{ getEditalCargo(editaisAtivosVisiveis[0]) }}</span>
-              </ng-container>
+              <span class="hero-edital-label__nome">Editais em estudo</span>
+              <span class="hero-edital-label__cargo">{{ editalAtivoNome }}</span>
             </div>
-            <button
-              type="button"
-              class="hero-edital-date-btn"
-              (click)="abrirModalDataProva()">
-              {{ dataProvaLabel }}
-            </button>
           </ng-container>
           <ng-template #heroEditalLabelVazio>
             <span class="hero-edital-label__nome">{{ editalAtivoNome }}</span>
@@ -62,32 +54,44 @@
             <div class="hero-edital-list">
               <article class="hero-edital-row" *ngFor="let e of editaisAtivosVisiveis"
                 role="button" tabindex="0" (click)="irParaEditais()" (keydown.enter)="irParaEditais()">
-                <div class="hero-edital-logo" [class.hero-edital-logo--placeholder]="!activeEditalImagemUrls[e.id!]">
-                  <img
-                    *ngIf="activeEditalImagemUrls[e.id!]"
-                    [src]="activeEditalImagemUrls[e.id!]"
-                    (error)="onEditalAtivoImagemErro(e.id!)"
-                    alt="Logo do orgao"
-                  />
-                  <span *ngIf="!activeEditalImagemUrls[e.id!]">{{ getSiglaEdital(e.nome) }}</span>
-                </div>
                 <div class="hero-edital-info">
-                  <div class="hero-edital-meta" *ngIf="editaisAtivosVisiveis[0]?.id === e.id">
+                  <div class="hero-edital-title-row">
+                    <div class="hero-edital-title">
+                      <span class="hero-edital-nome">{{ e.nome }}</span>
+                      <span class="hero-edital-cargo" *ngIf="getEditalCargo(e)"> - {{ getEditalCargo(e) }}</span>
+                    </div>
+                    <button
+                      type="button"
+                      class="hero-edital-date-btn"
+                      (click)="abrirModalDataProva(e); $event.stopPropagation()">
+                      {{ dataProvaLabelPorEdital(e) }}
+                    </button>
+                  </div>
+                  <div class="hero-edital-kpis-row">
+                    <div class="hero-edital-logo" [class.hero-edital-logo--placeholder]="!activeEditalImagemUrls[e.id!]">
+                      <img
+                        *ngIf="activeEditalImagemUrls[e.id!]"
+                        [src]="activeEditalImagemUrls[e.id!]"
+                        (error)="onEditalAtivoImagemErro(e.id!)"
+                        alt="Logo do orgao"
+                      />
+                      <span *ngIf="!activeEditalImagemUrls[e.id!]">{{ getSiglaEdital(e.nome) }}</span>
+                    </div>
                     <div class="hero-kpi-grid">
                       <div class="hero-kpi metric-card metric-variant-neutral">
-                        <div class="hero-kpi-value metric-value">{{ formatPercent(kpiProgresso) }}</div>
+                        <div class="hero-kpi-value metric-value">{{ formatPercent(getEditalProgresso(e)) }}</div>
                         <div class="hero-kpi-label metric-label">Progresso</div>
                       </div>
                       <div class="hero-kpi metric-card metric-variant-neutral">
-                        <div class="hero-kpi-value metric-value">{{ formatPercent(kpiDominio) }}</div>
+                        <div class="hero-kpi-value metric-value">{{ formatPercent(getEditalDominio(e)) }}</div>
                         <div class="hero-kpi-label metric-label">Dominio</div>
                       </div>
-                      <div class="hero-kpi metric-card metric-variant-danger" [class.metric-variant-neutral]="totalVencidas === 0">
-                        <div class="hero-kpi-value metric-value">{{ totalVencidas }}</div>
+                      <div class="hero-kpi metric-card metric-variant-danger" [class.metric-variant-neutral]="getRevisoesVencidasEdital(e) === 0">
+                        <div class="hero-kpi-value metric-value">{{ getRevisoesVencidasEdital(e) }}</div>
                         <div class="hero-kpi-label metric-label">Revisoes vencidas</div>
                       </div>
-                      <div class="hero-kpi metric-card metric-variant-warning" [class.metric-variant-neutral]="revisoesVencemHoje === 0">
-                        <div class="hero-kpi-value metric-value">{{ revisoesVencemHoje }}</div>
+                      <div class="hero-kpi metric-card metric-variant-warning" [class.metric-variant-neutral]="getRevisoesHojeEdital(e) === 0">
+                        <div class="hero-kpi-value metric-value">{{ getRevisoesHojeEdital(e) }}</div>
                         <div class="hero-kpi-label metric-label">Revisoes hoje</div>
                       </div>
                     </div>

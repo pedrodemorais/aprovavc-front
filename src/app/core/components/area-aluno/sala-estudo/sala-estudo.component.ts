@@ -39,6 +39,10 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   private flashcardDragOffset = { x: 0, y: 0 };
   private quillEditor?: any;
   private ultimoTrechoSelecionado = '';
+  maxCaracteres = 1200;
+  caracteresUsados = 0;
+  caracteresRestantes = 1200;
+  private ajustandoLimiteCaracteres = false;
 
   topicos: any[] = [];
   topicoSelecionado?: any | null;
@@ -131,6 +135,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   vocabularioDefinicao: string = '';
   vocabularioTags: string = '';
   vocabularioListaTexto: string = '';
+  maxVocabularioChars = 80;
   vocabularios: VocabularioDTO[] = [];
   carregandoVocabularios: boolean = false;
   erroVocabularios?: string;
@@ -153,6 +158,8 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   flashcardDificuldade: string = 'MEDIA';
   flashcardTags: string = '';
   flashcardVerdadeiroFalso: 'VERDADEIRO' | 'FALSO' | null = null;
+  maxFlashcardFrente = 120;
+  maxFlashcardVerso = 200;
 
   mensagemFlashcardRevisao?: string;
 
@@ -230,6 +237,25 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       if (texto) {
         this.ultimoTrechoSelecionado = texto.trim();
       }
+    });
+
+    const atualizarContador = () => {
+      const length = Math.max(0, (quill.getLength?.() ?? 0) - 1);
+      this.atualizarContadorCaracteres(length);
+    };
+    atualizarContador();
+
+    quill.on('text-change', () => {
+      if (this.ajustandoLimiteCaracteres) {
+        return;
+      }
+      const length = Math.max(0, (quill.getLength?.() ?? 0) - 1);
+      if (length > this.maxCaracteres) {
+        this.ajustandoLimiteCaracteres = true;
+        quill.deleteText(this.maxCaracteres, length - this.maxCaracteres, 'silent');
+        this.ajustandoLimiteCaracteres = false;
+      }
+      this.atualizarContadorCaracteres(Math.min(length, this.maxCaracteres));
     });
 
     // Bloqueia drop de imagem
@@ -376,10 +402,12 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       next: (resp) => {
         this.anotacoes = resp.anotacoes || '';
         this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+        this.atualizarContadorCaracteresFromHtml(this.anotacoes);
       },
       error: () => {
         this.anotacoes = '';
         this.anotacoesHtmlSeguras = null;
+        this.atualizarContadorCaracteres(0);
       }
     });
   }
@@ -493,10 +521,12 @@ ativarRevisaoFlashcards(): void {
       next: (resp) => {
         this.anotacoes = resp.anotacoes || '';
         this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+        this.atualizarContadorCaracteresFromHtml(this.anotacoes);
       },
       error: () => {
         this.anotacoes = '';
         this.anotacoesHtmlSeguras = null;
+        this.atualizarContadorCaracteres(0);
       }
     });
 
@@ -841,13 +871,38 @@ ativarRevisaoFlashcards(): void {
   // ================================================================
 
   mudarModo(novoModo: 'estudar' | 'revisar'): void {
+    if (this.modo === novoModo) {
+      return;
+    }
+    if (this.topicoPermiteEstudo && this.temTempoNaoSalvo()) {
+      this.salvarEstudo();
+    }
+    if (this.timerAtivo) {
+      this.timerAtivo = false;
+      this.pararTimerInterno();
+      this.revisaoAutoExplicacaoAtiva = false;
+    }
+    this.resetarTimerParaNovoModo();
     this.modo = novoModo;
     this.mensagemRevisao = undefined;
     this.revisaoAutoExplicacaoAtiva = novoModo === 'revisar' && this.timerAtivo;
     this.ajustarColunaEsquerdaParaModo();
-    // quando entrar no modo revisar, se tiver tópico válido, carrega flashcards de revisão
+    // quando entrar no modo revisar, se tiver topico valido, carrega flashcards de revisao
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
+    }
+  }
+
+  private resetarTimerParaNovoModo(): void {
+    this.silenciarAlarme();
+    this.segundosEstudoJaSalvosTopicoAtual = 0;
+    this.temTempoNaoSalvoFlag = false;
+    if (this.modoTemporizador === 'livre') {
+      this.tempoTotalSegundos = 0;
+    } else {
+      this.pomodoroFase = 'foco';
+      this.pomodoroCiclosConcluidos = 0;
+      this.pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
     }
   }
 
@@ -889,11 +944,13 @@ ativarRevisaoFlashcards(): void {
       tempoParaSalvar = 0;
     }
 
+    const tipoSessao: EstudoTopicoRequest['tipoSessao'] =
+      this.modo === 'revisar' ? 'REVISAO' : 'ESTUDO';
     const payload: EstudoTopicoRequest = {
       materiaId: this.materiaId,
       topicoId: this.topicoSelecionado.id,
       modoTemporizador: modoBack,
-      tipoSessao: this.modo === 'revisar' ? 'REVISAO' : 'ESTUDO',
+      tipoSessao,
       tempoLivreSegundos: tempoParaSalvar,
       anotacoes: this.anotacoes,
       pomodoroFase: this.modoTemporizador === 'pomodoro' ? this.pomodoroFase : undefined,
@@ -910,7 +967,7 @@ ativarRevisaoFlashcards(): void {
         this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
         this.temTempoNaoSalvoFlag = false;
 
-        this.mensagemEstudoSalvo = this.modo === 'revisar'
+        this.mensagemEstudoSalvo = tipoSessao === 'REVISAO'
           ? 'Revis\u00e3o salva com sucesso.'
           : 'Estudo salvo com sucesso.';
         setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
@@ -1053,6 +1110,18 @@ ativarRevisaoFlashcards(): void {
     if (!termo || !definicao) {
       return;
     }
+    if (termo.length > this.maxVocabularioChars) {
+      this.erroVocabularios = `O termo deve ter no maximo ${this.maxVocabularioChars} caracteres.`;
+      return;
+    }
+    if (definicao.length > this.maxVocabularioChars) {
+      this.erroVocabularios = `A definicao deve ter no maximo ${this.maxVocabularioChars} caracteres.`;
+      return;
+    }
+    if (this.isTermoDuplicado(termo)) {
+      this.erroVocabularios = 'Esse termo ja existe neste topico.';
+      return;
+    }
     const payload = {
       materiaId: this.materiaId,
       topicoId: this.topicoSelecionado.id,
@@ -1061,6 +1130,7 @@ ativarRevisaoFlashcards(): void {
       tags: this.vocabularioTags?.trim() || undefined
     };
     this.salvandoVocabulario = true;
+    this.erroVocabularios = undefined;
     this.salaEstudoService.criarVocabulario(payload).subscribe({
       next: () => {
         this.salvandoVocabulario = false;
@@ -1086,7 +1156,24 @@ ativarRevisaoFlashcards(): void {
       this.erroVocabularios = 'Nenhum item valido para importar.';
       return;
     }
+    const termosVistos = new Set<string>();
+    for (const item of itens) {
+      const normalizado = this.normalizarTermo(item.termo);
+      if (!normalizado) {
+        continue;
+      }
+      if (item.termo.length > this.maxVocabularioChars || item.definicao.length > this.maxVocabularioChars) {
+        this.erroVocabularios = `Cada termo e definicao deve ter no maximo ${this.maxVocabularioChars} caracteres.`;
+        return;
+      }
+      if (termosVistos.has(normalizado) || this.isTermoDuplicado(item.termo)) {
+        this.erroVocabularios = 'Existe termo repetido nesta lista ou ja cadastrado no topico.';
+        return;
+      }
+      termosVistos.add(normalizado);
+    }
     this.salvandoListaVocabulario = true;
+    this.erroVocabularios = undefined;
     const requisicoes = itens.map((item) =>
       this.salaEstudoService.criarVocabulario({
         materiaId: this.materiaId,
@@ -1110,6 +1197,20 @@ ativarRevisaoFlashcards(): void {
         this.salvandoListaVocabulario = false;
       }
     });
+  }
+
+  private isTermoDuplicado(termo: string): boolean {
+    const normalizado = this.normalizarTermo(termo);
+    if (!normalizado) {
+      return false;
+    }
+    return (this.vocabularios || []).some((v) =>
+      this.normalizarTermo(v?.termo || '') === normalizado
+    );
+  }
+
+  private normalizarTermo(termo: string): string {
+    return (termo || '').trim().toLowerCase();
   }
 
   private parseVocabularioLista(texto: string): Array<{ termo: string; definicao: string }> {
@@ -1464,16 +1565,26 @@ ativarRevisaoFlashcards(): void {
       this.flashcardVerso = this.flashcardVerdadeiroFalso;
     }
 
-    if (!this.flashcardFrente || !this.flashcardVerso) {
+    const frente = (this.flashcardFrente || '').trim();
+    const verso = (this.flashcardVerso || '').trim();
+    if (!frente || !verso) {
       alert('Preencha frente e verso do flashcard.');
+      return;
+    }
+    if (frente.length > this.maxFlashcardFrente) {
+      alert(`A pergunta deve ter no maximo ${this.maxFlashcardFrente} caracteres.`);
+      return;
+    }
+    if (verso.length > this.maxFlashcardVerso) {
+      alert(`A resposta deve ter no maximo ${this.maxFlashcardVerso} caracteres.`);
       return;
     }
 
     const payload: FlashcardDTO = {
       materiaId: this.materiaId,
       topicoId: this.topicoSelecionado.id,
-      frente: this.flashcardFrente,
-      verso: this.flashcardVerso,
+      frente,
+      verso,
       tipo: this.flashcardTipo as any,
       dificuldade: this.flashcardDificuldade as any,
       tags: this.flashcardTags
@@ -2243,6 +2354,28 @@ get podeIrParaProximaRevisao(): boolean {
   temEstudoNoTopico(t: any): boolean {
     return this.getStatusRevisaoTopicoView(t) !== 'SEM';
   }
+
+  private atualizarContadorCaracteres(quantidade: number): void {
+    const usado = Math.max(0, Math.min(this.maxCaracteres, quantidade));
+    this.caracteresUsados = usado;
+    this.caracteresRestantes = Math.max(0, this.maxCaracteres - usado);
+  }
+
+  private atualizarContadorCaracteresFromHtml(html: string): void {
+    if (!html) {
+      this.atualizarContadorCaracteres(0);
+      return;
+    }
+    if (typeof document === 'undefined') {
+      const texto = html.replace(/<[^>]*>/g, '');
+      this.atualizarContadorCaracteres(texto.length);
+      return;
+    }
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    const texto = container.textContent || '';
+    this.atualizarContadorCaracteres(texto.length);
+  }
   classeSemaforoRevisaoSala(t: any) {
     const status = this.getStatusRevisaoTopicoView(t);
 
@@ -2368,6 +2501,7 @@ private mostrarMensagemRevisao(texto: string): void {
 
 
 }
+
 
 
 

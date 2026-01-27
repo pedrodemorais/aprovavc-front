@@ -4,7 +4,7 @@ import localePt from '@angular/common/locales/pt';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 
-import { PrimeNGConfig, MessageService, ConfirmationService } from 'primeng/api';
+import { PrimeNGConfig, MessageService, ConfirmationService, TreeDragDropService } from 'primeng/api';
 
 // PrimeNG (usei o que seu HTML/stack usa)
 import { TabViewModule } from 'primeng/tabview';
@@ -138,6 +138,7 @@ registerLocaleData(localePt);
   providers: [
     MessageService,
     ConfirmationService,
+    TreeDragDropService,
     DatePipe
   ],
   exports: [

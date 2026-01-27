@@ -30,6 +30,16 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
   temMudancasNaoSalvas = false;
   private ignorarMudancasFormulario = false;
   private formChangesSub?: Subscription;
+  private readonly rascunhoKey = 'cadastro-editais:rascunho';
+  private permitirSaidaSemAviso = false;
+  private rascunhoPendente: {
+    editalId: number | null;
+    nome: string;
+    cargo: string;
+    descricao: string;
+    dataProva: string | null;
+    materiasIds: number[];
+  } | null = null;
 
   constructor(
     private editalService: EditalService,
@@ -41,6 +51,7 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
 
   ngOnInit(): void {
     this.montarForm();
+    this.carregarRascunhoLocal();
     this.route.paramMap.subscribe((params) => {
       const raw = params.get('id');
       const id = raw ? Number(raw) : null;
@@ -54,6 +65,7 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
       } else {
         this.editalCarregado = false;
         this.resetarFormulario();
+        this.aplicarRascunhoSeDisponivel();
       }
     });
     this.carregarMaterias();
@@ -106,6 +118,7 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
         if (this.editalId && !this.editalCarregado) {
           this.carregarEdital();
         }
+        this.aplicarRascunhoSeDisponivel();
       },
       error: (err) => {
         console.error('[CADASTRO-EDITAIS] Erro ao carregar matérias:', err);
@@ -139,6 +152,7 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
         this.editalCarregado = true;
         this.temMudancasNaoSalvas = false;
         this.atualizarPickListMaterias();
+        this.aplicarRascunhoSeDisponivel();
         this.carregandoEdital = false;
       },
       error: (err) => {
@@ -182,6 +196,7 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
         this.salvando = false;
         this.mensagemSucesso = this.editalId ? 'Edital atualizado com sucesso.' : 'Edital salvo com sucesso.';
         this.iniciarTimeoutMensagem();
+        this.limparRascunhoLocal();
         if (this.editalId) {
           this.temMudancasNaoSalvas = false;
         } else {
@@ -197,7 +212,16 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
   }
 
   cancelar(): void {
+    this.limparRascunhoLocal();
     this.router.navigate(['/area-restrita/editais']);
+  }
+
+  irParaCadastroMateria(): void {
+    this.salvarRascunhoLocal();
+    this.permitirSaidaSemAviso = true;
+    this.router.navigate(['/area-restrita/cad-materias'], {
+      queryParams: { voltarPara: 'cadastro-editais', editalId: this.editalId ?? null }
+    });
   }
 
   private resetarFormulario(): void {
@@ -266,9 +290,75 @@ export class CadastroEditaisComponent implements OnInit, OnDestroy, CanComponent
   }
 
   canDeactivate(): boolean {
+    if (this.permitirSaidaSemAviso) {
+      this.permitirSaidaSemAviso = false;
+      return true;
+    }
     if (!this.temMudancasNaoSalvas) {
       return true;
     }
     return window.confirm('Você possui alterações não salvas. Deseja sair sem salvar?');
+  }
+
+  private salvarRascunhoLocal(): void {
+    const raw = this.form.getRawValue();
+    const draft = {
+      editalId: this.editalId ?? null,
+      nome: raw.nome || '',
+      cargo: raw.cargo || '',
+      descricao: raw.descricao || '',
+      dataProva: raw.dataProva || null,
+      materiasIds: (raw.materiasIds || []).map((v: any) => Number(v)).filter((v: number) => Number.isFinite(v))
+    };
+    localStorage.setItem(this.rascunhoKey, JSON.stringify(draft));
+    this.rascunhoPendente = draft;
+  }
+
+  private carregarRascunhoLocal(): void {
+    const raw = localStorage.getItem(this.rascunhoKey);
+    if (!raw) {
+      this.rascunhoPendente = null;
+      return;
+    }
+    try {
+      const draft = JSON.parse(raw);
+      this.rascunhoPendente = {
+        editalId: Number.isFinite(draft?.editalId) ? draft.editalId : null,
+        nome: draft?.nome || '',
+        cargo: draft?.cargo || '',
+        descricao: draft?.descricao || '',
+        dataProva: draft?.dataProva ?? null,
+        materiasIds: Array.isArray(draft?.materiasIds) ? draft.materiasIds : []
+      };
+    } catch {
+      this.rascunhoPendente = null;
+    }
+  }
+
+  private aplicarRascunhoSeDisponivel(): void {
+    if (!this.rascunhoPendente) {
+      return;
+    }
+    const draft = this.rascunhoPendente;
+    if (draft.editalId !== (this.editalId ?? null)) {
+      return;
+    }
+    this.aplicarSemRastrearMudancas(() => {
+      this.form.patchValue({
+        nome: draft.nome,
+        cargo: draft.cargo,
+        descricao: draft.descricao,
+        dataProva: draft.dataProva,
+        materiasIds: draft.materiasIds
+      });
+    });
+    this.temMudancasNaoSalvas = true;
+    this.atualizarPickListMaterias();
+    this.rascunhoPendente = null;
+  }
+
+  private limparRascunhoLocal(): void {
+    localStorage.removeItem(this.rascunhoKey);
+    this.rascunhoPendente = null;
   }
 }

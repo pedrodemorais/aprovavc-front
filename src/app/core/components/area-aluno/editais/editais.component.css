@@ -17,13 +17,36 @@
 }
 .titulo-botoes{
   width: 100%;
-  height: 4rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   border-bottom: solid 1px var(--border);
   margin-bottom: 10px;
-  
+  padding-bottom: 8px;
+}
+.header-top{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.mensagens-inline{
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mensagens-inline .msg{
+  margin: 0;
+}
+
+.header-actions{
+  display: flex;
+  justify-content: flex-end;
 }
 .page-edital .layout {
   max-width: 980px;
@@ -726,6 +749,19 @@
   color: #229c12;
   border: 1px solid rgba(27, 129, 18, 0.35);
   cursor: pointer;
+}
+
+.badge-edital-info {
+  margin-left: auto;
+  cursor: default;
+  pointer-events: none;
+  min-width: 90px;
+  justify-content: center;
+}
+
+.badge-edital-info.is-placeholder {
+  opacity: 0;
+  border-color: transparent;
 }
 
 .badge-edital-ativo.is-inativo {

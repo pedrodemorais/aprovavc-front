@@ -80,14 +80,15 @@
             <ng-template pTemplate="sourceHeader">
               <div class="picklist-header">
                 <span class="p-picklist-title">Biblioteca</span>
-                <a
+                <button
+                  type="button"
                   class="picklist-add-btn"
-                  routerLink="/area-restrita/cad-materias"
+                  (click)="irParaCadastroMateria()"
                   aria-label="Adicionar matéria"
                   title="Adicionar matéria"
                 >
                   <i class="pi pi-plus"></i>
-                </a>
+                </button>
               </div>
             </ng-template>
             <ng-template let-materia pTemplate="item">
@@ -110,3 +111,4 @@
     </section>
   </div>
 </div>
+
