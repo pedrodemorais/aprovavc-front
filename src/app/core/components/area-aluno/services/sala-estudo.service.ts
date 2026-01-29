@@ -174,6 +174,10 @@ export class SalaEstudoService {
     return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`);
   }
 
+  resetarTopico(topicoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/reset`);
+  }
+
   listarTopicosFinalizados(): Observable<TopicoFinalizadoDTO[]> {
     if (this.isCacheValido(this.topicosFinalizadosCache)) {
       return of(this.topicosFinalizadosCache!.data);

@@ -397,3 +397,10 @@ html, body {
   margin: 0;
   overflow-x: hidden;
 }
+
+/* Dashboard (iOS Chrome): libera scroll no html/body quando esta rota esta ativa */
+html.dashboard-scroll,
+body.dashboard-scroll {
+  overflow: auto !important;
+  height: 100%;
+}

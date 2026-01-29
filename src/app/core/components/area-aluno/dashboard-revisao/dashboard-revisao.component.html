@@ -28,12 +28,7 @@
             <span class="legend-text legend-text--full">Revisao do dia</span>
             <span class="legend-text legend-text--short">Hoje</span>
           </span>
-          <button
-            type="button"
-            class="hero-next-legend-link"
-            (click)="irParaBlocosEstudo(); $event.stopPropagation()">
-            Ver meu plano semanal
-          </button>
+         
         </div>
       </div>
 
@@ -42,7 +37,7 @@
           <ng-container *ngIf="activeEditais.length; else heroEditalLabelVazio">
             <div class="hero-edital-label__left">
               <span class="hero-edital-label__nome">Editais em estudo</span>
-              <span class="hero-edital-label__cargo">{{ editalAtivoNome }}</span>
+              
             </div>
           </ng-container>
           <ng-template #heroEditalLabelVazio>
@@ -63,7 +58,8 @@
                     <button
                       type="button"
                       class="hero-edital-date-btn"
-                      (click)="abrirModalDataProva(e); $event.stopPropagation()">
+                      (click)="abrirModalDataProva(e); $event.stopPropagation()"
+                      (pointerup)="abrirModalDataProva(e); $event.stopPropagation()">
                       {{ dataProvaLabelPorEdital(e) }}
                     </button>
                   </div>
@@ -139,7 +135,8 @@
         <button
           type="button"
           class="planner-alert-action"
-          (click)="irParaBlocosEstudo()">
+          (click)="irParaBlocosEstudo()"
+          (pointerup)="irParaBlocosEstudo()">
           Atualizar planner
         </button>
       </div>
@@ -151,7 +148,8 @@
             <button
               type="button"
               class="btn-modo-timer ativo btn-hero-primary hero-next-primary"
-              (click)="comecarAgora()">
+              (click)="comecarAgora()"
+              (pointerup)="comecarAgora()">
               <i class="pi pi-play"></i>
               Come&ccedil;ar
             </button>
@@ -167,6 +165,7 @@
                     type="button"
                     class="btn-modo-timer ativo"
                     (click)="iniciarRevisao()"
+                    (pointerup)="iniciarRevisao()"
                     [disabled]="!revisoesPrioritariasTotal">
                     <i class="pi pi-play"></i>
                     Iniciar
@@ -184,6 +183,7 @@
                       class="hero-next-topic"
                       *ngFor="let item of grupo.itens"
                       (pointerdown)="irParaSalaRevisao(item)"
+                      (pointerup)="irParaSalaRevisao(item)"
                       [attr.data-materia-id]="item.materiaId"
                       [attr.data-topico-id]="item.topicoId"
                       (click)="irParaSalaRevisao(item)">
@@ -204,7 +204,8 @@
                 type="button"
                 class="hero-next-more"
                 *ngIf="revisoesPrioritariasTotal > 5"
-                (click)="verMaisRevisoes()">
+                (click)="verMaisRevisoes()"
+                (pointerup)="verMaisRevisoes()">
                 Ver mais
               </button>
               <ng-template #heroNextSemRevisoes>
@@ -219,6 +220,7 @@
                     type="button"
                     class="btn-modo-timer ativo"
                     (click)="comecarEstudoProximo()"
+                    (pointerup)="comecarEstudoProximo()"
                     [disabled]="!proximaMateriaEstudo">
                     <i class="pi pi-play"></i>
                     Iniciar
@@ -232,7 +234,8 @@
                     type="button"
                     class="quick-module-item"
                     *ngFor="let item of materiasDoDiaOrdenadas"
-                    (click)="irParaSalaMateriaProximo(item.materiaId)">
+                    (click)="irParaSalaMateriaProximo(item.materiaId)"
+                    (pointerup)="irParaSalaMateriaProximo(item.materiaId)">
                     <span class="quick-module-name">{{ item.nome }}</span>
                     <span class="quick-module-ordem">#{{ item.ordem }}</span>
                   </button>
@@ -289,7 +292,8 @@
             <button
               type="button"
               class="plano-btn"
-              (click)="irParaFilaRevisoes(item.filtroPreferido, item.materiaId)">
+              (click)="irParaFilaRevisoes(item.filtroPreferido, item.materiaId)"
+              (pointerup)="irParaFilaRevisoes(item.filtroPreferido, item.materiaId)">
               Revisar
             </button>
           </div>
@@ -462,7 +466,7 @@
         [(ngModel)]="dataProvaInput" />
     </div>
     <ng-template pTemplate="footer">
-      <button pButton type="button" class="date-dialog-btn ghost" (click)="fecharModalDataProva()">
+      <button pButton type="button" class="date-dialog-btn ghost" (click)="fecharModalDataProva()" (pointerup)="fecharModalDataProva()">
         Cancelar
       </button>
       <button
@@ -470,6 +474,7 @@
         type="button"
         class="date-dialog-btn"
         (click)="salvarDataProva()"
+        (pointerup)="salvarDataProva()"
         [disabled]="salvandoDataProva">
         Salvar
       </button>

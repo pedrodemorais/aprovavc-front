@@ -31,6 +31,8 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   private readonly pausarAoSairDaAbaKey = 'sala-estudo:pausar-ao-sair-aba';
   private topicosFinalizados = new Set<number>();
   private topicosFinalizadosCarregados = false;
+  private topicosFinalizadosPendentes = new Set<number>();
+  private topicosResetPendentes = new Set<number>();
 
   @ViewChild('flashcardModal', { static: false }) flashcardModalRef?: ElementRef<HTMLElement>;
   @ViewChild('flashcardOverlay', { static: false }) flashcardOverlayRef?: ElementRef<HTMLElement>;
@@ -148,7 +150,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   mostrarModalSplit: boolean = false;
   splitTopico: any | null = null;
-  splitNovos: string[] = [];
+  splitNovos: Array<{ id?: number; descricao: string; removendo?: boolean }> = [];
   splitTituloPai: string = '';
   splitErro?: string;
   splitSalvando: boolean = false;
@@ -599,6 +601,22 @@ ativarRevisaoFlashcards(): void {
       return false;
     }
     return this.topicosFinalizados.has(id);
+  }
+
+  isTopicoFinalizadoPendente(t: any): boolean {
+    const id = t?.id;
+    if (!id) {
+      return false;
+    }
+    return this.topicosFinalizadosPendentes.has(id);
+  }
+
+  isTopicoResetPendente(t: any): boolean {
+    const id = t?.id;
+    if (!id) {
+      return false;
+    }
+    return this.topicosResetPendentes.has(id);
   }
 
   private carregarTopicosFinalizados(): void {
@@ -1424,12 +1442,20 @@ ativarRevisaoFlashcards(): void {
       event.stopPropagation();
     }
 
-    if (!topico || topico.hasFilhos) {
+    if (!this.podeQuebrarTopico(topico)) {
       return;
     }
 
     this.splitTopico = topico;
-    this.splitNovos = ['', ''];
+    this.splitTituloPai = (topico?.descricao || '').toString();
+    const filhos = (topico?._raw?.subtopicos || topico?.subtopicos || []) as any[];
+    const itens = (filhos || [])
+      .map((f) => ({
+        id: this.getTopicoIdFromDto(f) ?? undefined,
+        descricao: (f?.descricao ?? '').toString().trim()
+      }))
+      .filter((v) => v.descricao.length > 0);
+    this.splitNovos = itens.length ? itens : [{ descricao: '' }];
     this.splitErro = undefined;
     this.splitSalvando = false;
     this.mostrarModalSplit = true;
@@ -1444,14 +1470,44 @@ ativarRevisaoFlashcards(): void {
   }
 
   adicionarSplitLinha(): void {
-    this.splitNovos.push('');
+    this.splitNovos.push({ descricao: '' });
   }
 
   removerSplitLinha(index: number): void {
-    if (this.splitNovos.length <= 2) {
+    if (this.splitNovos.length <= 1) {
       return;
     }
-    this.splitNovos.splice(index, 1);
+    const item = this.splitNovos[index];
+    if (!item) {
+      return;
+    }
+
+    if (!item.id) {
+      this.splitNovos.splice(index, 1);
+      return;
+    }
+
+    if (!this.materiaId) {
+      this.splitErro = 'Materia nao encontrada.';
+      return;
+    }
+
+    item.removendo = true;
+    this.splitErro = undefined;
+    this.materiaService.excluirTopico(this.materiaId, item.id).subscribe({
+      next: () => {
+        const idx = this.splitNovos.indexOf(item);
+        if (idx >= 0) {
+          this.splitNovos.splice(idx, 1);
+        }
+        this.carregarTopicos();
+      },
+      error: (err) => {
+        console.error('[SALA-ESTUDO] Erro ao remover subtopico:', err);
+        item.removendo = false;
+        this.splitErro = this.getSplitErroMensagem(err);
+      }
+    });
   }
 
   trackByIndex(index: number): number {
@@ -1473,7 +1529,10 @@ ativarRevisaoFlashcards(): void {
     const usados = new Set<string>();
 
     for (const item of this.splitNovos) {
-      const valor = (item || '').trim();
+      if (item?.id) {
+        continue;
+      }
+      const valor = (item?.descricao || '').trim();
       if (!valor) {
         continue;
       }
@@ -1488,8 +1547,10 @@ ativarRevisaoFlashcards(): void {
       limpos.push(valor);
     }
 
-    if (limpos.length < 2) {
-      this.splitErro = 'Informe pelo menos dois subtopicos diferentes do titulo do topico pai.';
+    if (limpos.length < 1) {
+      this.splitErro = undefined;
+      this.fecharModalSplit();
+      this.carregarTopicos();
       return;
     }
 
@@ -1712,6 +1773,17 @@ ativarRevisaoFlashcards(): void {
     this.avaliacaoFlashcardSelecionada = null;
     this.resetFlashcardFeedback();
     this.iniciarContagemRevisaoItem();
+  }
+
+  private getTopicoIdFromDto(dto: any): number | null {
+    const id =
+      dto?.id ??
+      dto?.topicoId ??
+      dto?.subtopicoId ??
+      dto?.idTopico ??
+      dto?.idSubtopico ??
+      null;
+    return id ? Number(id) : null;
   }
 
   anteriorFlashcard(): void {
@@ -2208,6 +2280,36 @@ get podeIrParaProximaRevisao(): boolean {
     if (!this.topicoSelecionado || !this.topicoPermiteEstudo) {
       return;
     }
+    const topicoId = this.topicoSelecionado?.id;
+    if (!topicoId || this.topicosFinalizadosPendentes.has(topicoId)) {
+      return;
+    }
+
+    if (this.isTopicoFinalizado(this.topicoSelecionado)) {
+      const confirmado = window.confirm('Deseja desfazer o finalizado deste topico?');
+      if (!confirmado) {
+        return;
+      }
+      this.topicosFinalizadosPendentes.add(topicoId);
+      this.topicosFinalizados.delete(topicoId);
+      this.salaEstudoService.desfinalizarTopico(topicoId).subscribe({
+        next: () => {
+          this.topicosFinalizadosPendentes.delete(topicoId);
+          this.mensagemTopicoFinalizado = 'Finalizado removido.';
+          setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+          this.carregarTopicosFinalizados();
+          window.location.reload();
+        },
+        error: () => {
+          this.topicosFinalizadosPendentes.delete(topicoId);
+          this.topicosFinalizados.add(topicoId);
+          this.mensagemTopicoFinalizado = 'Nao foi possivel desfazer o finalizado.';
+          setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+        }
+      });
+      return;
+    }
+
     if (this.timerAtivo) {
       this.timerAtivo = false;
       this.pararTimerInterno();
@@ -2216,13 +2318,11 @@ get podeIrParaProximaRevisao(): boolean {
     if (this.temTempoNaoSalvo()) {
       this.salvarEstudo();
     }
-    const topicoId = this.topicoSelecionado?.id;
-    if (!topicoId) {
-      return;
-    }
     const proximoPreferidoId = this.obterProximoTopicoIdAtual(topicoId);
+    this.topicosFinalizadosPendentes.add(topicoId);
     this.salaEstudoService.finalizarTopico(topicoId).subscribe({
       next: () => {
+        this.topicosFinalizadosPendentes.delete(topicoId);
         this.topicosFinalizados.add(topicoId);
         this.mensagemTopicoFinalizado = 'Topico finalizado.';
         setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
@@ -2230,7 +2330,46 @@ get podeIrParaProximaRevisao(): boolean {
         this.recarregarTopicosAposRevisao(topicoId, proximoPreferidoId);
       },
       error: () => {
+        this.topicosFinalizadosPendentes.delete(topicoId);
         this.mensagemTopicoFinalizado = 'Nao foi possivel finalizar o topico.';
+        setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+      }
+    });
+  }
+
+  resetarTopico(): void {
+    if (!this.topicoSelecionado || !this.topicoPermiteEstudo) {
+      return;
+    }
+    const topicoId = this.topicoSelecionado?.id;
+    if (!topicoId || this.topicosResetPendentes.has(topicoId)) {
+      return;
+    }
+
+    const confirmado = window.confirm(
+      'Deseja zerar todo o estudo deste topico? Isso apagará anotacoes, flashcards, vocabulario, tempos e revisoes.'
+    );
+    if (!confirmado) {
+      return;
+    }
+
+    if (this.timerAtivo) {
+      this.timerAtivo = false;
+      this.pararTimerInterno();
+      this.revisaoAutoExplicacaoAtiva = false;
+    }
+
+    this.topicosResetPendentes.add(topicoId);
+    this.salaEstudoService.resetarTopico(topicoId).subscribe({
+      next: () => {
+        this.topicosResetPendentes.delete(topicoId);
+        this.mensagemTopicoFinalizado = 'Topico zerado.';
+        setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+        window.location.reload();
+      },
+      error: () => {
+        this.topicosResetPendentes.delete(topicoId);
+        this.mensagemTopicoFinalizado = 'Nao foi possivel zerar o topico.';
         setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
       }
     });
@@ -2353,6 +2492,39 @@ get podeIrParaProximaRevisao(): boolean {
   /** Classes CSS para a bolinha da Sala de Estudo */
   temEstudoNoTopico(t: any): boolean {
     return this.getStatusRevisaoTopicoView(t) !== 'SEM';
+  }
+
+  podeQuebrarTopico(t: any): boolean {
+    if (!t?.id) return false;
+    const ids = this.coletarIdsSubarvore(t._raw ?? t);
+    if (!ids.length) return false;
+    const mapa = new Map<number, any>((this.topicos || []).map(n => [n.id, n]));
+    return !ids.some(id => {
+      const node = mapa.get(id);
+      return node ? this.temEstudoNoTopico(node) : false;
+    });
+  }
+
+  private coletarIdsSubarvore(dto: any): number[] {
+    const ids: number[] = [];
+    const stack: any[] = [dto];
+    while (stack.length) {
+      const atual = stack.pop();
+      if (!atual) continue;
+      const id =
+        atual.id ??
+        atual.topicoId ??
+        atual.subtopicoId ??
+        atual.idTopico ??
+        atual.idSubtopico ??
+        null;
+      if (id) ids.push(Number(id));
+      const filhos = atual.subtopicos || atual.filhos || [];
+      if (Array.isArray(filhos) && filhos.length) {
+        stack.push(...filhos);
+      }
+    }
+    return ids;
   }
 
   private atualizarContadorCaracteres(quantidade: number): void {

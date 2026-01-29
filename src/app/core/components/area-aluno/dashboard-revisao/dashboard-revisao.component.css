@@ -93,6 +93,7 @@
   color: rgba(0, 0, 0, 0.65);
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+  touch-action: manipulation;
 }
 
 .btn-modo-timer .pi {
@@ -793,6 +794,7 @@
   white-space: nowrap;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
   transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+  touch-action: manipulation;
 }
 
 .plano-btn:hover {
@@ -896,6 +898,7 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  touch-action: manipulation;
 }
 
 .planner-alert-action:hover,
@@ -1123,6 +1126,7 @@
   position: relative;
   z-index: 1;
   user-select: none;
+  touch-action: manipulation;
 }
 
 .hero-next-topic * {
@@ -1252,6 +1256,7 @@
   font-weight: 600;
   cursor: pointer;
   align-self: flex-start;
+  touch-action: manipulation;
   padding: 2px 0;
 }
 
@@ -1303,6 +1308,7 @@
   color: #6b7280;
   cursor: pointer;
   transition: color 0.15s ease, transform 0.15s ease;
+  touch-action: manipulation;
 }
 
 .quick-module-item:hover,

@@ -62,16 +62,16 @@
                 </span>
               </div>
               <div class="topico-meta">
-                <div class="topico-actions" *ngIf="!t.hasFilhos && !temEstudoNoTopico(t)">
+                <div class="topico-actions" *ngIf="podeQuebrarTopico(t)">
                   <button
                     type="button"
                     class="btn-split-topico"
                     (click)="abrirModalSplit(t, $event)"
-                    pTooltip="Quebrar subtopico"
+                    pTooltip="Editar subtopico"
                     tooltipPosition="left"
                     [showDelay]="150"
                     [hideDelay]="80"
-                    aria-label="Quebrar subtopico">
+                    aria-label="Editar subtopico">
                     <i class="pi pi-sitemap"></i>
                   </button>
                 </div>
@@ -659,9 +659,14 @@
                   <span>Salvar</span>
                 </button>
                 <button type="button" class="btn-modo-timer"
-                  [disabled]="!topicoPermiteEstudo || isTopicoFinalizado(topicoSelecionado)" (click)="finalizarTopico()">
-                  <i class="pi" [ngClass]="isTopicoFinalizado(topicoSelecionado) ? 'pi-check' : 'pi-flag'"></i>
-                  <span>{{ isTopicoFinalizado(topicoSelecionado) ? 'Finalizado' : 'Finalizar' }}</span>
+                  [disabled]="!topicoPermiteEstudo || isTopicoFinalizadoPendente(topicoSelecionado)" (click)="finalizarTopico()">
+                  <i class="pi" [ngClass]="isTopicoFinalizado(topicoSelecionado) ? 'pi-undo' : 'pi-flag'"></i>
+                  <span>{{ isTopicoFinalizado(topicoSelecionado) ? 'Desfazer' : 'Finalizar' }}</span>
+                </button>
+                <button type="button" class="btn-modo-timer btn-reset"
+                  [disabled]="!topicoPermiteEstudo || isTopicoResetPendente(topicoSelecionado)" (click)="resetarTopico()">
+                  <i class="pi pi-refresh"></i>
+                  <span>Zerar</span>
                 </button>
               </div>
 
@@ -871,7 +876,7 @@
   <div class="split-overlay" *ngIf="mostrarModalSplit">
     <div class="split-modal">
       <header class="split-header">
-        <h2 class="split-title">Quebrar subtopico</h2>
+        <h2 class="split-title">Editar subtopico</h2>
         <button type="button" class="split-fechar" (click)="fecharModalSplit()">x</button>
       </header>
 
@@ -884,23 +889,18 @@
           placeholder="Digite o titulo principal" />
       </div>
 
-      <div class="split-contexto split-contexto--readonly">
-        <span class="split-label">Texto original</span>
-        <div class="split-original">{{ splitTopico?.descricao }}</div>
-      </div>
-
       <div class="split-list">
         <div class="split-row" *ngFor="let item of splitNovos; let i = index; trackBy: trackByIndex">
           <input
             type="text"
             class="split-input"
-            [(ngModel)]="splitNovos[i]"
+            [(ngModel)]="item.descricao"
             placeholder="Novo subtopico {{ i + 1 }}" />
           <button
             type="button"
             class="split-remove"
             (click)="removerSplitLinha(i)"
-            [disabled]="splitNovos.length <= 2">
+            [disabled]="splitNovos.length <= 1 || item.removendo">
             <span class="pi pi-minus"></span>
           </button>
         </div>

@@ -11,6 +11,19 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Dashboard: libera scroll no html/body (iOS Chrome hit-test fix) */
+html.dashboard-scroll,
+body.dashboard-scroll {
+  overflow: auto !important;
+  height: 100%;
+}
+
+:host-context(html.dashboard-scroll),
+:host-context(body.dashboard-scroll) {
+  overflow: auto !important;
+  height: 100%;
+}
+
 html,
 body {
   height: 100%;
@@ -105,6 +118,7 @@ body {
   border-radius: 999px;
   padding: 8px 10px;
   cursor: pointer;
+  touch-action: manipulation;
 }
 :host {
   display: block;
@@ -188,6 +202,7 @@ body {
   font-size: 1.4rem;
   cursor: pointer;
   color: #4b5563;
+  touch-action: manipulation;
 }
 
 /* =======================================
@@ -695,6 +710,7 @@ body {
  
   transition: transform 0.12s, box-shadow 0.12s, background 0.18s, opacity 0.18s;
   opacity: 0.95;
+  touch-action: manipulation;
 }
 
 .som-icone:hover {
@@ -941,6 +957,7 @@ body {
   justify-content: center;
 
   transition: transform .12s ease, opacity .12s ease;
+  touch-action: manipulation;
 }
 
 .btn-som-foco:hover{
@@ -1095,6 +1112,7 @@ body.theme-dark .sons-foco-panel .som-icone-nome{
   align-items: center;
   justify-content: center;
   transition: transform .12s ease, opacity .12s ease;
+  touch-action: manipulation;
 }
 
 .btn-user-menu:hover{

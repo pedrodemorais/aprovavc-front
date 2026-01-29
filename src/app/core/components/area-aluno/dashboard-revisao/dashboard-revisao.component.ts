@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -18,7 +18,7 @@ import { AuthService } from 'src/app/site/services/auth.service';
   templateUrl: './dashboard-revisao.component.html',
   styleUrls: ['./dashboard-revisao.component.css']
 })
-export class DashboardRevisaoComponent implements OnInit, OnDestroy {
+export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   carregando = false;
   erro?: string;
@@ -97,13 +97,20 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.toggleDashboardScroll(true);
     this.carregarUsuarioNome();
     this.carregarDados();
     this.blocosSubscription = this.blocosEstudoService.blocosChanged$
       .subscribe(() => this.carregarDados());
   }
 
+  ngAfterViewInit(): void {
+    this.desbloquearOverlaysInvisiveis();
+    setTimeout(() => this.desbloquearOverlaysInvisiveis(), 250);
+  }
+
   ngOnDestroy(): void {
+    this.toggleDashboardScroll(false);
     this.limparImagensTemplates();
     this.limparImagensEditaisAtivos();
     this.blocosSubscription?.unsubscribe();
@@ -154,6 +161,51 @@ export class DashboardRevisaoComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  private toggleDashboardScroll(ativo: boolean): void {
+    if (typeof document === 'undefined') return;
+    const className = 'dashboard-scroll';
+    document.body.classList.toggle(className, ativo);
+    document.documentElement.classList.toggle(className, ativo);
+  }
+
+  private desbloquearOverlaysInvisiveis(): void {
+    if (typeof document === 'undefined') return;
+    const selectors = [
+      '.p-dialog-mask',
+      '.p-overlaypanel',
+      '.p-tooltip',
+      '.p-sidebar-mask',
+      '.p-dropdown-panel',
+      '.p-multiselect-panel',
+      '.p-datepicker',
+      '.p-overlay',
+      '[class*="overlay"]',
+      '[class*="modal"]',
+      '[class*="backdrop"]'
+    ];
+    const nodes = document.querySelectorAll<HTMLElement>(selectors.join(','));
+    const vw = window.innerWidth || 0;
+    const vh = window.innerHeight || 0;
+    nodes.forEach((el) => {
+      const style = window.getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      const invisivel =
+        style.display === 'none' ||
+        style.visibility === 'hidden' ||
+        Number(style.opacity) < 0.2 ||
+        rect.width <= 0 ||
+        rect.height <= 0;
+      const cobreTela =
+        rect.width >= vw * 0.9 &&
+        rect.height >= vh * 0.9 &&
+        (style.position === 'fixed' || style.position === 'absolute');
+      if (invisivel || cobreTela) {
+        el.style.pointerEvents = 'none';
+      }
+    });
+  }
+
 
   private contarMateriasParaEstudo(lista: MateriaTopicosDTO[] | null | undefined): number {
     const ids = new Set<number>();

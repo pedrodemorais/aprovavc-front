@@ -11,7 +11,7 @@
     </div>
 
     <div class="topbar-menu">
-      <button #menuToggle class="menu-toggle" type="button" (click)="toggleMenu()" aria-label="Abrir menu">
+      <button #menuToggle class="menu-toggle" type="button" (click)="toggleMenu()" (pointerup)="toggleMenu()" aria-label="Abrir menu">
         <i class="fas fa-bars" aria-hidden="true"></i>
       </button>
     </div>
@@ -23,6 +23,7 @@
       <button class="btn-modo-leitura"
               type="button"
               (click)="modoLeituraService.toggle()"
+              (pointerup)="modoLeituraService.toggle()"
               aria-label="Alternar tema">
         <i class="pi" [ngClass]="modoLeituraService.isDark() ? 'pi-sun' : 'pi-moon'" aria-hidden="true"></i>
       </button>
@@ -34,6 +35,7 @@
         <button type="button"
                 class="btn-som-foco"
                 (click)="toggleSonsFoco(); $event.stopPropagation()"
+                (pointerup)="toggleSonsFoco(); $event.stopPropagation()"
                 [attr.aria-expanded]="sonsFocoAberto"
                 aria-label="Som de foco"
                 title="Som de foco">
@@ -67,6 +69,7 @@
                     *ngFor="let som of sonsFoco"
                     [class.ativo]="somAtivoId === som.id"
                     (click)="onClickSomIcone(som.id); $event.stopPropagation()"
+                    (pointerup)="onClickSomIcone(som.id); $event.stopPropagation()"
                     [title]="som.nome">
 
               <div class="som-icone-avatar-wrapper">
@@ -89,6 +92,7 @@
           type="button"
           class="btn-user-menu"
           (click)="toggleUserMenu(); $event.stopPropagation()"
+          (pointerup)="toggleUserMenu(); $event.stopPropagation()"
           [attr.aria-expanded]="userMenuAberto"
           aria-label="Meu Cadastro"
           title="Meu Cadastro"
