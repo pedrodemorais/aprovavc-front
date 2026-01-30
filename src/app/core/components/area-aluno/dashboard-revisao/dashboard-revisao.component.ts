@@ -120,6 +120,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     this.carregando = true;
     this.erro = undefined;
 
+    this.salaEstudoService.limparCacheRevisoesDashboard();
     forkJoin({
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
       materias: this.materiaService.listarMaterias(),
@@ -131,7 +132,8 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     }).subscribe({
       next: ({ revisoes, materias, materiasParaEstudo, editais, plano, blocos }) => {
         const revisoesAtivas = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
-        this.revisoes = this.filtrarRevisoesComTopicosFilhos(revisoesAtivas, materiasParaEstudo);
+        const revisoesSemFilhos = this.filtrarRevisoesComTopicosFilhos(revisoesAtivas, materiasParaEstudo);
+        this.revisoes = this.normalizarRevisoesDashboard(revisoesSemFilhos);
         this.materias = materias || [];
         this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
         this.editais = editais || [];
@@ -1244,6 +1246,60 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
       return revisoes;
     }
     return (revisoes || []).filter((item) => !topicosComFilhos.has(item.topicoId));
+  }
+
+  private normalizarRevisoesDashboard(revisoes: RevisaoDashboardItem[]): RevisaoDashboardItem[] {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return (revisoes || [])
+      .map((item) => this.normalizarRevisaoItem(item, hoje))
+      .filter((item): item is RevisaoDashboardItem => !!item);
+  }
+
+  private normalizarRevisaoItem(item: RevisaoDashboardItem, hoje: Date): RevisaoDashboardItem | null {
+    const statusRevisao = (item as any)?.statusRevisao as string | undefined;
+    if (statusRevisao) {
+      const normalizado = this.mapearStatusRevisao(statusRevisao);
+      if (!normalizado) {
+        return null;
+      }
+      return { ...item, status: normalizado };
+    }
+
+    const proxima = (item as any)?.proximaRevisao || (item as any)?.dataProximaRevisao || null;
+    if (!proxima) {
+      return null;
+    }
+
+    const dataRev = this.construirDataLocal(proxima);
+    const hojeTime = hoje.getTime();
+    const revTime = dataRev.getTime();
+
+    if (Number.isNaN(revTime)) {
+      return null;
+    }
+
+    const normalizado = revTime < hojeTime ? 'VENCIDA' : revTime === hojeTime ? 'EM_DIA' : 'FUTURA';
+    return { ...item, status: normalizado };
+  }
+
+  private mapearStatusRevisao(status: string): RevisaoDashboardItem['status'] | null {
+    const upper = status.toUpperCase();
+    if (upper === 'ATRASADA') return 'VENCIDA';
+    if (upper === 'HOJE') return 'EM_DIA';
+    if (upper === 'FUTURA') return 'FUTURA';
+    if (upper === 'SEM') return null;
+    return null;
+  }
+
+  private construirDataLocal(isoDate: string): Date {
+    const [anoStr, mesStr, diaStr] = String(isoDate).split('-');
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);
+    const dia = Number(diaStr);
+    const data = new Date(ano, mes - 1, dia);
+    data.setHours(0, 0, 0, 0);
+    return data;
   }
 
   private obterTopicosComFilhos(materiasParaEstudo: MateriaTopicosDTO[] | null | undefined): Set<number> {

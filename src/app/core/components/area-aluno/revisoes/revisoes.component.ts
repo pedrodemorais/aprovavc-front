@@ -74,6 +74,7 @@ export class RevisoesComponent implements OnInit {
     this.carregando = true;
     this.erro = undefined;
 
+    this.salaEstudoService.limparCacheRevisoesDashboard();
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
       next: (itens) => {
         this.revisoesTodas = itens || [];

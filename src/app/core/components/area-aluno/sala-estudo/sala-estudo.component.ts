@@ -152,6 +152,8 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   splitTopico: any | null = null;
   splitNovos: Array<{ id?: number; descricao: string; removendo?: boolean }> = [];
   splitTituloPai: string = '';
+  private splitTituloPaiOriginal: string = '';
+  private splitDescricaoOriginalPorId = new Map<number, string>();
   splitErro?: string;
   splitSalvando: boolean = false;
   flashcardFrente: string = '';
@@ -254,7 +256,8 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       const length = Math.max(0, (quill.getLength?.() ?? 0) - 1);
       if (length > this.maxCaracteres) {
         this.ajustandoLimiteCaracteres = true;
-        quill.deleteText(this.maxCaracteres, length - this.maxCaracteres, 'silent');
+        // Usa "api" para o PrimeNG sincronizar o ngModel com o conteúdo já truncado.
+        quill.deleteText(this.maxCaracteres, length - this.maxCaracteres, 'api');
         this.ajustandoLimiteCaracteres = false;
       }
       this.atualizarContadorCaracteres(Math.min(length, this.maxCaracteres));
@@ -603,6 +606,25 @@ ativarRevisaoFlashcards(): void {
     return this.topicosFinalizados.has(id);
   }
 
+  isTopicoFinalizadoLinha(t: any): boolean {
+    const id = t?.id;
+    if (!id) {
+      return false;
+    }
+    if (this.topicosFinalizados.has(id)) {
+      return true;
+    }
+    const dto = this.encontrarDtoPorId(this.arvoreTopicos, id);
+    if (!dto) {
+      return false;
+    }
+    const filhos = (dto.subtopicos || dto.filhos || []) as any[];
+    if (!filhos.length) {
+      return false;
+    }
+    return this.todosFilhosFinalizados(filhos);
+  }
+
   isTopicoFinalizadoPendente(t: any): boolean {
     const id = t?.id;
     if (!id) {
@@ -617,6 +639,26 @@ ativarRevisaoFlashcards(): void {
       return false;
     }
     return this.topicosResetPendentes.has(id);
+  }
+
+  private todosFilhosFinalizados(lista: any[]): boolean {
+    for (const filho of lista || []) {
+      if (filho?.ativo === false) {
+        continue;
+      }
+      const sub = (filho?.subtopicos || filho?.filhos || []) as any[];
+      if (sub.length) {
+        if (!this.todosFilhosFinalizados(sub)) {
+          return false;
+        }
+        continue;
+      }
+      const id = this.getTopicoIdFromDto(filho);
+      if (!id || !this.topicosFinalizados.has(id)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private carregarTopicosFinalizados(): void {
@@ -949,6 +991,12 @@ ativarRevisaoFlashcards(): void {
     if (!this.topicoSelecionado) {
       this.erro = 'Selecione um topico antes de salvar o estudo.';
       return;
+    }
+
+    // Garante que o HTML salvo é o que está no editor (evita ngModel desatualizado após truncar).
+    const quillHtml = this.quillEditor?.root?.innerHTML;
+    if (typeof quillHtml === 'string') {
+      this.anotacoes = quillHtml;
     }
 
     const modoBack = this.modoTemporizador;
@@ -1448,6 +1496,7 @@ ativarRevisaoFlashcards(): void {
 
     this.splitTopico = topico;
     this.splitTituloPai = (topico?.descricao || '').toString();
+    this.splitTituloPaiOriginal = this.splitTituloPai;
     const filhos = (topico?._raw?.subtopicos || topico?.subtopicos || []) as any[];
     const itens = (filhos || [])
       .map((f) => ({
@@ -1456,6 +1505,11 @@ ativarRevisaoFlashcards(): void {
       }))
       .filter((v) => v.descricao.length > 0);
     this.splitNovos = itens.length ? itens : [{ descricao: '' }];
+    this.splitDescricaoOriginalPorId = new Map(
+      (itens || [])
+        .filter((item) => !!item.id)
+        .map((item) => [Number(item.id), item.descricao])
+    );
     this.splitErro = undefined;
     this.splitSalvando = false;
     this.mostrarModalSplit = true;
@@ -1465,6 +1519,8 @@ ativarRevisaoFlashcards(): void {
     this.mostrarModalSplit = false;
     this.splitTopico = null;
     this.splitNovos = [];
+    this.splitTituloPaiOriginal = '';
+    this.splitDescricaoOriginalPorId.clear();
     this.splitErro = undefined;
     this.splitSalvando = false;
   }
@@ -1474,11 +1530,13 @@ ativarRevisaoFlashcards(): void {
   }
 
   removerSplitLinha(index: number): void {
-    if (this.splitNovos.length <= 1) {
-      return;
-    }
     const item = this.splitNovos[index];
     if (!item) {
+      return;
+    }
+
+    if (item.id && this.temEstudoNoTopicoId(item.id)) {
+      this.splitErro = 'Nao e possivel remover subtopico com estudo iniciado.';
       return;
     }
 
@@ -1518,6 +1576,10 @@ ativarRevisaoFlashcards(): void {
     if (!this.splitTopico || !this.splitTopico.id) {
       return;
     }
+    if (!this.materiaId) {
+      this.splitErro = 'Materia nao encontrada.';
+      return;
+    }
 
     const limpos: string[] = [];
     const tituloPai = (this.splitTituloPai || '').trim();
@@ -1527,12 +1589,33 @@ ativarRevisaoFlashcards(): void {
     }
     const tituloChave = tituloPai.toLowerCase();
     const usados = new Set<string>();
+    const nomesNormalizados = new Set<string>();
+
+    const edicoesExistentes: Array<{ id: number; descricao: string }> = [];
 
     for (const item of this.splitNovos) {
+      const valor = (item?.descricao || '').trim();
       if (item?.id) {
+        if (!valor) {
+          this.splitErro = 'Subtopico nao pode ficar vazio.';
+          return;
+        }
+        if (valor.toLowerCase() === tituloChave) {
+          this.splitErro = 'Subtopico nao pode ser igual ao titulo do topico pai.';
+          return;
+        }
+        const chave = valor.toLowerCase();
+        if (nomesNormalizados.has(chave)) {
+          this.splitErro = 'Ha subtopicos duplicados. Ajuste os nomes.';
+          return;
+        }
+        nomesNormalizados.add(chave);
+        const original = (this.splitDescricaoOriginalPorId.get(Number(item.id)) || '').trim();
+        if (original !== valor) {
+          edicoesExistentes.push({ id: Number(item.id), descricao: valor });
+        }
         continue;
       }
-      const valor = (item?.descricao || '').trim();
       if (!valor) {
         continue;
       }
@@ -1540,50 +1623,80 @@ ativarRevisaoFlashcards(): void {
       if (chave === tituloChave) {
         continue;
       }
+      if (nomesNormalizados.has(chave)) {
+        continue;
+      }
       if (usados.has(chave)) {
         continue;
       }
+      nomesNormalizados.add(chave);
       usados.add(chave);
       limpos.push(valor);
     }
 
-    if (limpos.length < 1) {
-      this.splitErro = undefined;
-      this.fecharModalSplit();
-      this.carregarTopicos();
+    const tituloAlterado = (this.splitTituloPaiOriginal || '').trim() !== tituloPai;
+    if (!limpos.length && !edicoesExistentes.length && !tituloAlterado) {
+      this.splitErro = 'Nenhuma alteracao para salvar.';
       return;
     }
 
     this.splitErro = undefined;
     this.splitSalvando = true;
 
-    this.salaEstudoService
-      .splitSubtopico(this.splitTopico.id, {
-        novosSubtopicos: limpos,
-        novoTituloPai: tituloPai,
-        desativarOriginal: false
-      })
-      .subscribe({
-        next: () => {
-          const eraSelecionado = this.topicoSelecionado?.id === this.splitTopico?.id;
+    const requests: any[] = [];
 
-          this.splitSalvando = false;
-          this.fecharModalSplit();
-          this.carregarTopicos();
+    if (tituloAlterado) {
+      requests.push(
+        this.materiaService.salvarTopico(this.materiaId, {
+          id: this.splitTopico.id,
+          descricao: tituloPai,
+          ativo: this.splitTopico?.ativo ?? true
+        })
+      );
+    }
 
-          if (eraSelecionado) {
-            this.resetarTimerAoTrocarTopico();
-            this.topicoSelecionado = null;
-            this.anotacoes = '';
-            this.anotacoesHtmlSeguras = null;
-          }
-        },
-        error: (err) => {
-          console.error('[SALA-ESTUDO] Erro ao quebrar subtopico:', err);
-          this.splitSalvando = false;
-          this.splitErro = this.getSplitErroMensagem(err);
+    edicoesExistentes.forEach((item) => {
+      requests.push(
+        this.materiaService.salvarTopico(this.materiaId, {
+          id: item.id,
+          descricao: item.descricao,
+          ativo: true,
+          topicoPaiId: this.splitTopico?.id
+        })
+      );
+    });
+
+    limpos.forEach((novo) => {
+      requests.push(
+        this.materiaService.salvarTopico(this.materiaId, {
+          descricao: novo,
+          ativo: true,
+          topicoPaiId: this.splitTopico?.id
+        })
+      );
+    });
+
+    forkJoin(requests).subscribe({
+      next: () => {
+        const eraSelecionado = this.topicoSelecionado?.id === this.splitTopico?.id;
+
+        this.splitSalvando = false;
+        this.fecharModalSplit();
+        this.carregarTopicos();
+
+        if (eraSelecionado) {
+          this.resetarTimerAoTrocarTopico();
+          this.topicoSelecionado = null;
+          this.anotacoes = '';
+          this.anotacoesHtmlSeguras = null;
         }
-      });
+      },
+      error: (err) => {
+        console.error('[SALA-ESTUDO] Erro ao salvar edicao de subtopico:', err);
+        this.splitSalvando = false;
+        this.splitErro = this.getSplitErroMensagem(err);
+      }
+    });
   }
   private getSplitErroMensagem(err: any): string {
     const mensagem = err?.error?.mensagem || err?.error?.message || err?.error?.erro || err?.message;
@@ -1591,6 +1704,10 @@ ativarRevisaoFlashcards(): void {
       return 'Nao e possivel quebrar este topico, pois ele ja possui estudo.';
     }
     return mensagem || 'Erro ao salvar. Tente novamente.';
+  }
+
+  temEstudoNoTopicoId(id: number): boolean {
+    return this.getStatusSimplesTopico(id) !== 'SEM';
   }
 
   onFlashcardTipoChange(tipo: string): void {
@@ -2495,14 +2612,7 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   podeQuebrarTopico(t: any): boolean {
-    if (!t?.id) return false;
-    const ids = this.coletarIdsSubarvore(t._raw ?? t);
-    if (!ids.length) return false;
-    const mapa = new Map<number, any>((this.topicos || []).map(n => [n.id, n]));
-    return !ids.some(id => {
-      const node = mapa.get(id);
-      return node ? this.temEstudoNoTopico(node) : false;
-    });
+    return !!t?.id;
   }
 
   private coletarIdsSubarvore(dto: any): number[] {

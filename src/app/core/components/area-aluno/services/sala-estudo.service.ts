@@ -167,15 +167,21 @@ export class SalaEstudoService {
   }
 
   finalizarTopico(topicoId: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`, {});
+    return this.http.post<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`, {}).pipe(
+      tap(() => this.limparCacheTopicosFinalizados())
+    );
   }
 
   desfinalizarTopico(topicoId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`);
+    return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`).pipe(
+      tap(() => this.limparCacheTopicosFinalizados())
+    );
   }
 
   resetarTopico(topicoId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/reset`);
+    return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/reset`).pipe(
+      tap(() => this.limparCacheTopicosFinalizados())
+    );
   }
 
   listarTopicosFinalizados(): Observable<TopicoFinalizadoDTO[]> {
@@ -199,6 +205,11 @@ export class SalaEstudoService {
       })
     );
     return this.topicosFinalizadosRequest$;
+  }
+
+  private limparCacheTopicosFinalizados(): void {
+    this.topicosFinalizadosCache = undefined;
+    this.topicosFinalizadosRequest$ = undefined;
   }
 
   buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {
@@ -337,7 +348,7 @@ export class SalaEstudoService {
     return this.http.post<SplitSubtopicoResponse>(`${this.topicosApiUrl}/${subtopicoId}/split`, payload);
   }
 
-listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
+  listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
   if (this.isCacheValido(this.revisoesDashboardCache)) {
     return of(this.revisoesDashboardCache!.data);
   }
@@ -360,6 +371,11 @@ listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
   );
   return this.revisoesDashboardRequest$;
 }
+
+  limparCacheRevisoesDashboard(): void {
+    this.revisoesDashboardCache = undefined;
+    this.revisoesDashboardRequest$ = undefined;
+  }
 
 private isCacheValido(cache?: { ts: number }): boolean {
   if (!cache) return false;

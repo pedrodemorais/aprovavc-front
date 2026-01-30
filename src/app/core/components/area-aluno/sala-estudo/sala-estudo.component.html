@@ -51,7 +51,7 @@
       <div class="lista-de-topicos">
         <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
           <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
-            [class.finalizado]="!t.hasFilhos && isTopicoFinalizado(t)"
+            [class.finalizado]="isTopicoFinalizadoLinha(t)"
             [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
             (click)="!t.hasFilhos && selecionarTopico(t)">
             <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
@@ -62,22 +62,20 @@
                 </span>
               </div>
               <div class="topico-meta">
-                <div class="topico-actions" *ngIf="podeQuebrarTopico(t)">
+                <div class="topico-actions" *ngIf="t?.id">
                   <button
                     type="button"
                     class="btn-split-topico"
                     (click)="abrirModalSplit(t, $event)"
-                    pTooltip="Editar subtopico"
+                    pTooltip="Editar"
                     tooltipPosition="left"
                     [showDelay]="150"
                     [hideDelay]="80"
-                    aria-label="Editar subtopico">
+                    aria-label="Editar">
                     <i class="pi pi-sitemap"></i>
                   </button>
                 </div>
-                <span class="topico-finalizado" *ngIf="!t.hasFilhos && isTopicoFinalizado(t)">
-                  <i class="pi pi-check"></i>
-                </span>
+                <!-- finalizado agora apenas via background na linha -->
               </div>
             </div>
           </li>
@@ -876,7 +874,7 @@
   <div class="split-overlay" *ngIf="mostrarModalSplit">
     <div class="split-modal">
       <header class="split-header">
-        <h2 class="split-title">Editar subtopico</h2>
+        <h2 class="split-title">Editar</h2>
         <button type="button" class="split-fechar" (click)="fecharModalSplit()">x</button>
       </header>
 
@@ -900,7 +898,7 @@
             type="button"
             class="split-remove"
             (click)="removerSplitLinha(i)"
-            [disabled]="splitNovos.length <= 1 || item.removendo">
+            [disabled]="item.removendo || (item.id && temEstudoNoTopicoId(item.id))">
             <span class="pi pi-minus"></span>
           </button>
         </div>

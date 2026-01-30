@@ -407,15 +407,13 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   private converterDtoParaTopico(dto: any, nivel: number = 0): Topico {
-    const idRaw =
-      dto?.id ??
-      dto?.topicoId ??
-      dto?.subtopicoId ??
-      dto?.idTopico ??
-      dto?.idSubtopico ??
-      null;
-
-    const idConvertido = this.asId(idRaw);
+    const idConvertido = this.primeiroIdValido([
+      dto?.topicoId,
+      dto?.subtopicoId,
+      dto?.idTopico,
+      dto?.idSubtopico,
+      dto?.id
+    ]);
 
     const filhos: Topico[] = (dto?.subtopicos || []).map((sub: any) =>
       this.converterDtoParaTopico(sub, nivel + 1)
@@ -874,6 +872,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       this.salaEstudoService.desfinalizarTopico(id).subscribe({
         next: () => {
           this.topicosFinalizadosPendentes.delete(id);
+          this.carregarTopicosFinalizados();
         },
         error: () => {
           this.topicosFinalizadosPendentes.delete(id);
@@ -895,6 +894,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.salaEstudoService.finalizarTopico(id).subscribe({
       next: () => {
         this.topicosFinalizadosPendentes.delete(id);
+        this.carregarTopicosFinalizados();
       },
       error: () => {
         this.topicosFinalizadosPendentes.delete(id);
@@ -1086,9 +1086,21 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   private getTopicoId(topico: any): number | null {
-    const raw = topico?.id ?? topico?.topicoId ?? null;
-    const id = Number(raw);
-    return Number.isFinite(id) && id > 0 ? id : null;
+    return this.primeiroIdValido([topico?.id, topico?.topicoId]);
+  }
+
+  private primeiroIdValido(candidatos: Array<any>): number | null {
+    for (const raw of candidatos) {
+      const id = Number(raw);
+      if (Number.isFinite(id) && id > 0) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  trackByTopicoId(index: number, topico: Topico): number {
+    return this.getTopicoId(topico) ?? index;
   }
 }
 
