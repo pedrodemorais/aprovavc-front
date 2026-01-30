@@ -229,9 +229,10 @@
               <div class="secao-lista" *ngIf="secaoAbertaId === $any(s).id">
 
                 <div class="topico-linha"
-                     *ngFor="let t of (s.filhos || [])"
+                     *ngFor="let t of listarDescendentes(s)"
                      (click)="selecionarTopico(t)"
-                     [class.is-active]="topicoAtivoId === $any(t).id">
+                     [class.is-active]="topicoAtivoId === $any(t).id"
+                     [style.paddingLeft.px]="(t.nivel || 0) * 14">
 
                   <button type="button"
                           class="topico-check"
@@ -312,7 +313,6 @@
 
   </div>
 </div>
-
 
 
 

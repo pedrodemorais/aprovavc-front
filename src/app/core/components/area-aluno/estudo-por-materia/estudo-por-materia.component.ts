@@ -9,6 +9,7 @@ import { Edital } from '../models/Edital';
 import { EditalService } from '../services/edital.service';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 import { EditalTemplateService } from '../services/edital-template.service';
+import { MateriaService } from '../services/materia.service';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 
@@ -76,6 +77,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
   constructor(
     private salaEstudoService: SalaEstudoService,
+    private materiaService: MateriaService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
     private empresaParametroService: EmpresaParametroService,
@@ -141,6 +143,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         this.materias = materias;
         this.materiasFiltradasPorEscopo = true;
         this.carregandoMaterias = false;
+        this.hidratarTopicosComMateriaService(materias);
       },
       error: (err) => {
         console.error('[MATERIAS] Erro ao carregar matérias:', err);
@@ -623,6 +626,36 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.activeEditalImagemTemplateId = null;
   }
 
+  private hidratarTopicosComMateriaService(materias: Materia[]): void {
+    (materias || []).forEach((m) => {
+      const materiaId = this.asId((m as any)?.id ?? (m as any)?.materiaId);
+      if (!materiaId) return;
+      this.materiaService.listarTopicos(materiaId).subscribe({
+        next: (lista) => {
+          const topicos = (lista || []).map((dto: any) => this.converterDtoParaTopico(dto, 0));
+          this.topicosPorMateria.set(materiaId, topicos);
+          if (this.materiaExpandida?.id === materiaId) {
+            this.topicos = topicos;
+            this.atualizarResumoExpandida();
+          }
+        },
+        error: (err) => {
+          console.warn('[MATERIAS] Falha ao carregar topicos completos:', err);
+        }
+      });
+    });
+  }
+
+  listarDescendentes(topico: Topico): Topico[] {
+    const out: Topico[] = [];
+    const walk = (t: Topico) => {
+      out.push(t);
+      (t.filhos || []).forEach(walk);
+    };
+    (topico?.filhos || []).forEach(walk);
+    return out;
+  }
+
   private getRevisoesPorStatusEdital(edital: Edital | null | undefined, status: StatusRevisao): number {
     if (!edital?.id) return 0;
     const ids = this.materiasPorEdital.get(edital.id);
@@ -872,6 +905,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       this.salaEstudoService.desfinalizarTopico(id).subscribe({
         next: () => {
           this.topicosFinalizadosPendentes.delete(id);
+          this.atualizarConclusaoPais(topico);
           this.carregarTopicosFinalizados();
         },
         error: () => {
@@ -894,6 +928,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.salaEstudoService.finalizarTopico(id).subscribe({
       next: () => {
         this.topicosFinalizadosPendentes.delete(id);
+        this.atualizarConclusaoPais(topico);
         this.carregarTopicosFinalizados();
       },
       error: () => {
@@ -926,6 +961,9 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       next: () => {
         this.concluidosPorTopico.delete(id);
         this.atualizarResumoExpandida();
+        if (topico) {
+          this.atualizarConclusaoPais(topico);
+        }
       },
       error: () => {
         this.mensagemErro = 'Nao foi possivel desfazer o finalizado.';
@@ -937,12 +975,12 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // Contadores seÃ§Ã£o
   // ==========================
   getTotalSecao(secao: Topico): number {
-    return (secao?.filhos?.length ?? 0);
+    return this.folhasTopicos(secao?.filhos || []).length;
   }
 
   getConcluidasSecao(secao: Topico): number {
-    const filhos = (secao?.filhos ?? []);
-    return filhos.filter((x: any) => x?.id && this.concluidosPorTopico.has(x.id)).length;
+    const folhas = this.folhasTopicos(secao?.filhos || []);
+    return folhas.filter((x: any) => x?.id && this.concluidosPorTopico.has(x.id)).length;
   }
 
   getPercentSecao(secao: Topico): number {
@@ -1033,6 +1071,82 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     return out;
   }
 
+  private encontrarCaminhoParaTopico(alvos: Topico[], topicoId: number): Topico[] {
+    const stack: Array<{ node: Topico; path: Topico[] }> = [];
+    (alvos || []).forEach((n) => stack.push({ node: n, path: [n] }));
+    while (stack.length) {
+      const atual = stack.pop();
+      if (!atual) continue;
+      const id = this.getTopicoId(atual.node);
+      if (id === topicoId) {
+        return atual.path;
+      }
+      (atual.node.filhos || []).forEach((filho) => {
+        stack.push({ node: filho, path: [...atual.path, filho] });
+      });
+    }
+    return [];
+  }
+
+  private atualizarConclusaoPais(topico: Topico): void {
+    const id = this.getTopicoId(topico);
+    if (!id) return;
+
+    const materiaId = this.materiaExpandida?.id || null;
+    const roots = materiaId ? (this.topicosPorMateria.get(materiaId) || this.topicos) : this.topicos;
+    if (!roots?.length) return;
+
+    const caminho = this.encontrarCaminhoParaTopico(roots, id);
+    if (!caminho.length) return;
+
+    for (let i = caminho.length - 2; i >= 0; i -= 1) {
+      const pai = caminho[i];
+      const paiId = this.getTopicoId(pai);
+      if (!paiId) continue;
+
+      const folhas = this.folhasTopicos([pai]);
+      const todasConcluidas = folhas.length > 0 &&
+        folhas.every((f) => {
+          const fid = this.getTopicoId(f);
+          return !!fid && this.concluidosPorTopico.has(fid);
+        });
+
+      if (todasConcluidas && !this.concluidosPorTopico.has(paiId)) {
+        this.concluidosPorTopico.add(paiId);
+        this.concluidosPorTopico = new Set(this.concluidosPorTopico);
+        this.atualizarResumoExpandida();
+        this.topicosFinalizadosPendentes.set(paiId, true);
+        this.salaEstudoService.finalizarTopico(paiId).subscribe({
+          next: () => {
+            this.topicosFinalizadosPendentes.delete(paiId);
+            this.atualizarResumoExpandida();
+          },
+          error: () => {
+            this.topicosFinalizadosPendentes.delete(paiId);
+            this.concluidosPorTopico.delete(paiId);
+          }
+        });
+      }
+
+      if (!todasConcluidas && this.concluidosPorTopico.has(paiId)) {
+        this.concluidosPorTopico.delete(paiId);
+        this.concluidosPorTopico = new Set(this.concluidosPorTopico);
+        this.atualizarResumoExpandida();
+        this.topicosFinalizadosPendentes.set(paiId, false);
+        this.salaEstudoService.desfinalizarTopico(paiId).subscribe({
+          next: () => {
+            this.topicosFinalizadosPendentes.delete(paiId);
+            this.atualizarResumoExpandida();
+          },
+          error: () => {
+            this.topicosFinalizadosPendentes.delete(paiId);
+            this.concluidosPorTopico.add(paiId);
+          }
+        });
+      }
+    }
+  }
+
   private atualizarResumoExpandida(): void {
     if (!this.materiaExpandida || !this.topicos?.length) {
       this.resumoExpandida = null;
@@ -1074,6 +1188,9 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
             concluido.delete(id);
           }
         });
+
+        // Mantém o estado otimista local para evitar "sumir" antes do back refletir.
+        this.concluidosPorTopico.forEach((id) => concluido.add(id));
 
         this.concluidosPorTopico = concluido;
         this.atualizarResumoExpandida();
