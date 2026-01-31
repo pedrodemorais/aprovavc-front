@@ -267,9 +267,7 @@
 
 
 .item-topico.topico-pai {
-  cursor: default;
-  background: transparent;
-  box-shadow: none;
+  cursor: pointer;
 }
 
 .linha-topico {

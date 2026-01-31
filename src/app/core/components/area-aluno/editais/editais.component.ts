@@ -11,7 +11,7 @@ import { EditalTemplateDTO, EstruturaTemplateDTO } from 'src/app/core/area-admin
 import { TreeNode } from 'primeng/api';
 import { CanComponentDeactivate } from '../guards/estudo-em-andamento.guard';
 import { forkJoin, of, Subscription } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-editais',
@@ -426,6 +426,14 @@ private mensagemTimeout: any; // para guardar o setTimeout
     return '+ Novo edital';
   }
 
+  get podeExcluirEdital(): boolean {
+    if (this.obterEditalSelecionadoParaAcao()) {
+      return true;
+    }
+    const formId = this.form.get('id')?.value as number | null;
+    return !!formId;
+  }
+
   acaoPrincipal(): void {
     this.router.navigate(['/area-restrita/cadastro-editais']);
   }
@@ -511,6 +519,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
   }
 
   excluir(edital: Edital): void {
+    console.log('[EDITAIS] excluir()', edital);
     if (!edital.id) {
       return;
     }
@@ -520,7 +529,57 @@ private mensagemTimeout: any; // para guardar o setTimeout
       return;
     }
 
-    this.editalService.excluir(edital.id).subscribe({
+    const materias = (edital.materias || []).filter((m) => !!m?.materiaId);
+    const desvincularMateriasDelete$: any = materias.length
+      ? forkJoin(
+          materias.map((m) =>
+            this.editalService
+              .atualizarStatusMateria(edital.id as number, m.materiaId, false)
+              .pipe(catchError(() => of(null)))
+          )
+        )
+      : of(null);
+
+    desvincularMateriasDelete$.subscribe({
+      next: () => {
+        console.log('[EDITAIS] materias desvinculadas');
+        console.log('[EDITAIS] chamando DELETE', edital.id);
+        this.editalService.excluir(edital.id as number).subscribe({
+          next: () => {
+            this.mensagemSucesso = 'Edital excluido com sucesso.';
+            this.carregarEditais();
+            this.novoEdital();
+          },
+          error: (err: any) => {
+            console.error('[EDITAIS] Erro ao excluir edital:', err);
+            this.erro = 'Erro ao excluir edital. Tente novamente.';
+          }
+        });
+      },
+      error: (err: any) => {
+        console.error('[EDITAIS] Erro ao desvincular materias:', err);
+        this.erro = 'Erro ao desvincular materias do edital.';
+      }
+    });
+    return;
+  }
+
+/*
+    const desvincularMaterias$ = (edital.materias || []).length
+      ? forkJoin(
+          (edital.materias || []).map((m) =>
+            this.editalService
+              .atualizarStatusMateria(edital.id as number, m.materiaId, false)
+              .pipe(catchError(() => of(null)))
+          )
+        )
+      : of(null);
+
+    desvincularMaterias$
+      .pipe(
+        switchMap(() => this.editalService.excluir(edital.id as number))
+      )
+      .subscribe({
       next: () => {
         this.mensagemSucesso = 'Edital excluído com sucesso.';
         this.carregarEditais();
@@ -532,6 +591,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
       }
     });
   }
+*/
 
   definirComoEmEstudo(edital: Edital): void {
     if (!edital?.id) {
@@ -1011,8 +1071,31 @@ private mensagemTimeout: any; // para guardar o setTimeout
   }
 
   acaoExcluirSelecionado(): void {
-    if (!this.editalSelecionado) return;
-    this.excluir(this.editalSelecionado);
+    console.log('[EDITAIS] acaoExcluirSelecionado');
+    const edital = this.obterEditalSelecionadoParaAcao();
+    const editalId = edital?.id ?? (this.form.get('id')?.value as number | null);
+    if (!editalId) {
+      this.erro = 'Selecione um edital para excluir.';
+      return;
+    }
+
+    if (edital?.id) {
+      this.excluir(edital);
+      return;
+    }
+
+    this.editalService.buscarPorId(editalId).subscribe({
+      next: (detalhe) => {
+        const resolvido = detalhe
+          ? { ...detalhe, id: detalhe.id ?? editalId }
+          : ({ id: editalId, nome: '', materias: [] } as Edital);
+        this.excluir(resolvido);
+      },
+      error: (err) => {
+        console.error('[EDITAIS] Erro ao carregar edital para excluir:', err);
+        this.erro = 'Erro ao preparar exclusao do edital. Tente novamente.';
+      }
+    });
   }
 
   abrirModalVincularMaterias(): void {
@@ -1157,6 +1240,29 @@ private mensagemTimeout: any; // para guardar o setTimeout
     if (formId !== editalId) {
       this.editar(encontrado, false);
     }
+  }
+
+  private obterEditalSelecionadoParaAcao(): Edital | null {
+    if (this.editalSelecionado?.id) {
+      return this.editalSelecionado;
+    }
+    if (this.editalEmEdicao?.id) {
+      return this.editalEmEdicao;
+    }
+    const formId = this.form.get('id')?.value as number | null;
+    if (formId) {
+      const encontrado = (this.editais || []).find(e => e.id === formId);
+      if (encontrado) {
+        return encontrado;
+      }
+    }
+    const node = (this.selectedEditalNodes || []).find(n => n?.data?.tipo === 'EDITAL')
+      || (this.selectedEditalNodes || []).find(n => n?.data?.editalId);
+    const editalId = node?.data?.editalId as number | undefined;
+    if (!editalId) {
+      return null;
+    }
+    return (this.editais || []).find(e => e.id === editalId) || null;
   }
 
   private construirTopicosTreeNodes(

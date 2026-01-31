@@ -1,41 +1,74 @@
 import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpInterceptor,
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpErrorResponse
+} from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { catchError, switchMap, finalize } from 'rxjs/operators';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
+  private refreshing = false;
+  private refreshToken$?: Observable<string>;
+
   constructor(private authService: AuthService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     let token = this.authService.getAccessToken();
 
-    // 🔹 Evita interceptar a própria requisição de refresh para não gerar loop
+    // Avoid intercepting the refresh request itself to prevent loops.
     if (req.url.includes('/refresh')) {
       return next.handle(req);
     }
 
-    // 🔹 Se o token estiver expirado, primeiro faz o refresh antes de continuar a requisição
+    // If token is expired, try refresh before sending the request.
     if (token && this.authService.isTokenExpired(token)) {
-      return this.authService.refreshToken().pipe(
-        switchMap(newToken => {
-          // ✅ Atualiza a requisição original com o novo token e a reenvia
-          req = this.addToken(req, newToken);
-          return next.handle(req);
-        }),
-        catchError(error => {
-          return throwError(error);
-        })
-      );
+      return this.handle401(req, next);
     }
 
-    // 🔹 Se o token ainda for válido, segue normalmente
     if (token) {
       req = this.addToken(req, token);
     }
 
-    return next.handle(req);
+    return next.handle(req).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401) {
+          return this.handle401(req, next);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private handle401(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    if (!this.refreshing) {
+      this.refreshing = true;
+      this.refreshToken$ = this.authService.refreshToken().pipe(
+        finalize(() => {
+          this.refreshing = false;
+          this.refreshToken$ = undefined;
+        })
+      );
+    }
+
+    return (this.refreshToken$ || this.authService.refreshToken()).pipe(
+      switchMap((newToken) => {
+        if (!newToken) {
+          this.authService.logout();
+          return throwError(() => new Error('Token refresh failed.'));
+        }
+        const retryReq = this.addToken(req, newToken);
+        return next.handle(retryReq);
+      }),
+      catchError((err) => {
+        this.authService.logout();
+        return throwError(() => err);
+      })
+    );
   }
 
   private addToken(request: HttpRequest<any>, token: string) {

@@ -52,8 +52,8 @@
         <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
           <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
             [class.finalizado]="isTopicoFinalizadoLinha(t)"
-            [class.selecionado]="!t.hasFilhos && topicoSelecionado?.id === t.id"
-            (click)="!t.hasFilhos && selecionarTopico(t)">
+            [class.selecionado]="topicoSelecionado?.id === t.id"
+            (click)="selecionarTopico(t)">
             <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
               <div class="topico-info">
                 <span class="badge-nivel" [ngClass]="classeSemaforoRevisaoSala(t)"></span>
@@ -264,10 +264,6 @@
 
                       <span *ngIf="!topicoSelecionado">
                         Selecione um t&oacute;pico na coluna &agrave; esquerda para come&ccedil;ar.
-                      </span>
-
-                      <span *ngIf="topicoSelecionado && topicoSelecionado.hasFilhos">
-                        Este t&oacute;pico possui subt&oacute;picos. Selecione um subt&oacute;pico espec&iacute;fico.
                       </span>
 
                     <span *ngIf="topicoPermiteEstudo && !timerAtivo">

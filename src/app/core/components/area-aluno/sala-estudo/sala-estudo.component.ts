@@ -335,7 +335,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   }
 
   get topicoPermiteEstudo(): boolean {
-    return !!(this.topicoSelecionado && !this.topicoSelecionado.hasFilhos);
+    return !!(this.topicoSelecionado && this.topicoSelecionado.ativo !== false);
   }
 
   private carregarTopicos(): void {
@@ -578,7 +578,7 @@ ativarRevisaoFlashcards(): void {
   }
 
   private salvarUltimoTopico(t: any): void {
-    if (!t?.id || t?.hasFilhos || !this.materiaId) {
+    if (!t?.id || !this.materiaId) {
       return;
     }
     const key = `${this.ultimoTopicoKeyPrefix}${this.materiaId}`;
@@ -2327,7 +2327,7 @@ get podeIrParaProximaRevisao(): boolean {
     let alvo: any | undefined;
     if (this.topicoIdPreferido) {
       const candidato = this.topicos.find(t => t.id === this.topicoIdPreferido);
-      if (candidato && !candidato.hasFilhos) {
+      if (candidato) {
         if (this.isTopicoFinalizado(candidato)) {
           const folhas = this.topicos.filter(t => !t.hasFilhos && t.ativo !== false);
           alvo = this.obterProximoTopicoApos(folhas, candidato.id) || candidato;

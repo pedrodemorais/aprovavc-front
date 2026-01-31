@@ -37,7 +37,9 @@ export class EditalService {
   }
 
   excluir(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    const url = `${this.apiUrl}/${id}`;
+    console.log('[EDITAL SERVICE] DELETE', url);
+    return this.http.delete<void>(url);
   }
 
   definirComoAtivo(id: number): Observable<void> {

@@ -46,8 +46,8 @@
               <button type="button" class="segmented-btn" [disabled]="!editalSelecionado" title="Arquivar edital">
                 Arquivar
               </button>
-              <button type="button" class="segmented-btn segmented-btn--danger" [disabled]="!editalSelecionado"
-                (click)="acaoExcluirSelecionado()" title="Excluir edital">
+              <button type="button" class="segmented-btn segmented-btn--danger" [disabled]="!podeExcluirEdital"
+                (click)="$event.stopPropagation(); acaoExcluirSelecionado()" title="Excluir edital">
                 Excluir
               </button>
               </div>
