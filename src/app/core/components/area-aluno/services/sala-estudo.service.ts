@@ -250,7 +250,9 @@ export class SalaEstudoService {
    * POST /api/sala-estudo/flashcards/revisao/responder
    */
   responderRevisaoFlashcard(req: FlashcardRevisaoRespostaRequest): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/flashcards/revisao/responder`, req);
+    return this.http.post<void>(`${this.apiUrl}/flashcards/revisao/responder`, req).pipe(
+      tap(() => this.limparCacheRevisoesDashboard())
+    );
   }
 
   /**
@@ -260,7 +262,9 @@ export class SalaEstudoService {
    * POST /api/sala-estudo/topicos/revisao/responder
    */
   responderRevisaoTopico(req: TopicoRevisaoRespostaRequest): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/topicos/revisao/responder`, req);
+    return this.http.post<void>(`${this.apiUrl}/topicos/revisao/responder`, req).pipe(
+      tap(() => this.limparCacheRevisoesDashboard())
+    );
   }
 
   listarTempoEstudoPorMateria(): Observable<TempoEstudoMateriaDTO[]> {

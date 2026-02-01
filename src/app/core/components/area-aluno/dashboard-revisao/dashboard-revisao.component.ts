@@ -131,12 +131,14 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe({
       next: ({ revisoes, materias, materiasParaEstudo, editais, plano, blocos }) => {
+        console.log('[DASH-REVISAO] Editais recebidos:', editais);
         const revisoesAtivas = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
         const revisoesSemFilhos = this.filtrarRevisoesComTopicosFilhos(revisoesAtivas, materiasParaEstudo);
         this.revisoes = this.normalizarRevisoesDashboard(revisoesSemFilhos);
         this.materias = materias || [];
         this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
         this.editais = editais || [];
+        console.log('[DASH-REVISAO] Editais ativos:', this.editais.filter(e => e?.ativo));
         this.planoDoDia = plano;
         this.atualizarTotais();
         this.modulosHoje = plano?.blocoNumero ?? 1;

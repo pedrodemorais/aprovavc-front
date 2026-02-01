@@ -2282,8 +2282,19 @@ get podeIrParaProximaRevisao(): boolean {
             null;
 
           let status: StatusRevisao = 'SEM';
+          const statusRevisaoRaw = String(item.statusRevisao || '').toUpperCase();
+          const statusRaw = String(item.status || '').toUpperCase();
 
-          if (proxima) {
+          if (statusRevisaoRaw) {
+            if (statusRevisaoRaw === 'ATRASADA') status = 'ATRASADA';
+            else if (statusRevisaoRaw === 'HOJE') status = 'HOJE';
+            else if (statusRevisaoRaw === 'FUTURA') status = 'FUTURA';
+            else status = 'SEM';
+          } else if (statusRaw) {
+            if (statusRaw === 'VENCIDA') status = 'ATRASADA';
+            else if (statusRaw === 'FUTURA') status = 'FUTURA';
+            else status = 'SEM';
+          } else if (proxima) {
             const dataRev = this.construirDataLocal(proxima);
 
             const hojeTime = hoje.getTime();

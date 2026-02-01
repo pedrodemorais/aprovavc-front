@@ -371,8 +371,10 @@ export class ProgressoComponent implements OnInit {
 
     this.editalService.listar().subscribe({
       next: (lista) => {
+        console.log('[PROGRESSO] Editais recebidos:', lista);
         this.editais = lista || [];
         this.editalAtivo = this.editais.find(e => e.ativo) || this.editais[0];
+        console.log('[PROGRESSO] Edital ativo:', this.editalAtivo);
         this.atualizarCoberturaMaterias();
         this.atualizarPlanoAtaque();
         this.atualizarPrazoRitmo();
