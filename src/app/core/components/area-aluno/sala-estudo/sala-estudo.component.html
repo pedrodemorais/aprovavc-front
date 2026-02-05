@@ -9,7 +9,6 @@
       <span class="titulo-materia-text">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemRevisao">{{ mensagemRevisao }}</span>
-      <span class="salvo-msg sala-avanco-msg" *ngIf="mensagemAvancoCiclo">{{ mensagemAvancoCiclo }}</span>
       <span class="salvo-msg sala-topico-finalizado-msg" *ngIf="mensagemTopicoFinalizado">{{ mensagemTopicoFinalizado }}</span>
     </span>
     <button type="button" class="btn-toggle-coluna btn-toggle-coluna--titulo"
@@ -23,9 +22,9 @@
 
   <section class="card sala-body">
     <!-- COLUNA ESQUERDA: LISTA DE TOPICOS -->
-    <aside class="coluna-esquerda">
-      <div class="nome-botoes">
-        <div class="coluna-header">
+      <aside class="coluna-esquerda">
+        <div class="nome-botoes">
+          <div class="coluna-header">
 
 
           <button type="button" class="btn-toggle-coluna" (click)="toggleColunaEsquerda()"
@@ -48,11 +47,12 @@
       </div>
 
       <!-- LISTA HIERARQUICA -->
-      <div class="lista-de-topicos">
-        <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos">
+      <div class="lista-de-topicos" #listaTopicosContainer>
+        <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos" #listaTopicos>
           <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
             [class.finalizado]="isTopicoFinalizadoLinha(t)"
             [class.selecionado]="topicoSelecionado?.id === t.id"
+            [attr.data-topico-id]="t.id"
             (click)="selecionarTopico(t)">
             <div class="linha-topico" [style.paddingLeft.px]="(t.nivel || 0) * 20">
               <div class="topico-info">
@@ -647,11 +647,11 @@
                   <span>Vocabul&aacute;rio</span>
                 </button>
 
-                <button type="button" class="btn-modo-timer btn-salvar" [class.ativo]="topicoPermiteEstudo && timerAtivo"
-                  [disabled]="!topicoPermiteEstudo || !timerAtivo" (click)="salvarEstudo()">
-                  <i class="pi pi-check"></i>
-                  <span>Salvar</span>
-                </button>
+                  <button type="button" class="btn-modo-timer btn-salvar" [class.ativo]="topicoPermiteEstudo && timerAtivo"
+                    [disabled]="!topicoPermiteEstudo || !timerAtivo" (click)="salvarEstudo('botao')">
+                    <i class="pi pi-check"></i>
+                    <span>Salvar</span>
+                  </button>
                 <button type="button" class="btn-modo-timer"
                   [disabled]="!topicoPermiteEstudo || isTopicoFinalizadoPendente(topicoSelecionado)" (click)="finalizarTopico()">
                   <i class="pi" [ngClass]="isTopicoFinalizado(topicoSelecionado) ? 'pi-undo' : 'pi-flag'"></i>

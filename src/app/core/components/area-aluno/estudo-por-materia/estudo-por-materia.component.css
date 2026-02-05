@@ -731,23 +731,35 @@
 }
 
 .topico-ir{
-  margin-left:auto;
-  border:0;
-  background:transparent;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap: 8px;
-  color: var(--accent);
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
 }
-.topico-acessar{
-  font-size: 12.5px;
-  font-weight: 900;
-  color: var(--accent);
+.topico-acao{
+  border: 1px solid rgba(11,114,133,.35);
+  background: rgba(14,165,167,.10);
+  color: #0b7285;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
   white-space: nowrap;
+  line-height: 1;
 }
-.topico-arrow{ font-size: 16px; color: var(--accent); }
+.topico-acao:hover{
+  background: rgba(14,165,167,.18);
+}
+.topico-acao--revisar{
+  border-color: rgba(245,158,11,.35);
+  background: rgba(245,158,11,.14);
+  color: #b45309;
+}
+.topico-acao--revisar:hover{
+  background: rgba(245,158,11,.22);
+}
 
 .secao-vazio{
   padding: 10px 12px;

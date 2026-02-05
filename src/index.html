@@ -57,6 +57,16 @@
   <!-- PrimeNG theme -->
   <link id="primeng-theme" rel="stylesheet" href="assets/primeng-themes/saga-blue/theme.css">
 
+  <script>
+    (function () {
+      try {
+        if (location.pathname.startsWith('/area-restrita')) {
+          document.body.classList.add('app-booting');
+        }
+      } catch {}
+    })();
+  </script>
+
   <!-- Structured Data -->
   <script type="application/ld+json">
   {

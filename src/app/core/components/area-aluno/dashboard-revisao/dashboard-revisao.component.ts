@@ -55,6 +55,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   planoDisponivel = false;
   planoDoDia: PlanoDoDiaDTO | null = null;
   materiasDoDiaFallback: Array<{ materiaId: number; nome: string; ordem: number }> = [];
+  private ordemTopicoPorId = new Map<number, number>();
 
   sugestaoCarregando = false;
   sugestaoEstudo: {
@@ -132,9 +133,9 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     }).subscribe({
       next: ({ revisoes, materias, materiasParaEstudo, editais, plano, blocos }) => {
         console.log('[DASH-REVISAO] Editais recebidos:', editais);
+        this.atualizarOrdemTopicos(materiasParaEstudo);
         const revisoesAtivas = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
-        const revisoesSemFilhos = this.filtrarRevisoesComTopicosFilhos(revisoesAtivas, materiasParaEstudo);
-        this.revisoes = this.normalizarRevisoesDashboard(revisoesSemFilhos);
+        this.revisoes = this.normalizarRevisoesDashboard(revisoesAtivas);
         this.materias = materias || [];
         this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
         this.editais = editais || [];
@@ -272,7 +273,31 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   get revisoesPrioritariasVisiveis(): RevisaoDashboardItem[] {
-    return this.revisoesPrioritariasFiltradas.slice(0, 5);
+    const ordenadas = this.revisoesPrioritariasFiltradas;
+    const visiveis: RevisaoDashboardItem[] = [];
+    const materiasUsadas = new Set<number>();
+    const chavesUsadas = new Set<string>();
+
+    for (const item of ordenadas) {
+      if (visiveis.length >= 5) break;
+      if (!materiasUsadas.has(item.materiaId)) {
+        visiveis.push(item);
+        materiasUsadas.add(item.materiaId);
+        chavesUsadas.add(`${item.materiaId}-${item.topicoId}`);
+      }
+    }
+
+    if (visiveis.length < 5) {
+      for (const item of ordenadas) {
+        if (visiveis.length >= 5) break;
+        const chave = `${item.materiaId}-${item.topicoId}`;
+        if (chavesUsadas.has(chave)) continue;
+        visiveis.push(item);
+        chavesUsadas.add(chave);
+      }
+    }
+
+    return visiveis;
   }
 
   get isPrimeiroAcesso(): boolean {
@@ -358,6 +383,14 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
 
     this.revisoesHoje = vencidas + vencemHoje;
     this.revisoesVencemHoje = vencemHoje;
+
+    console.log('[DASHBOARD] Totais revisoes:', {
+      total: this.revisoes.length,
+      vencidas,
+      emDia: vencemHoje,
+      futuras,
+      revisoesHoje: this.revisoesHoje
+    });
   }
 
   private getRevisoesPorStatusEdital(edital: Edital, status: RevisaoDashboardItem['status']): number {
@@ -1118,6 +1151,10 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
         if (a.status !== b.status) {
           return a.status === 'VENCIDA' ? -1 : 1;
         }
+        const ordem = this.compararOrdemTopico(a, b);
+        if (ordem !== 0) {
+          return ordem;
+        }
         return this.compararDatasIso(a.dataProximaRevisao, b.dataProximaRevisao);
       });
   }
@@ -1239,15 +1276,38 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     });
   }
 
-  private filtrarRevisoesComTopicosFilhos(
-    revisoes: RevisaoDashboardItem[],
-    materiasParaEstudo: MateriaTopicosDTO[] | null | undefined
-  ): RevisaoDashboardItem[] {
-    const topicosComFilhos = this.obterTopicosComFilhos(materiasParaEstudo);
-    if (!topicosComFilhos.size) {
-      return revisoes;
+
+  private atualizarOrdemTopicos(materiasParaEstudo: MateriaTopicosDTO[] | null | undefined): void {
+    this.ordemTopicoPorId.clear();
+    let ordem = 0;
+
+    const walk = (topico: any) => {
+      const id = this.obterIdTopico(topico);
+      if (id && !this.ordemTopicoPorId.has(id)) {
+        this.ordemTopicoPorId.set(id, ordem++);
+      }
+      const filhos = (topico?.filhos || topico?.subtopicos || []) as any[];
+      if (filhos.length) {
+        filhos.forEach((filho) => walk(filho));
+      }
+    };
+
+    for (const materia of materiasParaEstudo || []) {
+      (materia?.topicos || []).forEach((topico: any) => walk(topico));
     }
-    return (revisoes || []).filter((item) => !topicosComFilhos.has(item.topicoId));
+  }
+
+  private compararOrdemTopico(a: RevisaoDashboardItem, b: RevisaoDashboardItem): number {
+    const ordemA = this.ordemTopicoPorId.get(a.topicoId);
+    const ordemB = this.ordemTopicoPorId.get(b.topicoId);
+    const temA = ordemA != null;
+    const temB = ordemB != null;
+    if (temA && temB && ordemA !== ordemB) {
+      return ordemA - ordemB;
+    }
+    if (temA && !temB) return -1;
+    if (!temA && temB) return 1;
+    return 0;
   }
 
   private normalizarRevisoesDashboard(revisoes: RevisaoDashboardItem[]): RevisaoDashboardItem[] {
@@ -1302,26 +1362,6 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     const data = new Date(ano, mes - 1, dia);
     data.setHours(0, 0, 0, 0);
     return data;
-  }
-
-  private obterTopicosComFilhos(materiasParaEstudo: MateriaTopicosDTO[] | null | undefined): Set<number> {
-    const resultado = new Set<number>();
-    for (const materia of materiasParaEstudo || []) {
-      const stack = [...(materia.topicos || [])];
-      while (stack.length) {
-        const atual = stack.shift();
-        if (!atual) continue;
-        const filhos = this.obterFilhosAtivos(atual);
-        if (filhos.length) {
-          const id = this.obterIdTopico(atual);
-          if (id) {
-            resultado.add(id);
-          }
-          stack.unshift(...filhos);
-        }
-      }
-    }
-    return resultado;
   }
 
   private obterIdTopico(topico: any): number | null {

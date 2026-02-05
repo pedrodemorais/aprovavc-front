@@ -322,6 +322,10 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   abrirSalaAulaTopico(m: Materia, t: Topico): void {
+    this.abrirSalaAulaTopicoModo(m, t, 'estudar');
+  }
+
+  abrirSalaAulaTopicoModo(m: Materia, t: Topico, modo: 'estudar' | 'revisar'): void {
     const materiaIdRaw = (m as any)?.id ?? (m as any)?.materiaId ?? null;
     const materiaId = Number(materiaIdRaw);
 
@@ -333,10 +337,11 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.router.navigate(
-      ['/area-restrita/sala-estudo', materiaId],
-      { queryParams: (topicoId && Number.isFinite(topicoId)) ? { topicoId } : undefined }
-    );
+    const queryParams: any = (topicoId && Number.isFinite(topicoId)) ? { topicoId } : {};
+    if (modo === 'revisar') {
+      queryParams.modo = 'revisar';
+    }
+    this.router.navigate(['/area-restrita/sala-estudo', materiaId], { queryParams });
   }
 
   irParaRevisaoMateria(m: Materia, status: StatusRevisao): void {
@@ -454,9 +459,22 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
             (item as any).dataProximaRevisao ||
             null;
 
+          const statusRevisaoRaw = String((item as any).statusRevisao || '').toUpperCase();
+          const statusRaw = String((item as any).status || '').toUpperCase();
+
           let status: StatusRevisao = 'SEM';
 
-          if (proxima) {
+          if (statusRevisaoRaw) {
+            if (statusRevisaoRaw === 'ATRASADA') status = 'ATRASADA';
+            else if (statusRevisaoRaw === 'HOJE') status = 'HOJE';
+            else if (statusRevisaoRaw === 'FUTURA') status = 'FUTURA';
+            else status = 'SEM';
+          } else if (statusRaw) {
+            if (statusRaw === 'VENCIDA') status = 'ATRASADA';
+            else if (statusRaw === 'EM_DIA') status = 'HOJE';
+            else if (statusRaw === 'FUTURA') status = 'FUTURA';
+            else status = 'SEM';
+          } else if (proxima) {
             const dataRev = this.construirDataLocal(proxima);
             const hojeTime = hoje.getTime();
             const revTime = dataRev.getTime();
@@ -671,7 +689,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   classeDotRevisao(t: Topico) {
-    const st = this.getStatusRevisaoTopicoComFilhos(t);
+    const st = this.getStatusRevisaoTopico(t);
     return {
       'rev-sem': st === 'SEM',
       'rev-futura': st === 'FUTURA',
@@ -768,7 +786,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   getLabelStatusTopico(t: Topico): string {
-    const st = this.getStatusRevisaoTopicoComFilhos(t);
+    const st = this.getStatusRevisaoTopico(t);
     return this.labelStatus(st);
   }
 
@@ -1017,14 +1035,14 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
     const topicosMateria = this.topicosPorMateria.get(materiaId) || [];
     if (topicosMateria.length) {
-      const folhas = this.folhasTopicos(topicosMateria);
+      const todos = this.listarTodosTopicos(topicosMateria);
       let total = 0;
       let concluidas = 0;
       let atrasadas = 0;
       let hoje = 0;
       let emDia = 0;
 
-      folhas.forEach((t) => {
+      todos.forEach((t) => {
         const id = (t as any)?.id;
         if (id && this.concluidosPorTopico.has(id)) concluidas++;
         total++;
@@ -1066,6 +1084,17 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       const filhos = t?.filhos || [];
       if (filhos.length) filhos.forEach(walk);
       else out.push(t);
+    };
+    (lista || []).forEach(walk);
+    return out;
+  }
+
+  private listarTodosTopicos(lista: Topico[]): Topico[] {
+    const out: Topico[] = [];
+    const walk = (t: Topico) => {
+      out.push(t);
+      const filhos = t?.filhos || [];
+      if (filhos.length) filhos.forEach(walk);
     };
     (lista || []).forEach(walk);
     return out;

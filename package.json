@@ -9,8 +9,7 @@
     "test": "ng test",
     "dev:ssr": "ng run visao:serve-ssr",
     "serve:ssr": "node dist/visao/server/main.js",
-    "build:ssr": "ng build && ng run visao:server",
-    "prerender": "ng run visao:prerender"
+    "build:ssr": "ng build && ng run visao:server"
   },
   "private": true,
   "dependencies": {

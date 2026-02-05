@@ -1,6 +1,6 @@
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { MateriaService } from '../services/materia.service';
 import { Materia } from '../models/materia.model';
@@ -25,10 +25,15 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   anotacoes: string = '';
   mensagemEstudoSalvo?: string;
-  mensagemAvancoCiclo?: string;
   mensagemTopicoFinalizado?: string;
   pausarAoSairDaAba = true;
   private readonly pausarAoSairDaAbaKey = 'sala-estudo:pausar-ao-sair-aba';
+  private salvandoEstudo = false;
+  private ultimoSaveKeyPorTopico = new Map<number, string>();
+  private ultimoSaveMsPorTopico = new Map<number, number>();
+  private ultimoSaveHashPorTopico = new Map<number, number>();
+  private editorTopicoId: number | null = null;
+  private readonly saveLogKey = 'sala-estudo:save-log';
   private topicosFinalizados = new Set<number>();
   private topicosFinalizadosCarregados = false;
   private topicosFinalizadosPendentes = new Set<number>();
@@ -36,6 +41,9 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
   @ViewChild('flashcardModal', { static: false }) flashcardModalRef?: ElementRef<HTMLElement>;
   @ViewChild('flashcardOverlay', { static: false }) flashcardOverlayRef?: ElementRef<HTMLElement>;
+  @ViewChild('listaTopicos', { static: false }) listaTopicosRef?: ElementRef<HTMLElement>;
+  @ViewChild('listaTopicosContainer', { static: false }) listaTopicosContainerRef?: ElementRef<HTMLElement>;
+  private centralizarTopicoTentativas = 0;
   flashcardModalPos = { x: 0, y: 0 };
   flashcardModalDragging = false;
   private flashcardDragOffset = { x: 0, y: 0 };
@@ -181,6 +189,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   carregandoFlashcardsRevisao: boolean = false;
   erroFlashcardsRevisao?: string;
   private revisaoItemInicio: number | null = null;
+  private ultimoTopicoRevisadoId: number | null = null;
   private readonly revisaoTempoKey = 'revisao:tempoTotalSegundos';
   private readonly revisaoItensKey = 'revisao:itensTotais';
   private readonly ultimoTopicoKeyPrefix = 'sala-estudo:ultimo-topico:';
@@ -202,14 +211,32 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.carregarPreferenciaPausaAba();
     this.carregarTopicosFinalizados();
+    this.route.queryParamMap.subscribe(queryParams => {
+      const topicoId = this.getTopicoIdFromQuery(queryParams);
+      const autoTopico = this.getAutoTopicoFromQuery(queryParams);
+      const modoAtualizado = this.getModoFromQuery(queryParams, this.modo);
+
+      if (modoAtualizado !== this.modo) {
+        this.modoPreferido = modoAtualizado;
+        this.modo = modoAtualizado;
+        this.ajustarColunaEsquerdaParaModo();
+      }
+
+      this.autoSelecionarUltimoNaoEstudado = autoTopico;
+      this.topicoIdPreferido = topicoId;
+
+      if (topicoId && topicoId !== this.topicoSelecionado?.id && this.topicosCarregados) {
+        const candidato = this.topicos.find(t => t.id === topicoId);
+        if (candidato) {
+          this.selecionarTopico(candidato);
+          this.selecionouTopicoInicial = true;
+        }
+      }
+    });
+
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('materiaId') ?? params.get('id');
       this.materiaId = idParam ? Number(idParam) : 0;
-      this.topicoIdPreferido = this.getTopicoIdFromQuery();
-      this.autoSelecionarUltimoNaoEstudado = this.getAutoTopicoFromQuery();
-      this.modoPreferido = this.getModoFromQuery();
-      this.modo = this.modoPreferido;
-      this.ajustarColunaEsquerdaParaModo();
 
       console.log('[SALA-ESTUDO] materiaId =', this.materiaId);
 
@@ -361,8 +388,9 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     });
   }
 
-  private getTopicoIdFromQuery(): number | null {
-    const raw = this.route.snapshot.queryParamMap.get('topicoId');
+  private getTopicoIdFromQuery(queryParams?: ParamMap): number | null {
+    const params = queryParams ?? this.route.snapshot.queryParamMap;
+    const raw = params.get('topicoId');
     if (!raw) {
       return null;
     }
@@ -370,18 +398,20 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     return Number.isFinite(id) && id > 0 ? id : null;
   }
 
-  private getAutoTopicoFromQuery(): boolean {
-    const raw = (this.route.snapshot.queryParamMap.get('proximo') || '').toLowerCase();
-    const alt = (this.route.snapshot.queryParamMap.get('autoTopico') || '').toLowerCase();
-    const alt2 = (this.route.snapshot.queryParamMap.get('proximoTopico') || '').toLowerCase();
+  private getAutoTopicoFromQuery(queryParams?: ParamMap): boolean {
+    const params = queryParams ?? this.route.snapshot.queryParamMap;
+    const raw = (params.get('proximo') || '').toLowerCase();
+    const alt = (params.get('autoTopico') || '').toLowerCase();
+    const alt2 = (params.get('proximoTopico') || '').toLowerCase();
     return raw === '1' || raw === 'true' || raw === 'sim' || alt === '1' || alt === 'true' || alt === 'sim' ||
       alt2 === '1' || alt2 === 'true' || alt2 === 'sim';
   }
 
-  private getModoFromQuery(): 'estudar' | 'revisar' {
-    const rawModo = (this.route.snapshot.queryParamMap.get('modo') || '').toLowerCase();
-    const rawRevisar = (this.route.snapshot.queryParamMap.get('revisar') || '').toLowerCase();
-    const rawRevisao = (this.route.snapshot.queryParamMap.get('revisao') || '').toLowerCase();
+  private getModoFromQuery(queryParams?: ParamMap, fallback: 'estudar' | 'revisar' = 'estudar'): 'estudar' | 'revisar' {
+    const params = queryParams ?? this.route.snapshot.queryParamMap;
+    const rawModo = (params.get('modo') || '').toLowerCase();
+    const rawRevisar = (params.get('revisar') || '').toLowerCase();
+    const rawRevisao = (params.get('revisao') || '').toLowerCase();
 
     if (rawModo === 'revisar' || rawModo === 'revisao') {
       return 'revisar';
@@ -395,7 +425,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       return 'revisar';
     }
 
-    return 'estudar';
+    return fallback;
   }
 
   ativarRevisaoAnotacoes(): void {
@@ -404,16 +434,18 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   if (this.topicoSelecionado && this.topicoPermiteEstudo) {
     // se quiser, pode for+�ar recarregar anota+�+�es aqui tamb+�m
     this.salaEstudoService.buscarAnotacoes(this.topicoSelecionado.id).subscribe({
-      next: (resp) => {
-        this.anotacoes = resp.anotacoes || '';
-        this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
-        this.atualizarContadorCaracteresFromHtml(this.anotacoes);
-      },
-      error: () => {
-        this.anotacoes = '';
-        this.anotacoesHtmlSeguras = null;
-        this.atualizarContadorCaracteres(0);
-      }
+	      next: (resp) => {
+	        this.anotacoes = resp.anotacoes || '';
+	        this.atualizarMarcaAnotacoes(this.topicoSelecionado?.id, this.hasConteudoAnotacoes(this.anotacoes));
+	        this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+	        this.atualizarContadorCaracteresFromHtml(this.anotacoes);
+	      },
+	      error: () => {
+	        this.anotacoes = '';
+	        this.atualizarMarcaAnotacoes(this.topicoSelecionado?.id, false);
+	        this.anotacoesHtmlSeguras = null;
+	        this.atualizarContadorCaracteres(0);
+	      }
     });
   }
 }
@@ -504,6 +536,8 @@ ativarRevisaoFlashcards(): void {
     if (t?.id) {
       this.atualizarQueryTopico(t.id);
     }
+    this.editorTopicoId = t?.id ?? null;
+    this.centralizarTopicoSelecionado();
     if (this.modo === 'revisar') {
       this.iniciarContagemRevisaoItem();
     }
@@ -524,12 +558,20 @@ ativarRevisaoFlashcards(): void {
 
     this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
       next: (resp) => {
+        this.editorTopicoId = t.id ?? null;
+        console.log('[SALA-ESTUDO] buscarAnotacoes resp:', {
+          topicoId: t.id,
+          respTopicoId: resp?.topicoId,
+          tamanho: (resp?.anotacoes || '').length
+        });
         this.anotacoes = resp.anotacoes || '';
+        this.atualizarMarcaAnotacoes(t.id, this.hasConteudoAnotacoes(this.anotacoes));
         this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
         this.atualizarContadorCaracteresFromHtml(this.anotacoes);
       },
       error: () => {
         this.anotacoes = '';
+        this.atualizarMarcaAnotacoes(t.id, false);
         this.anotacoesHtmlSeguras = null;
         this.atualizarContadorCaracteres(0);
       }
@@ -540,9 +582,34 @@ ativarRevisaoFlashcards(): void {
       this.carregarFlashcardsParaRevisao();
     }
 
-    if (this.mostrarModalVocabulario && this.topicoPermiteEstudo) {
-      this.carregarVocabularios();
+      if (this.mostrarModalVocabulario && this.topicoPermiteEstudo) {
+        this.carregarVocabularios();
+      }
     }
+
+  private centralizarTopicoSelecionado(): void {
+    const container = this.listaTopicosContainerRef?.nativeElement;
+    const lista = this.listaTopicosRef?.nativeElement;
+    const topicoId = this.topicoSelecionado?.id;
+    if (!container || !lista || !topicoId) {
+      return;
+    }
+    const executar = () => {
+      const el = lista.querySelector(`[data-topico-id="${topicoId}"]`) as HTMLElement | null;
+      if (!el) {
+        if (this.centralizarTopicoTentativas < 12) {
+          this.centralizarTopicoTentativas += 1;
+          setTimeout(executar, 60);
+        }
+        return;
+      }
+      this.centralizarTopicoTentativas = 0;
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = el.getBoundingClientRect();
+      const delta = (itemRect.top - containerRect.top) - ((container.clientHeight / 2) - (itemRect.height / 2));
+      container.scrollTop += delta;
+    };
+    requestAnimationFrame(() => requestAnimationFrame(executar));
   }
 
   private carregarFlashcards(): void {
@@ -987,16 +1054,31 @@ ativarRevisaoFlashcards(): void {
   // SALVAR ESTUDO
   // ================================================================
 
-  salvarEstudo(): void {
+  salvarEstudo(motivo: string = 'auto'): void {
     if (!this.topicoSelecionado) {
       this.erro = 'Selecione um topico antes de salvar o estudo.';
+      return;
+    }
+    if (this.salvandoEstudo) {
+      return;
+    }
+    const topicoAtualId = this.topicoSelecionado?.id ?? null;
+    if (!topicoAtualId || (this.editorTopicoId && this.editorTopicoId !== topicoAtualId)) {
+      this.registrarSaveLog('bloqueado-topico-mismatch', {
+        motivo,
+        topicoAtualId,
+        editorTopicoId: this.editorTopicoId
+      });
+      try {
+        alert('Detectamos um conflito: o editor está vinculado a outro tópico. O salvamento foi bloqueado para evitar gravação no tópico errado.');
+      } catch {}
       return;
     }
 
     // Garante que o HTML salvo é o que está no editor (evita ngModel desatualizado após truncar).
     const quillHtml = this.quillEditor?.root?.innerHTML;
     if (typeof quillHtml === 'string') {
-      this.anotacoes = quillHtml;
+      this.anotacoes = this.normalizarHtmlAnotacoes(quillHtml);
     }
 
     const modoBack = this.modoTemporizador;
@@ -1025,13 +1107,86 @@ ativarRevisaoFlashcards(): void {
         : undefined
     };
 
+    const anotacoesHash = this.hashTexto(this.anotacoes || '');
+    const saveKey = `${payload.topicoId}|${payload.tipoSessao}|${payload.modoTemporizador}|${tempoParaSalvar}|${anotacoesHash}`;
+    const ultimoKey = this.ultimoSaveKeyPorTopico.get(payload.topicoId);
+    const ultimoMs = this.ultimoSaveMsPorTopico.get(payload.topicoId) || 0;
+    const ultimoHash = this.ultimoSaveHashPorTopico.get(payload.topicoId);
+    const agora = Date.now();
+
+    if (tempoParaSalvar <= 0 && ultimoHash === anotacoesHash) {
+      console.warn('[SALA-ESTUDO] salvarEstudo ignorado (sem alteracao):', {
+        motivo,
+        topicoId: payload.topicoId,
+        tempoParaSalvar
+      });
+      this.registrarSaveLog('ignorado-sem-alteracao', {
+        motivo,
+        topicoId: payload.topicoId,
+        tempoParaSalvar
+      });
+      return;
+    }
+
+    if (ultimoKey === saveKey && (agora - ultimoMs) < 1500) {
+      console.warn('[SALA-ESTUDO] salvarEstudo ignorado (duplicado):', {
+        motivo,
+        topicoId: payload.topicoId,
+        tempoParaSalvar,
+        intervaloMs: agora - ultimoMs
+      });
+      this.registrarSaveLog('ignorado-duplicado', {
+        motivo,
+        topicoId: payload.topicoId,
+        tempoParaSalvar,
+        intervaloMs: agora - ultimoMs
+      });
+      return;
+    }
+
+    console.log('[SALA-ESTUDO] salvarEstudo payload:', {
+      motivo,
+      materiaId: payload.materiaId,
+      topicoId: payload.topicoId,
+      topicoSelecionado: this.topicoSelecionado?.descricao,
+      topicoPaiId: this.topicoSelecionado?.topicoPaiId ?? this.topicoSelecionado?._raw?.topicoPaiId ?? null,
+      modo: this.modo,
+      modoTemporizador: this.modoTemporizador,
+      tempoParaSalvar
+    });
+    console.log('[SALA-ESTUDO] salvarEstudo debug:', {
+      motivo,
+      saveKey,
+      ultimoKey,
+      ultimoMsDelta: agora - ultimoMs
+    });
+    this.registrarSaveLog('enviado', {
+      motivo,
+      topicoId: payload.topicoId,
+      tempoParaSalvar,
+      modo: this.modo,
+      modoTemporizador: this.modoTemporizador
+    });
+
+    this.salvandoEstudo = true;
     this.salaEstudoService.salvarEstudo(payload).subscribe({
       next: (resp) => {
         console.log('[SALA-ESTUDO] Estudo salvo:', resp);
+        this.registrarSaveLog('ok', {
+          motivo,
+          topicoId: payload.topicoId,
+          retornoTopicoId: (resp as any)?.topicoId ?? null
+        });
 
         // ap+�s salvar com sucesso, acumula o que foi enviado
         this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
         this.temTempoNaoSalvoFlag = false;
+        if (this.modo === 'estudar') {
+          this.atualizarMarcaAnotacoes(
+            this.topicoSelecionado?.id,
+            this.hasConteudoAnotacoes(this.anotacoes)
+          );
+        }
 
         this.mensagemEstudoSalvo = tipoSessao === 'REVISAO'
           ? 'Revis\u00e3o salva com sucesso.'
@@ -1041,12 +1196,56 @@ ativarRevisaoFlashcards(): void {
         if (this.modo === 'estudar' && tempoParaSalvar > 0) {
           this.tentarAvancarCicloSilencioso();
         }
+
+        window.location.reload();
       },
       error: (err) => {
         console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
         this.erro = 'Erro ao salvar o estudo. Tente novamente.';
+        this.registrarSaveLog('erro', {
+          motivo,
+          topicoId: payload.topicoId,
+          status: err?.status ?? null
+        });
       }
+    }).add(() => {
+      this.ultimoSaveKeyPorTopico.set(payload.topicoId, saveKey);
+      this.ultimoSaveMsPorTopico.set(payload.topicoId, Date.now());
+      this.ultimoSaveHashPorTopico.set(payload.topicoId, anotacoesHash);
+      this.salvandoEstudo = false;
     });
+  }
+
+  private hashTexto(valor: string): number {
+    let hash = 5381;
+    for (let i = 0; i < valor.length; i += 1) {
+      hash = ((hash << 5) + hash) + valor.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash >>> 0;
+  }
+
+  private registrarSaveLog(tipo: string, dados: Record<string, any>): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(this.saveLogKey);
+      const lista = raw ? JSON.parse(raw) : [];
+      const entrada = {
+        ts: new Date().toISOString(),
+        tipo,
+        materiaId: this.materiaId ?? null,
+        topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
+        editorTopicoId: this.editorTopicoId,
+        ...dados
+      };
+      lista.push(entrada);
+      const corte = lista.slice(-200);
+      localStorage.setItem(this.saveLogKey, JSON.stringify(corte));
+    } catch {
+      // ignora falha de log
+    }
   }
 
   @HostListener('document:visibilitychange')
@@ -1080,15 +1279,9 @@ ativarRevisaoFlashcards(): void {
   private tentarAvancarCicloSilencioso(): void {
     this.blocosService.avancarCiclo().subscribe({
       next: () => {
-        this.mensagemAvancoCiclo = undefined;
         this.blocosService.notificarBlocosAlterados();
       },
-      error: (err) => {
-        const msg = err?.error?.message
-          || 'Estudo salvo, mas o tempo minimo para avancar o modulo ainda nao foi atingido.';
-        this.mensagemAvancoCiclo = msg;
-        setTimeout(() => (this.mensagemAvancoCiclo = undefined), 5000);
-      }
+      error: () => {}
     });
   }
 
@@ -2028,6 +2221,14 @@ ativarRevisaoFlashcards(): void {
     topicoId: this.topicoSelecionado.id,
     avaliacao
   };
+  this.ultimoTopicoRevisadoId = req.topicoId;
+
+  console.log('[REVISAO] Enviando avaliacao de anotacoes:', {
+    topicoId: req.topicoId,
+    avaliacao: req.avaliacao,
+    modo: this.modo,
+    modoRevisao: this.modoRevisao
+  });
 
   const proximo = this.obterProximoTopicoRevisao();
 
@@ -2151,8 +2352,8 @@ ativarRevisaoFlashcards(): void {
 
     return lista[0];
   }
-get podeIrParaProximaRevisao(): boolean {
-    const lista = this.getTopicosFolha();
+  get podeIrParaProximaRevisao(): boolean {
+    const lista = this.getTopicosParaRevisao();
     return lista.length > 1;
   }
 
@@ -2168,7 +2369,7 @@ get podeIrParaProximaRevisao(): boolean {
   }
 
   private obterProximoTopicoRevisao(): any | null {
-    const lista = this.getTopicosFolha();
+    const lista = this.getTopicosParaRevisao();
     if (!lista.length) {
       return null;
     }
@@ -2189,6 +2390,10 @@ get podeIrParaProximaRevisao(): boolean {
     }
 
     return lista[0];
+  }
+
+  private getTopicosParaRevisao(): any[] {
+    return (this.topicos || []).filter(t => t.ativo !== false);
   }
 
   get podeIrParaProximoEstudo(): boolean {
@@ -2244,6 +2449,7 @@ get podeIrParaProximaRevisao(): boolean {
     status: StatusRevisao;
     proximaRevisao?: string | null;
   }>();
+  private topicosComAnotacoes = new Set<number>();
 
     /**
    * Constr+�i uma data local (sem problema de UTC) a partir de 'YYYY-MM-DD'.
@@ -2267,6 +2473,8 @@ get podeIrParaProximaRevisao(): boolean {
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
       next: (itens) => {
         this.revisoesPorTopico.clear();
+        const selecionadoId = this.topicoSelecionado?.id;
+        const revisadoId = this.ultimoTopicoRevisadoId;
 
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
@@ -2288,10 +2496,12 @@ get podeIrParaProximaRevisao(): boolean {
           if (statusRevisaoRaw) {
             if (statusRevisaoRaw === 'ATRASADA') status = 'ATRASADA';
             else if (statusRevisaoRaw === 'HOJE') status = 'HOJE';
+            else if (statusRevisaoRaw === 'EM_DIA') status = 'HOJE';
             else if (statusRevisaoRaw === 'FUTURA') status = 'FUTURA';
             else status = 'SEM';
           } else if (statusRaw) {
             if (statusRaw === 'VENCIDA') status = 'ATRASADA';
+            else if (statusRaw === 'EM_DIA') status = 'HOJE';
             else if (statusRaw === 'FUTURA') status = 'FUTURA';
             else status = 'SEM';
           } else if (proxima) {
@@ -2312,6 +2522,25 @@ get podeIrParaProximaRevisao(): boolean {
             status,
             proximaRevisao: proxima
           });
+
+          if (selecionadoId && item.topicoId === selecionadoId) {
+            console.log('[SALA-ESTUDO] Status recebido do back (topico selecionado):', {
+              topicoId: item.topicoId,
+              status,
+              proximaRevisao: proxima,
+              statusRevisaoRaw,
+              statusRaw
+            });
+          }
+          if (revisadoId && item.topicoId === revisadoId) {
+            console.log('[SALA-ESTUDO] Status recebido do back (topico revisado):', {
+              topicoId: item.topicoId,
+              status,
+              proximaRevisao: proxima,
+              statusRevisaoRaw,
+              statusRaw
+            });
+          }
         });
 
         console.log('[SALA-ESTUDO] Mapa revisoesPorTopico:', this.revisoesPorTopico);
@@ -2426,7 +2655,6 @@ get podeIrParaProximaRevisao(): boolean {
           this.mensagemTopicoFinalizado = 'Finalizado removido.';
           setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
           this.carregarTopicosFinalizados();
-          window.location.reload();
         },
         error: () => {
           this.topicosFinalizadosPendentes.delete(topicoId);
@@ -2566,6 +2794,32 @@ get podeIrParaProximaRevisao(): boolean {
     return null;
   }
 
+  private normalizarStatusRevisao(raw: any): StatusRevisao | null {
+    const status = String(raw || '').toUpperCase();
+    if (status === 'EM_DIA') {
+      return 'HOJE';
+    }
+    if (status === 'ATRASADA' || status === 'HOJE' || status === 'FUTURA' || status === 'SEM') {
+      return status as StatusRevisao;
+    }
+    return null;
+  }
+
+  private getStatusFromDto(dto: any): StatusRevisao {
+    if (!dto?.id) {
+      return 'SEM';
+    }
+    const info = this.revisoesPorTopico.get(dto.id);
+    if (info?.status) {
+      return info.status;
+    }
+    const statusDto = this.normalizarStatusRevisao(dto.statusRevisao);
+    if (statusDto) {
+      return statusDto;
+    }
+    return 'SEM';
+  }
+
   /**
    * Status "simples" de um tópico, olhando só o próprio id no mapa de revisões.
    * (Dashboard já calculou o status com base na data).
@@ -2576,7 +2830,11 @@ get podeIrParaProximaRevisao(): boolean {
     }
     const info = this.revisoesPorTopico.get(topicoId);
     if (!info) {
-      return 'SEM';
+      const dto = this.encontrarDtoPorId(this.arvoreTopicos, topicoId);
+      if (dto) {
+        return this.getStatusFromDto(dto);
+      }
+      return this.topicosComAnotacoes.has(topicoId) ? 'FUTURA' : 'SEM';
     }
     return info.status ?? 'SEM';
   }
@@ -2586,7 +2844,7 @@ get podeIrParaProximaRevisao(): boolean {
    * considera o pr+�prio id + todos os subtopicos.
    */
   private getStatusRevisaoTopicoNaArvore(dto: any): StatusRevisao {
-    let pior: StatusRevisao = this.getStatusSimplesTopico(dto.id);
+    let pior: StatusRevisao = this.getStatusFromDto(dto);
 
     const filhos = dto.subtopicos || [];
     filhos.forEach((filho: any) => {
@@ -2614,7 +2872,7 @@ get podeIrParaProximaRevisao(): boolean {
       return this.getStatusSimplesTopico(t.id);
     }
 
-    return this.getStatusRevisaoTopicoNaArvore(dto);
+	    return this.getStatusFromDto(dto);
   }
 
   /** Classes CSS para a bolinha da Sala de Estudo */
@@ -2669,6 +2927,42 @@ get podeIrParaProximaRevisao(): boolean {
     const texto = container.textContent || '';
     this.atualizarContadorCaracteres(texto.length);
   }
+
+  private hasConteudoAnotacoes(html?: string | null): boolean {
+    if (!html) {
+      return false;
+    }
+    if (typeof document === 'undefined') {
+      return html.replace(/<[^>]*>/g, '').trim().length > 0;
+    }
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    const texto = (container.textContent || '').replace(/\u200B/g, '').trim();
+    return texto.length > 0;
+  }
+
+  private normalizarHtmlAnotacoes(html: string): string {
+    if (!html) {
+      return '';
+    }
+    let normalizado = html;
+    // Remove parágrafos vazios repetidos gerados pelo editor
+    normalizado = normalizado.replace(/(?:<p><br><\/p>|\s*<p>\s*<\/p>)+/gi, '<p><br></p>');
+    // Remove espaços em branco no início/fim
+    normalizado = normalizado.trim();
+    return normalizado;
+  }
+
+  private atualizarMarcaAnotacoes(topicoId: number | undefined, temConteudo: boolean): void {
+    if (!topicoId) {
+      return;
+    }
+    if (temConteudo) {
+      this.topicosComAnotacoes.add(topicoId);
+    } else {
+      this.topicosComAnotacoes.delete(topicoId);
+    }
+  }
   classeSemaforoRevisaoSala(t: any) {
     const status = this.getStatusRevisaoTopicoView(t);
 
@@ -2692,6 +2986,12 @@ private recarregarTopicosAposRevisao(proximoAposId?: number | null, proximoPrefe
   }
 
   const idSelecionado = this.topicoSelecionado?.id;
+  console.log('[SALA-ESTUDO] Recarregar apos revisao:', {
+    materiaId: this.materiaId,
+    idSelecionado,
+    proximoAposId,
+    proximoPreferidoId
+  });
 
   // 1) Atualiza o mapa de revisões (daqui que vem o semáforo)
   this.carregarRevisoesDashboard();

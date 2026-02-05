@@ -163,28 +163,7 @@
           },
           "defaultConfiguration": "development"
         },
-        "prerender": {
-          "builder": "@nguniversal/builders:prerender",
-          "options": {
-            "guessRoutes": false,
-            "routes": [
-              "/",
-              "/politica-privacidade",
-              "/termos-de-uso"
-            ]
-          },
-          "configurations": {
-            "production": {
-              "browserTarget": "visao:build:production",
-              "serverTarget": "visao:server:production"
-            },
-            "development": {
-              "browserTarget": "visao:build:development",
-              "serverTarget": "visao:server:development"
-            }
-          },
-          "defaultConfiguration": "production"
-        }
+        
       }
     }
   },

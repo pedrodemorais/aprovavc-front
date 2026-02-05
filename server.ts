@@ -13,6 +13,10 @@ export function app(): express.Express {
   const server = express();
   const distFolder = join(process.cwd(), 'dist/visao/browser');
   const indexHtml = existsSync(join(distFolder, 'index.original.html')) ? 'index.original.html' : 'index';
+  const indexHtmlFile = join(distFolder, indexHtml);
+  const indexClientFile = existsSync(join(distFolder, 'index.original.html'))
+    ? join(distFolder, 'index.original.html')
+    : indexHtmlFile;
 
   // Our Universal express-engine (found @ https://github.com/angular/universal/tree/main/modules/express-engine)
   server.engine('html', ngExpressEngine({
@@ -29,9 +33,14 @@ export function app(): express.Express {
     maxAge: '1y'
   }));
 
-  // All regular routes use the Universal engine
+  // Desativa SSR para area-restrita (renderiza só no client)
+  server.get(['/area-restrita', '/area-restrita/*'], (req, res) => {
+    res.sendFile(indexClientFile);
+  });
+
+  // Renderiza tudo no client (index neutro), evitando HTML pré-renderizado
   server.get('*', (req, res) => {
-    res.render(indexHtml, { req, providers: [{ provide: APP_BASE_HREF, useValue: req.baseUrl }] });
+    res.sendFile(indexClientFile);
   });
 
   return server;

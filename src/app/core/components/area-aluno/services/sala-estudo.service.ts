@@ -152,11 +152,6 @@ export class SalaEstudoService {
 
   private apiUrl = `${environment.apiUrl}/sala-estudo`;
   private topicosApiUrl = `${environment.apiUrl}/topicos`;
-  private readonly cacheTtlMs = 60000;
-  private revisoesDashboardCache?: { data: RevisaoDashboardItem[]; ts: number };
-  private revisoesDashboardRequest$?: Observable<RevisaoDashboardItem[]>;
-  private topicosFinalizadosCache?: { data: TopicoFinalizadoDTO[]; ts: number };
-  private topicosFinalizadosRequest$?: Observable<TopicoFinalizadoDTO[]>;
 
   constructor(private http: HttpClient) {}
 
@@ -185,31 +180,10 @@ export class SalaEstudoService {
   }
 
   listarTopicosFinalizados(): Observable<TopicoFinalizadoDTO[]> {
-    if (this.isCacheValido(this.topicosFinalizadosCache)) {
-      return of(this.topicosFinalizadosCache!.data);
-    }
-    if (this.topicosFinalizadosRequest$) {
-      return this.topicosFinalizadosRequest$;
-    }
-    this.topicosFinalizadosRequest$ = this.http.get<TopicoFinalizadoDTO[]>(`${this.apiUrl}/topicos/finalizados`).pipe(
-      tap((lista) => {
-        this.topicosFinalizadosCache = { data: lista || [], ts: Date.now() };
-      }),
-      shareReplay(1),
-      catchError((err) => {
-        this.topicosFinalizadosRequest$ = undefined;
-        return throwError(() => err);
-      }),
-      finalize(() => {
-        this.topicosFinalizadosRequest$ = undefined;
-      })
-    );
-    return this.topicosFinalizadosRequest$;
+    return this.http.get<TopicoFinalizadoDTO[]>(`${this.apiUrl}/topicos/finalizados`);
   }
 
   private limparCacheTopicosFinalizados(): void {
-    this.topicosFinalizadosCache = undefined;
-    this.topicosFinalizadosRequest$ = undefined;
   }
 
   buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {
@@ -353,38 +327,12 @@ export class SalaEstudoService {
   }
 
   listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
-  if (this.isCacheValido(this.revisoesDashboardCache)) {
-    return of(this.revisoesDashboardCache!.data);
-  }
-  if (this.revisoesDashboardRequest$) {
-    return this.revisoesDashboardRequest$;
-  }
   const url = `${this.apiUrl}/revisoes/dashboard`;
-  this.revisoesDashboardRequest$ = this.http.get<RevisaoDashboardItem[]>(url).pipe(
-    tap((res) => {
-      this.revisoesDashboardCache = { data: res || [], ts: Date.now() };
-    }),
-    shareReplay(1),
-    catchError((err) => {
-      this.revisoesDashboardRequest$ = undefined;
-      return throwError(() => err);
-    }),
-    finalize(() => {
-      this.revisoesDashboardRequest$ = undefined;
-    })
-  );
-  return this.revisoesDashboardRequest$;
+  return this.http.get<RevisaoDashboardItem[]>(url);
 }
 
   limparCacheRevisoesDashboard(): void {
-    this.revisoesDashboardCache = undefined;
-    this.revisoesDashboardRequest$ = undefined;
   }
-
-private isCacheValido(cache?: { ts: number }): boolean {
-  if (!cache) return false;
-  return (Date.now() - cache.ts) < this.cacheTtlMs;
-}
 
 
 

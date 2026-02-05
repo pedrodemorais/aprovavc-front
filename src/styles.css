@@ -404,3 +404,6 @@ body.dashboard-scroll {
   overflow: auto !important;
   height: 100%;
 }
+body.app-booting app-root {
+  visibility: hidden;
+}

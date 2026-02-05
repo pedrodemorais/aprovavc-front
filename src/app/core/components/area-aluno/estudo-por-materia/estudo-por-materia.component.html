@@ -253,13 +253,20 @@
                     <span class="topico-text">{{ t.descricao }}</span>
                   </button>
 
-                  <button type="button"
-                          class="topico-ir"
-                          (click)="abrirSalaAulaTopico(m, t); $event.stopPropagation()"
-                          aria-label="Acessar aula">
-                    <span class="topico-acessar" *ngIf="topicoAtivoId === $any(t).id">Acessar</span>
-                    <i class="pi pi-angle-right topico-arrow" aria-hidden="true"></i>
-                  </button>
+                  <div class="topico-ir">
+                    <button type="button"
+                            class="topico-acao"
+                            (click)="abrirSalaAulaTopicoModo(m, t, 'estudar'); $event.stopPropagation()"
+                            aria-label="Estudar tópico">
+                      Estudar
+                    </button>
+                    <button type="button"
+                            class="topico-acao topico-acao--revisar"
+                            (click)="abrirSalaAulaTopicoModo(m, t, 'revisar'); $event.stopPropagation()"
+                            aria-label="Revisar tópico">
+                      Revisar
+                    </button>
+                  </div>
                 </div>
 
                 <div class="secao-vazio" *ngIf="!(s.filhos?.length)">
@@ -294,13 +301,20 @@
                   <span class="topico-text">{{ s.descricao }}</span>
                 </button>
 
-                <button type="button"
-                        class="topico-ir"
-                        (click)="abrirSalaAulaTopico(m, s); $event.stopPropagation()"
-                        aria-label="Acessar aula">
-                  <span class="topico-acessar" *ngIf="topicoAtivoId === $any(s).id">Acessar</span>
-                  <i class="pi pi-angle-right topico-arrow" aria-hidden="true"></i>
-                </button>
+                <div class="topico-ir">
+                  <button type="button"
+                          class="topico-acao"
+                          (click)="abrirSalaAulaTopicoModo(m, s, 'estudar'); $event.stopPropagation()"
+                          aria-label="Estudar tópico">
+                    Estudar
+                  </button>
+                  <button type="button"
+                          class="topico-acao topico-acao--revisar"
+                          (click)="abrirSalaAulaTopicoModo(m, s, 'revisar'); $event.stopPropagation()"
+                          aria-label="Revisar tópico">
+                    Revisar
+                  </button>
+                </div>
               </div>
             </ng-template>
 
@@ -313,7 +327,6 @@
 
   </div>
 </div>
-
 
 
 

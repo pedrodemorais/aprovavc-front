@@ -14,7 +14,10 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-  this.modoLeitura.init(); 
+  this.modoLeitura.init();
+  if (typeof document !== 'undefined') {
+    document.body.classList.remove('app-booting');
+  }
     
   }
 }
