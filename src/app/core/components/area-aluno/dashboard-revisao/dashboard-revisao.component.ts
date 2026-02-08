@@ -41,6 +41,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   mensagemTemplateOk?: string;
   templateImagemUrls: Record<number, string> = {};
   private templateImagemObjectUrls = new Map<number, string>();
+  private materiaIdToEditalId = new Map<number, number>();
 
   usuarioNome = 'Usuário';
   editalAtivoNome = 'Nenhum edital selecionado';
@@ -140,6 +141,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
         this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
         this.editais = editais || [];
         console.log('[DASH-REVISAO] Editais ativos:', this.editais.filter(e => e?.ativo));
+        this.rebuildMateriaEditalMap(this.editais);
         this.planoDoDia = plano;
         this.atualizarTotais();
         this.modulosHoje = plano?.blocoNumero ?? 1;
@@ -275,8 +277,20 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   get revisoesPrioritariasVisiveis(): RevisaoDashboardItem[] {
     const ordenadas = this.revisoesPrioritariasFiltradas;
     const visiveis: RevisaoDashboardItem[] = [];
+    const editaisUsados = new Set<number>();
     const materiasUsadas = new Set<number>();
     const chavesUsadas = new Set<string>();
+
+    for (const item of ordenadas) {
+      if (visiveis.length >= 5) break;
+      const editalId = this.getEditalIdForMateria(item.materiaId);
+      if (editalId && !editaisUsados.has(editalId)) {
+        visiveis.push(item);
+        editaisUsados.add(editalId);
+        materiasUsadas.add(item.materiaId);
+        chavesUsadas.add(`${item.materiaId}-${item.topicoId}`);
+      }
+    }
 
     for (const item of ordenadas) {
       if (visiveis.length >= 5) break;
@@ -343,10 +357,8 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   private get revisoesPrioritariasFiltradas(): RevisaoDashboardItem[] {
-    const ordenadas = this.revisoesPrioritariasOrdenadas;
-    const temVencidas = ordenadas.some((item) => item.status === 'VENCIDA');
-    const statusAlvo = temVencidas ? 'VENCIDA' : 'EM_DIA';
-    return ordenadas.filter((item) => item.status === statusAlvo);
+    return this.revisoesPrioritariasOrdenadas
+      .filter((item) => item.status === 'VENCIDA' || item.status === 'EM_DIA');
   }
 
   get proximaMateriaEstudo(): { materiaId: number; nome: string; ordem: number } | null {
@@ -404,6 +416,25 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
       .map((m: any) => Number(m?.materiaId))
       .filter((id) => Number.isFinite(id) && id > 0);
     return new Set(ids);
+  }
+
+  private rebuildMateriaEditalMap(editais: Edital[]): void {
+    this.materiaIdToEditalId.clear();
+    const ativos = (editais || []).filter((e) => e?.ativo);
+    for (const edital of ativos) {
+      const editalId = Number((edital as any)?.id);
+      if (!editalId) continue;
+      for (const materia of (edital as any)?.materias || []) {
+        const materiaId = Number((materia as any)?.materiaId);
+        if (Number.isFinite(materiaId) && materiaId > 0 && !this.materiaIdToEditalId.has(materiaId)) {
+          this.materiaIdToEditalId.set(materiaId, editalId);
+        }
+      }
+    }
+  }
+
+  private getEditalIdForMateria(materiaId: number): number | null {
+    return this.materiaIdToEditalId.get(materiaId) ?? null;
   }
 
   formatPercent(v?: number | null): string {

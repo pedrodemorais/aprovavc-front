@@ -7,6 +7,7 @@
   <div class="sala-titulo">
     <span class="titulo-materia">
       <span class="titulo-materia-text">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
+      <span class="salvo-msg sala-processando-msg" *ngIf="carregandoAnotacoes">Carregando anota&ccedil;&otilde;es...</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemRevisao">{{ mensagemRevisao }}</span>
       <span class="salvo-msg sala-topico-finalizado-msg" *ngIf="mensagemTopicoFinalizado">{{ mensagemTopicoFinalizado }}</span>
@@ -47,7 +48,10 @@
       </div>
 
       <!-- LISTA HIERARQUICA -->
-      <div class="lista-de-topicos" #listaTopicosContainer>
+      <div class="lista-de-topicos" #listaTopicosContainer [class.carregando-anotacoes]="carregandoAnotacoes">
+        <div class="topicos-loading-overlay" *ngIf="carregandoAnotacoes">
+          <span>Carregando anota&ccedil;&otilde;es...</span>
+        </div>
         <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos" #listaTopicos>
           <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
             [class.finalizado]="isTopicoFinalizadoLinha(t)"
@@ -325,6 +329,12 @@
 
                 <!-- Anotacoes -->
                 <ng-container *ngIf="modoRevisao === 'anotacoes'">
+                  <ng-container *ngIf="carregandoAnotacoes; else revisaoConteudoTpl">
+                    <div class="painel-revisao-placeholder">
+                      Carregando anota&ccedil;&otilde;es...
+                    </div>
+                  </ng-container>
+                  <ng-template #revisaoConteudoTpl>
                   <ng-container *ngIf="anotacoes && anotacoes.trim(); else semAnotacoesTpl">
 
                     <div class="revisao-anotacoes-layout">
@@ -366,6 +376,7 @@
                         Use o modo <strong>Estudar</strong> para registrar um resumo.
                       </p>
                     </div>
+                  </ng-template>
                   </ng-template>
                 </ng-container>
 
@@ -669,7 +680,7 @@
                   type="button"
                   class="btn-modo-timer"
                   (click)="voltarEstudo()"
-                  [disabled]="!podeVoltarEstudo"
+                  [disabled]="!podeVoltarEstudo || carregandoAnotacoes"
                   pTooltip="Topico anterior"
                   tooltipPosition="top">
                   <i class="pi pi-angle-left"></i>
@@ -679,7 +690,7 @@
                   type="button"
                   class="btn-modo-timer"
                   (click)="irParaProximoEstudo()"
-                  [disabled]="!podeIrParaProximoEstudo"
+                  [disabled]="!podeIrParaProximoEstudo || carregandoAnotacoes"
                   pTooltip="Proximo topico"
                   tooltipPosition="top">
                   <span>Avancar</span>
@@ -712,7 +723,7 @@
                   type="button"
                   class="btn-modo-timer"
                   (click)="voltarRevisao()"
-                  [disabled]="!podeVoltarRevisao"
+                  [disabled]="!podeVoltarRevisao || carregandoAnotacoes"
                   pTooltip="Topico anterior"
                   tooltipPosition="top">
                   <i class="pi pi-angle-left"></i>
@@ -722,7 +733,7 @@
                   type="button"
                   class="btn-modo-timer"
                   (click)="irParaProximaRevisao()"
-                  [disabled]="!podeIrParaProximaRevisao"
+                  [disabled]="!podeIrParaProximaRevisao || carregandoAnotacoes"
                   pTooltip="Proximo topico"
                   tooltipPosition="top">
                   <span>Avancar</span>
@@ -883,8 +894,11 @@
           placeholder="Digite o titulo principal" />
       </div>
 
-      <div class="split-list">
-        <div class="split-row" *ngFor="let item of splitNovos; let i = index; trackBy: trackByIndex">
+      <div class="split-list" cdkDropList (cdkDropListDropped)="onSplitDrop($event)">
+        <div class="split-row" *ngFor="let item of splitNovos; let i = index; trackBy: trackByIndex" cdkDrag>
+          <button type="button" class="split-handle" cdkDragHandle aria-label="Arrastar subtopico">
+            <span class="pi pi-bars"></span>
+          </button>
           <input
             type="text"
             class="split-input"

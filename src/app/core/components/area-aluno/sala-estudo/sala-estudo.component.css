@@ -111,6 +111,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.sala-processando-msg {
+  background: rgba(234, 88, 12, 0.18);
+  color: #9a3412;
+}
 
 /* tiramos o “risquinho” entre header e body (caso exista) */
 .separador {
@@ -139,7 +143,36 @@
 
 .lista-de-topicos {
   border-top: 1px solid #4f535136;
+  position: relative;
 
+}
+
+.lista-de-topicos.carregando-anotacoes .lista-topicos {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.topicos-loading-overlay {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  background: rgba(255, 247, 237, 0.95);
+  border: 1px solid rgba(234, 88, 12, 0.22);
+  color: #9a3412;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 10px;
+  margin: 6px 6px 0;
+}
+
+:host-context(body.theme-dark) .topicos-loading-overlay {
+  background: rgba(30, 41, 59, 0.92) !important;
+  border-color: rgba(248, 113, 113, 0.25) !important;
+  color: #fca5a5 !important;
 }
 
 .coluna-direita {
@@ -2022,9 +2055,32 @@
 
 .split-row {
   display: grid;
-  grid-template-columns: 1fr 34px;
+  grid-template-columns: 28px 1fr 34px;
   gap: 8px;
   align-items: center;
+}
+.split-handle {
+  width: 28px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+.split-handle:active {
+  cursor: grabbing;
+}
+.split-row.cdk-drag-preview {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  background: #ffffff;
+}
+.split-row.cdk-drag-placeholder {
+  opacity: 0.4;
 }
 
 .split-input {

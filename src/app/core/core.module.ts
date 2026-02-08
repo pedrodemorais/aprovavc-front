@@ -10,6 +10,7 @@ import { PrimeNGConfig, MessageService, ConfirmationService, TreeDragDropService
 import { TabViewModule } from 'primeng/tabview';
 import { TableModule } from 'primeng/table';
 import { DragDropModule } from 'primeng/dragdrop';
+import { DragDropModule as CdkDragDropModule } from '@angular/cdk/drag-drop';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -100,6 +101,7 @@ registerLocaleData(localePt);
     TabViewModule,
     TableModule,
     DragDropModule,
+    CdkDragDropModule,
     ButtonModule,
     DropdownModule,
     InputNumberModule,
@@ -134,6 +136,7 @@ registerLocaleData(localePt);
     MatNativeDateModule,
      
   DragDropModule,
+  CdkDragDropModule,
   ],
   providers: [
     MessageService,
