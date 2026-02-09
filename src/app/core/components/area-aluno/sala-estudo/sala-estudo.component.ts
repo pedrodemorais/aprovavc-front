@@ -1117,6 +1117,10 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
     }
+    if (novoModo === 'estudar' && this.topicoSelecionado && this.topicoPermiteEstudo) {
+      this.mostrarMensagemRevisao('Recarregando anotações para o modo Estudar...');
+      this.recarregarAnotacoesSeNecessario('modo-estudar');
+    }
   }
 
   private resetarTimerParaNovoModo(): void {
@@ -1174,9 +1178,11 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const quillHtml = this.quillEditor?.root?.innerHTML;
-    if (typeof quillHtml === 'string') {
-      this.anotacoes = this.normalizarHtmlAnotacoes(quillHtml);
+    if (this.modo === 'estudar') {
+      const quillHtml = this.quillEditor?.root?.innerHTML;
+      if (typeof quillHtml === 'string') {
+        this.anotacoes = this.normalizarHtmlAnotacoes(quillHtml);
+      }
     }
 
     const modoBack = this.modoTemporizador;
