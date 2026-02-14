@@ -1,5 +1,5 @@
 import { FlashcardDTO } from '../models/FlashcardDTO';
-import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 import { forkJoin, of, from } from 'rxjs';
 import { concatMap, toArray } from 'rxjs/operators';
@@ -24,7 +24,7 @@ type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
   templateUrl: './sala-estudo.component.html',
   styleUrls: ['./sala-estudo.component.css']
 })
-export class SalaEstudoComponent implements OnInit, OnDestroy {
+export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   mensagemRevisao?: string;
   materiaId!: number;
   materia?: Materia;
@@ -60,6 +60,9 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   @ViewChild('listaTopicosContainer', { static: false }) listaTopicosContainerRef?: ElementRef<HTMLElement>;
 
   private centralizarTopicoTentativas = 0;
+  private centralizacaoProgramadaRefs: any[] = [];
+  private listaTopicosObserver?: MutationObserver;
+  private recentralizarRafId: number | null = null;
 
   flashcardModalPos = { x: 0, y: 0 };
   flashcardModalDragging = false;
@@ -186,6 +189,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   private readonly revisaoTempoKey = 'revisao:tempoTotalSegundos';
   private readonly revisaoItensKey = 'revisao:itensTotais';
   private readonly ultimoTopicoKeyPrefix = 'sala-estudo:ultimo-topico:';
+  private readonly ultimoTopicoGlobalKey = 'sala-estudo:ultimo-topico-global';
 
   /** Mapa: topicoId -> info de revisão (status + próxima data) */
   private revisoesPorTopico = new Map<number, {
@@ -225,8 +229,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
 
       if (modoAtualizado !== this.modo) {
         this.modoPreferido = modoAtualizado;
-        this.modo = modoAtualizado;
-        this.ajustarColunaEsquerdaParaModo();
+        this.mudarModo(modoAtualizado);
       }
 
       this.autoSelecionarUltimoNaoEstudado = autoTopico;
@@ -259,7 +262,17 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destruirObservadorListaTopicos();
+    if (this.recentralizarRafId != null) {
+      cancelAnimationFrame(this.recentralizarRafId);
+      this.recentralizarRafId = null;
+    }
+    this.limparCentralizacaoProgramada();
     this.encerrarArrasteFlashcard();
+  }
+
+  ngAfterViewInit(): void {
+    this.inicializarObservadorListaTopicos();
   }
 
   canDeactivate(): boolean {
@@ -451,6 +464,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
         });
 
         this.topicosCarregados = true;
+        this.inicializarObservadorListaTopicos();
         this.tentarSelecionarTopicoInicial();
       },
       error: (err) => {
@@ -516,6 +530,15 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     if (this.topicoSelecionado && this.topicoPermiteEstudo) {
       this.carregarFlashcards();
     }
+  }
+
+  fecharRevisaoFlashcards(event?: Event): void {
+    event?.stopPropagation();
+    this.mostrarVersoAtual = false;
+    this.avaliacaoFlashcardSelecionada = null;
+    this.mensagemFlashcardRevisao = '';
+    this.flashcardFeedback = null;
+    this.ativarRevisaoAnotacoes();
   }
 
   // ================================================================
@@ -668,6 +691,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
         this.atualizarMarcaAnotacoes(t.id, this.hasConteudoAnotacoes(this.anotacoes));
         this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
         this.atualizarContadorCaracteresFromHtml(this.anotacoes);
+        this.centralizarTopicoSelecionado();
         if (reqSeq === this.anotacoesReqSeq) {
           this.carregandoAnotacoes = false;
         }
@@ -677,6 +701,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
         this.atualizarMarcaAnotacoes(t.id, false);
         this.anotacoesHtmlSeguras = null;
         this.atualizarContadorCaracteres(0);
+        this.centralizarTopicoSelecionado();
         if (reqSeq === this.anotacoesReqSeq) {
           this.carregandoAnotacoes = false;
         }
@@ -734,27 +759,99 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     const lista = this.listaTopicosRef?.nativeElement;
     const topicoId = this.topicoSelecionado?.id;
 
-    if (!container || !lista || !topicoId) return;
+    if (!container || !lista) {
+      this.limparCentralizacaoProgramada();
+      for (let delay = 80; delay <= 1200; delay += 120) {
+        const ref = setTimeout(() => this.centralizarTopicoSelecionado(), delay);
+        this.centralizacaoProgramadaRefs.push(ref);
+      }
+      return;
+    }
 
-    const executar = () => {
-      const el = lista.querySelector(`[data-topico-id="${topicoId}"]`) as HTMLElement | null;
+    const ajustarPosicao = () => {
+      const elPorId = topicoId ? (lista.querySelector(`[data-topico-id="${topicoId}"]`) as HTMLElement | null) : null;
+      const elSelecionado = lista.querySelector('.item-topico.selecionado') as HTMLElement | null;
+      const el = elPorId || elSelecionado;
       if (!el) {
-        if (this.centralizarTopicoTentativas < 12) {
+        if (this.centralizarTopicoTentativas < 20) {
           this.centralizarTopicoTentativas += 1;
-          setTimeout(executar, 60);
+          setTimeout(ajustarPosicao, 80);
         }
         return;
       }
 
       this.centralizarTopicoTentativas = 0;
-
-      const containerRect = container.getBoundingClientRect();
-      const itemRect = el.getBoundingClientRect();
-      const delta = (itemRect.top - containerRect.top) - ((container.clientHeight / 2) - (itemRect.height / 2));
-      container.scrollTop += delta;
+      const elTopDentroDoContainer = this.obterOffsetTopDentroDoContainer(el, container);
+      const elCentro = elTopDentroDoContainer + (el.offsetHeight / 2);
+      const alvoScrollTop = elCentro - (container.clientHeight / 2);
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+      container.scrollTop = Math.max(0, Math.min(alvoScrollTop, maxScroll));
     };
 
-    requestAnimationFrame(() => requestAnimationFrame(executar));
+    this.limparCentralizacaoProgramada();
+    const agendar = (delay: number) => {
+      const ref = setTimeout(() => ajustarPosicao(), delay);
+      this.centralizacaoProgramadaRefs.push(ref);
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        ajustarPosicao();
+        for (let delay = 80; delay <= 2500; delay += 120) {
+          agendar(delay);
+        }
+      });
+    });
+  }
+
+  private obterOffsetTopDentroDoContainer(el: HTMLElement, container: HTMLElement): number {
+    const elRect = el.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    return (elRect.top - containerRect.top) + container.scrollTop;
+  }
+
+  private limparCentralizacaoProgramada(): void {
+    if (!this.centralizacaoProgramadaRefs.length) return;
+    for (const ref of this.centralizacaoProgramadaRefs) {
+      clearTimeout(ref);
+    }
+    this.centralizacaoProgramadaRefs = [];
+  }
+
+  private inicializarObservadorListaTopicos(tentativa: number = 0): void {
+    const container = this.listaTopicosContainerRef?.nativeElement;
+    if (!container) {
+      if (tentativa < 12) {
+        setTimeout(() => this.inicializarObservadorListaTopicos(tentativa + 1), 120);
+      }
+      return;
+    }
+
+    this.destruirObservadorListaTopicos();
+    this.listaTopicosObserver = new MutationObserver(() => this.agendarRecentralizacaoPorObserver());
+    this.listaTopicosObserver.observe(container, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+
+  private destruirObservadorListaTopicos(): void {
+    if (!this.listaTopicosObserver) return;
+    this.listaTopicosObserver.disconnect();
+    this.listaTopicosObserver = undefined;
+  }
+
+  private agendarRecentralizacaoPorObserver(): void {
+    if (this.recentralizarRafId != null) {
+      cancelAnimationFrame(this.recentralizarRafId);
+      this.recentralizarRafId = null;
+    }
+    this.recentralizarRafId = requestAnimationFrame(() => {
+      this.recentralizarRafId = null;
+      this.centralizarTopicoSelecionado();
+    });
   }
 
   private carregarFlashcards(): void {
@@ -790,6 +887,10 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     if (!t?.id || !this.materiaId) return;
     const key = `${this.ultimoTopicoKeyPrefix}${this.materiaId}`;
     localStorage.setItem(key, String(t.id));
+    localStorage.setItem(
+      this.ultimoTopicoGlobalKey,
+      JSON.stringify({ materiaId: this.materiaId, topicoId: t.id })
+    );
   }
 
   private obterProximoTopicoApos(folhas: any[], topicoId: number): any | null {
@@ -1407,8 +1508,47 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     this.preencherFlashcardFrenteComSelecao();
 
     if (!this.flashcardTags && this.materia && this.topicoSelecionado) {
-      this.flashcardTags = `${this.materia.nome.toLowerCase()}, ${this.topicoSelecionado.descricao.toLowerCase()}`;
+      this.flashcardTags = this.montarTagMateriaTopico(this.materia.nome, this.topicoSelecionado.descricao);
     }
+  }
+
+  private montarTagMateriaTopico(materiaNome: string, topicoDescricao: string): string {
+    const materia = this.toTitleCasePtBr(materiaNome || '');
+    const topico = this.toTitleCasePtBr(topicoDescricao || '');
+    return [materia, topico].filter(Boolean).join(' - ');
+  }
+
+  formatarTagsFlashcard(tags: string | undefined | null): string {
+    const raw = (tags || '').trim();
+    if (!raw) return '';
+
+    const delimiters = [' - ', ',', ' -', '- '];
+    for (const delimiter of delimiters) {
+      const idx = raw.indexOf(delimiter);
+      if (idx > -1) {
+        const materia = this.toTitleCasePtBr(raw.slice(0, idx).trim());
+        const topico = this.toTitleCasePtBr(raw.slice(idx + delimiter.length).trim());
+        return [materia, topico].filter(Boolean).join(' - ');
+      }
+    }
+
+    return this.toTitleCasePtBr(raw);
+  }
+
+  private toTitleCasePtBr(value: string): string {
+    const lowerWords = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'no', 'na', 'nos', 'nas', 'a', 'o', 'as', 'os']);
+    const normalized = (value || '').trim().toLocaleLowerCase('pt-BR');
+    let wordIndex = 0;
+
+    return normalized.replace(/[a-zA-ZÀ-ÖØ-öø-ÿ0-9]+/g, (word) => {
+      if (/^\d+$/.test(word)) return word;
+
+      const keepLower = wordIndex > 0 && lowerWords.has(word);
+      wordIndex++;
+      if (keepLower) return word;
+
+      return word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1);
+    });
   }
 
   fecharModalFlashcard(): void {
@@ -2127,7 +2267,7 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
       verso,
       tipo: this.flashcardTipo as any,
       dificuldade: this.flashcardDificuldade as any,
-      tags: this.flashcardTags
+      tags: this.formatarTagsFlashcard(this.flashcardTags)
     };
 
     this.salaEstudoService.criarFlashcard(payload).subscribe({
@@ -2585,12 +2725,9 @@ export class SalaEstudoComponent implements OnInit, OnDestroy {
     if (this.topicoIdPreferido) {
       const candidato = this.topicos.find(t => t.id === this.topicoIdPreferido);
       if (candidato) {
-        if (this.isTopicoFinalizado(candidato)) {
-          const folhas = this.topicos.filter(t => !t.hasFilhos && t.ativo !== false);
-          alvo = this.obterProximoTopicoApos(folhas, candidato.id) || candidato;
-        } else {
-          alvo = candidato;
-        }
+        // Quando o topico vem explicitamente na URL (dashboard/revisoes),
+        // deve abrir exatamente nele, mesmo que ja esteja finalizado.
+        alvo = candidato;
       }
     }
 

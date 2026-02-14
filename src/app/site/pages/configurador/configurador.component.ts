@@ -4,6 +4,8 @@ import { MunicipioService } from 'src/app/site/services/municio.service';
 import { NotificationService } from 'src/app/site/services/notification.service';
 import { Router } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
+import { EditalTemplateService } from 'src/app/core/components/area-aluno/services/edital-template.service';
+import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto';
 
 @Component({
   selector: 'app-configurador',
@@ -21,6 +23,9 @@ export class ConfiguradorComponent implements OnInit {
   totalSteps = 2; // Total de etapas
   isSubmitting = false; // Flag para evitar requisições duplicadas
   municipios: any[] = []; // Lista de municípios
+  editaisTemplates: EditalTemplateDTO[] = [];
+  carregandoEditaisTemplates = false;
+  erroEditaisTemplates: string | null = null;
   uf: string[] = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT',
     'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO',
@@ -39,6 +44,7 @@ export class ConfiguradorComponent implements OnInit {
     private fb: FormBuilder,
     private municipioService: MunicipioService,
     private usuarioService: UsuarioService,
+    private editalTemplateService: EditalTemplateService,
     private cdRef: ChangeDetectorRef,
     private notificationService: NotificationService,
     private router: Router,
@@ -50,6 +56,7 @@ export class ConfiguradorComponent implements OnInit {
       senha: ['', [Validators.required, Validators.minLength(6)]],
       confirmSenha: ['', Validators.required],
       role: ['USER', Validators.required], // Padrão USER
+      editalTemplateId: [null, Validators.required],
       
       // 🔹 Dados da Empresa
       nomeFantasia: ['', Validators.required],
@@ -100,9 +107,36 @@ export class ConfiguradorComponent implements OnInit {
   
 
   ngOnInit(): void {
+    this.aplicarNormalizacaoEmail('email');
+    this.aplicarNormalizacaoEmail('emailEmpresa');
     this.carregarEstados();
+    this.carregarEditaisTemplates();
     
   this.cdRef.detectChanges(); // 🔥 Força a interface a ser atualizada
+  }
+
+  carregarEditaisTemplates(): void {
+    if (this.carregandoEditaisTemplates) return;
+    this.carregandoEditaisTemplates = true;
+    this.erroEditaisTemplates = null;
+
+    this.editalTemplateService.listarTemplatesPublicos().subscribe({
+      next: (lista) => {
+        const all = lista || [];
+        this.editaisTemplates = all.filter(t => t.publicado === undefined ? true : t.publicado);
+        this.carregandoEditaisTemplates = false;
+
+        if (this.editaisTemplates.length === 1) {
+          this.configuradorForm.get('editalTemplateId')?.setValue(this.editaisTemplates[0].id);
+        }
+      },
+      error: (err) => {
+        console.error('[CONFIGURADOR] Erro ao carregar editais:', err);
+        this.erroEditaisTemplates = 'Não foi possível carregar os editais.';
+        this.editaisTemplates = [];
+        this.carregandoEditaisTemplates = false;
+      }
+    });
   }
   atualizarTipoPessoa(): void {
     this.tipoPessoa = this.configuradorForm.get('tipoDePessoa')?.value;
@@ -181,6 +215,7 @@ export class ConfiguradorComponent implements OnInit {
         }
        
         if (!this.configuradorForm.get('role')?.value) camposInvalidos.push('Função');
+        if (!this.configuradorForm.get('editalTemplateId')?.value) camposInvalidos.push('Edital');
         break;
 
 
@@ -225,8 +260,24 @@ export class ConfiguradorComponent implements OnInit {
  
   onSubmit(): void {
     if (this.isSubmitting) return;
+    this.isSubmitting = true;
+    this.normalizarEmailsAntesDoEnvio();
     this.errorMessage = null; // 🔥 Limpar erros anteri
     const municipioIbgeValue = this.configuradorForm.get('endereco.municipio.municipioIbge')?.value;
+    const editalTemplateId = Number(this.configuradorForm.get('editalTemplateId')?.value) || null;
+    const parametrosAluno = [
+      {
+        chave: "exigeDocNoCadastro",
+        valor: "true"
+      }
+    ];
+
+    if (editalTemplateId) {
+      parametrosAluno.push({
+        chave: "editalTemplateId",
+        valor: String(editalTemplateId)
+      });
+    }
     
   
     const usuarioDTO = {
@@ -235,7 +286,7 @@ export class ConfiguradorComponent implements OnInit {
       senha: this.configuradorForm.get('senha')?.value,
       role: this.configuradorForm.get('role')?.value,
       aluno: { // AlunoDTO dentro do usuário
-        nomeFantasia: this.configuradorForm.get('nomeAluno')?.value,
+        nomeAluno: this.configuradorForm.get('nomeFantasia')?.value,
        
        
         email: this.configuradorForm.get('emailEmpresa')?.value,
@@ -251,12 +302,7 @@ export class ConfiguradorComponent implements OnInit {
             uf: this.configuradorForm.get('endereco.municipio.uf')?.value
           }
         },
-        parametros: [ // ✅ Corrigido aqui!
-          {
-            chave: "exigeDocNoCadastro",
-            valor: "true" // Ou você pode usar uma variável para decidir true/false
-          }
-        ]
+        parametros: parametrosAluno
       }
     };
     
@@ -265,6 +311,9 @@ export class ConfiguradorComponent implements OnInit {
 
     this.usuarioService.cadastrarUsuario(usuarioDTO).subscribe(
       response => {
+        if (editalTemplateId) {
+          localStorage.setItem('onboarding:editalTemplateId', String(editalTemplateId));
+        }
         this.notificationService.setMessage('✅ Cadastro realizado com sucesso! Verifique seu e-mail.');
         this.isSubmitting = false;
         this.router.navigate(['/login']); // ✅ Redirecionando para a tela de login
@@ -346,9 +395,36 @@ export class ConfiguradorComponent implements OnInit {
       }
     );
   }
+
+  private aplicarNormalizacaoEmail(campo: string): void {
+    const control = this.configuradorForm.get(campo);
+    if (!control) return;
+
+    control.valueChanges.subscribe((value) => {
+      if (typeof value !== 'string') return;
+
+      const normalizado = value.toLowerCase();
+      if (normalizado !== value) {
+        control.setValue(normalizado, { emitEvent: false });
+      }
+    });
+  }
+
+  private normalizarEmailsAntesDoEnvio(): void {
+    ['email', 'emailEmpresa'].forEach((campo) => {
+      const control = this.configuradorForm.get(campo);
+      const valor = control?.value;
+
+      if (control && typeof valor === 'string') {
+        control.setValue(valor.toLowerCase(), { emitEvent: false });
+      }
+    });
+  }
   
   }
   
   
   
+
+
 

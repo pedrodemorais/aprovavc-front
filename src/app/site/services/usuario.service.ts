@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { UsuarioConsultaDTO } from 'src/app/core/components/area-aluno/models/AlunoParametroDTO';
+import { AuthService } from 'src/app/site/services/auth.service';
 
 
 @Injectable({
@@ -11,7 +12,7 @@ import { UsuarioConsultaDTO } from 'src/app/core/components/area-aluno/models/Al
 export class UsuarioService {
   
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   // 🔹 Buscar usuário por ID
   getUsuario(): Observable<any> {
@@ -25,7 +26,7 @@ export class UsuarioService {
   }
 
   getUsuarioLogado(): Observable<UsuarioConsultaDTO> {
-  return this.http.get<UsuarioConsultaDTO>(`${environment.apiUrl}/usuarios/me`);
+  return this.authService.getUserData() as Observable<UsuarioConsultaDTO>;
 }
 
 cadastrarUsuario(usuarioData: any): Observable<{ message: string }> {

@@ -31,6 +31,14 @@
                 >
                   {{ labelAcaoPrincipal }}
                 </button>
+                <button
+                  type="button"
+                  class="segmented-btn"
+                  [disabled]="salvando"
+                  (click)="abrirModalTemplates()"
+                >
+                  Escolher template pronto
+                </button>
 
                 <button type="button" class="segmented-btn" (click)="limparFormulario()">
                   Limpar
@@ -71,6 +79,9 @@
               <a class="segmented-btn" routerLink="/area-restrita/cadastro-editais">
                 + Criar meu primeiro edital
               </a>
+              <button type="button" class="segmented-btn" (click)="abrirModalTemplates()">
+                Escolher template pronto
+              </button>
             </div>
         </div>
 
@@ -135,98 +146,6 @@
 
     </div>
 
-    <!-- MODAL: NOVO EDITAL POR TEMPLATE -->
-    <div class="template-modal" *ngIf="mostrarModalTemplates" (click)="fecharModalTemplates()">
-      <div class="template-modal-card" (click)="$event.stopPropagation()">
-        <div class="template-modal-head">
-          <div>
-            <h3>Escolha um edital publicado</h3>
-            <p>Selecione um modelo para definir seu edital padrão de estudos.</p>
-          </div>
-          <button type="button" class="btn-ghost" (click)="fecharModalTemplates()">Fechar</button>
-        </div>
-
-        <div class="template-state" *ngIf="templatesCarregando">Carregando templates...</div>
-        <div class="template-state erro" *ngIf="templatesErro">{{ templatesErro }}</div>
-
-        <div class="template-filtros" *ngIf="templates.length">
-          <div class="filtro-item">
-            <label for="filtroArea">Área</label>
-            <select id="filtroArea" [(ngModel)]="areaFiltro">
-              <option value="todas">Todas</option>
-              <option *ngFor="let a of areasDisponiveis" [value]="a">{{ a }}</option>
-            </select>
-          </div>
-          <div class="filtro-item">
-            <label for="filtroAbrangencia">Abrangência</label>
-            <select id="filtroAbrangencia" [(ngModel)]="abrangenciaFiltro">
-              <option value="todas">Todas</option>
-              <option *ngFor="let a of abrangenciasDisponiveis" [value]="a">{{ a }}</option>
-            </select>
-          </div>
-          <button type="button" class="filtro-limpar" (click)="limparFiltrosTemplates()">Limpar</button>
-        </div>
-
-        <div class="template-grid" *ngIf="templatesFiltrados.length">
-          <button
-            type="button"
-            class="template-card"
-            *ngFor="let t of templatesFiltrados"
-            [class.selected]="templateSelecionadoId === t.id"
-            (click)="selecionarTemplate(t)"
-          >
-            <div class="template-info-card">
-              <div class="template-image-wrap">
-                <img
-                  *ngIf="templateImagemUrls[t.id]"
-                  class="template-image"
-                  [src]="templateImagemUrls[t.id]"
-                  (error)="onTemplateImagemErro(t.id)"
-                  alt="Logo do orgao"
-                />
-              </div>
-              <div class="template-name">{{ t.nome }}</div>
-              <div class="template-cargo">{{ t.cargoNome || t.cargo || 'Cargo nao informado' }}</div>
-            </div>
-          </button>
-        </div>
-
-        <div class="template-vazio" *ngIf="templates.length && !templatesFiltrados.length">
-          Nenhum template encontrado para os filtros selecionados.
-        </div>
-
-        <div class="template-form" *ngIf="templates.length">
-          <label class="template-label" for="nomeEditalTemplate">Nome do edital</label>
-          <input
-            id="nomeEditalTemplate"
-            type="text"
-            class="template-input"
-            [(ngModel)]="nomeEditalTemplate"
-            (ngModelChange)="onNomeEditalTemplateChange()"
-            placeholder="Ex: Edital PM 2025"
-          />
-          <button
-            *ngIf="!modoImportacao"
-            type="button"
-            class="step-action"
-            [disabled]="clonandoTemplate || !templateSelecionadoId"
-            (click)="clonarTemplateSelecionado()"
-          >
-            {{ clonandoTemplate ? 'Criando...' : 'Criar edital pelo template' }}
-          </button>
-          <button
-            *ngIf="modoImportacao"
-            type="button"
-            class="step-action"
-            [disabled]="importandoTemplate || !templateSelecionadoId"
-            (click)="importarTemplateSelecionado()"
-          >
-            {{ importandoTemplate ? 'Importando...' : 'Importar edital' }}
-          </button>
-          <div class="template-ok" *ngIf="mensagemTemplateOk">{{ mensagemTemplateOk }}</div>
-        </div>
-      </div>
-    </div>
     </ng-container>
 
   <ng-template #onboardingSemMaterias>
@@ -251,17 +170,112 @@
           <div class="onboarding-step">
             <div class="step-index">2</div>
             <div class="step-content">
-              <div class="step-title">Volte e crie o edital</div>
-              <div class="step-text">Vincule as materias e acompanhe o progresso.</div>
+              <div class="step-title">Ou escolha um template pronto</div>
+              <div class="step-text">Importe uma estrutura publicada para começar mais rápido.</div>
             </div>
-            <button type="button" class="step-action ghost" disabled>Pronto para criar</button>
+            <button type="button" class="step-action ghost" (click)="abrirModalTemplates(true)">
+              Escolher template
+            </button>
           </div>
         </div>
 
-        <div class="onboarding-note">Depois disso, voce ja pode criar seu edital aqui.</div>
+        <div class="onboarding-note">Depois disso, voce ja pode criar e acompanhar seus editais aqui.</div>
       </div>
     </div>
   </ng-template>
+
+  <!-- MODAL: NOVO EDITAL POR TEMPLATE -->
+  <div class="template-modal" *ngIf="mostrarModalTemplates" (click)="fecharModalTemplates()">
+    <div class="template-modal-card" (click)="$event.stopPropagation()">
+      <div class="template-modal-head">
+        <div>
+          <h3>Escolha um edital publicado</h3>
+          <p>Selecione um modelo para definir seu edital padrão de estudos.</p>
+        </div>
+        <button type="button" class="btn-ghost" (click)="fecharModalTemplates()">Fechar</button>
+      </div>
+
+      <div class="template-state" *ngIf="templatesCarregando">Carregando templates...</div>
+      <div class="template-state erro" *ngIf="templatesErro">{{ templatesErro }}</div>
+
+      <div class="template-filtros" *ngIf="templates.length">
+        <div class="filtro-item">
+          <label for="filtroArea">Área</label>
+          <select id="filtroArea" [(ngModel)]="areaFiltro">
+            <option value="todas">Todas</option>
+            <option *ngFor="let a of areasDisponiveis" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label for="filtroAbrangencia">Abrangência</label>
+          <select id="filtroAbrangencia" [(ngModel)]="abrangenciaFiltro">
+            <option value="todas">Todas</option>
+            <option *ngFor="let a of abrangenciasDisponiveis" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+        <button type="button" class="filtro-limpar" (click)="limparFiltrosTemplates()">Limpar</button>
+      </div>
+
+      <div class="template-grid" *ngIf="templatesFiltrados.length">
+        <button
+          type="button"
+          class="template-card"
+          *ngFor="let t of templatesFiltrados"
+          [class.selected]="templateSelecionadoId === t.id"
+          (click)="selecionarTemplate(t)"
+        >
+          <div class="template-info-card">
+            <div class="template-image-wrap">
+              <img
+                *ngIf="templateImagemUrls[t.id]"
+                class="template-image"
+                [src]="templateImagemUrls[t.id]"
+                (error)="onTemplateImagemErro(t.id)"
+                alt="Logo do orgao"
+              />
+            </div>
+            <div class="template-name">{{ t.nome }}</div>
+            <div class="template-cargo">{{ t.cargoNome || t.cargo || 'Cargo nao informado' }}</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="template-vazio" *ngIf="templates.length && !templatesFiltrados.length">
+        Nenhum template encontrado para os filtros selecionados.
+      </div>
+
+      <div class="template-form" *ngIf="templates.length">
+        <label class="template-label" for="nomeEditalTemplate">Nome do edital</label>
+        <input
+          id="nomeEditalTemplate"
+          type="text"
+          class="template-input"
+          [(ngModel)]="nomeEditalTemplate"
+          (ngModelChange)="onNomeEditalTemplateChange()"
+          placeholder="Ex: Edital PM 2025"
+        />
+        <button
+          *ngIf="!modoImportacao"
+          type="button"
+          class="step-action"
+          [disabled]="clonandoTemplate || !templateSelecionadoId"
+          (click)="clonarTemplateSelecionado()"
+        >
+          {{ clonandoTemplate ? 'Criando...' : 'Criar edital pelo template' }}
+        </button>
+        <button
+          *ngIf="modoImportacao"
+          type="button"
+          class="step-action"
+          [disabled]="importandoTemplate || !templateSelecionadoId"
+          (click)="importarTemplateSelecionado()"
+        >
+          {{ importandoTemplate ? 'Importando...' : 'Importar edital' }}
+        </button>
+        <div class="template-ok" *ngIf="mensagemTemplateOk">{{ mensagemTemplateOk }}</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 

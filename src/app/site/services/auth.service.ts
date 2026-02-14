@@ -2,7 +2,7 @@ import { Inject, Injectable, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, of, throwError, BehaviorSubject } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError, switchMap, shareReplay } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
@@ -21,6 +21,7 @@ export class AuthService {
 
   private assinaturaValidaSubject = new BehaviorSubject<boolean>(false);
   assinaturaValida$ = this.assinaturaValidaSubject.asObservable();
+  private userDataCache$?: Observable<any>;
 
   private statusAssinaturaSubject = new BehaviorSubject<string | null>(null);
   statusAssinatura$ = this.statusAssinaturaSubject.asObservable();
@@ -191,6 +192,7 @@ checarAssinaturaNoBack(): Observable<boolean> {
     localStorage.setItem('access_token', token);
     this.accessTokenSubject.next(token);
     this.tokenAtualizado.emit();
+    this.userDataCache$ = undefined;
   }
 
   isTokenExpired(token: string): boolean {
@@ -229,14 +231,18 @@ checarAssinaturaNoBack(): Observable<boolean> {
   // ========= DADOS DO USUÁRIO =========
 
   getUserData(): Observable<any> {
-    return this.http
-      .get<any>(`${environment.apiUrl}/usuarios/me`, { withCredentials: true })
-      .pipe(
-        tap((user) => {
-          console.log('📤 Dados do usuário recebidos:', user.nome);
-          console.log('📤 ID:', user.id);
-        })
-      );
+    if (!this.userDataCache$) {
+      this.userDataCache$ = this.http
+        .get<any>(`${environment.apiUrl}/usuarios/me`, { withCredentials: true })
+        .pipe(
+          tap((user) => {
+            console.log('📤 Dados do usuário recebidos:', user.nome);
+            console.log('📤 ID:', user.id);
+          }),
+          shareReplay(1)
+        );
+    }
+    return this.userDataCache$;
   }
 
   decodeToken(token: string): any {
@@ -375,6 +381,7 @@ checarAssinaturaNoBack(): Observable<boolean> {
     this.assinaturaValidaSubject.next(false);
     this.statusAssinaturaSubject.next(null);
     this.planoAtualSubject.next(null);
+    this.userDataCache$ = undefined;
 
     this.router.navigate(['/login']);
   }

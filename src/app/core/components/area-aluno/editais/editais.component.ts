@@ -25,6 +25,7 @@ export class EditaisComponent implements OnInit, OnDestroy, CanComponentDeactiva
   erro?: string;
   mensagemSucesso?: string;
   definindoAtivoId: number | null = null;
+  private tentativaAutoAtivarPadrao = false;
 private mensagemTimeout: any; // para guardar o setTimeout
 
   editais: Edital[] = [];
@@ -158,9 +159,32 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
     this.editalService.listar().subscribe({
       next: (lista) => {
-        this.editais = lista || [];
-        this.montarArvoreEditais();
-        this.carregando = false;
+        const editaisRecebidos = lista || [];
+        if (this.tentativaAutoAtivarPadrao) {
+          this.editais = editaisRecebidos;
+          this.montarArvoreEditais();
+          this.carregando = false;
+          return;
+        }
+
+        this.editalService.garantirEditalPadraoAtivo(editaisRecebidos).subscribe({
+          next: (ativouPadrao) => {
+            if (ativouPadrao) {
+              this.tentativaAutoAtivarPadrao = true;
+              this.carregarEditais();
+              return;
+            }
+
+            this.editais = editaisRecebidos;
+            this.montarArvoreEditais();
+            this.carregando = false;
+          },
+          error: () => {
+            this.editais = editaisRecebidos;
+            this.montarArvoreEditais();
+            this.carregando = false;
+          }
+        });
       },
       error: (err) => {
         console.error('[EDITAIS] Erro ao carregar editais:', err);
@@ -492,6 +516,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
         this.editalSelecionado = { ...edital, ...detalhe, materias: materiasDetalhe };
         this.editalEmEdicao = this.editalSelecionado;
+        this.atualizarEditalNaLista(this.editalSelecionado);
 
         this.aplicarSemRastrearMudancas(() => {
           this.form.patchValue({
@@ -867,6 +892,9 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
     const editalId = node?.data?.editalId as number | undefined;
     if (!editalId) return;
+    if (node?.data?.tipo === 'EDITAL') {
+      this.editaisAbertos.add(editalId);
+    }
     const encontrado = this.editais.find(e => e.id === editalId);
     if (encontrado) {
       this.editalSelecionado = encontrado;
@@ -1166,7 +1194,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
           nivelDominioGeral: edital.nivelDominioGeral
         },
         selectable: true,
-        expanded: false,
+        expanded: this.editaisAbertos.has(editalId),
         children: materiaNodes
       };
 
@@ -1179,6 +1207,18 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
     this.editalTreeNodes = nodes;
     this.selectedEditalNodes = selecionados;
+  }
+
+  private atualizarEditalNaLista(editalAtualizado: Edital): void {
+    if (!editalAtualizado?.id) {
+      return;
+    }
+    const idx = (this.editais || []).findIndex((e) => e.id === editalAtualizado.id);
+    if (idx < 0) {
+      return;
+    }
+    this.editais[idx] = { ...this.editais[idx], ...editalAtualizado };
+    this.montarArvoreEditais();
   }
 
   private atualizarStatusMateriaNode(node: TreeNode, ativo: boolean): void {

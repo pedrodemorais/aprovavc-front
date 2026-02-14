@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 import {
@@ -16,6 +17,11 @@ export class EditalTemplateService {
   private readonly baseUrl = `${environment.apiUrl}`.replace(/\/+$/, '');
   private readonly api = this.baseUrl.endsWith('/api') ? this.baseUrl : `${this.baseUrl}/api`;
   private readonly templateBase = `${this.api}/admin/editais-template`;
+  private readonly templatePublicBase = `${this.api}/editais-template/public`;
+  private readonly templatePublicAltBase = `${this.api}/public/editais-template`;
+  private readonly orgaoAdminBase = `${this.api}/admin/orgaos`;
+  private readonly orgaoBase = `${this.api}/orgaos`;
+  private readonly orgaoPublicAltBase = `${this.api}/public/orgaos`;
   private readonly cloneBase = `${this.api}/editais/clonar-template`;
 
   constructor(private http: HttpClient) {}
@@ -35,6 +41,15 @@ export class EditalTemplateService {
     return this.http.get<EditalTemplateDTO[]>(this.templateBase, this.options());
   }
 
+  listarTemplatesPublicos(): Observable<EditalTemplateDTO[]> {
+    return this.http.get<EditalTemplateDTO[]>(this.templatePublicBase).pipe(
+      catchError(() => {
+        return this.http.get<EditalTemplateDTO[]>(this.templatePublicAltBase);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   buscarEstrutura(templateId: number): Observable<EstruturaTemplateDTO> {
     return this.http.get<EstruturaTemplateDTO>(`${this.templateBase}/${templateId}/estrutura`, this.options());
   }
@@ -44,11 +59,18 @@ export class EditalTemplateService {
   }
 
   buscarImagemArquivo(id: number): Observable<HttpResponse<Blob>> {
-    return this.http.get(`${this.templateBase}/${id}/imagem`, {
-      ...this.options(),
-      observe: 'response',
-      responseType: 'blob'
-    });
+    return this.buscarImagemTemplateComFallback(id).pipe(
+      catchError(() =>
+        this.buscarOrgaoIdDoTemplate(id).pipe(
+          switchMap((orgaoId) => {
+            if (!orgaoId) {
+              return throwError(() => new Error('Imagem não encontrada para o template informado.'));
+            }
+            return this.buscarImagemOrgaoComFallback(orgaoId);
+          })
+        )
+      )
+    );
   }
 
   clonarTemplate(templateId: number, payload: ClonarEditalRequestDTO = {}): Observable<ClonarEditalResponseDTO> {
@@ -56,6 +78,87 @@ export class EditalTemplateService {
       `${this.cloneBase}/${templateId}`,
       payload,
       this.options()
+    );
+  }
+
+  extrairEditalIdClonado(res: ClonarEditalResponseDTO | number | null | undefined): number | null {
+    if (typeof res === 'number') {
+      return Number.isFinite(res) && res > 0 ? res : null;
+    }
+    if (res && typeof res === 'object') {
+      const id = Number((res as ClonarEditalResponseDTO).id);
+      return Number.isFinite(id) && id > 0 ? id : null;
+    }
+    return null;
+  }
+
+  private buscarImagemTemplateComFallback(id: number): Observable<HttpResponse<Blob>> {
+    const urls = [
+      `${this.templateBase}/${id}/imagem`,
+      `${this.templatePublicBase}/${id}/imagem`,
+      `${this.templatePublicAltBase}/${id}/imagem`
+    ];
+    return this.buscarBlobComFallback(urls);
+  }
+
+  private buscarImagemOrgaoComFallback(orgaoId: number): Observable<HttpResponse<Blob>> {
+    const urls = [
+      `${this.orgaoAdminBase}/${orgaoId}/imagem`,
+      `${this.orgaoBase}/${orgaoId}/imagem`,
+      `${this.orgaoPublicAltBase}/${orgaoId}/imagem`,
+      `${this.orgaoBase}/public/${orgaoId}/imagem`
+    ];
+    return this.buscarBlobComFallback(urls);
+  }
+
+  private buscarOrgaoIdDoTemplate(templateId: number): Observable<number | null> {
+    const urls = [
+      `${this.templateBase}/${templateId}`,
+      `${this.templatePublicBase}/${templateId}`,
+      `${this.templatePublicAltBase}/${templateId}`
+    ];
+    return this.buscarTemplateComFallback(urls).pipe(
+      map((tpl) => {
+        const orgaoId = Number((tpl as any)?.orgaoId);
+        return Number.isFinite(orgaoId) && orgaoId > 0 ? orgaoId : null;
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  private buscarBlobComFallback(urls: string[]): Observable<HttpResponse<Blob>> {
+    const [urlAtual, ...restante] = urls;
+    if (!urlAtual) {
+      return throwError(() => new Error('Imagem não encontrada.'));
+    }
+
+    return this.http.get(urlAtual, {
+      ...this.options(),
+      observe: 'response',
+      responseType: 'blob'
+    }).pipe(
+      catchError(() => {
+        if (!restante.length) {
+          return throwError(() => new Error('Imagem não encontrada.'));
+        }
+        return this.buscarBlobComFallback(restante);
+      })
+    );
+  }
+
+  private buscarTemplateComFallback(urls: string[]): Observable<EditalTemplateDTO> {
+    const [urlAtual, ...restante] = urls;
+    if (!urlAtual) {
+      return throwError(() => new Error('Template não encontrado.'));
+    }
+
+    return this.http.get<EditalTemplateDTO>(urlAtual, this.options()).pipe(
+      catchError(() => {
+        if (!restante.length) {
+          return throwError(() => new Error('Template não encontrado.'));
+        }
+        return this.buscarTemplateComFallback(restante);
+      })
     );
   }
 }

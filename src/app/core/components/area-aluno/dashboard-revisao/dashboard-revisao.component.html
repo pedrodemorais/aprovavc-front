@@ -1,4 +1,4 @@
-<div class="container">
+﻿<div class="container">
 
 <section class="dashboard-revisao-page">
 
@@ -20,12 +20,12 @@
         <div class="hero-head-legend hero-next-legend">
           <span class="legend-item">
             <span class="legend-dot dot-vencida"></span>
-            <span class="legend-text legend-text--full">Revisao vencida</span>
+            <span class="legend-text legend-text--full">Revisão vencida</span>
             <span class="legend-text legend-text--short">Vencidas</span>
           </span>
           <span class="legend-item">
             <span class="legend-dot dot-hoje"></span>
-            <span class="legend-text legend-text--full">Revisao do dia</span>
+            <span class="legend-text legend-text--full">Revisão do dia</span>
             <span class="legend-text legend-text--short">Hoje</span>
           </span>
          
@@ -80,15 +80,15 @@
                       </div>
                       <div class="hero-kpi metric-card metric-variant-neutral">
                         <div class="hero-kpi-value metric-value">{{ formatPercent(getEditalDominio(e)) }}</div>
-                        <div class="hero-kpi-label metric-label">Dominio</div>
+                        <div class="hero-kpi-label metric-label">Domínio</div>
                       </div>
                       <div class="hero-kpi metric-card metric-variant-danger" [class.metric-variant-neutral]="getRevisoesVencidasEdital(e) === 0">
                         <div class="hero-kpi-value metric-value">{{ getRevisoesVencidasEdital(e) }}</div>
-                        <div class="hero-kpi-label metric-label">Revisoes vencidas</div>
+                        <div class="hero-kpi-label metric-label">Revisões vencidas</div>
                       </div>
                       <div class="hero-kpi metric-card metric-variant-warning" [class.metric-variant-neutral]="getRevisoesHojeEdital(e) === 0">
                         <div class="hero-kpi-value metric-value">{{ getRevisoesHojeEdital(e) }}</div>
-                        <div class="hero-kpi-label metric-label">Revisoes hoje</div>
+                        <div class="hero-kpi-label metric-label">Revisões hoje</div>
                       </div>
                     </div>
                   </div>
@@ -128,16 +128,16 @@
         <div class="planner-alert-text">
           <strong>
             <span class="planner-alert-icon" aria-hidden="true">!</span>
-            Materia concluida no planner semanal.
+            Matéria concluída no planejamento semanal.
           </strong>
-          <span>Substitua no planner: {{ textoMateriasConcluidasNoPlanner }}</span>
+          <span>Substitua no planejamento: {{ textoMateriasConcluidasNoPlanner }}</span>
         </div>
         <button
           type="button"
           class="planner-alert-action"
           (click)="irParaBlocosEstudo()"
           (pointerup)="irParaBlocosEstudo()">
-          Atualizar planner
+          Atualizar planejamento
         </button>
       </div>
 
@@ -191,8 +191,8 @@
                       class="hero-next-item-status-dot"
                       [class.status-vencida]="item.status === 'VENCIDA'"
                       [class.status-hoje]="item.status === 'EM_DIA'"
-                      [attr.aria-label]="item.status === 'VENCIDA' ? 'Revisao vencida' : 'Revisao do dia'"
-                      [attr.title]="item.status === 'VENCIDA' ? 'Revisao vencida' : 'Revisao do dia'"
+                      [attr.aria-label]="item.status === 'VENCIDA' ? 'Revisão vencida' : 'Revisão do dia'"
+                      [attr.title]="item.status === 'VENCIDA' ? 'Revisão vencida' : 'Revisão do dia'"
                       role="img"
                     ></span>
                     <span class="hero-next-topic-text">{{ item.topicoDescricao }}</span>
@@ -209,7 +209,7 @@
                 Ver mais
               </button>
               <ng-template #heroNextSemRevisoes>
-                <div class="hero-next-state">Sem revisões hoje. Vamos avançar no estudo.</div>
+                <div class="hero-next-state">{{ mensagemSemRevisoesCard }}</div>
               </ng-template>
             </div>
             <div class="hero-next-col">
@@ -248,7 +248,7 @@
           </div>
         </div>
         <ng-template #heroNextLoading>
-          <div class="hero-next-state">Carregando sugestao...</div>
+          <div class="hero-next-state">Carregando sugestão...</div>
         </ng-template>
       </div>
 
@@ -262,7 +262,7 @@
               tooltipPosition="top"
               [showDelay]="150"
               [hideDelay]="80"
-              aria-label="Informacoes sobre plano de ataque"
+              aria-label="Informações sobre plano de ataque"
               tabindex="0"></i>
           </div>
           <div class="plan-value">{{ planoAtaqueSemana.length }}</div>
@@ -445,7 +445,7 @@
         <ul class="modal-list">
           <li>Cadastre matérias e tópicos para criar seu conteúdo.</li>
           <li>O sistema cria revisões automáticas e prioriza o que importa.</li>
-          <li>O Centro de Estudo mostra o proximo passo a seguir.</li>
+          <li>O Centro de Estudo mostra o próximo passo a seguir.</li>
         </ul>
       </div>
     </div>
@@ -483,3 +483,6 @@
 
 </section>
 </div>
+
+
+

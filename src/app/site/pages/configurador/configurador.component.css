@@ -158,6 +158,12 @@ select:focus {
   color: #dc2626;
 }
 
+.info {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
 /* Ações */
 .acoes {
   display: flex;

@@ -2207,10 +2207,22 @@ export class PainelAdminComponent implements OnInit {
     }).subscribe({
       next: (res) => {
         this.resultadoClone = res;
-        this.exibirMensagemOk(`Clone realizado. Edital criado: ID ${res}`);
+        const editalId = this.extrairIdClone(res);
+        this.exibirMensagemOk(`Clone realizado. Edital criado: ID ${editalId ?? '-'}`);
       },
       error: (err) => this.tratarErro(err, 'Falha ao clonar (possivel rota diferente ou permissao).')
     });
+  }
+
+  private extrairIdClone(res: any): number | null {
+    if (typeof res === 'number') {
+      return Number.isFinite(res) ? res : null;
+    }
+    if (res && typeof res === 'object') {
+      const id = Number(res.id);
+      return Number.isFinite(id) ? id : null;
+    }
+    return null;
   }
 
   // =========================

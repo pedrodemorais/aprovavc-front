@@ -62,6 +62,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   linhasFixasPorBloco: Array<Array<{ item: BlocoEstudoItemDTO | null }>> = [];
   blocoHoraInputs: string[] = [];
   blocoHoraErrors: Array<string | null> = [];
+  horasMateriaInputs: Record<string, string> = {};
 
   blocoCopiaOrigem: number | null = null;
   blocoCopiaDestino: number | null = null;
@@ -84,6 +85,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   mensagemTexto = '';
   mensagemTipo: 'success' | 'error' | 'warn' | null = null;
   private mensagemTimeoutId: number | null = null;
+  private tentativaAutoAtivarPadrao = false;
+  private autopreenchimentoExecutado = false;
+  private autopreenchimentoEmExecucao = false;
 
   constructor(
     private fb: FormBuilder,
@@ -230,6 +234,20 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     return this.minutosParaTexto(this.totalCicloMinutos);
   }
 
+  get diasPlanejados(): number {
+    return (this.blocos || []).filter((bloco) => this.isBlocoPlanejado(bloco)).length;
+  }
+
+  get mediaDiariaTexto(): string {
+    const dias = this.diasPlanejados;
+    if (!dias) return '0 min';
+    return this.minutosParaTexto(Math.round(this.totalCicloMinutos / dias));
+  }
+
+  get materiasPlanejadasSemana(): number {
+    return (this.blocos || []).reduce((acc, bloco) => acc + this.obterItensOrdenados(bloco).length, 0);
+  }
+
   get minutosDistribuidos(): number[] {
     return this.calcularDistribuicaoMinutos();
   }
@@ -274,24 +292,59 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     this.carregandoEditais = true;
 
     this.editalService.listar()
-      .pipe(finalize(() => (this.carregandoEditais = false)))
       .subscribe({
         next: (lista) => {
           this.editais = lista || [];
-          this.activeEditais = (this.editais || []).filter((e) => e?.ativo);
-          this.editalAtivo = this.activeEditais[0] || null;
-          const nomes = this.activeEditais.map((e) => e.nome).filter(Boolean);
-          this.editalAtivoNome = nomes.length ? nomes.join(' / ') : 'Nenhum edital selecionado';
-          const ids = new Set<number>();
-          this.activeEditais.forEach((e) => {
-            (e?.materias || [])
-              .map((m) => m.materiaId)
-              .filter((id) => Number.isFinite(id))
-              .forEach((id) => ids.add(id));
-          });
-          this.materiasFiltroIds = ids;
-          this.carregarImagemEditalAtivo();
-          this.atualizarMateriasOptions();
+          if (!this.tentativaAutoAtivarPadrao) {
+            this.editalService.garantirEditalPadraoAtivo(this.editais).subscribe({
+              next: (ativouPadrao) => {
+                if (!ativouPadrao) {
+                  return;
+                }
+                this.tentativaAutoAtivarPadrao = true;
+                this.carregarEditais();
+              },
+              error: () => {}
+            });
+          }
+          this.recalcularContextoEditaisAtivos();
+
+          const editaisSemMaterias = this.activeEditais.filter(
+            (e) => !this.editalTemMateriasCarregadas(e) && Number((e as any)?.id) > 0
+          );
+          if (!editaisSemMaterias.length) {
+            this.carregandoEditais = false;
+            return;
+          }
+
+          const requests = editaisSemMaterias.map((e) =>
+            this.editalService.buscarPorId(Number((e as any).id))
+          );
+
+          forkJoin(requests)
+            .pipe(finalize(() => (this.carregandoEditais = false)))
+            .subscribe({
+              next: (detalhes) => {
+                const detalhesPorId = new Map<number, Edital>();
+                (detalhes || []).forEach((detalhe) => {
+                  const id = Number((detalhe as any)?.id);
+                  if (Number.isFinite(id) && id > 0) {
+                    detalhesPorId.set(id, detalhe);
+                  }
+                });
+
+                this.editais = (this.editais || []).map((edital) => {
+                  const id = Number((edital as any)?.id);
+                  const detalhe = detalhesPorId.get(id);
+                  return detalhe ? { ...edital, materias: detalhe.materias || [] } : edital;
+                });
+
+                this.recalcularContextoEditaisAtivos();
+              },
+              error: () => {
+                this.recalcularContextoEditaisAtivos();
+              }
+            });
         },
         error: () => {
           this.activeEditais = [];
@@ -300,8 +353,85 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.materiasFiltroIds = new Set<number>();
           this.limparImagemEditalAtivo();
           this.atualizarMateriasOptions();
+          this.carregandoEditais = false;
         }
       });
+  }
+
+  isDiaPlanejado(index: number): boolean {
+    const bloco = this.blocos[index];
+    if (!bloco) return false;
+    return this.isBlocoPlanejado(bloco);
+  }
+
+  resumoDia(index: number): string {
+    const bloco = this.blocos[index];
+    if (!bloco) return 'Sem plano';
+    const materias = this.obterItensOrdenados(bloco).length;
+    const minutos = bloco.minutosDisponiveis ?? 0;
+    if (!materias && !minutos) return 'Sem plano';
+    if (!materias) return `${this.minutosParaTexto(minutos)}`;
+    return `${materias} mat - ${this.minutosParaTexto(minutos)}`;
+  }
+
+  resumoDiaMini(index: number): string {
+    const bloco = this.blocos[index];
+    if (!bloco) return 'Sem plano';
+    const materias = this.obterItensOrdenados(bloco).length;
+    const minutos = bloco.minutosDisponiveis ?? 0;
+    if (!materias && !minutos) return 'Sem plano';
+    if (!materias) return this.minutosParaTexto(minutos);
+    return `${materias} mat`;
+  }
+
+  getDiaCurto(index: number): string {
+    const nomes = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+    return nomes[index] || this.getNomeDiaSemanaSemFeira(index).slice(0, 3);
+  }
+
+  irParaHoje(): void {
+    this.showWeekly = false;
+    this.selecionarBloco(this.getDiaAtualIndex());
+  }
+
+  getTotalMateriasBloco(index: number): number {
+    const bloco = this.blocos[index];
+    if (!bloco) return 0;
+    return this.obterItensOrdenados(bloco).length;
+  }
+
+  private recalcularContextoEditaisAtivos(): void {
+    this.activeEditais = (this.editais || []).filter((e) => e?.ativo);
+    this.editalAtivo = this.activeEditais[0] || null;
+    const nomes = this.activeEditais.map((e) => e.nome).filter(Boolean);
+    this.editalAtivoNome = nomes.length ? nomes.join(' / ') : 'Nenhum edital selecionado';
+    this.materiasFiltroIds = this.extrairMateriaIdsDeEditais(this.activeEditais);
+    this.carregarImagemEditalAtivo();
+    this.atualizarMateriasOptions();
+    this.tentarAutoPreencherPlanejamentoInicial();
+  }
+
+  private editalTemMateriasCarregadas(edital: Edital): boolean {
+    return (edital?.materias || []).length > 0;
+  }
+
+  private extrairMateriaIdsDeEditais(editais: Edital[]): Set<number> {
+    const ids = new Set<number>();
+    (editais || []).forEach((edital) => {
+      (edital?.materias || []).forEach((materia: any) => {
+        if (materia?.ativo === false) return;
+        const rawId =
+          materia?.materiaId ??
+          materia?.idMateria ??
+          materia?.materia?.id ??
+          materia?.id;
+        const materiaId = Number(rawId);
+        if (Number.isFinite(materiaId) && materiaId > 0) {
+          ids.add(materiaId);
+        }
+      });
+    });
+    return ids;
   }
 
   private carregarImagemEditalAtivo(): void {
@@ -479,6 +609,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       .filter((m) => !aplicarFiltro || this.materiasFiltroIds.has(m.id))
       .map(m => ({ label: m.nome, value: m.id }))
       .sort((a, b) => a.label.localeCompare(b.label));
+    this.tentarAutoPreencherPlanejamentoInicial();
   }
 
   carregarBlocos(): void {
@@ -495,12 +626,13 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
             this.selectedDayIndex = this.getDiaAtualIndex();
             this.abaAtiva = this.selectedDayIndex;
             this.montarForm(this.blocos[this.abaAtiva]);
-            this.sincronizarInputsPorBloco();
-            this.inicializarLinhasFixas();
-            this.atualizarOrdemSemanal();
-            this.setMensagem('warn', 'Nenhum bloco veio do backend. Exibindo 7 blocos padrao.');
-            return;
-          }
+          this.sincronizarInputsPorBloco();
+          this.inicializarLinhasFixas();
+          this.atualizarOrdemSemanal();
+          this.setMensagem('warn', 'Nenhum bloco veio do backend. Exibindo 7 blocos padrao.');
+          this.tentarAutoPreencherPlanejamentoInicial();
+          return;
+        }
 
           this.blocos = lista;
           this.selectedDayIndex = Math.min(this.getDiaAtualIndex(), this.blocos.length - 1);
@@ -509,6 +641,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.sincronizarInputsPorBloco();
           this.inicializarLinhasFixas();
           this.atualizarOrdemSemanal();
+          this.tentarAutoPreencherPlanejamentoInicial();
         },
         error: () => {
           this.blocos = this.criarBlocosPadrao();
@@ -519,8 +652,15 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.inicializarLinhasFixas();
           this.atualizarOrdemSemanal();
           this.setMensagem('error', 'Falha ao carregar blocos. Mostrando blocos padrao.');
+          this.tentarAutoPreencherPlanejamentoInicial();
         }
       });
+  }
+
+  private isBlocoPlanejado(bloco: BlocoEstudoDTO): boolean {
+    const minutos = bloco?.minutosDisponiveis ?? 0;
+    const materias = this.obterItensOrdenados(bloco).length;
+    return minutos > 0 || materias > 0;
   }
 
   carregarRevisoesDashboard(): void {
@@ -551,6 +691,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
 
   montarForm(bloco: BlocoEstudoDTO): void {
+    this.inicializarPesosBloco(bloco);
     this.form = this.fb.group({
       minutosDisponiveis: this.fb.control(bloco.minutosDisponiveis ?? 0, {
         nonNullable: true,
@@ -711,13 +852,23 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
 
   salvar(): void {
+    if (!this.sincronizarHorasMateriaNoBloco(this.abaAtiva)) {
+      return;
+    }
+    this.atualizarBlocoAtualComForm();
+    const erroBlocoAtual = this.blocoErroMensagem(this.abaAtiva);
+    if (erroBlocoAtual) {
+      this.setMensagem('warn', erroBlocoAtual);
+      return;
+    }
+
     const blocoNumero = this.blocos[this.abaAtiva]?.numero ?? (this.abaAtiva + 1);
 
     const minutosDisponiveis = this.form.controls.minutosDisponiveis.value ?? 0;
     const itensPayload = this.itensFormArray.controls.map((ctrl, idx) => ({
-      id: ctrl.controls.id.value ?? undefined,
       materiaEstudoId: ctrl.controls.materiaEstudoId.value,
-      ordem: idx + 1
+      ordem: idx + 1,
+      peso: ctrl.controls.peso.value ?? undefined
     }));
 
     const payload = { minutosDisponiveis, itens: itensPayload };
@@ -762,6 +913,12 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
 
   salvarTodos(): void {
+    for (let i = 0; i < this.blocos.length; i += 1) {
+      if (!this.sincronizarHorasMateriaNoBloco(i)) {
+        return;
+      }
+    }
+
     if (this.temBlocosInvalidos) {
       this.setMensagem('warn', 'Ajuste os blocos antes de salvar.');
       return;
@@ -780,9 +937,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     const requests = blocosParaSalvar.map((bloco) => {
       const itens = this.obterItensOrdenados(bloco);
       const itensPayload = itens.map((it, idx) => ({
-        id: it.id ?? undefined,
         materiaEstudoId: it.materiaEstudoId,
-        ordem: idx + 1
+        ordem: idx + 1,
+        peso: it.peso ?? undefined
       }));
 
       return this.blocosService.atualizarBloco(bloco.numero, {
@@ -872,12 +1029,14 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   private atualizarBlocoAtualComForm(): void {
     const bloco = this.blocos[this.abaAtiva];
     if (!bloco) return;
+    const itensAtuaisOrdenados = this.obterItensOrdenados(bloco);
     bloco.minutosDisponiveis = this.form.controls.minutosDisponiveis.value ?? 0;
     bloco.itens = this.itensFormArray.controls.map((ctrl, idx) => ({
       id: ctrl.controls.id.value ?? undefined,
       materiaEstudoId: ctrl.controls.materiaEstudoId.value,
       materiaNome: ctrl.controls.materiaNome.value ?? this.nomeMateria(ctrl.controls.materiaEstudoId.value),
-      ordem: idx + 1
+      ordem: idx + 1,
+      peso: ctrl.controls.peso.value ?? itensAtuaisOrdenados[idx]?.peso ?? undefined
     }));
   }
 
@@ -898,7 +1057,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     const bloco = this.blocos[index];
     if (!bloco) return '';
     const minutos = bloco.minutosDisponiveis ?? 0;
-    const itens = bloco.itens || [];
+    const itens = this.obterItensOrdenados(bloco);
+    const materiaComHoraZerada = itens.some((item) => (Number(item?.peso) || 0) <= 0);
+    if (itens.length > 0 && materiaComHoraZerada) return 'Todas as materias devem ter horas maiores que zero.';
     if (minutos <= 0 && itens.length > 0) return 'Informe as horas deste bloco.';
     return '';
   }
@@ -978,7 +1139,8 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       id: undefined,
       materiaEstudoId: materiaId,
       materiaNome,
-      ordem: itens.length + 1
+      ordem: itens.length + 1,
+      peso: 0
     });
 
     bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
@@ -989,6 +1151,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.montarForm(bloco);
       this.form.markAsDirty();
     }
+    this.recalcularHorasLiquidasDoBloco(blocoIndex);
   }
 
   removerMateriaBloco(blocoIndex: number, linha: number): void {
@@ -1009,6 +1172,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.montarForm(bloco);
       this.form.markAsDirty();
     }
+    this.recalcularHorasLiquidasDoBloco(blocoIndex);
   }
 
   iniciarSubstituicao(blocoIndex: number, itemIndex: number): void {
@@ -1210,6 +1374,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     const base = itens[itemIndex];
     itens[itemIndex] = {
       ...base,
+      id: undefined,
       materiaEstudoId: materiaId,
       materiaNome
     };
@@ -1259,6 +1424,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.montarForm(bloco);
       this.form.markAsDirty();
     }
+    this.recalcularHorasLiquidasDoBloco(blocoIndex);
   }
 
   abrirCopiaPanel(blocoIndex: number, event: Event): void {
@@ -1290,7 +1456,8 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       id: undefined,
       materiaEstudoId: item.materiaEstudoId,
       materiaNome: item.materiaNome ?? this.nomeMateria(item.materiaEstudoId),
-      ordem: idx + 1
+      ordem: idx + 1,
+      peso: item.peso ?? 0
     }));
     this.atualizarLinhasFixas(destinoIndex);
 
@@ -1305,6 +1472,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.montarForm(destino);
       this.form.markAsDirty();
     }
+    this.recalcularHorasLiquidasDoBloco(destinoIndex);
   }
 
   private sincronizarInputsPorBloco(): void {
@@ -1315,5 +1483,264 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     this.materiaSelecionadaPorLinha = this.blocos.map(() =>
       Array.from({ length: this.linhasPorBloco }, () => null)
     );
+  }
+
+  getHorasMateriaInput(blocoIndex: number, linhaIndex: number, item: BlocoEstudoItemDTO): string {
+    const key = `${blocoIndex}-${linhaIndex}`;
+    if (this.horasMateriaInputs[key] != null) {
+      return this.horasMateriaInputs[key];
+    }
+    return this.formatMinutosParaHora(Math.max(0, Number(item?.peso ?? 0) || 0));
+  }
+
+  onHorasMateriaChange(blocoIndex: number, linhaIndex: number, valor: string): void {
+    const key = `${blocoIndex}-${linhaIndex}`;
+    this.horasMateriaInputs[key] = valor;
+  }
+
+  onHorasMateriaBlur(blocoIndex: number, linhaIndex: number, item: BlocoEstudoItemDTO): void {
+    const key = `${blocoIndex}-${linhaIndex}`;
+    const valor = this.horasMateriaInputs[key] ?? '';
+    const resultado = this.parseHora(valor);
+    if (resultado.erro || resultado.minutos == null) {
+      this.horasMateriaInputs[key] = this.formatMinutosParaHora(Math.max(0, Number(item?.peso ?? 0) || 0));
+      return;
+    }
+
+    item.peso = resultado.minutos;
+    this.horasMateriaInputs[key] = this.formatMinutosParaHora(resultado.minutos);
+    if (blocoIndex === this.abaAtiva) {
+      const itemCtrl = this.itensFormArray.at(linhaIndex);
+      if (itemCtrl) {
+        itemCtrl.controls.peso.setValue(resultado.minutos);
+      }
+    }
+    this.recalcularHorasLiquidasDoBloco(blocoIndex);
+  }
+
+  abrirPickerHora(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    if (!input) return;
+    try {
+      const anyInput = input as any;
+      if (typeof anyInput.showPicker === 'function') {
+        anyInput.showPicker();
+      }
+    } catch {}
+  }
+
+  private recalcularHorasLiquidasDoBloco(blocoIndex: number): void {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return;
+
+    const total = this.obterItensOrdenados(bloco).reduce((acc, it) => acc + (Number(it?.peso) || 0), 0);
+    bloco.minutosDisponiveis = Math.max(0, total);
+    this.blocoHoraInputs[blocoIndex] = this.formatMinutosParaHora(bloco.minutosDisponiveis);
+    this.blocoHoraErrors[blocoIndex] = null;
+
+    if (this.abaAtiva === blocoIndex && this.form?.controls?.minutosDisponiveis) {
+      this.form.controls.minutosDisponiveis.setValue(bloco.minutosDisponiveis);
+      this.form.markAsDirty();
+    }
+  }
+
+  private inicializarPesosBloco(bloco: BlocoEstudoDTO): void {
+    const itens = this.obterItensOrdenados(bloco);
+    if (!itens.length) return;
+    const algumComPeso = itens.some((it) => Number.isFinite(Number(it?.peso)));
+    if (algumComPeso) return;
+
+    const total = Math.max(0, bloco.minutosDisponiveis ?? 0);
+    const base = Math.floor(total / itens.length);
+    let resto = total - base * itens.length;
+
+    itens.forEach((it) => {
+      it.peso = base + (resto > 0 ? 1 : 0);
+      if (resto > 0) resto -= 1;
+    });
+  }
+
+  private sincronizarHorasMateriaNoBloco(blocoIndex: number): boolean {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return true;
+
+    const itens = this.obterItensOrdenados(bloco);
+    for (let li = 0; li < itens.length; li += 1) {
+      const key = `${blocoIndex}-${li}`;
+      const valor = this.horasMateriaInputs[key];
+      if (valor == null) continue;
+
+      const resultado = this.parseHora(valor);
+      if (resultado.erro || resultado.minutos == null) {
+        this.setMensagem('warn', 'Hora invalida em uma materia. Ajuste antes de salvar.');
+        return false;
+      }
+
+      itens[li].peso = resultado.minutos;
+      this.horasMateriaInputs[key] = this.formatMinutosParaHora(resultado.minutos);
+      if (blocoIndex === this.abaAtiva) {
+        const itemCtrl = this.itensFormArray.at(li);
+        if (itemCtrl) {
+          itemCtrl.controls.peso.setValue(resultado.minutos);
+        }
+      }
+    }
+
+    bloco.itens = itens.map((item, idx) => ({ ...item, ordem: idx + 1 }));
+    this.recalcularHorasLiquidasDoBloco(blocoIndex);
+    return true;
+  }
+
+  private tentarAutoPreencherPlanejamentoInicial(): void {
+    if (this.autopreenchimentoExecutado || this.autopreenchimentoEmExecucao) return;
+    if (!this.temEditalAtivo) return;
+    if (!this.blocos?.length) return;
+    if (!this.semanaEstaVazia()) {
+      this.autopreenchimentoExecutado = true;
+      return;
+    }
+
+    const poolIds = this.obterPoolMateriasAtivasParaAutoplano();
+    if (!poolIds.length) return;
+
+    const itensPorDia = this.gerarDistribuicaoAutoplano(poolIds);
+    const minutosPorMateria = 60;
+
+    for (let dia = 0; dia < Math.min(6, this.blocos.length); dia += 1) {
+      const bloco = this.blocos[dia];
+      const idsDia = itensPorDia[dia] || [];
+      bloco.itens = idsDia.map((materiaId, idx) => ({
+        id: undefined,
+        materiaEstudoId: materiaId,
+        materiaNome: this.nomeMateria(materiaId),
+        ordem: idx + 1,
+        peso: minutosPorMateria
+      }));
+      bloco.minutosDisponiveis = idsDia.length * minutosPorMateria;
+    }
+
+    if (this.blocos.length > 6) {
+      const domingo = this.blocos[6];
+      domingo.itens = [];
+      domingo.minutosDisponiveis = 0;
+    }
+
+    this.autopreenchimentoExecutado = true;
+    this.autopreenchimentoEmExecucao = true;
+    const blocosParaPersistir = this.blocos.filter((bloco) => {
+      const minutos = Number(bloco?.minutosDisponiveis || 0);
+      const itens = this.obterItensOrdenados(bloco);
+      return minutos > 0 && itens.length > 0;
+    });
+
+    if (!blocosParaPersistir.length) {
+      this.autopreenchimentoEmExecucao = false;
+      return;
+    }
+
+    const requests = blocosParaPersistir.map((bloco) => {
+      const itens = this.obterItensOrdenados(bloco);
+      return this.blocosService.atualizarBloco(bloco.numero, {
+        minutosDisponiveis: bloco.minutosDisponiveis ?? 0,
+        itens: itens.map((it, idx) => ({
+          materiaEstudoId: it.materiaEstudoId,
+          ordem: idx + 1,
+          peso: it.peso ?? undefined
+        }))
+      });
+    });
+
+    forkJoin(requests)
+      .pipe(finalize(() => (this.autopreenchimentoEmExecucao = false)))
+      .subscribe({
+        next: (blocosAtualizados) => {
+          (blocosAtualizados || []).forEach((blocoAtualizado) => {
+            const idx = this.blocos.findIndex((b) => b.numero === blocoAtualizado.numero);
+            if (idx >= 0) this.blocos[idx] = blocoAtualizado;
+          });
+          this.blocos = this.blocos.slice().sort((a, b) => a.numero - b.numero);
+          this.selectedDayIndex = Math.min(this.getDiaAtualIndex(), this.blocos.length - 1);
+          this.abaAtiva = this.selectedDayIndex;
+          this.montarForm(this.blocos[this.abaAtiva]);
+          this.sincronizarInputsPorBloco();
+          this.inicializarLinhasFixas();
+          this.atualizarOrdemSemanal();
+          this.setMensagem('success', 'Plano semanal inicial preenchido automaticamente.');
+        },
+        error: () => {
+          this.setMensagem('warn', 'Nao foi possivel preencher automaticamente o plano inicial.');
+        }
+      });
+  }
+
+  private semanaEstaVazia(): boolean {
+    return (this.blocos || []).every((bloco) => {
+      const itens = this.obterItensOrdenados(bloco);
+      const minutos = Number(bloco?.minutosDisponiveis || 0);
+      return itens.length === 0 && minutos <= 0;
+    });
+  }
+
+  private obterPoolMateriasAtivasParaAutoplano(): number[] {
+    const ids = this.materiasOptions
+      .map((opt) => Number(opt.value))
+      .filter((id) => Number.isFinite(id) && id > 0)
+      .slice(0, 6);
+    return ids;
+  }
+
+  private gerarDistribuicaoAutoplano(poolIds: number[]): number[][] {
+    const dias = 6;
+    const slotsPorDia = 3;
+    const distribuicao: number[][] = Array.from({ length: dias }, () => []);
+    const restante = new Map<number, number>(poolIds.map((id) => [id, 2]));
+    const alvo = poolIds.length * 2;
+    let alocados = 0;
+    let cursorDia = 0;
+    let guard = 0;
+
+    while (alocados < alvo && guard < 1000) {
+      guard += 1;
+      const dia = cursorDia % dias;
+      cursorDia += 1;
+
+      if (distribuicao[dia].length >= slotsPorDia) {
+        continue;
+      }
+
+      const candidatos = poolIds.filter((id) => {
+        const falta = restante.get(id) || 0;
+        if (falta <= 0) return false;
+        if (distribuicao[dia].includes(id)) return false;
+        return true;
+      });
+
+      if (!candidatos.length) {
+        continue;
+      }
+
+      const diaAnterior = dia > 0 ? distribuicao[dia - 1] : [];
+      const semRepetirDiaAnterior = candidatos.filter((id) => !diaAnterior.includes(id));
+      const universoEscolha = semRepetirDiaAnterior.length ? semRepetirDiaAnterior : candidatos;
+
+      const escolhida = universoEscolha
+        .slice()
+        .sort((a, b) => {
+          const ra = restante.get(a) || 0;
+          const rb = restante.get(b) || 0;
+          if (rb !== ra) return rb - ra;
+          return a - b;
+        })[0];
+
+      if (!escolhida) {
+        continue;
+      }
+
+      distribuicao[dia].push(escolhida);
+      restante.set(escolhida, Math.max(0, (restante.get(escolhida) || 0) - 1));
+      alocados += 1;
+    }
+
+    return distribuicao;
   }
 }

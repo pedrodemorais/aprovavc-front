@@ -167,10 +167,11 @@
         </ul>
 
         <ng-template #menuItemTpl let-item>
-          <li class="menu-item" [class.has-children]="item.items?.length" [class.menu-item--logout]="item.label === 'Sair'">
+          <li class="menu-item" [ngClass]="item.styleClass" [class.has-children]="item.items?.length" [class.menu-item--logout]="item.label === 'Sair'">
             <a
               *ngIf="item.routerLink; else menuButton"
               class="menu-link"
+              [class.menu-link--section]="item.styleClass === 'menu-section-title'"
               [routerLink]="item.routerLink"
               routerLinkActive="is-active"
               [class.is-disabled]="item.disabled"
@@ -178,7 +179,7 @@
               [attr.title]="item.title || item.label"
               (click)="onMenuItemClick($event, item)"
             >
-              <span class="menu-icon">
+              <span class="menu-icon" *ngIf="item.icon">
                 <i class="pi" [ngClass]="item.icon || ''"></i>
               </span>
               <span class="menu-text">{{ item.label }}</span>
@@ -188,12 +189,13 @@
               <button
                 type="button"
                 class="menu-link"
+                [class.menu-link--section]="item.styleClass === 'menu-section-title'"
                 [class.is-disabled]="item.disabled"
                 [attr.aria-disabled]="item.disabled || null"
                 [attr.title]="item.title || item.label"
                 (click)="onMenuItemClick($event, item)"
               >
-                <span class="menu-icon">
+                <span class="menu-icon" *ngIf="item.icon">
                   <i class="pi" [ngClass]="item.icon || ''"></i>
                 </span>
                 <span class="menu-text">{{ item.label }}</span>

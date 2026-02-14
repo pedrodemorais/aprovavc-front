@@ -32,6 +32,7 @@
           <div class="form-group">
             <label for="email">Email</label>
             <input type="email" id="email" class="form-control" placeholder="Digite seu email" formControlName="email"
+              autocapitalize="none" spellcheck="false"
               required />
             <p *ngIf="configuradorForm.get('email')?.invalid && configuradorForm.get('email')?.touched" class="error">
               Email inválido.
@@ -54,6 +55,22 @@
             <p *ngIf="configuradorForm.get('confirmSenha')?.value !== configuradorForm.get('senha')?.value && configuradorForm.get('confirmSenha')?.touched"
               class="error">
               As senhas não coincidem.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="editalTemplateId">Edital</label>
+            <select id="editalTemplateId" formControlName="editalTemplateId" [disabled]="carregandoEditaisTemplates" required>
+              <option value="">Selecione um edital</option>
+              <option *ngFor="let edital of editaisTemplates" [value]="edital.id">
+                {{ edital.nome }}
+              </option>
+            </select>
+            <p *ngIf="carregandoEditaisTemplates" class="info">Carregando editais...</p>
+            <p *ngIf="erroEditaisTemplates" class="error">{{ erroEditaisTemplates }}</p>
+            <p *ngIf="configuradorForm.get('editalTemplateId')?.invalid && configuradorForm.get('editalTemplateId')?.touched"
+              class="error">
+              Edital obrigatório.
             </p>
           </div>
         </div>

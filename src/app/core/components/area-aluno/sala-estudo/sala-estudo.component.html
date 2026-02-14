@@ -401,9 +401,19 @@
                                 FRENTE
                               </span>
 
-                              <span class="meta-contagem">
-                                {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
-                              </span>
+                              <div class="flashcard-header-actions">
+                                <span class="meta-contagem">
+                                  {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
+                                </span>
+                                <button
+                                  type="button"
+                                  class="flashcard-close-btn"
+                                  aria-label="Fechar flashcards"
+                                  title="Fechar flashcards"
+                                  (click)="fecharRevisaoFlashcards($event)">
+                                  &times;
+                                </button>
+                              </div>
                             </div>
 
                           
@@ -420,7 +430,7 @@
                               </span>
 
                               <span class="meta-tags" *ngIf="flashcardAtual?.tags">
-                                {{ flashcardAtual?.tags }}
+                                {{ formatarTagsFlashcard(flashcardAtual?.tags) }}
                               </span>
 
                               <span class="meta-hint">
@@ -435,9 +445,19 @@
                                 VERSO
                               </span>
 
-                              <span class="meta-contagem">
-                                {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
-                              </span>
+                              <div class="flashcard-header-actions">
+                                <span class="meta-contagem">
+                                  {{ flashcardIndexAtual + 1 }} / {{ flashcards.length }}
+                                </span>
+                                <button
+                                  type="button"
+                                  class="flashcard-close-btn"
+                                  aria-label="Fechar flashcards"
+                                  title="Fechar flashcards"
+                                  (click)="fecharRevisaoFlashcards($event)">
+                                  &times;
+                                </button>
+                              </div>
                             </div>
 
                         
@@ -476,7 +496,7 @@
                               </span>
 
                               <span class="meta-tags" *ngIf="flashcardAtual?.tags">
-                                {{ flashcardAtual?.tags }}
+                                {{ formatarTagsFlashcard(flashcardAtual?.tags) }}
                               </span>
 
                               <span class="meta-hint">
@@ -881,7 +901,10 @@
   <div class="split-overlay" *ngIf="mostrarModalSplit">
     <div class="split-modal">
       <header class="split-header">
-        <h2 class="split-title">Editar</h2>
+        <div class="split-title-wrap">
+          <h2 class="split-title">Editar tópico</h2>
+          <p class="split-subtitle">Organize os subtópicos e ajuste o título principal.</p>
+        </div>
         <button type="button" class="split-fechar" (click)="fecharModalSplit()">x</button>
       </header>
 
@@ -895,8 +918,18 @@
       </div>
 
       <div class="split-list" cdkDropList (cdkDropListDropped)="onSplitDrop($event)">
+        <div class="split-hint">
+          <span class="pi pi-arrows-v"></span>
+          Arraste pela alça para reordenar
+        </div>
         <div class="split-row" *ngFor="let item of splitNovos; let i = index; trackBy: trackByIndex" cdkDrag>
-          <button type="button" class="split-handle" cdkDragHandle aria-label="Arrastar subtopico">
+          <button
+            type="button"
+            class="split-handle"
+            cdkDragHandle
+            pTooltip="Arraste para reordenar"
+            tooltipPosition="top"
+            aria-label="Arrastar subtopico">
             <span class="pi pi-bars"></span>
           </button>
           <input

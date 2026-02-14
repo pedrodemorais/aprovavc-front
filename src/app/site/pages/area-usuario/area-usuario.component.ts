@@ -1,4 +1,4 @@
-import {
+﻿import {
   Component,
   OnInit,
   OnDestroy,
@@ -39,7 +39,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   hasMaterias = true;
   isAdmin = false;
 
-  // 🔥 Controle de assinatura
+  // ðŸ”¥ Controle de assinatura
   assinaturaValida = true;
 
   private destroy$ = new Subject<void>();
@@ -110,26 +110,26 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
 
-    // 1) Já se inscreve pra reagir a MUDANÇAS (login, renovação, expiração, etc.)
+    // 1) JÃ¡ se inscreve pra reagir a MUDANÃ‡AS (login, renovaÃ§Ã£o, expiraÃ§Ã£o, etc.)
     this.authService.assinaturaValida$
       .pipe(takeUntil(this.destroy$))
       .subscribe(valida => {
-        console.log('📡 [MENU] assinaturaValida mudou para:', valida);
+        console.log('ðŸ“¡ [MENU] assinaturaValida mudou para:', valida);
         this.assinaturaValida = valida;
         this.montarMenu();
       });
 
-    // 2) Checa no backend como está a assinatura AGORA
+    // 2) Checa no backend como estÃ¡ a assinatura AGORA
     this.authService.checarAssinaturaNoBack()
       .pipe(takeUntil(this.destroy$))
       .subscribe((valida) => {
-        console.log('📡 [MENU] Resultado checagem no back:', valida);
+        console.log('ðŸ“¡ [MENU] Resultado checagem no back:', valida);
         this.assinaturaValida = valida;
         this.montarMenu();
       });
   }
 
-  // ✅ CLICK FORA (CAPTURE) — funciona mesmo com stopPropagation do PrimeNG
+  // âœ… CLICK FORA (CAPTURE) â€” funciona mesmo com stopPropagation do PrimeNG
   private onDocPointerDown = (event: Event) => {
     const target = event.target as HTMLElement | null;
     if (!target) return;
@@ -171,7 +171,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ✅ ESC fecha o painel do som (mantém o que você já tinha funcionando)
+  // âœ… ESC fecha o painel do som (mantÃ©m o que vocÃª jÃ¡ tinha funcionando)
   @HostListener('window:resize')
   onResize(): void {
     this.agendarMenuOffset();
@@ -278,119 +278,86 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   private montarMenu(): void {
     const isLocked = !this.assinaturaValida;
 
-    const adminItem: MenuItem = {
-      label: 'Painel Adm',
-      icon: 'pi pi-shield',
-      items: [
-        {
-          label: 'Cadastrar Consurso',
-          icon: 'pi pi-file-edit',
-          routerLink: ['/area-restrita/admin/painel'],
-          command: () => this.router.navigate(['/area-restrita/admin/painel'])
-        },
-        {
-          label: 'Cadastros base',
-          icon: 'pi pi-database',
-          routerLink: ['/area-restrita/admin/cadastro-base'],
-          command: () => this.router.navigate(['/area-restrita/admin/cadastro-base'])
-        }
-      ]
-    };
-
-    const menuPrincipal: MenuItem = {
-      label: 'Menu principal',
-      icon: 'pi pi-compass',
-      items: [
-        {
-          label: 'Hoje',
-          icon: 'pi pi-calendar',
-          routerLink: ['/area-restrita/dashboard'],
-          disabled: isLocked
-        },
-      
-     
-        {
-          label: 'Estudar',
-          icon: 'pi pi-book',
-           routerLink: ['/area-restrita/estudar-materias'],
-            disabled: isLocked || !this.hasMaterias,
-              title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-         
-          
-        },
-        {
-          label: 'Biblioteca',
-          icon: 'pi pi-bookmark',
-          routerLink: ['/area-restrita/biblioteca'],
-          disabled: isLocked || !this.hasMaterias,
-          title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-        },
-
-
-        
-        {
-          label: 'Revisar',
-          icon: 'pi pi-undo',
-           routerLink: ['/area-restrita/revisoes'],
-         
-           
-          
-        },
-        {
-          label: 'Progresso',
-          icon: 'pi pi-chart-line',
-           routerLink: ['/area-restrita/progresso'],
-         
-        }
-      ]
-    };
-
-    const menuSecundario: MenuItem = {
-      label: 'Menu secundario',
-      icon: 'pi pi-th-large',
-      items: [
-        {
-           label: 'Meus Editais',
-              icon: 'pi pi-folder-open',
-              routerLink: ['/area-restrita/editais'],
-              disabled: isLocked
-         
-        },
-         {
-           label: 'Minhas Matérias',
-              icon: 'pi pi-book',
-              routerLink: ['/area-restrita/cad-materias'],
-              disabled: isLocked
-         
-            
-          
-        },
-              {
-     label: 'Planejamento de Estudo',
-      icon: 'pi pi-table',
-      routerLink: ['/area-restrita/blocos-estudo'],
-      disabled: isLocked || !this.hasMaterias,
-      title: !this.hasMaterias ? 'Cadastre matérias primeiro' : undefined
-
-
-},
-        {
-          label: 'Configuracoes',
-          icon: 'pi pi-cog',
-        
-        }
-      ]
-    };
+    const section = (label: string): MenuItem => ({
+      label,
+      styleClass: 'menu-section-title',
+      disabled: true
+    });
 
     this.items = [
-      ...(menuPrincipal.items || []),
-      ...(menuSecundario.items || [])
+      section('ACAO'),
+      {
+        label: 'Hoje',
+        icon: 'pi pi-calendar',
+        routerLink: ['/area-restrita/dashboard'],
+        disabled: isLocked
+      },
+      {
+        label: 'Estudar',
+        icon: 'pi pi-book',
+        routerLink: ['/area-restrita/estudar-materias'],
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
+      {
+        label: 'Revisar',
+        icon: 'pi pi-undo',
+        routerLink: ['/area-restrita/revisoes'],
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
+
+      section('EVOLUCAO'),
+      {
+        label: 'Progresso',
+        icon: 'pi pi-chart-line',
+        routerLink: ['/area-restrita/progresso'],
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
+      {
+        label: 'Planejamento',
+        icon: 'pi pi-table',
+        routerLink: ['/area-restrita/blocos-estudo'],
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
+
+      section('ORGANIZACAO'),
+      {
+        label: 'Meus Editais',
+        icon: 'pi pi-folder-open',
+        routerLink: ['/area-restrita/editais'],
+        disabled: isLocked
+      },
+      {
+        label: 'Minhas Materias',
+        icon: 'pi pi-book',
+        routerLink: ['/area-restrita/cad-materias'],
+        disabled: isLocked
+      },
+      {
+        label: 'Biblioteca',
+        icon: 'pi pi-bookmark',
+        routerLink: ['/area-restrita/biblioteca'],
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
+
+      section('SISTEMA'),
+      {
+        label: 'Configuracoes',
+        icon: 'pi pi-cog'
+      }
     ];
 
     if (this.isAdmin) {
-      const sairIndex = this.items.findIndex(i => i.label === 'Sair');
-      const insertIndex = sairIndex >= 0 ? sairIndex : this.items.length;
-      this.items.splice(insertIndex, 0, adminItem);
+      this.items.push({
+        label: 'Painel Admin',
+        icon: 'pi pi-shield',
+        routerLink: ['/area-restrita/admin/painel'],
+        disabled: isLocked
+      });
     }
   }
 private atualizarAdminDoToken(): void {
@@ -459,7 +426,7 @@ private atualizarAdminDoToken(): void {
   ];
 
   private audioFoco: HTMLAudioElement | null = null;
-  somAtivoId: string | null = null;   // qual ícone/som está ativo
+  somAtivoId: string | null = null;   // qual Ã­cone/som estÃ¡ ativo
   volumeSomFoco: number = 0.5;        // se quiser depois pode expor um slider
 
   private inicializarAudioFoco(): void {
@@ -493,7 +460,7 @@ private atualizarAdminDoToken(): void {
       return;
     }
 
-    // se já está tocando esse mesmo som, parar
+    // se jÃ¡ estÃ¡ tocando esse mesmo som, parar
     if (this.somAtivoId === somId) {
       this.pararSomFoco();
       return;
@@ -503,7 +470,7 @@ private atualizarAdminDoToken(): void {
     this.audioFoco.pause();
     this.audioFoco.src = som.arquivo;
     this.audioFoco.currentTime = 0;
-    this.audioFoco.loop = true; // reforça o loop sempre que troca o som
+    this.audioFoco.loop = true; // reforÃ§a o loop sempre que troca o som
 
     this.audioFoco.load();
     this.somAtivoId = somId;
@@ -513,7 +480,7 @@ private atualizarAdminDoToken(): void {
       if (this.somAtivoId === somId && this.audioFoco) {
         this.audioFoco.currentTime = 0;
         this.audioFoco.play().catch(err => {
-          console.error('Erro ao reiniciar áudio de foco:', err);
+          console.error('Erro ao reiniciar Ã¡udio de foco:', err);
         });
       }
     };
@@ -521,12 +488,12 @@ private atualizarAdminDoToken(): void {
     this.audioFoco
       .play()
       .catch(err => {
-        console.error('Erro ao tocar áudio de foco:', err);
+        console.error('Erro ao tocar Ã¡udio de foco:', err);
         this.somAtivoId = null;
       });
   }
 
-  // chamado ao clicar no ícone
+  // chamado ao clicar no Ã­cone
   onClickSomIcone(somId: string): void {
     this.tocarSom(somId);
   }
@@ -549,9 +516,9 @@ private atualizarAdminDoToken(): void {
   }
 
   /**
-   * Navegação protegida por assinatura:
-   * - Se assinatura válida → navega normalmente
-   * - Se expirada → manda pra tela de planos
+   * NavegaÃ§Ã£o protegida por assinatura:
+   * - Se assinatura vÃ¡lida â†’ navega normalmente
+   * - Se expirada â†’ manda pra tela de planos
    */
   private navegarProtegido(url: string): void {
     if (!this.assinaturaValida) {
@@ -672,7 +639,7 @@ private atualizarAdminDoToken(): void {
   }
 
   openSettings() {
-    alert('Abrindo configurações...');
+    alert('Abrindo configuraÃ§Ãµes...');
   }
 
   openSupport() {
@@ -685,6 +652,7 @@ private atualizarAdminDoToken(): void {
     this.authService.logout();
   }
 }
+
 
 
 

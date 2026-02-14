@@ -1385,6 +1385,34 @@
   gap: 0.5rem;
 }
 
+.flashcard-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.flashcard-close-btn {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.flashcard-close-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: rgba(100, 116, 139, 0.55);
+}
+
 .face-pill {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -1441,14 +1469,19 @@
 }
 
 .meta-tags {
-  max-width: 40%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 1 1 70%;
+  min-width: 0;
+  max-width: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.25;
 }
 
 .meta-hint {
-  margin-left: auto;
+  margin-left: 0;
+  flex: 1 1 100%;
+  text-align: right;
   font-style: italic;
   color: rgba(71, 85, 105, 0.95);
 }
@@ -1984,10 +2017,12 @@
 
 .split-modal {
   background: #ffffff;
-  border-radius: 18px;
-  padding: 18px 20px;
-  width: min(560px, 100% - 32px);
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+  border-radius: 20px;
+  padding: 20px 22px;
+  width: min(620px, 100% - 32px);
+  box-shadow:
+    0 24px 60px rgba(15, 23, 42, 0.25),
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -2003,9 +2038,21 @@
 
 .split-title {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: #111827;
+}
+
+.split-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.split-subtitle {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #6b7280;
 }
 
 .split-fechar {
@@ -2027,10 +2074,10 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #eef2f7;
+  background: #f8fafc;
 }
 
 .split-label {
@@ -2053,23 +2100,46 @@
   gap: 8px;
 }
 
+.split-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  align-self: flex-start;
+}
+
 .split-row {
   display: grid;
   grid-template-columns: 28px 1fr 34px;
   gap: 8px;
   align-items: center;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #eef2f7;
 }
 .split-handle {
   width: 28px;
   height: 34px;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   background: #f8fafc;
   color: #64748b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.split-handle:hover {
+  background: #f1f5f9;
+  border-color: #cbd5f5;
+  color: #475569;
 }
 .split-handle:active {
   cursor: grabbing;
@@ -2086,16 +2156,19 @@
 .split-input {
   width: 100%;
   border-radius: 10px;
-  border: 1px solid #d1d5db;
-  padding: 8px 10px;
-  font-size: 0.9rem;
+  border: 1px solid #e2e8f0;
+  padding: 9px 12px;
+  font-size: 0.92rem;
   box-sizing: border-box;
+  background: #f9fafb;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
 .split-input:focus {
   outline: none;
-  border-color: #16a34a;
-  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.3);
+  border-color: #22c55e;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
 }
 
 .split-remove {
@@ -2109,6 +2182,11 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.split-remove:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.15);
 }
 
 .split-remove:disabled {

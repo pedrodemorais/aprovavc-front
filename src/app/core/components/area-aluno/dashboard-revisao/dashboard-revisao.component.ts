@@ -1,7 +1,7 @@
-import { Component, HostListener, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+﻿import { Component, HostListener, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of, Subscription } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, of, Subscription, Observable } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { MateriaTopicosDTO, SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
 import { EditalService  } from '../services/edital.service';
@@ -87,6 +87,8 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   salvandoDataProva = false;
   private editalDataProvaAtual: Edital | null = null;
   private blocosSubscription?: Subscription;
+  private tentativaAutoAtivarPadrao = false;
+  private readonly revisaoAtivaDiaKeyPrefix = 'dashboard:revisao-ativa-dia:';
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -128,7 +130,9 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
       materias: this.materiaService.listarMaterias(),
       materiasParaEstudo: this.salaEstudoService.listarMateriasParaEstudo('todas')
         .pipe(catchError(() => of([] as MateriaTopicosDTO[]))),
-      editais: this.editalService.listar(),
+      editais: this.editalService.listar().pipe(
+        switchMap((lista) => this.hidratarEditaisParaDashboard(lista || []))
+      ),
       plano: this.blocosEstudoService.planoDoDia().pipe(catchError(() => of(null))),
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe({
@@ -140,6 +144,18 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
         this.materias = materias || [];
         this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
         this.editais = editais || [];
+        if (!this.tentativaAutoAtivarPadrao) {
+          this.editalService.garantirEditalPadraoAtivo(this.editais).subscribe({
+            next: (ativouPadrao) => {
+              if (!ativouPadrao) {
+                return;
+              }
+              this.tentativaAutoAtivarPadrao = true;
+              this.carregarDados();
+            },
+            error: () => {}
+          });
+        }
         console.log('[DASH-REVISAO] Editais ativos:', this.editais.filter(e => e?.ativo));
         this.rebuildMateriaEditalMap(this.editais);
         this.planoDoDia = plano;
@@ -155,6 +171,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
         }
 
         this.definirSugestaoEstudo();
+        this.marcarHistoricoRevisoesDoDia();
         if (!plano?.materiasDoBloco?.length) {
           this.carregarMateriasDoBloco(plano?.blocoNumero ?? null, blocos);
         } else {
@@ -338,6 +355,17 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     return this.formatarMinutos(totalMin);
   }
 
+  get deveMostrarParabensRevisao(): boolean {
+    return !this.revisoesPrioritariasTotal && this.jaTeveRevisaoPendenteHoje();
+  }
+
+  get mensagemSemRevisoesCard(): string {
+    if (this.deveMostrarParabensRevisao) {
+      return 'Parabéns! Revisões do dia concluídas. Excelente consistência.';
+    }
+    return 'Sem revisões hoje. Vamos avançar no estudo.';
+  }
+
   get revisoesPrioritariasAgrupadas(): { materiaId: number; materiaNome: string; itens: RevisaoDashboardItem[] }[] {
     const itens = this.revisoesPrioritariasVisiveis;
     const grupos: { materiaId: number; materiaNome: string; itens: RevisaoDashboardItem[] }[] = [];
@@ -407,15 +435,41 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
 
   private getRevisoesPorStatusEdital(edital: Edital, status: RevisaoDashboardItem['status']): number {
     const materiaIds = this.getMateriaIdsEdital(edital);
-    if (!materiaIds.size) return 0;
-    return this.revisoes.filter((r) => materiaIds.has(r.materiaId) && r.status === status).length;
+    const materiaNomes = this.getMateriaNomesEdital(edital);
+    if (!materiaIds.size && !materiaNomes.size) return 0;
+
+    return this.revisoes.filter((r) => {
+      if (r.status !== status) return false;
+      const idMateriaRevisao = Number((r as any)?.materiaId);
+      if (Number.isFinite(idMateriaRevisao) && idMateriaRevisao > 0 && materiaIds.has(idMateriaRevisao)) {
+        return true;
+      }
+      const nomeMateriaRevisao = this.normalizarNomeMateria((r as any)?.materiaNome);
+      return !!nomeMateriaRevisao && materiaNomes.has(nomeMateriaRevisao);
+    }).length;
   }
 
   private getMateriaIdsEdital(edital: Edital): Set<number> {
     const ids = (edital?.materias || [])
-      .map((m: any) => Number(m?.materiaId))
+      .map((m: any) => Number(m?.materiaId ?? m?.id))
       .filter((id) => Number.isFinite(id) && id > 0);
     return new Set(ids);
+  }
+
+  private getMateriaNomesEdital(edital: Edital): Set<string> {
+    const nomes = (edital?.materias || [])
+      .map((m: any) => this.normalizarNomeMateria(m?.materiaNome ?? m?.nome))
+      .filter((nome: string) => !!nome);
+    return new Set(nomes);
+  }
+
+  private normalizarNomeMateria(nome: string | null | undefined): string {
+    return String(nome || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
   }
 
   private rebuildMateriaEditalMap(editais: Edital[]): void {
@@ -425,7 +479,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
       const editalId = Number((edital as any)?.id);
       if (!editalId) continue;
       for (const materia of (edital as any)?.materias || []) {
-        const materiaId = Number((materia as any)?.materiaId);
+        const materiaId = Number((materia as any)?.materiaId ?? (materia as any)?.id);
         if (Number.isFinite(materiaId) && materiaId > 0 && !this.materiaIdToEditalId.has(materiaId)) {
           this.materiaIdToEditalId.set(materiaId, editalId);
         }
@@ -785,8 +839,52 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   irParaSalaMateriaProximo(materiaId: number): void {
     if (!materiaId) return;
     this.router.navigate(['/area-restrita/sala-estudo', materiaId], {
-      queryParams: { modo: 'estudar', proximo: '1' }
+      queryParams: { modo: 'estudar' }
     });
+  }
+
+  private hidratarEditaisParaDashboard(editais: Edital[]): Observable<Edital[]> {
+    const lista = editais || [];
+    const consultas = lista.map((edital) => {
+      const id = Number((edital as any)?.id);
+      const materias = (edital as any)?.materias;
+      const jaTemMaterias = Array.isArray(materias) && materias.length > 0;
+
+      if (!id || jaTemMaterias) {
+        return of(edital);
+      }
+
+      return this.editalService.buscarPorId(id).pipe(
+        map((detalhe) => ({
+          ...edital,
+          ...detalhe,
+          materias: Array.isArray((detalhe as any)?.materias) ? (detalhe as any).materias : (edital as any)?.materias || []
+        })),
+        catchError(() => of(edital))
+      );
+    });
+
+    return consultas.length ? forkJoin(consultas) : of(lista);
+  }
+
+  private marcarHistoricoRevisoesDoDia(): void {
+    if (typeof localStorage === 'undefined') return;
+    if (this.revisoesPrioritariasTotal > 0) {
+      localStorage.setItem(this.getRevisaoAtivaDiaKey(), '1');
+    }
+  }
+
+  private jaTeveRevisaoPendenteHoje(): boolean {
+    if (typeof localStorage === 'undefined') return false;
+    return localStorage.getItem(this.getRevisaoAtivaDiaKey()) === '1';
+  }
+
+  private getRevisaoAtivaDiaKey(): string {
+    const hoje = new Date();
+    const yyyy = hoje.getFullYear();
+    const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoje.getDate()).padStart(2, '0');
+    return `${this.revisaoAtivaDiaKeyPrefix}${yyyy}-${mm}-${dd}`;
   }
 
   irParaBlocosEstudo(): void {
@@ -866,10 +964,10 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
 
   getJustificativaPlano(item: { atrasadas: number; hoje: number; nivelDominio: number }): string {
     if (item.atrasadas > 0) {
-      return 'Recuperacao (revisoes vencidas)';
+      return 'Recuperação (revisões vencidas)';
     }
     if (item.hoje > 0) {
-      return 'Manutencao (revisoes hoje)';
+      return 'Manutenção (revisões hoje)';
     }
     if (item.nivelDominio <= 30) {
       return 'Ponto fraco (dominio baixo)';
@@ -1549,6 +1647,8 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   }
 
 }
+
+
 
 
 

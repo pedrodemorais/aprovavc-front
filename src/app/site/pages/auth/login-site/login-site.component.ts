@@ -3,6 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { NotificationService } from 'src/app/site/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PlanoSemanalBootstrapService } from 'src/app/core/components/area-aluno/services/plano-semanal-bootstrap.service';
 
 @Component({
   selector: 'app-login-site',
@@ -18,9 +19,11 @@ export class LoginSiteComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   mensagem: string = '';
+  private mensagemAtivacaoDetectada = false;
 
   constructor(
     private authService: AuthService,
+    private planoSemanalBootstrapService: PlanoSemanalBootstrapService,
     private router: Router,
     private route: ActivatedRoute,
     private notificationService: NotificationService
@@ -34,6 +37,8 @@ export class LoginSiteComponent implements OnInit {
       // Compatibilidade com seu formato antigo: ?ativado=true
       if (params['ativado'] === 'true') {
         this.mensagem = '✅ Conta ativada com sucesso! Faça login.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
         this.limparQueryParamsAtivacao();
         return;
       }
@@ -43,19 +48,25 @@ export class LoginSiteComponent implements OnInit {
 
       if (ativacao === 'ok') {
         this.mensagem = '✅ Conta ativada com sucesso! Faça login.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
         this.limparQueryParamsAtivacao();
       } else if (ativacao === 'ja') {
         this.mensagem = 'ℹ️ Sua conta já estava ativada. Faça login.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
         this.limparQueryParamsAtivacao();
       } else if (ativacao === 'invalido') {
         this.mensagem = '⚠️ Link de ativação inválido ou expirado. Tente fazer login ou solicite um novo cadastro.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
         this.limparQueryParamsAtivacao();
       }
     });
 
     // ✅ Mensagem salva no localStorage
     const savedMessage = localStorage.getItem('notificationMessage');
-    if (savedMessage) {
+    if (!this.mensagemAtivacaoDetectada && savedMessage) {
       this.mensagem = savedMessage;
 
       setTimeout(() => {
@@ -94,8 +105,17 @@ export class LoginSiteComponent implements OnInit {
           return;
         }
 
-        this.router.navigate(['/area-restrita/dashboard']).then(() => {
-          console.log('➡️ Redirecionado para o dashboard');
+        this.planoSemanalBootstrapService.preencherSeNecessarioNoLogin().subscribe({
+          next: () => {
+            this.router.navigate(['/area-restrita/dashboard']).then(() => {
+              console.log('➡️ Redirecionado para o dashboard');
+            });
+          },
+          error: () => {
+            this.router.navigate(['/area-restrita/dashboard']).then(() => {
+              console.log('➡️ Redirecionado para o dashboard');
+            });
+          }
         });
       },
 

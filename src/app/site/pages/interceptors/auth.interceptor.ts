@@ -37,6 +37,10 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
+          // Sem token, não tenta refresh nem força logout (ex: rotas públicas).
+          if (!token) {
+            return throwError(() => error);
+          }
           return this.handle401(req, next);
         }
         return throwError(() => error);

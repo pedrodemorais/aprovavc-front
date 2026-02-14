@@ -118,5 +118,8 @@ export interface ClonarEditalRequestDTO {
   nomeEdital?: string;
 }
 
-// ✅ SEU BACKEND RETORNA ResponseEntity<Long>, então a resposta é NUMBER
-export type ClonarEditalResponseDTO = number;
+// ✅ Resposta do clone agora é estruturada
+export interface ClonarEditalResponseDTO {
+  id: number;
+  templateId?: number | null;
+}

@@ -7,69 +7,51 @@
       </div>
     </ng-template>
   </p-toast>
+
   <div class="planner-shell">
     <div class="header">
       <div class="header-title">
         <div class="header-title-row">
-          <h2>Planner semanal (repete automaticamente)</h2>
+          <h2>Planejamento semanal de estudo</h2>
           <button
             type="button"
             class="header-info-btn"
-            pTooltip='O sistema usa este planner para montar seu "Hoje".'
+            pTooltip='Escolha as materias de cada dia. O plano se repete automaticamente toda semana.'
             tooltipPosition="top"
-            aria-label='O sistema usa este planner para montar seu "Hoje".'>
+            aria-label='Escolha as materias de cada dia. O plano se repete automaticamente toda semana.'>
             <i class="pi pi-info-circle"></i>
           </button>
         </div>
       </div>
-       <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
-      {{ mensagemTexto }}
-    </div>
-      <div class="header-badge">Total semanal: {{ totalCicloTexto }}</div>
-    </div>
 
-   
+      <div class="header-alert" *ngIf="mensagemTexto || blocosInvalidos.length > 0">
+        <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
+          {{ mensagemTexto }}
+        </div>
 
-    <div class="planner-edital-card" *ngIf="temEditalAtivo; else plannerEditalVazio">
-      <div class="planner-edital-title">Editais ativos</div>
-      <div class="planner-edital-list">
-        <div class="planner-edital-body" *ngFor="let e of activeEditais">
-          <div class="planner-edital-logo">
-            <span>{{ getSiglaEdital(e.nome) }}</span>
-          </div>
-          <div class="planner-edital-info">
-            <div class="planner-edital-name">{{ e.nome }}</div>
-            <div class="planner-edital-cargo" *ngIf="getEditalCargo(e)">
-              {{ getEditalCargo(e) }}
-            </div>
-          </div>
+        <div class="validation-summary validation-summary--inline" *ngIf="!mensagemTexto && blocosInvalidos.length > 0">
+          <span class="validation-title">Ajuste os blocos:</span>
+          <button
+            type="button"
+            class="validation-link"
+            *ngFor="let invalido of blocosInvalidos"
+            (click)="focoNoBlocoInvalido(invalido.index)">
+            {{ getNomeDiaSemanaSemFeira(invalido.index) }} - {{ invalido.mensagem }}
+          </button>
         </div>
       </div>
-      <div class="planner-edital-note" *ngIf="materiasFiltroIds.size === 0">
-        Nenhuma materia ativa encontrada nos editais selecionados.
-      </div>
-    </div>
-    <ng-template #plannerEditalVazio>
-      <div class="planner-edital-card empty">
-        <div class="planner-edital-title">Edital ativo</div>
-        <div class="planner-edital-body">
-          <div class="planner-edital-logo is-placeholder">-</div>
-          <div class="planner-edital-info">
-            <div class="planner-edital-name">Nenhum edital selecionado</div>
-          </div>
-        </div>
-      </div>
-    </ng-template>
 
-    <div class="validation-summary" *ngIf="blocosInvalidos.length > 0">
-      <span class="validation-title">Ajuste os blocos:</span>
-      <button
-        type="button"
-        class="validation-link"
-        *ngFor="let invalido of blocosInvalidos"
-        (click)="focoNoBlocoInvalido(invalido.index)">
-        {{ getNomeDiaSemanaSemFeira(invalido.index) }} - {{ getModuloLabel(invalido.index) }} - {{ invalido.mensagem }}
-      </button>
+    </div>
+
+    <div class="planner-context">
+      <span class="planner-context-label">Edital ativo:</span>
+      <ng-container *ngIf="temEditalAtivo; else semEditalContexto">
+        <span class="planner-context-chip" *ngFor="let e of activeEditais">{{ e.nome }}</span>
+      </ng-container>
+      <ng-template #semEditalContexto>
+        <span class="planner-context-empty">Nenhum edital selecionado</span>
+      </ng-template>
+      <span class="planner-context-total">Total semanal: {{ totalCicloTexto }}</span>
     </div>
 
     <div class="planner-row" *ngIf="blocos.length > 0">
@@ -78,38 +60,27 @@
           Backlog: {{ backlogCount }} materias fora do planner
         </div>
         <ng-template #backlogInfo>
-          <div class="planner-backlog">
-            Voce pode substituir materias "Em dia" por outras ainda fora do planner.
-          </div>
+          <div class="planner-backlog">Voce pode adicionar novas materias conforme evolui na semana.</div>
         </ng-template>
-      
       </div>
-    <div class="planner-row-actions">
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="toggleWeeklyView()">
-        {{ showWeekly ? 'Ver por dia' : 'Ver semana' }}
-      </button>
-      <button
-        type="button"
-        class="btn-save"
-        [disabled]="salvarDisabled"
-        (click)="salvarTodos()">
-        Salvar
-      </button>
-    </div>
-  </div>
 
-    <div class="planner-day-nav" *ngIf="blocos.length > 0 && !showWeekly">
-      <button type="button" class="day-nav-btn" (click)="navegarDia(-1)" aria-label="Dia anterior">
-        <i class="pi pi-chevron-left"></i>
-      </button>
-      <div class="day-nav-title">
-        {{ diasSemana[selectedDayIndex] || ('Bloco ' + (selectedDayIndex + 1)) }}
+      <div class="planner-row-actions">
+        <button type="button" class="btn-secondary" (click)="irParaHoje()">Hoje</button>
+        <button type="button" class="btn-secondary" (click)="toggleWeeklyView()">
+          {{ showWeekly ? 'Ver por dia' : 'Ver semana' }}
+        </button>
       </div>
-      <button type="button" class="day-nav-btn" (click)="navegarDia(1)" aria-label="Proximo dia">
-        <i class="pi pi-chevron-right"></i>
+    </div>
+
+    <div class="planner-day-strip" *ngIf="blocos.length > 0 && !showWeekly">
+      <button
+        type="button"
+        class="planner-day-tab"
+        *ngFor="let b of blocos; let i = index"
+        [class.is-active]="selectedDayIndex === i"
+        (click)="selecionarBloco(i)">
+        <span class="planner-day-tab-name">{{ getDiaCurto(i) }}</span>
+        <span class="planner-day-tab-meta">{{ resumoDiaMini(i) }}</span>
       </button>
     </div>
 
@@ -122,10 +93,8 @@
     </div>
 
     <div class="blocos-grid-weekly" *ngIf="blocos.length > 0 && showWeekly">
-      <div class="blocos-weekly-title">Semana completa (domingo a sabado)</div>
-      <div
-        class="bloco-weekly-item"
-        *ngFor="let item of weeklyOrderedBlocos">
+      <div class="blocos-weekly-title">Semana completa</div>
+      <div class="bloco-weekly-item" *ngFor="let item of weeklyOrderedBlocos">
         <ng-container *ngTemplateOutlet="blocoCard; context: { $implicit: item.bloco, index: item.index, weekly: true }"></ng-container>
       </div>
     </div>
@@ -139,17 +108,9 @@
         [(ngModel)]="blocoCopiaDestino"
         placeholder="Selecione o bloco destino">
       </p-dropdown>
-      <button
-        pButton
-        type="button"
-        label="Copiar"
-        (click)="confirmarCopiaBloco()"
-        [disabled]="blocoCopiaDestino == null">
-      </button>
+      <button pButton type="button" label="Copiar" (click)="confirmarCopiaBloco()" [disabled]="blocoCopiaDestino == null"></button>
     </div>
   </p-overlayPanel>
-
- 
 
   <div class="muted small" *ngIf="!blocos || blocos.length === 0" style="padding: 12px 0;">
     Carregando blocos...
@@ -161,50 +122,46 @@
     [class.bloco-col-wrap-weekly]="weekly"
     [class.bloco-col-wrap]="!weekly"
     [class.ativo]="abaAtiva === i"
-    [class.erro]="isBlocoInvalido(i)"
-    [style.background]="getCardBgColor(i)">
+    [class.erro]="isBlocoInvalido(i)">
+
     <div class="bloco-col-dia">
-      <span class="bloco-col-dia-primary" *ngIf="!weekly">{{ getModuloLabel(i) }}</span>
+      <div class="bloco-col-day-nav" *ngIf="!weekly">
+        <button type="button" class="day-nav-btn" (click)="navegarDia(-1)" aria-label="Dia anterior">
+          <i class="pi pi-chevron-left"></i>
+        </button>
+        <span class="bloco-col-dia-primary">{{ diasSemana[i] }} - {{ resumoDia(i) }}</span>
+        <button type="button" class="day-nav-btn" (click)="navegarDia(1)" aria-label="Proximo dia">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
       <span class="bloco-col-dia-primary bloco-col-dia-primary--weekly" *ngIf="weekly">
         {{ getNomeDiaSemanaSemFeira(i) }} - {{ getModuloLabel(i) }}
       </span>
     </div>
-    <div
-      class="bloco-col"
-      [class.ativo]="abaAtiva === i"
-      [class.erro]="isBlocoInvalido(i)">
-      <div class="bloco-col-header" (click)="selecionarBloco(i)">
-        <div class="bloco-col-horas">
-          <div class="bloco-col-horas-row">
-            <ng-container *ngIf="weekly; else horasInput">
-              <span class="bloco-col-horas-weekly">Hrs Liq - {{ blocoHoraInputs[i] }}</span>
-            </ng-container>
-            <ng-template #horasInput>
-              <label class="bloco-col-horas-label" for="minutos-{{ b.numero }}">Horas Liquidas</label>
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="5"
-                autocomplete="off"
-                [ngModel]="blocoHoraInputs[i]"
-                (ngModelChange)="onHorasChange(b, $event, i)"
-                (blur)="onHorasBlur(b, i)"
-                id="minutos-{{ b.numero }}"
-                class="bloco-col-horas-field"
-                placeholder="00:00"
-                [attr.aria-label]="'Horas do bloco ' + b.numero"
-                [attr.aria-invalid]="isBlocoInvalido(i)"
-                [attr.aria-describedby]="blocoErroMensagem(i) ? 'bloco-erro-' + b.numero : null" />
-            </ng-template>
+
+    <div class="bloco-col" [class.ativo]="abaAtiva === i" [class.erro]="isBlocoInvalido(i)">
+      <div class="bloco-col-header" (click)="!weekly && selecionarBloco(i)">
+        <div class="bloco-col-toolbar">
+          <div class="bloco-col-actions" *ngIf="!weekly">
+            <button type="button" class="bloco-action" (click)="abrirCopiaPanel(i, $event)">Copiar</button>
+            <button type="button" class="bloco-action" (click)="limparBloco(i); $event.stopPropagation()">Limpar</button>
+            <button type="button" class="bloco-action" [disabled]="salvarDisabled" (click)="salvarTodos(); $event.stopPropagation()">Salvar</button>
+          </div>
+
+          <div class="bloco-col-horas" *ngIf="!weekly">
+            <div class="bloco-col-horas-row">
+              <label class="bloco-col-horas-label">Horas liquidas</label>
+              <span class="bloco-col-horas-readonly">{{ blocoHoraInputs[i] }}</span>
+            </div>
           </div>
         </div>
-        <div
-          class="bloco-col-erro"
-          *ngIf="blocoErroMensagem(i)"
-          [attr.id]="'bloco-erro-' + b.numero">
+
+        <div class="bloco-col-erro" *ngIf="!weekly && blocoErroMensagem(i)" [attr.id]="'bloco-erro-' + b.numero">
           {{ blocoErroMensagem(i) }}
         </div>
+
       </div>
+
       <div class="bloco-col-body">
         <div
           class="bloco-linha"
@@ -214,18 +171,30 @@
           [class.revisao-vencida]="linha.item && temRevisaoVencida(linha.item)"
           [class.revisao-hoje]="linha.item && temRevisaoHoje(linha.item)"
           [class.revisao-futura]="linha.item && temRevisaoFutura(linha.item)"
-          [attr.tabindex]="!linha.item ? 0 : null"
-          (click)="!linha.item && iniciarEdicaoLinha(i, li)"
-          (keydown.enter)="!linha.item && iniciarEdicaoLinha(i, li)"
-          (keydown.space)="!linha.item && iniciarEdicaoLinha(i, li)">
+          [attr.tabindex]="!weekly && !linha.item ? 0 : null"
+          (click)="!weekly && !linha.item && iniciarEdicaoLinha(i, li)"
+          (keydown.enter)="!weekly && !linha.item && iniciarEdicaoLinha(i, li)"
+          (keydown.space)="!weekly && !linha.item && iniciarEdicaoLinha(i, li)">
+
           <ng-container *ngIf="linha.item && !estaSubstituindo(i, li); else linhaEditar">
-            <span
-              class="bloco-item-text"
-              [pTooltip]="linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId)"
-              tooltipPosition="top">
+            <span class="bloco-item-text" [pTooltip]="linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId)" tooltipPosition="top">
               {{ linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId) }}
             </span>
-            <div class="bloco-item-actions">
+            <div class="bloco-item-horas" *ngIf="!weekly">
+              <span class="bloco-item-horas-label">Hrs:</span>
+              <input
+                type="time"
+                step="60"
+                min="00:00"
+                max="23:59"
+                class="bloco-item-horas-field"
+                [ngModel]="getHorasMateriaInput(i, li, linha.item)"
+                (ngModelChange)="onHorasMateriaChange(i, li, $event)"
+                (blur)="onHorasMateriaBlur(i, li, linha.item)"
+                (focus)="!weekly && abrirPickerHora($event)"
+                [disabled]="weekly" />
+            </div>
+            <div class="bloco-item-actions" *ngIf="!weekly">
               <button
                 type="button"
                 class="bloco-item-substituir"
@@ -242,8 +211,9 @@
               </button>
             </div>
           </ng-container>
+
           <ng-template #linhaEditar>
-            <ng-container *ngIf="estaSubstituindo(i, li) || estaEditandoLinha(i, li); else linhaVazia">
+            <ng-container *ngIf="!weekly && (estaSubstituindo(i, li) || estaEditandoLinha(i, li)); else linhaVazia">
               <div class="bloco-linha-edit" (click)="$event.stopPropagation()">
                 <p-autoComplete
                   #autoMateria
@@ -266,6 +236,7 @@
               <button
                 type="button"
                 class="bloco-linha-add"
+                *ngIf="!weekly"
                 (click)="iniciarEdicaoLinha(i, li); $event.stopPropagation()">
                 +
               </button>
