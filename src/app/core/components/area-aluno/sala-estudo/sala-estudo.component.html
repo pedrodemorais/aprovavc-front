@@ -1,5 +1,6 @@
 <div class="sala-container" *ngIf="!carregando; else loadingTpl"
-  [class.coluna-esquerda-oculta]="colunaEsquerdaOculta">
+  [class.coluna-esquerda-oculta]="colunaEsquerdaOculta"
+  [class.flashcard-foco-mobile]="modo === 'revisar' && modoRevisao === 'flashcards' && !!flashcards?.length">
 
 
 
@@ -117,7 +118,9 @@
                 <ng-container *ngSwitchCase="'estudar'">
                 <ng-container *ngIf="topicoSelecionado; else selecioneTopicoTpl">
                   <h2 class="titulo-section">
-                      Estudando: <span>{{ topicoSelecionado.descricao }}</span>
+                      Estudando:
+                      <span class="badge-nivel titulo-semaforo" [ngClass]="classeSemaforoRevisaoSala(topicoSelecionado)"></span>
+                      <span>{{ topicoSelecionado.descricao }}</span>
                       <span class="badge-finalizado" *ngIf="isTopicoFinalizado(topicoSelecionado)">Finalizado</span>
                     </h2>
                   </ng-container>
@@ -127,7 +130,9 @@
                 <ng-container *ngSwitchCase="'revisar'">
                 <ng-container *ngIf="topicoSelecionado; else selecioneTopicoTpl">
                   <h2 class="titulo-section">
-                      Revisando: <span>{{ topicoSelecionado.descricao }}</span>
+                      Revisando:
+                      <span class="badge-nivel titulo-semaforo" [ngClass]="classeSemaforoRevisaoSala(topicoSelecionado)"></span>
+                      <span>{{ topicoSelecionado.descricao }}</span>
                       <span class="badge-finalizado" *ngIf="isTopicoFinalizado(topicoSelecionado)">Finalizado</span>
                     </h2>
                   </ng-container>
@@ -573,10 +578,6 @@
                         Escolha um t&oacute;pico na coluna &agrave; esquerda para revisar.
                       </span>
 
-                      <span *ngIf="topicoSelecionado && topicoSelecionado.hasFilhos">
-                        Este t&oacute;pico possui subt&oacute;picos. Selecione um subt&oacute;pico espec&iacute;fico.
-                      </span>
-
                       <span *ngIf="topicoPermiteEstudo && !timerAtivo">
                         Inicie o cron&ocirc;metro para liberar a revis&atilde;o.
                       </span>
@@ -677,6 +678,14 @@
                   <i class="pi pi-book"></i>
                   <span>Vocabul&aacute;rio</span>
                 </button>
+                <button type="button" class="btn-modo-timer"
+                  (click)="abrirCadernoErros()"
+                  [disabled]="!topicoSelecionado || !topicoPermiteEstudo"
+                  pTooltip="Registrar erro do t&oacute;pico atual"
+                  tooltipPosition="top">
+                  <i class="pi pi-file-edit"></i>
+                  <span>Caderno</span>
+                </button>
 
                   <button type="button" class="btn-modo-timer btn-salvar" [class.ativo]="topicoPermiteEstudo && timerAtivo"
                     [disabled]="!topicoPermiteEstudo || !timerAtivo" (click)="salvarEstudo('botao')">
@@ -730,11 +739,23 @@
                 </button>
 
                 <button type="button" class="btn-modo-timer" [class.ativo]="modoRevisao === 'flashcards'"
-                  (click)="ativarRevisaoFlashcards()">
+                  (click)="ativarRevisaoFlashcards()"
+                  [disabled]="!podeAbrirRevisaoFlashcards">
                   <span>Flashcards</span>
                 </button>
 
-                <button type="button" class="btn-modo-timer" (click)="abrirModalVocabulario('revisar')">
+                <button
+                  type="button"
+                  class="btn-modo-timer"
+                  (click)="abrirCadernoErros()"
+                  [disabled]="!topicoSelecionado"
+                  pTooltip="Revisar erros do topico atual"
+                  tooltipPosition="top">
+                  <span>Caderno</span>
+                </button>
+
+                <button type="button" class="btn-modo-timer" (click)="abrirModalVocabulario('revisar')"
+                  [disabled]="!podeAbrirRevisaoVocabulario">
                   <span>Vocabulário</span>
                 </button>
               </div>
@@ -787,8 +808,8 @@
              aria-label="Dica"></i>
         </div>
 
-        <button type="button" class="flashcard-fechar" (click)="fecharModalFlashcard()">
-          x
+        <button type="button" class="flashcard-fechar" (click)="fecharModalFlashcard()" aria-label="Fechar modal de flashcard">
+          <span aria-hidden="true">&times;</span>
         </button>
       </header>
 

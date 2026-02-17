@@ -343,6 +343,13 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: isLocked || !this.hasMaterias,
         title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
       },
+      {
+        label: 'Caderno de Erros',
+        icon: 'pi pi-file-edit',
+        routerLink: ['/area-restrita/caderno-erros'],
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
 
       section('SISTEMA'),
       {
@@ -355,8 +362,21 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       this.items.push({
         label: 'Painel Admin',
         icon: 'pi pi-shield',
-        routerLink: ['/area-restrita/admin/painel'],
-        disabled: isLocked
+        disabled: isLocked,
+        items: [
+          {
+            label: 'Templates e Editais',
+            icon: 'pi pi-file-edit',
+            routerLink: ['/area-restrita/admin/painel'],
+            disabled: isLocked
+          },
+          {
+            label: 'Cadastro Base',
+            icon: 'pi pi-sitemap',
+            routerLink: ['/area-restrita/admin/cadastro-base'],
+            disabled: isLocked
+          }
+        ]
       });
     }
   }

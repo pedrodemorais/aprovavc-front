@@ -62,6 +62,7 @@ import { ProgressoComponent } from './components/area-aluno/progresso/progresso.
 import { CadastroBaseComponent } from './area-admin/pages/painel-admin/cadastro-base/cadastro-base.component';
 import { BibliotecaComponent } from './components/area-aluno/biblioteca/biblioteca.component';
 import { BibliotecaResumoComponent } from './components/area-aluno/biblioteca/biblioteca-resumo.component';
+import { CadernoErrosComponent } from './components/area-aluno/caderno-erros/caderno-erros.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -89,6 +90,7 @@ registerLocaleData(localePt);
     CadastroBaseComponent,
     BibliotecaComponent,
     BibliotecaResumoComponent,
+    CadernoErrosComponent,
 
   ],
   imports: [

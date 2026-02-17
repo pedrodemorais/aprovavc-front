@@ -58,15 +58,46 @@
           Nenhum resumo encontrado para os filtros atuais.
         </div>
 
-        <ul class="resumo-lista" *ngIf="!carregandoResumos && resumosDisponiveis.length">
-          <li class="resumo-item" *ngFor="let t of resumosDisponiveis">
-            <div class="resumo-info">
-              <strong>{{ t.topicoDescricao }}</strong>
-              <span>Materia: {{ t.materiaNome }}</span>
-            </div>
-            <button type="button" class="resumo-btn" (click)="abrirResumo(t)">Abrir resumo</button>
-          </li>
-        </ul>
+        <p-treeTable
+          *ngIf="!carregandoResumos && resumosTreeNodes.length"
+          class="biblioteca-tree"
+          [value]="resumosTreeNodes"
+          [scrollable]="true"
+          scrollHeight="flex"
+        >
+          <ng-template pTemplate="colgroup">
+            <colgroup>
+              <col class="col-topico" />
+              <col class="col-acao" />
+            </colgroup>
+          </ng-template>
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="col-topico">Matéria / Tópico</th>
+              <th class="col-acao">Ação</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
+            <tr [class.is-materia]="rowData?.isMateria">
+              <td>
+                <div class="tree-label">
+                  <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
+                  <span class="tree-text">{{ rowData?.label }}</span>
+                </div>
+              </td>
+              <td class="col-acao">
+                <button
+                  *ngIf="rowData?.source && !rowData?.hasChildren"
+                  type="button"
+                  class="resumo-btn"
+                  (click)="abrirResumo(rowData.source)"
+                >
+                  Abrir resumo
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-treeTable>
       </ng-container>
 
       <ng-container *ngIf="modo === 'flashcards'">

@@ -276,7 +276,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   canDeactivate(): boolean {
-    if (!this.temTempoNaoSalvo()) {
+    if (!this.deveAlertarTempoNaoSalvo()) {
       return true;
     }
 
@@ -290,7 +290,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:beforeunload', ['$event'])
   beforeUnload(event: BeforeUnloadEvent): void {
-    if (!this.temTempoNaoSalvo()) {
+    if (!this.deveAlertarTempoNaoSalvo()) {
       return;
     }
     event.preventDefault();
@@ -526,9 +526,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ativarRevisaoFlashcards(): void {
+    if (!this.podeAbrirRevisaoFlashcards) return;
     this.modoRevisao = 'flashcards';
     if (this.topicoSelecionado && this.topicoPermiteEstudo) {
-      this.carregarFlashcards();
+      this.carregarFlashcardsParaRevisao();
     }
   }
 
@@ -550,6 +551,16 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       return this.tempoTotalSegundos;
     }
     return this.duracaoFaseAtual - this.pomodoroSegundosRestantes;
+  }
+
+  private calcularTempoNaoSalvoAtual(): number {
+    const tempoAtualTotal = this.calcularTempoEstudoAtual();
+    return Math.max(0, tempoAtualTotal - this.segundosEstudoJaSalvosTopicoAtual);
+  }
+
+  private deveAlertarTempoNaoSalvo(): boolean {
+    const limiteSegundosConfirmacao = 30;
+    return this.temTempoNaoSalvo() && this.calcularTempoNaoSalvoAtual() >= limiteSegundosConfirmacao;
   }
 
   private temTempoNaoSalvo(): boolean {
@@ -589,8 +600,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const trocandoDeTopico = this.topicoSelecionado && this.topicoSelecionado.id !== t.id;
 
     if (trocandoDeTopico && this.modo === 'estudar') {
-      const tempoAtual = this.calcularTempoEstudoAtual();
-      const temAlgoParaSalvar = tempoAtual > 0 && this.topicoPermiteEstudo;
+      const temAlgoParaSalvar = this.deveAlertarTempoNaoSalvo();
 
       if (temAlgoParaSalvar) {
         const desejaSalvar = window.confirm('Você já possui tempo de estudo neste tópico. Deseja salvar antes de mudar para outro tópico?');
@@ -710,6 +720,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.modo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
+      this.carregarVocabulariosParaRevisao();
     }
 
     if (this.mostrarModalVocabulario && this.topicoPermiteEstudo) {
@@ -1010,7 +1021,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   setModoTemporizador(modo: 'livre' | 'pomodoro'): void {
     if (this.modoTemporizador === modo) return;
 
-    if (this.temTempoNaoSalvo()) {
+    if (this.deveAlertarTempoNaoSalvo()) {
       const desejaSalvar = window.confirm('Ao mudar o tipo de estudo o tempo atual sera zerado. Deseja salvar o tempo ja estudado?');
       if (desejaSalvar) this.salvarEstudo();
     }
@@ -1217,6 +1228,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (novoModo === 'revisar' && this.topicoPermiteEstudo) {
       this.carregarFlashcardsParaRevisao();
+      this.carregarVocabulariosParaRevisao();
     }
     if (novoModo === 'estudar' && this.topicoSelecionado && this.topicoPermiteEstudo) {
       this.mostrarMensagemRevisao('Recarregando anotações para o modo Estudar...');
@@ -1328,23 +1340,32 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.salaEstudoService.salvarEstudo(payload).subscribe({
       next: (resp) => {
+        const topicoAindaSelecionado = (this.topicoSelecionado?.id ?? null) === payload.topicoId;
         this.registrarSaveLog('ok', { motivo, topicoId: payload.topicoId, retornoTopicoId: (resp as any)?.topicoId ?? null });
 
-        this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
-        this.temTempoNaoSalvoFlag = false;
+        if (topicoAindaSelecionado) {
+          this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
+          this.temTempoNaoSalvoFlag = false;
 
-        if (this.modo === 'estudar') {
-          this.atualizarMarcaAnotacoes(this.topicoSelecionado?.id, this.hasConteudoAnotacoes(this.anotacoes));
+          if (this.modo === 'estudar') {
+            this.atualizarMarcaAnotacoes(payload.topicoId, this.hasConteudoAnotacoes(this.anotacoes));
+          }
+        } else {
+          this.registrarSaveLog('ok-topico-diferente', {
+            motivo,
+            topicoSalvoId: payload.topicoId,
+            topicoSelecionadoId: this.topicoSelecionado?.id ?? null
+          });
         }
 
         this.mensagemEstudoSalvo = tipoSessao === 'REVISAO' ? 'Revisão salva com sucesso.' : 'Estudo salvo com sucesso.';
         setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
 
-        if (this.modo === 'estudar' && tempoParaSalvar > 0) {
+        if (topicoAindaSelecionado && this.modo === 'estudar' && tempoParaSalvar > 0) {
           this.tentarAvancarCicloSilencioso();
         }
 
-        this.recarregarTelaAposSalvar();
+        this.recarregarTelaAposSalvar(payload.topicoId);
       },
       error: (err) => {
         console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
@@ -1368,15 +1389,15 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return hash >>> 0;
   }
 
-  private recarregarTelaAposSalvar(): void {
-    const topicoId = this.topicoSelecionado?.id ?? null;
+  private recarregarTelaAposSalvar(topicoSalvoId?: number): void {
+    const topicoIdNoInicioReq = this.topicoSelecionado?.id ?? null;
     if (!this.materiaId) return;
 
     const reqs = {
       topicos: this.materiaService.listarTopicos(this.materiaId),
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
       finalizados: this.salaEstudoService.listarTopicosFinalizados(),
-      anotacoes: topicoId ? this.salaEstudoService.buscarAnotacoes(topicoId) : of(null)
+      anotacoes: topicoIdNoInicioReq ? this.salaEstudoService.buscarAnotacoes(topicoIdNoInicioReq) : of(null)
     };
 
     forkJoin(reqs).subscribe({
@@ -1451,12 +1472,24 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.topicosFinalizadosCarregados = true;
         this.tentarSelecionarTopicoInicial();
 
-        if (topicoId && anotacoes && (anotacoes as any)?.anotacoes !== undefined) {
+        const topicoAtualId = this.topicoSelecionado?.id ?? null;
+        if (
+          topicoIdNoInicioReq &&
+          anotacoes &&
+          (anotacoes as any)?.anotacoes !== undefined &&
+          topicoAtualId === topicoIdNoInicioReq
+        ) {
           const resp: any = anotacoes;
           this.anotacoes = resp.anotacoes || '';
-          this.atualizarMarcaAnotacoes(topicoId, this.hasConteudoAnotacoes(this.anotacoes));
+          this.atualizarMarcaAnotacoes(topicoIdNoInicioReq, this.hasConteudoAnotacoes(this.anotacoes));
           this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
           this.atualizarContadorCaracteresFromHtml(this.anotacoes);
+        } else if (topicoIdNoInicioReq && topicoAtualId !== topicoIdNoInicioReq) {
+          this.registrarSaveLog('refresh-anotacoes-ignorado-topico-trocado', {
+            topicoSalvoId: topicoSalvoId ?? null,
+            topicoReqId: topicoIdNoInicioReq,
+            topicoAtualId
+          });
         }
       },
       error: () => { /* ignora erro de refresh */ }
@@ -1512,6 +1545,34 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  abrirCadernoErros(): void {
+    const selecionado = this.topicoSelecionado;
+    const selecionadoId = selecionado?.id;
+    if (!this.materiaId || !selecionadoId) return;
+
+    const raw = selecionado?._raw || {};
+    const parentIdRaw =
+      raw?.topicoPaiId ??
+      raw?.paiId ??
+      raw?.topicoPai?.id ??
+      raw?.pai?.id ??
+      null;
+    const parentId = Number(parentIdRaw);
+    const temPaiValido = Number.isFinite(parentId) && parentId > 0;
+
+    const topicoId = temPaiValido ? parentId : Number(selecionadoId);
+    const subtopicoId = temPaiValido ? Number(selecionadoId) : null;
+
+    this.router.navigate(['/area-restrita/caderno-erros'], {
+      queryParams: {
+        materiaId: this.materiaId,
+        topicoId,
+        subtopicoId,
+        modo: this.modo
+      }
+    });
+  }
+
   private montarTagMateriaTopico(materiaNome: string, topicoDescricao: string): string {
     const materia = this.toTitleCasePtBr(materiaNome || '');
     const topico = this.toTitleCasePtBr(topicoDescricao || '');
@@ -1562,6 +1623,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   abrirModalVocabulario(modo: 'lista' | 'revisar' = 'lista'): void {
     if (!this.topicoPermiteEstudo) return;
+    if (modo === 'revisar' && !this.podeAbrirRevisaoVocabulario) return;
     this.mostrarModalVocabulario = true;
     this.resetVocabularioForm();
     this.vocabularioModo = modo;
@@ -1608,6 +1670,22 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.carregandoVocabularios = false;
       }
     });
+  }
+
+  private carregarVocabulariosParaRevisao(): void {
+    if (!this.topicoSelecionado?.id) {
+      this.vocabularios = [];
+      return;
+    }
+    this.carregarVocabularios();
+  }
+
+  get podeAbrirRevisaoFlashcards(): boolean {
+    return !!(this.topicoPermiteEstudo && !this.carregandoFlashcardsRevisao && this.flashcards?.length);
+  }
+
+  get podeAbrirRevisaoVocabulario(): boolean {
+    return !!(this.topicoPermiteEstudo && !this.carregandoVocabularios && this.vocabularios?.length);
   }
 
   salvarVocabulario(): void {
@@ -2105,8 +2183,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     const requests: any[] = [];
+    const operacoesSplit: Array<{ tipo: 'titulo' | 'edicao' | 'novo'; id?: number }> = [];
 
     if (tituloAlterado) {
+      operacoesSplit.push({ tipo: 'titulo', id: this.splitTopico.id });
       requests.push(
         this.materiaService.salvarTopico(this.materiaId, {
           id: this.splitTopico.id,
@@ -2117,6 +2197,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     edicoesExistentes.forEach((item) => {
+      operacoesSplit.push({ tipo: 'edicao', id: item.id });
       requests.push(
         this.materiaService.salvarTopico(this.materiaId, {
           id: item.id,
@@ -2129,6 +2210,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     limpos.forEach((novo) => {
+      operacoesSplit.push({ tipo: 'novo' });
       requests.push(
         this.materiaService.salvarTopico(this.materiaId, {
           descricao: novo.descricao,
@@ -2143,50 +2225,97 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       concatMap((req) => req),
       toArray()
     ).subscribe({
-      next: () => {
-        const eraSelecionado = this.topicoSelecionado?.id === this.splitTopico?.id;
+      next: (respostas: any[]) => {
+        const topicoPaiId = this.splitTopico?.id ?? null;
+        const topicoSelecionadoAntesId = this.topicoSelecionado?.id ?? null;
+        const eraSelecionado = topicoSelecionadoAntesId === topicoPaiId;
+
+        let alvoIdPreferido: number | null = null;
+        const idxPrimeiroNovo = operacoesSplit.findIndex((op) => op.tipo === 'novo');
+        if (idxPrimeiroNovo >= 0) {
+          alvoIdPreferido = this.getTopicoIdFromDto(respostas[idxPrimeiroNovo]);
+        }
+        if (!alvoIdPreferido) {
+          const idxPrimeiraEdicao = operacoesSplit.findIndex((op) => op.tipo === 'edicao');
+          if (idxPrimeiraEdicao >= 0) {
+            alvoIdPreferido = operacoesSplit[idxPrimeiraEdicao]?.id ?? this.getTopicoIdFromDto(respostas[idxPrimeiraEdicao]);
+          }
+        }
+
         console.log('[SALA-ESTUDO][SPLIT] salvarSplit ok', {
-          topicoPaiId: this.splitTopico?.id ?? null,
+          topicoPaiId,
           eraSelecionado,
-          topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
+          topicoSelecionadoId: topicoSelecionadoAntesId,
+          alvoIdPreferido,
           editorTopicoId: this.editorTopicoId
         });
         this.registrarSaveLog('split-salvar-ok', {
-          topicoPaiId: this.splitTopico?.id ?? null,
+          topicoPaiId,
           eraSelecionado,
-          topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
+          topicoSelecionadoId: topicoSelecionadoAntesId,
+          alvoIdPreferido,
           editorTopicoId: this.editorTopicoId
         });
 
         this.splitSalvando = false;
         this.fecharModalSplit();
-        this.carregarTopicos();
-
-        if (eraSelecionado) {
-          this.resetarTimerAoTrocarTopico();
-          this.topicoSelecionado = null;
-          this.anotacoes = '';
-          this.anotacoesHtmlSeguras = null;
-          this.editorTopicoId = null;
-          this.anotacoesReqSeq += 1;
-          this.ultimaAnotacoesReqInfo = { seq: this.anotacoesReqSeq, topicoId: null };
-          this.carregandoAnotacoes = false;
-          console.log('[SALA-ESTUDO][SPLIT] limparSelecao', {
-            topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
-            editorTopicoId: this.editorTopicoId,
-            reqSeqAtual: this.anotacoesReqSeq
-          });
-          this.registrarSaveLog('split-limpar-selecao', {
-            topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
-            editorTopicoId: this.editorTopicoId,
-            reqSeqAtual: this.anotacoesReqSeq
-          });
-        }
+        this.recarregarTopicosAposSplit(alvoIdPreferido, topicoPaiId, topicoSelecionadoAntesId);
       },
       error: (err) => {
         console.error('[SALA-ESTUDO] Erro ao salvar edicao de subtopico:', err);
         this.splitSalvando = false;
         this.splitErro = this.getSplitErroMensagem(err);
+      }
+    });
+  }
+
+  private recarregarTopicosAposSplit(
+    alvoIdPreferido: number | null,
+    topicoPaiId: number | null,
+    topicoSelecionadoAntesId: number | null
+  ): void {
+    if (!this.materiaId) return;
+
+    this.materiaService.listarTopicos(this.materiaId).subscribe({
+      next: (lista) => {
+        const listaSegura = lista || [];
+        this.arvoreTopicos = listaSegura;
+        this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
+
+        let alvo: any | null = null;
+
+        if (alvoIdPreferido) {
+          alvo = this.topicos.find(t => t.id === alvoIdPreferido) || null;
+        }
+
+        if (!alvo && topicoPaiId) {
+          const paiDto = this.encontrarDtoPorId(this.arvoreTopicos, topicoPaiId);
+          const primeiroFilho = ((paiDto?.subtopicos || paiDto?.filhos) || [])[0];
+          const primeiroFilhoId = this.getTopicoIdFromDto(primeiroFilho);
+          if (primeiroFilhoId) {
+            alvo = this.topicos.find(t => t.id === primeiroFilhoId) || null;
+          }
+        }
+
+        if (!alvo && topicoSelecionadoAntesId) {
+          alvo = this.topicos.find(t => t.id === topicoSelecionadoAntesId) || null;
+        }
+
+        if (!alvo && topicoPaiId) {
+          alvo = this.topicos.find(t => t.id === topicoPaiId) || null;
+        }
+
+        if (!alvo) {
+          alvo = this.topicos.find(t => !t.hasFilhos && t.ativo !== false) || this.topicos[0] || null;
+        }
+
+        if (alvo) {
+          this.selecionarTopico(alvo);
+        }
+      },
+      error: (err) => {
+        console.error('[SALA-ESTUDO] Erro ao recarregar topicos apos editar topico:', err);
+        this.carregarTopicos();
       }
     });
   }

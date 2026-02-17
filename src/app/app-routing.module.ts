@@ -36,6 +36,7 @@ import { ProgressoComponent } from './core/components/area-aluno/progresso/progr
 import { EstudoEmAndamentoGuard } from './core/components/area-aluno/guards/estudo-em-andamento.guard';
 import { BibliotecaComponent } from './core/components/area-aluno/biblioteca/biblioteca.component';
 import { BibliotecaResumoComponent } from './core/components/area-aluno/biblioteca/biblioteca-resumo.component';
+import { CadernoErrosComponent } from './core/components/area-aluno/caderno-erros/caderno-erros.component';
 
 
 const routes: Routes = [
@@ -68,6 +69,7 @@ const routes: Routes = [
       { path: 'biblioteca/resumo', component: BibliotecaResumoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca/resumo/:topicoId', component: BibliotecaResumoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca', component: BibliotecaComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'caderno-erros', component: CadernoErrosComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'blocos-estudo', component: BlocosEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'progresso', component: ProgressoComponent, canActivate: [PlanoAtivoGuard] },
         { path: 'revisoes', component: RevisoesComponent },

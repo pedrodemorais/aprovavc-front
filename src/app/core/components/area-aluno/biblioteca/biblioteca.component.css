@@ -90,6 +90,41 @@
   gap: 12px;
 }
 
+.biblioteca-tree {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.biblioteca-tree :host ::ng-deep .p-treetable-wrapper {
+  max-height: 62vh;
+}
+
+.col-topico {
+  width: 80%;
+}
+
+.col-acao {
+  width: 20%;
+  text-align: right;
+}
+
+.tree-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tree-text {
+  color: #111827;
+  font-weight: 500;
+}
+
+tr.is-materia .tree-text {
+  font-weight: 700;
+}
+
 .resumo-item,
 .flashcard-item {
   padding: 14px 16px;

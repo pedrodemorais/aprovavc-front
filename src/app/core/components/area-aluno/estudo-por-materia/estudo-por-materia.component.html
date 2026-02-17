@@ -1,4 +1,5 @@
 <div class="trilhas-page">
+  <div class="trilhas-card-shell">
 
     <header class="trilhas-topo">
       <div class="topo-left">
@@ -110,6 +111,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <!-- CARD POR MATÉRIA -->
@@ -256,15 +258,9 @@
                   <div class="topico-ir">
                     <button type="button"
                             class="topico-acao"
-                            (click)="abrirSalaAulaTopicoModo(m, t, 'estudar'); $event.stopPropagation()"
-                            aria-label="Estudar tópico">
-                      Estudar
-                    </button>
-                    <button type="button"
-                            class="topico-acao topico-acao--revisar"
-                            (click)="abrirSalaAulaTopicoModo(m, t, 'revisar'); $event.stopPropagation()"
-                            aria-label="Revisar tópico">
-                      Revisar
+                            (click)="abrirSalaAulaTopico(m, t); $event.stopPropagation()"
+                            aria-label="Acessar tópico">
+                      Acessar
                     </button>
                   </div>
                 </div>
@@ -304,15 +300,9 @@
                 <div class="topico-ir">
                   <button type="button"
                           class="topico-acao"
-                          (click)="abrirSalaAulaTopicoModo(m, s, 'estudar'); $event.stopPropagation()"
-                          aria-label="Estudar tópico">
-                    Estudar
-                  </button>
-                  <button type="button"
-                          class="topico-acao topico-acao--revisar"
-                          (click)="abrirSalaAulaTopicoModo(m, s, 'revisar'); $event.stopPropagation()"
-                          aria-label="Revisar tópico">
-                    Revisar
+                          (click)="abrirSalaAulaTopico(m, s); $event.stopPropagation()"
+                          aria-label="Acessar tópico">
+                    Acessar
                   </button>
                 </div>
               </div>
@@ -327,7 +317,5 @@
 
   </div>
 </div>
-
-
 
 

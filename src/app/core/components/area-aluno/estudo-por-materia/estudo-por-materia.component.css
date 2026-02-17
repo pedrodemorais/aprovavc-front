@@ -19,6 +19,16 @@
   padding: 12px 12px 16px;
 }
 
+.trilhas-card-shell{
+  max-width: 1060px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  padding: 14px;
+}
+
 /* =========================
    TOPO
    ========================= */
@@ -882,9 +892,154 @@
 }
 
 @media (max-width: 640px){
+  .secao-meta{
+    display: none !important;
+  }
+
+  .secao-right{
+    margin-left: auto;
+    min-width: 14px;
+    gap: 0;
+  }
+
+  .mini-ring{
+    width: 12px;
+    height: 12px;
+  }
+
+  .secao-title{
+    max-width: 100%;
+  }
+
+  .curso-resumo-item--atrasadas,
+  .curso-resumo-item--hoje,
+  .curso-resumo-item--em-dia,
+  .curso-resumo-item--concluidas{
+    display: none !important;
+  }
+
+  .curso-resumo-item--concluidas::before{
+    content: none !important;
+  }
+
   .curso-header{
-    padding-left: 8px;
-    padding-right: 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "info chevron"
+      "resumo resumo";
+    align-items: start;
+    row-gap: 6px;
     column-gap: 6px;
+    padding: 9px 8px;
+    padding-left: 10px;
+  }
+
+  .curso-info{
+    grid-area: info;
+    min-width: 0;
+  }
+
+  .curso-title{
+    font-size: 0.94rem;
+  }
+
+  .curso-resumo{
+    grid-area: resumo;
+    justify-self: stretch;
+    justify-content: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    white-space: normal;
+    row-gap: 4px;
+    column-gap: 6px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    min-width: 0;
+  }
+
+  .curso-resumo-item{
+    padding: 1px 0;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .curso-resumo-item + .curso-resumo-item::before{
+    margin: 0 2px 0 0;
+  }
+
+  .curso-chevron{
+    grid-area: chevron;
+    justify-self: end;
+    margin-left: 0;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 420px){
+  .mini-ring{
+    width: 11px;
+    height: 11px;
+  }
+
+  .trilhas-page{
+    padding: 8px 8px 14px;
+  }
+
+  .trilhas-card-shell{
+    border-radius: 12px;
+    padding: 10px;
+  }
+
+  .trilhas{
+    gap: 8px;
+  }
+
+  .curso-card{
+    border-radius: 10px;
+  }
+
+  .curso-header{
+    padding: 8px 7px;
+    padding-left: 9px;
+    row-gap: 5px;
+  }
+
+  .curso-title{
+    font-size: 0.88rem;
+  }
+
+  .curso-resumo{
+    font-size: 0.76rem;
+    row-gap: 3px;
+    column-gap: 5px;
+  }
+
+  .curso-resumo-item + .curso-resumo-item::before{
+    content: "";
+    margin: 0;
+  }
+
+  .curso-resumo-item{
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(241, 245, 249, 0.8);
+  }
+
+  .curso-resumo-link{
+    border-radius: 999px;
+  }
+
+  .topo-escopo label{
+    font-size: 0.83rem;
+  }
+
+  .topo-escopo select{
+    font-size: 0.84rem;
+    padding: 7px 9px;
+  }
+
+  .curso-chevron{
+    font-size: 0.75rem;
   }
 }

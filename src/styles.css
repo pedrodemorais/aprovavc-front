@@ -7,7 +7,7 @@
    TOKENS DE TEMA (LIGHT)
 ======================================= */
 :root {
-  --bg: radial-gradient(circle at top, #e9f7ef 0, #f5f7fa 45%, #e5e7eb 100%);
+  --bg: radial-gradient(circle at top, #dcfce7 0, #f0fdf4 45%, #e8f5e9 100%);
   --bg-solid: #ffffff;
 
   --surface: #ffffff;
@@ -62,6 +62,8 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background: var(--bg);
+  background-attachment: fixed;
   font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
  
