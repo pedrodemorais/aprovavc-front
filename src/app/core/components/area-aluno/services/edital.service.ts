@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -31,6 +31,15 @@ export class EditalService {
 
   listar(): Observable<Edital[]> {
     return this.http.get<Edital[]>(this.apiUrl);
+  }
+
+  listarComInclude(include?: string[]): Observable<Edital[]> {
+    if (!include?.length) {
+      return this.listar();
+    }
+
+    const params = new HttpParams().set('include', include.join(','));
+    return this.http.get<Edital[]>(this.apiUrl, { params });
   }
 
   buscarPorId(id: number): Observable<Edital> {

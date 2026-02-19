@@ -7,7 +7,38 @@
   <!-- CORPO DA SALA -->
   <div class="sala-titulo">
     <span class="titulo-materia">
-      <span class="titulo-materia-text">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
+      <span class="titulo-materia-nome troca-materia">
+        <span class="titulo-materia-text">{{ materia?.nome || 'Mat&eacute;ria' }}</span>
+        <button
+          type="button"
+          class="btn-troca-materia"
+          (click)="toggleMenuTrocaMateria($event)"
+          aria-label="Trocar mat&eacute;ria"
+          pTooltip="Trocar mat&eacute;ria"
+          tooltipPosition="bottom">
+          <i class="pi pi-refresh"></i>
+        </button>
+        <div class="menu-troca-materia" *ngIf="menuTrocaMateriaAberto">
+          <div class="menu-troca-materia-titulo">Trocar mat&eacute;ria</div>
+          <div class="menu-troca-materia-lista" *ngIf="!carregandoMateriasTroca; else carregandoMateriasTrocaTpl">
+            <button
+              type="button"
+              class="menu-troca-materia-item"
+              *ngFor="let m of materiasDisponiveisTroca"
+              [class.ativo]="m.id === materiaId"
+              (click)="trocarMateria(m, $event)">
+              <span>{{ m.nome }}</span>
+              <i class="pi pi-check" *ngIf="m.id === materiaId"></i>
+            </button>
+            <span class="menu-troca-materia-vazio" *ngIf="!materiasDisponiveisTroca?.length">
+              Nenhuma mat&eacute;ria dispon&iacute;vel.
+            </span>
+          </div>
+          <ng-template #carregandoMateriasTrocaTpl>
+            <div class="menu-troca-materia-carregando">Carregando mat&eacute;rias...</div>
+          </ng-template>
+        </div>
+      </span>
       <span class="salvo-msg sala-processando-msg" *ngIf="carregandoAnotacoes">Carregando anota&ccedil;&otilde;es...</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemRevisao">{{ mensagemRevisao }}</span>
@@ -35,6 +66,21 @@
             <i class="pi" [ngClass]="colunaEsquerdaOculta ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
             <span>{{ colunaEsquerdaOculta ? 'Mostrar' : 'Esconder' }}</span>
           </button>
+          <div class="filtro-semaforo" role="group" aria-label="Filtrar tópicos por semáforo">
+            <button
+              *ngFor="let opcao of opcoesFiltroSemaforo"
+              type="button"
+              class="btn-filtro-semaforo"
+              [class.ativo]="isFiltroSemaforoAtivo(opcao.status)"
+              [attr.aria-label]="'Filtrar por semáforo ' + opcao.rotulo"
+              [pTooltip]="'Filtrar:' + opcao.rotulo"
+              tooltipPosition="top"
+              [showDelay]="120"
+              [hideDelay]="80"
+              (click)="alternarFiltroSemaforo(opcao.status)">
+              <span class="badge-nivel" [ngClass]="opcao.classe"></span>
+            </button>
+          </div>
 
           <div class="titulo-com-info">
 
@@ -53,8 +99,8 @@
         <div class="topicos-loading-overlay" *ngIf="carregandoAnotacoes">
           <span>Carregando anota&ccedil;&otilde;es...</span>
         </div>
-        <ul class="lista-topicos" *ngIf="topicos && topicos.length; else semTopicos" #listaTopicos>
-          <li *ngFor="let t of topicos" class="item-topico" [class.topico-pai]="t.hasFilhos"
+        <ul class="lista-topicos" *ngIf="topicosExibidos && topicosExibidos.length; else semTopicos" #listaTopicos>
+          <li *ngFor="let t of topicosExibidos" class="item-topico" [class.topico-pai]="t.hasFilhos"
             [class.finalizado]="isTopicoFinalizadoLinha(t)"
             [class.selecionado]="topicoSelecionado?.id === t.id"
             [attr.data-topico-id]="t.id"
@@ -87,11 +133,16 @@
         </ul>
       </div>
       <ng-template #semTopicos>
+        <p class="muted" *ngIf="topicos?.length && filtroSemaforoSelecionado; else semTopicosCadastro">
+          Nenhum t&oacute;pico/subt&oacute;pico encontrado para o sem&aacute;foro {{ descricaoFiltroSemaforoAtual }}.
+        </p>
+        <ng-template #semTopicosCadastro>
         <p class="muted">
           Esta mat&eacute;ria ainda n&atilde;o possui t&oacute;picos cadastrados.
           <br />
           Volte ao cadastro de mat&eacute;rias para criar sua &aacute;rvore de t&oacute;picos.
         </p>
+        </ng-template>
       </ng-template>
     </aside>
 

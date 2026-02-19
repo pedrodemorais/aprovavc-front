@@ -25,7 +25,7 @@
         <tr
           [class.is-selected]="rowData?.source && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
           [class.is-materia]="rowData?.isMateria"
-          [class.row-clickable]="rowData?.source && !rowData?.hasChildren"
+          [class.row-clickable]="rowData?.source"
           [class.row-vencida]="rowData?.source && rowData.status === 'VENCIDA'"
           [class.row-hoje]="rowData?.source && rowData.status === 'EM_DIA'"
           [class.row-futura]="rowData?.source && rowData.status === 'FUTURA'"
@@ -67,7 +67,7 @@
           <td class="col-data">
             <div class="data-wrap">
               <button
-                *ngIf="rowData?.source && !rowData?.hasChildren && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+                *ngIf="rowData?.source && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
                 type="button"
                 class="btn-revisar-linha"
                 (click)="irParaSala(rowData.source); $event.stopPropagation()"

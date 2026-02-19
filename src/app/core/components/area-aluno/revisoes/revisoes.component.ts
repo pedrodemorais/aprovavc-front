@@ -362,7 +362,7 @@ export class RevisoesComponent implements OnInit {
   }
 
   onTreeRowClick(row: RevisaoTreeRow): void {
-    if (row?.source && !row.hasChildren) {
+    if (row?.source) {
       this.selecionarRevisao(row.source);
       return;
     }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { EditalService } from '../services/edital.service';
 import { Edital } from '../models/Edital';
 import { EditalMateriaResumo } from '../models/EditalMateriaResumo';
@@ -14,6 +14,7 @@ import {
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { BlocoEstudoDTO } from '../../dto/blocos-estudo.dto';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
+import { DashboardResumoService } from '../services/dashboard-resumo.service';
 
 @Component({
   selector: 'app-progresso',
@@ -103,6 +104,8 @@ export class ProgressoComponent implements OnInit {
   }> = [];
   private blocosCache: BlocoEstudoDTO[] = [];
   private constanciaMesCache: ConstanciaEstudoDiaDTO[] = [];
+  private constanciaMensalMap = new Map<string, ConstanciaEstudoDiaDTO[]>();
+  private constanciaMensalInFlight = new Map<string, Observable<ConstanciaEstudoDiaDTO[]>>();
   private revisoesDashboard: RevisaoDashboardItem[] = [];
   private weakColors = [
     '#ef4444',
@@ -119,13 +122,40 @@ export class ProgressoComponent implements OnInit {
     private editalService: EditalService,
     private salaEstudoService: SalaEstudoService,
     private blocosEstudoService: BlocosEstudoService,
+    private dashboardResumoService: DashboardResumoService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.carregarEditais();
-    this.carregarTemposEstudo();
-    this.carregarRevisoes();
+    this.carregarDadosIniciais();
+  }
+
+  private carregarDadosIniciais(): void {
+    this.carregando = true;
+    this.erro = undefined;
+
+    this.dashboardResumoService.buscarResumo({
+      lite: false,
+      include: ['editais', 'revisoes', 'blocosResumo']
+    }).subscribe({
+      next: (resumo) => {
+        const editais = this.extrairEditaisResumo(resumo);
+        const revisoes = this.extrairRevisoesResumo(resumo);
+        const blocos = this.extrairBlocosResumo(resumo);
+
+        this.aplicarEditais(editais);
+        this.aplicarRevisoes(revisoes);
+        this.blocosCache = blocos || [];
+        this.carregando = false;
+        this.carregarTemposEstudo(this.blocosCache);
+      },
+      error: (err) => {
+        console.warn('[PROGRESSO] Falha no endpoint agregado. Usando fallback legado.', err);
+        this.carregarEditais();
+        this.carregarRevisoes();
+        this.carregarTemposEstudo();
+      }
+    });
   }
 
   formatPercent(v?: number | null): string {
@@ -370,16 +400,7 @@ export class ProgressoComponent implements OnInit {
     this.erro = undefined;
 
     this.editalService.listar().subscribe({
-      next: (lista) => {
-        console.log('[PROGRESSO] Editais recebidos:', lista);
-        this.editais = lista || [];
-        this.editalAtivo = this.editais.find(e => e.ativo) || this.editais[0];
-        console.log('[PROGRESSO] Edital ativo:', this.editalAtivo);
-        this.atualizarCoberturaMaterias();
-        this.atualizarPlanoAtaque();
-        this.atualizarPrazoRitmo();
-        this.carregando = false;
-      },
+      next: (lista) => this.aplicarEditais(lista || []),
       error: () => {
         this.erro = 'Erro ao carregar seus editais.';
         this.carregando = false;
@@ -387,13 +408,21 @@ export class ProgressoComponent implements OnInit {
     });
   }
 
-  private carregarTemposEstudo(): void {
+  private carregarTemposEstudo(blocosOverride?: BlocoEstudoDTO[]): void {
+    const blocosFonte = (blocosOverride && blocosOverride.length)
+      ? blocosOverride
+      : (this.blocosCache?.length ? this.blocosCache : null);
+    const blocos$ = blocosFonte
+      ? of(blocosFonte)
+      : this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])));
+    const anoMesAtual = this.anoMesSelecionado();
+
     forkJoin({
       materias: this.salaEstudoService.listarTempoEstudoPorMateria().pipe(catchError(() => of([]))),
       total: this.salaEstudoService.buscarTempoEstudoTotal().pipe(catchError(() => of(null))),
       constancia: this.carregarConstanciaPeriodo().pipe(catchError(() => of([] as ConstanciaEstudoDiaDTO[]))),
-      constanciaMes: this.salaEstudoService.listarConstanciaMensal().pipe(catchError(() => of([] as ConstanciaEstudoDiaDTO[]))),
-      blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
+      constanciaMes: this.listarConstanciaMensalComCache(anoMesAtual.ano, anoMesAtual.mes),
+      blocos: blocos$
     }).subscribe(({ materias, total, constancia, constanciaMes, blocos }) => {
       this.temposMaterias = materias || [];
       this.tempoTotalDto = total;
@@ -430,18 +459,53 @@ export class ProgressoComponent implements OnInit {
   private carregarRevisoes(): void {
     this.salaEstudoService.listarRevisoesDashboard()
       .pipe(catchError(() => of([])))
-      .subscribe((itens) => {
-        this.revisoesDashboard = itens || [];
-        this.revisoesVencidasCount = (itens || []).filter((item) => item.status === 'VENCIDA').length;
-        this.atualizarResumoRevisoes(itens || []);
-        this.atualizarPlanoAtaque();
-      });
+      .subscribe((itens) => this.aplicarRevisoes((itens || []) as RevisaoDashboardItem[]));
+  }
+
+  private aplicarEditais(lista: Edital[]): void {
+    console.log('[PROGRESSO] Editais recebidos:', lista);
+    this.editais = lista || [];
+    this.editalAtivo = this.editais.find(e => e.ativo) || this.editais[0];
+    console.log('[PROGRESSO] Edital ativo:', this.editalAtivo);
+    this.atualizarCoberturaMaterias();
+    this.atualizarPlanoAtaque();
+    this.atualizarPrazoRitmo();
+    this.carregando = false;
+  }
+
+  private aplicarRevisoes(itens: RevisaoDashboardItem[]): void {
+    this.revisoesDashboard = itens || [];
+    this.revisoesVencidasCount = (itens || []).filter((item) => item.status === 'VENCIDA').length;
+    this.atualizarResumoRevisoes(itens || []);
+    this.atualizarPlanoAtaque();
+  }
+
+  private extrairEditaisResumo(resumo: any): Edital[] {
+    const editais = resumo?.editais;
+    if (Array.isArray(editais)) return editais as Edital[];
+    if (Array.isArray(editais?.itens)) return editais.itens as Edital[];
+    if (Array.isArray(editais?.lista)) return editais.lista as Edital[];
+    return [];
+  }
+
+  private extrairRevisoesResumo(resumo: any): RevisaoDashboardItem[] {
+    const revisoes = resumo?.revisoes;
+    if (Array.isArray(revisoes)) return revisoes as RevisaoDashboardItem[];
+    if (Array.isArray(revisoes?.itens)) return revisoes.itens as RevisaoDashboardItem[];
+    if (Array.isArray(revisoes?.lista)) return revisoes.lista as RevisaoDashboardItem[];
+    return [];
+  }
+
+  private extrairBlocosResumo(resumo: any): BlocoEstudoDTO[] {
+    const blocos = resumo?.blocosResumo ?? resumo?.blocos;
+    if (Array.isArray(blocos)) return blocos as BlocoEstudoDTO[];
+    if (Array.isArray(blocos?.itens)) return blocos.itens as BlocoEstudoDTO[];
+    if (Array.isArray(blocos?.lista)) return blocos.lista as BlocoEstudoDTO[];
+    return [];
   }
 
   private carregarConstanciaMesSelecionado(): void {
-    this.salaEstudoService
-      .listarConstanciaMensal(this.calendarioAno, this.calendarioMes + 1)
-      .pipe(catchError(() => of([] as ConstanciaEstudoDiaDTO[])))
+    this.listarConstanciaMensalComCache(this.calendarioAno, this.calendarioMes + 1)
       .subscribe((lista) => {
         this.constanciaDiasMes = lista || [];
         this.constanciaMesCache = lista || [];
@@ -740,9 +804,7 @@ export class ProgressoComponent implements OnInit {
     const periodo = this.obterPeriodoAtual();
     const meses = this.listarMesesEntre(periodo.inicio, periodo.fim);
     const requests = meses.map((mes) =>
-      this.salaEstudoService
-        .listarConstanciaMensal(mes.ano, mes.mes + 1)
-        .pipe(catchError(() => of([] as ConstanciaEstudoDiaDTO[])))
+      this.listarConstanciaMensalComCache(mes.ano, mes.mes + 1)
     );
     if (!requests.length) {
       return of([] as ConstanciaEstudoDiaDTO[]);
@@ -762,6 +824,40 @@ export class ProgressoComponent implements OnInit {
       atual.setMonth(atual.getMonth() + 1);
     }
     return meses;
+  }
+
+  private anoMesSelecionado(): { ano: number; mes: number } {
+    return { ano: this.calendarioAno, mes: this.calendarioMes + 1 };
+  }
+
+  private chaveMes(ano: number, mes: number): string {
+    return `${ano}-${String(mes).padStart(2, '0')}`;
+  }
+
+  private listarConstanciaMensalComCache(ano: number, mes: number): Observable<ConstanciaEstudoDiaDTO[]> {
+    const chave = this.chaveMes(ano, mes);
+    const emCache = this.constanciaMensalMap.get(chave);
+    if (emCache) {
+      return of(emCache);
+    }
+
+    const emVoo = this.constanciaMensalInFlight.get(chave);
+    if (emVoo) {
+      return emVoo;
+    }
+
+    const request$ = this.salaEstudoService
+      .listarConstanciaMensal(ano, mes)
+      .pipe(
+        catchError(() => of([] as ConstanciaEstudoDiaDTO[])),
+        map((lista) => lista || []),
+        tap((lista) => this.constanciaMensalMap.set(chave, lista)),
+        finalize(() => this.constanciaMensalInFlight.delete(chave)),
+        shareReplay(1)
+      );
+
+    this.constanciaMensalInFlight.set(chave, request$);
+    return request$;
   }
 
   private parseDia(valor: string | Date): Date {

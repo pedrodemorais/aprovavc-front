@@ -248,7 +248,28 @@
           </div>
         </div>
         <ng-template #heroNextLoading>
-          <div class="hero-next-state">Carregando sugestão...</div>
+          <div class="hero-next-body hero-next-body--loading" aria-hidden="true">
+            <div class="hero-next-columns">
+              <div class="hero-next-col">
+                <div class="hero-next-col-head">
+                  <div class="hero-next-col-title">Revisar</div>
+                </div>
+                <div class="hero-next-loading-line hero-next-loading-line--short"></div>
+                <div class="hero-next-loading-list">
+                  <div class="hero-next-loading-line" *ngFor="let _ of [1,2,3]"></div>
+                </div>
+              </div>
+              <div class="hero-next-col">
+                <div class="hero-next-col-head hero-next-col-head--study">
+                  <div class="hero-next-col-title">Estudar</div>
+                </div>
+                <div class="hero-next-loading-line hero-next-loading-line--short"></div>
+                <div class="hero-next-loading-list">
+                  <div class="hero-next-loading-line" *ngFor="let _ of [1,2,3]"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </ng-template>
       </div>
 

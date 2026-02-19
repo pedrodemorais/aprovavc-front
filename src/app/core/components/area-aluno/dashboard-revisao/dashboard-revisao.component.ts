@@ -13,6 +13,7 @@ import { EditalTemplateDTO } from 'src/app/core/area-admin/dto/edital-admin.dto'
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { BlocoEstudoDTO, PlanoDoDiaDTO } from '../../dto/blocos-estudo.dto';
 import { AuthService } from 'src/app/site/services/auth.service';
+import { DashboardResumoService } from '../services/dashboard-resumo.service';
 @Component({
   selector: 'app-dashboard-revisao',
   templateUrl: './dashboard-revisao.component.html',
@@ -96,6 +97,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
     private blocosEstudoService: BlocosEstudoService,
+    private dashboardResumoService: DashboardResumoService,
     private authService: AuthService,
     private router: Router
   ) {}
@@ -124,66 +126,179 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     this.carregando = true;
     this.erro = undefined;
 
+    this.dashboardResumoService.buscarResumo({
+      lite: false,
+      include: ['usuario', 'revisoes', 'materias', 'editais', 'planoDoDia', 'blocosResumo']
+    }).subscribe({
+      next: (resumo) => {
+        const revisoesRaw = this.extrairRevisoesResumo(resumo);
+        const materiasRaw = this.extrairMateriasResumo(resumo);
+        const editaisRaw = this.extrairEditaisResumo(resumo);
+        const planoRaw = (resumo as any)?.planoDoDia ?? (resumo as any)?.plano ?? null;
+        const blocosRaw = ((resumo as any)?.blocosResumo ?? (resumo as any)?.blocos ?? []) as BlocoEstudoDTO[];
+        const materiasParaEstudo = this.extrairMateriasParaOrdenacao(resumo, materiasRaw, editaisRaw);
+        const nomeUsuario = (resumo as any)?.usuario?.nome;
+
+        if (nomeUsuario) {
+          this.usuarioNome = this.primeiroNome(nomeUsuario) || this.usuarioNome;
+        }
+
+        this.aplicarDadosDashboard(
+          revisoesRaw,
+          materiasRaw,
+          materiasParaEstudo,
+          editaisRaw,
+          planoRaw,
+          blocosRaw
+        );
+      },
+      error: (err) => {
+        console.warn('[DASH-REVISAO] Falha no endpoint agregado. Usando fallback legado.', err);
+        this.carregarDadosLegado();
+      }
+    });
+  }
+
+  private carregarDadosLegado(): void {
     this.salaEstudoService.limparCacheRevisoesDashboard();
     forkJoin({
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
       materias: this.materiaService.listarMaterias(),
       materiasParaEstudo: this.salaEstudoService.listarMateriasParaEstudo('todas')
         .pipe(catchError(() => of([] as MateriaTopicosDTO[]))),
-      editais: this.editalService.listar().pipe(
+      editais: this.editalService.listarComInclude(['materias', 'topicos']).pipe(
         switchMap((lista) => this.hidratarEditaisParaDashboard(lista || []))
       ),
       plano: this.blocosEstudoService.planoDoDia().pipe(catchError(() => of(null))),
       blocos: this.blocosEstudoService.listarBlocos().pipe(catchError(() => of([] as BlocoEstudoDTO[])))
     }).subscribe({
-      next: ({ revisoes, materias, materiasParaEstudo, editais, plano, blocos }) => {
-        console.log('[DASH-REVISAO] Editais recebidos:', editais);
-        this.atualizarOrdemTopicos(materiasParaEstudo);
-        const revisoesAtivas = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
-        this.revisoes = this.normalizarRevisoesDashboard(revisoesAtivas);
-        this.materias = materias || [];
-        this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
-        this.editais = editais || [];
-        if (!this.tentativaAutoAtivarPadrao) {
-          this.editalService.garantirEditalPadraoAtivo(this.editais).subscribe({
-            next: (ativouPadrao) => {
-              if (!ativouPadrao) {
-                return;
-              }
-              this.tentativaAutoAtivarPadrao = true;
-              this.carregarDados();
-            },
-            error: () => {}
-          });
-        }
-        console.log('[DASH-REVISAO] Editais ativos:', this.editais.filter(e => e?.ativo));
-        this.rebuildMateriaEditalMap(this.editais);
-        this.planoDoDia = plano;
-        this.atualizarTotais();
-        this.modulosHoje = plano?.blocoNumero ?? 1;
-        this.atualizarEditalAtivoNome();
-        this.atualizarMateriasConcluidasNoPlanner(blocos || []);
-        this.atualizarPlanoAtaque();
-        this.carregando = false;
-
-        if (!this.editais.length || !this.materias.length) {
-          this.carregarTemplates();
-        }
-
-        this.definirSugestaoEstudo();
-        this.marcarHistoricoRevisoesDoDia();
-        if (!plano?.materiasDoBloco?.length) {
-          this.carregarMateriasDoBloco(plano?.blocoNumero ?? null, blocos);
-        } else {
-          this.materiasDoDiaFallback = [];
-        }
-      },
+      next: ({ revisoes, materias, materiasParaEstudo, editais, plano, blocos }) =>
+        this.aplicarDadosDashboard(revisoes, materias, materiasParaEstudo, editais, plano, blocos),
       error: (err) => {
         console.error('[DASH-REVISAO] Erro ao carregar dados:', err);
         this.erro = 'Erro ao carregar seus dados.';
         this.carregando = false;
       }
     });
+  }
+
+  private aplicarDadosDashboard(
+    revisoes: RevisaoDashboardItem[],
+    materias: Materia[],
+    materiasParaEstudo: MateriaTopicosDTO[],
+    editais: Edital[],
+    plano: PlanoDoDiaDTO | null,
+    blocos: BlocoEstudoDTO[]
+  ): void {
+    console.log('[DASH-REVISAO] Editais recebidos:', editais);
+    this.atualizarOrdemTopicos(materiasParaEstudo);
+    const revisoesAtivas = this.filtrarRevisoesPorTopicosAtivos(revisoes || [], editais || []);
+    this.revisoes = this.normalizarRevisoesDashboard(revisoesAtivas);
+    this.materias = materias || [];
+    this.materiasParaEstudoCount = this.contarMateriasParaEstudo(materiasParaEstudo);
+    this.editais = editais || [];
+    if (!this.tentativaAutoAtivarPadrao) {
+      this.editalService.garantirEditalPadraoAtivo(this.editais).subscribe({
+        next: (ativouPadrao) => {
+          this.tentativaAutoAtivarPadrao = true;
+          if (ativouPadrao) {
+            this.carregarDados();
+          }
+        },
+        error: () => {
+          this.tentativaAutoAtivarPadrao = true;
+        }
+      });
+    }
+    console.log('[DASH-REVISAO] Editais ativos:', this.editais.filter(e => e?.ativo));
+    this.rebuildMateriaEditalMap(this.editais);
+    this.planoDoDia = plano;
+    this.atualizarTotais();
+    this.modulosHoje = plano?.blocoNumero ?? 1;
+    this.atualizarEditalAtivoNome();
+    this.atualizarMateriasConcluidasNoPlanner(blocos || []);
+    this.atualizarPlanoAtaque();
+    this.carregando = false;
+
+    if (!this.editais.length || !this.materias.length) {
+      this.carregarTemplates();
+    }
+
+    this.definirSugestaoEstudo();
+    this.marcarHistoricoRevisoesDoDia();
+    if (!plano?.materiasDoBloco?.length) {
+      this.carregarMateriasDoBloco(plano?.blocoNumero ?? null, blocos);
+    } else {
+      this.materiasDoDiaFallback = [];
+    }
+  }
+
+  private extrairRevisoesResumo(resumo: any): RevisaoDashboardItem[] {
+    const revisoes = resumo?.revisoes;
+    if (Array.isArray(revisoes)) return revisoes as RevisaoDashboardItem[];
+    if (Array.isArray(revisoes?.itens)) return revisoes.itens as RevisaoDashboardItem[];
+    if (Array.isArray(revisoes?.lista)) return revisoes.lista as RevisaoDashboardItem[];
+    return [];
+  }
+
+  private extrairMateriasResumo(resumo: any): Materia[] {
+    const materias = resumo?.materias;
+    if (Array.isArray(materias)) return materias as Materia[];
+    if (Array.isArray(materias?.itens)) return materias.itens as Materia[];
+    if (Array.isArray(materias?.lista)) return materias.lista as Materia[];
+    return [];
+  }
+
+  private extrairEditaisResumo(resumo: any): Edital[] {
+    const editais = resumo?.editais;
+    if (Array.isArray(editais)) return editais as Edital[];
+    if (Array.isArray(editais?.itens)) return editais.itens as Edital[];
+    if (Array.isArray(editais?.lista)) return editais.lista as Edital[];
+    return [];
+  }
+
+  private extrairMateriasParaOrdenacao(
+    resumo: any,
+    materias: Materia[],
+    editais: Edital[]
+  ): MateriaTopicosDTO[] {
+    const materiasResumo = resumo?.materias;
+    const listaDireta =
+      materiasResumo?.materiasParaEstudo ||
+      materiasResumo?.paraEstudo ||
+      materiasResumo?.materiasComTopicos;
+
+    if (Array.isArray(listaDireta) && listaDireta.length) {
+      return listaDireta as MateriaTopicosDTO[];
+    }
+
+    const materiasComTopicos = (materias || [])
+      .map((m: any) => ({
+        materiaId: Number(m?.id ?? m?.materiaId) || 0,
+        materiaNome: m?.nome ?? m?.materiaNome ?? '',
+        topicos: m?.topicos || []
+      }))
+      .filter((m: MateriaTopicosDTO) => m.materiaId > 0);
+
+    if (materiasComTopicos.length) {
+      return materiasComTopicos;
+    }
+
+    const mapa = new Map<number, MateriaTopicosDTO>();
+    for (const edital of editais || []) {
+      for (const materia of (edital as any)?.materias || []) {
+        const materiaId = Number((materia as any)?.materiaId ?? (materia as any)?.id);
+        if (!Number.isFinite(materiaId) || materiaId <= 0 || mapa.has(materiaId)) {
+          continue;
+        }
+        mapa.set(materiaId, {
+          materiaId,
+          materiaNome: (materia as any)?.materiaNome ?? (materia as any)?.nome ?? `Materia ${materiaId}`,
+          topicos: (materia as any)?.topicos || []
+        });
+      }
+    }
+    return Array.from(mapa.values());
   }
 
   private toggleDashboardScroll(ativo: boolean): void {
@@ -394,16 +509,8 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   private carregarUsuarioNome(): void {
-    this.authService.getUserData().subscribe({
-      next: (user) => {
-        const nome = user?.nome || user?.nomeAluno || '';
-        this.usuarioNome = this.primeiroNome(nome) || this.usuarioNome;
-      },
-      error: () => {
-        const nomeToken = this.authService.getUserNameFromToken() || '';
-        this.usuarioNome = this.primeiroNome(nomeToken) || this.usuarioNome;
-      }
-    });
+    const nomeToken = this.authService.getUserNameFromToken() || '';
+    this.usuarioNome = this.primeiroNome(nomeToken) || this.usuarioNome;
   }
 
   private primeiroNome(nomeCompleto: string): string {
