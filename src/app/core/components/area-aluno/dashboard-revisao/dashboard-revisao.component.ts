@@ -14,6 +14,11 @@ import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { BlocoEstudoDTO, PlanoDoDiaDTO } from '../../dto/blocos-estudo.dto';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { DashboardResumoService } from '../services/dashboard-resumo.service';
+import {
+  construirDataLocal,
+  extrairStatusCanonicoRevisao,
+  statusCanonicoParaDashboard
+} from '../utils/revisao-status.util';
 @Component({
   selector: 'app-dashboard-revisao',
   templateUrl: './dashboard-revisao.component.html',
@@ -231,6 +236,27 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
     } else {
       this.materiasDoDiaFallback = [];
     }
+
+    // Garante que o dashboard use a mesma fonte "fresca" da tela /revisoes.
+    // O endpoint agregado pode chegar levemente defasado em alguns cenarios.
+    this.reconciliarRevisoesDoDashboard();
+  }
+
+  private reconciliarRevisoesDoDashboard(): void {
+    this.salaEstudoService.limparCacheRevisoesDashboard();
+    this.salaEstudoService.listarRevisoesDashboard().subscribe({
+      next: (revisoesDiretas) => {
+        const revisoesAtivas = this.filtrarRevisoesPorTopicosAtivos(revisoesDiretas || [], this.editais || []);
+        this.revisoes = this.normalizarRevisoesDashboard(revisoesAtivas);
+        this.atualizarTotais();
+        this.atualizarPlanoAtaque();
+        this.definirSugestaoEstudo();
+        this.marcarHistoricoRevisoesDoDia();
+      },
+      error: (err) => {
+        console.warn('[DASH-REVISAO] Falha ao reconciliar revisoes do dashboard.', err);
+      }
+    });
   }
 
   private extrairRevisoesResumo(resumo: any): RevisaoDashboardItem[] {
@@ -1549,55 +1575,97 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   private normalizarRevisoesDashboard(revisoes: RevisaoDashboardItem[]): RevisaoDashboardItem[] {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    return (revisoes || [])
+    const normalizadas = (revisoes || [])
       .map((item) => this.normalizarRevisaoItem(item, hoje))
       .filter((item): item is RevisaoDashboardItem => !!item);
+
+    return this.consolidarRevisoesPorTopico(normalizadas);
+  }
+
+  private consolidarRevisoesPorTopico(revisoes: RevisaoDashboardItem[]): RevisaoDashboardItem[] {
+    const porTopico = new Map<number, RevisaoDashboardItem>();
+    const semTopico: RevisaoDashboardItem[] = [];
+
+    for (const item of revisoes || []) {
+      const topicoId = Number((item as any)?.topicoId);
+      if (!Number.isFinite(topicoId) || topicoId <= 0) {
+        semTopico.push(item);
+        continue;
+      }
+
+      const atual = porTopico.get(topicoId);
+      if (!atual) {
+        porTopico.set(topicoId, item);
+        continue;
+      }
+
+      porTopico.set(topicoId, this.escolherMelhorRevisaoTopico(atual, item));
+    }
+
+    return [...porTopico.values(), ...semTopico];
+  }
+
+  private escolherMelhorRevisaoTopico(a: RevisaoDashboardItem, b: RevisaoDashboardItem): RevisaoDashboardItem {
+    const pa = this.prioridadeStatusDashboard(a?.status);
+    const pb = this.prioridadeStatusDashboard(b?.status);
+    if (pb > pa) return b;
+    if (pb < pa) return a;
+
+    const da = this.millisDataRevisao(a);
+    const db = this.millisDataRevisao(b);
+    if (db < da) return b;
+    if (db > da) return a;
+
+    const ta = this.prioridadeTipoRevisao((a as any)?.tipo);
+    const tb = this.prioridadeTipoRevisao((b as any)?.tipo);
+    if (tb > ta) return b;
+
+    return a;
+  }
+
+  private prioridadeStatusDashboard(status: RevisaoDashboardItem['status'] | string | undefined): number {
+    if (status === 'VENCIDA') return 3;
+    if (status === 'EM_DIA') return 2;
+    if (status === 'FUTURA') return 1;
+    return 0;
+  }
+
+  private prioridadeTipoRevisao(tipo: string | undefined): number {
+    if (tipo === 'TOPICO') return 3;
+    if (tipo === 'ANOTACAO') return 2;
+    if (tipo === 'FLASHCARD') return 1;
+    return 0;
+  }
+
+  private millisDataRevisao(item: RevisaoDashboardItem): number {
+    const raw = (item as any)?.dataProximaRevisao || (item as any)?.proximaRevisao || null;
+    if (!raw) return Number.POSITIVE_INFINITY;
+    const data = construirDataLocal(String(raw));
+    const time = data.getTime();
+    return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
   }
 
   private normalizarRevisaoItem(item: RevisaoDashboardItem, hoje: Date): RevisaoDashboardItem | null {
-    const statusRevisao = (item as any)?.statusRevisao as string | undefined;
-    if (statusRevisao) {
-      const normalizado = this.mapearStatusRevisao(statusRevisao);
-      if (!normalizado) {
-        return null;
-      }
-      return { ...item, status: normalizado };
+    const statusCanonico = extrairStatusCanonicoRevisao(item, hoje);
+    const statusDashboard = statusCanonicoParaDashboard(statusCanonico);
+    if (!statusDashboard) {
+      return null;
     }
 
     const proxima = (item as any)?.proximaRevisao || (item as any)?.dataProximaRevisao || null;
-    if (!proxima) {
-      return null;
+    if (proxima) {
+      const dataRev = construirDataLocal(proxima);
+      if (Number.isNaN(dataRev.getTime())) {
+        return null;
+      }
     }
 
-    const dataRev = this.construirDataLocal(proxima);
-    const hojeTime = hoje.getTime();
-    const revTime = dataRev.getTime();
-
-    if (Number.isNaN(revTime)) {
-      return null;
-    }
-
-    const normalizado = revTime < hojeTime ? 'VENCIDA' : revTime === hojeTime ? 'EM_DIA' : 'FUTURA';
-    return { ...item, status: normalizado };
-  }
-
-  private mapearStatusRevisao(status: string): RevisaoDashboardItem['status'] | null {
-    const upper = status.toUpperCase();
-    if (upper === 'ATRASADA') return 'VENCIDA';
-    if (upper === 'HOJE') return 'EM_DIA';
-    if (upper === 'FUTURA') return 'FUTURA';
-    if (upper === 'SEM') return null;
-    return null;
-  }
-
-  private construirDataLocal(isoDate: string): Date {
-    const [anoStr, mesStr, diaStr] = String(isoDate).split('-');
-    const ano = Number(anoStr);
-    const mes = Number(mesStr);
-    const dia = Number(diaStr);
-    const data = new Date(ano, mes - 1, dia);
-    data.setHours(0, 0, 0, 0);
-    return data;
+    return {
+      ...item,
+      statusCanonico,
+      statusRevisao: statusCanonico,
+      status: statusDashboard
+    };
   }
 
   private obterIdTopico(topico: any): number | null {

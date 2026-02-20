@@ -1,11 +1,11 @@
 // src/app/core/services/sala-estudo.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
-import { catchError, finalize, shareReplay, tap } from 'rxjs/operators';
+import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 
 
 
@@ -23,11 +23,11 @@ export interface EstudoTopicoRequest {
   materiaId: number;
   topicoId: number;
 
-  // mesmo nome e tipo lógico do back
+  // mesmo nome e tipo logico do back
   modoTemporizador: string;   // "livre" ou "pomodoro"
   tipoSessao: 'ESTUDO' | 'REVISAO';
 
-  tempoLivreSegundos: number; // tempo que será somado no back
+  tempoLivreSegundos: number; // tempo que sera somado no back
 
   pomodoroFase?: string;      // "foco", "pausa-curta", "pausa-longa"
   pomodoroCiclosConcluidos?: number;
@@ -90,10 +90,35 @@ export interface ConstanciaEstudoDiaDTO {
   teveEstudo?: boolean;
   materias?: string[];
 }
+
+export interface TopicoNodeDTO {
+  id?: number;
+  topicoId?: number;
+  subtopicoId?: number;
+  idTopico?: number;
+  idSubtopico?: number;
+  descricao?: string;
+  ativo?: boolean;
+  nivel?: number;
+  ordem?: number;
+  materiaId?: number;
+  topicoPaiId?: number | null;
+  paiId?: number | null;
+  topicoPai?: { id?: number | null };
+  pai?: { id?: number | null };
+  proximaRevisao?: string | null;
+  statusRevisao?: string | null;
+  statusCanonico?: string | null;
+  subtopicos?: TopicoNodeDTO[];
+  filhos?: TopicoNodeDTO[];
+  [key: string]: unknown;
+}
+
 export interface MateriaTopicosDTO {
   materiaId: number;
   materiaNome: string;
-  topicos: any[];
+  topicos: TopicoNodeDTO[];
+  ordemVersion?: string | null;
 }
 export interface BibliotecaResumoDTO {
   materiaId: number;
@@ -147,11 +172,62 @@ export interface SplitSubtopicoResponse {
   }>;
 }
 
+export interface FinalizacaoTopicoActionRequest {
+  acao: 'FINALIZAR' | 'DESFINALIZAR';
+  cascade?: boolean;
+}
+
+export interface FinalizacaoTopicoActionResponse {
+  topicoAtualizado?: {
+    topicoId?: number;
+    id?: number;
+    finalizado?: boolean;
+  };
+  topicosImpactados?: Array<{
+    topicoId?: number;
+    id?: number;
+    finalizado?: boolean;
+  }>;
+  resumoMateria?: {
+    materiaId?: number;
+    total?: number;
+    concluidos?: number;
+    pendentes?: number;
+  };
+}
+
+export interface NextTopicRecommendationResponse {
+  topicoId?: number | null;
+  materiaId?: number | null;
+  motivo?: string;
+  ordemVersion?: string | null;
+  contexto?: NextTopicContext;
+}
+
+export interface NextTopicContext {
+  ordemVersion?: string | null;
+  topicoAtualId?: number | null;
+  proximoTopicoId?: number | null;
+  motivo?: string;
+  indiceAtual?: number | null;
+  indiceRetornado?: number | null;
+  [key: string]: unknown;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SalaEstudoService {
 
   private apiUrl = `${environment.apiUrl}/sala-estudo`;
   private topicosApiUrl = `${environment.apiUrl}/topicos`;
+  private readonly usarRegrasBackV2 = !!environment?.featureFlags?.backendBusinessRulesV2;
+  private readonly cacheTopicosFinalizadosTtlMs = 15000;
+  private readonly cacheRevisoesDashboardTtlMs = 15000;
+  private topicosFinalizadosCache: TopicoFinalizadoDTO[] | null = null;
+  private topicosFinalizadosCacheTs = 0;
+  private topicosFinalizadosInFlight$: Observable<TopicoFinalizadoDTO[]> | null = null;
+  private revisoesDashboardCache: RevisaoDashboardItem[] | null = null;
+  private revisoesDashboardCacheTs = 0;
+  private revisoesDashboardInFlight$: Observable<RevisaoDashboardItem[]> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -162,13 +238,47 @@ export class SalaEstudoService {
   }
 
   finalizarTopico(topicoId: number): Observable<void> {
+    if (this.usarRegrasBackV2) {
+      return this.executarFinalizacaoTopico(topicoId, 'FINALIZAR').pipe(
+        map(() => void 0),
+        catchError(() =>
+          this.http.post<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`, {}).pipe(
+            tap(() => this.limparCacheTopicosFinalizados())
+          )
+        )
+      );
+    }
     return this.http.post<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`, {}).pipe(
       tap(() => this.limparCacheTopicosFinalizados())
     );
   }
 
   desfinalizarTopico(topicoId: number): Observable<void> {
+    if (this.usarRegrasBackV2) {
+      return this.executarFinalizacaoTopico(topicoId, 'DESFINALIZAR').pipe(
+        map(() => void 0),
+        catchError(() =>
+          this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`).pipe(
+            tap(() => this.limparCacheTopicosFinalizados())
+          )
+        )
+      );
+    }
     return this.http.delete<void>(`${this.apiUrl}/topicos/${topicoId}/finalizar`).pipe(
+      tap(() => this.limparCacheTopicosFinalizados())
+    );
+  }
+
+  executarFinalizacaoTopico(
+    topicoId: number,
+    acao: 'FINALIZAR' | 'DESFINALIZAR',
+    cascade = true
+  ): Observable<FinalizacaoTopicoActionResponse> {
+    const payload: FinalizacaoTopicoActionRequest = { acao, cascade };
+    return this.http.post<FinalizacaoTopicoActionResponse>(
+      `${this.apiUrl}/topicos/${topicoId}/finalizacao`,
+      payload
+    ).pipe(
       tap(() => this.limparCacheTopicosFinalizados())
     );
   }
@@ -180,10 +290,37 @@ export class SalaEstudoService {
   }
 
   listarTopicosFinalizados(): Observable<TopicoFinalizadoDTO[]> {
-    return this.http.get<TopicoFinalizadoDTO[]>(`${this.apiUrl}/topicos/finalizados`);
+    const agora = Date.now();
+    const cacheValido =
+      !!this.topicosFinalizadosCache &&
+      (agora - this.topicosFinalizadosCacheTs) < this.cacheTopicosFinalizadosTtlMs;
+
+    if (cacheValido) {
+      return of(this.topicosFinalizadosCache as TopicoFinalizadoDTO[]);
+    }
+
+    if (this.topicosFinalizadosInFlight$) {
+      return this.topicosFinalizadosInFlight$;
+    }
+
+    this.topicosFinalizadosInFlight$ = this.http.get<TopicoFinalizadoDTO[]>(`${this.apiUrl}/topicos/finalizados`).pipe(
+      tap((itens) => {
+        this.topicosFinalizadosCache = itens || [];
+        this.topicosFinalizadosCacheTs = Date.now();
+      }),
+      finalize(() => {
+        this.topicosFinalizadosInFlight$ = null;
+      }),
+      shareReplay(1)
+    );
+
+    return this.topicosFinalizadosInFlight$;
   }
 
   private limparCacheTopicosFinalizados(): void {
+    this.topicosFinalizadosCache = null;
+    this.topicosFinalizadosCacheTs = 0;
+    this.topicosFinalizadosInFlight$ = null;
   }
 
   buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {
@@ -204,11 +341,11 @@ export class SalaEstudoService {
     return this.http.delete<void>(`${this.apiUrl}/flashcards/${id}`);
   }
 
-  // ================= REVISÃO ESPAÇADA =================
+  // ================= REVISAO ESPACADA =================
 
   /**
-   * Lista apenas os flashcards que estão "vencidos" / para hoje,
-   * de acordo com a tabela de revisão (1, 3, 7, 14, 30...).
+   * Lista apenas os flashcards que estao "vencidos" / para hoje,
+   * de acordo com a tabela de revisao (1, 3, 7, 14, 30...).
    *
    * GET /api/sala-estudo/flashcards/revisao?topicoId=123
    */
@@ -218,7 +355,7 @@ export class SalaEstudoService {
   }
 
   /**
-   * Registra a resposta do aluno para um flashcard em revisão:
+   * Registra a resposta do aluno para um flashcard em revisao:
    * ERREI / DIFICIL / BOM / FACIL
    *
    * POST /api/sala-estudo/flashcards/revisao/responder
@@ -230,8 +367,8 @@ export class SalaEstudoService {
   }
 
   /**
-   * Registra a resposta de revisão baseada nas ANOTAÇÕES do tópico
-   * (mesma lógica de caixinhas, mas nível tópico).
+   * Registra a resposta de revisao baseada nas ANOTACOES do topico
+   * (mesma logica de caixinhas, mas nivel topico).
    *
    * POST /api/sala-estudo/topicos/revisao/responder
    */
@@ -326,17 +463,82 @@ export class SalaEstudoService {
     return this.http.post<SplitSubtopicoResponse>(`${this.topicosApiUrl}/${subtopicoId}/split`, payload);
   }
 
+  obterProximoTopico(
+    materiaId: number,
+    modo: 'estudar' | 'revisar',
+    filtro?: 'atrasadas' | 'hoje' | 'emdia',
+    currentTopicoId?: number | null,
+    ordemVersion?: string | null
+  ): Observable<NextTopicRecommendationResponse> {
+    if (!this.usarRegrasBackV2) {
+      return of({ topicoId: null, materiaId, motivo: 'FEATURE_FLAG_OFF' });
+    }
+
+    let params = new HttpParams().set('modo', modo);
+    if (filtro) {
+      params = params.set('filtro', filtro);
+    }
+    if (!currentTopicoId || !Number.isFinite(currentTopicoId) || currentTopicoId <= 0) {
+      return throwError(() => new Error('currentTopicoId é obrigatório para next-topic.'));
+    }
+    params = params.set('currentTopicoId', String(currentTopicoId));
+    if (!ordemVersion || !String(ordemVersion).trim()) {
+      return throwError(() => new Error('ordemVersion e obrigatoria para next-topic.'));
+    }
+    params = params.set('ordemVersion', String(ordemVersion));
+
+    return this.http.get<NextTopicRecommendationResponse>(
+      `${this.apiUrl}/materias/${materiaId}/next-topic`,
+      { params }
+    );
+  }
+
   listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
-  const url = `${this.apiUrl}/revisoes/dashboard`;
-  return this.http.get<RevisaoDashboardItem[]>(url);
-}
+    const agora = Date.now();
+    const cacheValido =
+      !!this.revisoesDashboardCache &&
+      (agora - this.revisoesDashboardCacheTs) < this.cacheRevisoesDashboardTtlMs;
+
+    if (cacheValido) {
+      return of(this.revisoesDashboardCache as RevisaoDashboardItem[]);
+    }
+
+    if (this.revisoesDashboardInFlight$) {
+      return this.revisoesDashboardInFlight$;
+    }
+
+    const url = `${this.apiUrl}/revisoes/dashboard`;
+    const params = new HttpParams().set('_t', String(Date.now()));
+    const headers = new HttpHeaders({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0'
+    });
+
+    this.revisoesDashboardInFlight$ = this.http.get<RevisaoDashboardItem[]>(url, { params, headers }).pipe(
+      tap((itens) => {
+        this.revisoesDashboardCache = itens || [];
+        this.revisoesDashboardCacheTs = Date.now();
+      }),
+      finalize(() => {
+        this.revisoesDashboardInFlight$ = null;
+      }),
+      shareReplay(1)
+    );
+
+    return this.revisoesDashboardInFlight$;
+  }
 
   limparCacheRevisoesDashboard(): void {
+    this.revisoesDashboardCache = null;
+    this.revisoesDashboardCacheTs = 0;
+    this.revisoesDashboardInFlight$ = null;
   }
 
 
 
 }
+
 
 
 

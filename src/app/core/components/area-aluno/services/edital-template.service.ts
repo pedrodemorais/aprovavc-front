@@ -59,20 +59,15 @@ export class EditalTemplateService {
   }
 
   buscarImagemArquivo(id: number): Observable<HttpResponse<Blob>> {
-    return this.buscarImagemTemplateComFallback(id).pipe(
-      catchError(() =>
-        this.buscarOrgaoIdDoTemplate(id).pipe(
-          switchMap((orgaoId) => {
-            if (!orgaoId) {
-              return throwError(() => new Error('Imagem não encontrada para o template informado.'));
-            }
-            return this.buscarImagemOrgaoComFallback(orgaoId);
-          })
-        )
-      )
+    return this.buscarOrgaoIdDoTemplate(id).pipe(
+      switchMap((orgaoId) => {
+        if (!orgaoId) {
+          return throwError(() => new Error('Imagem nao encontrada para o template informado.'));
+        }
+        return this.buscarImagemOrgaoComFallback(orgaoId);
+      })
     );
   }
-
   clonarTemplate(templateId: number, payload: ClonarEditalRequestDTO = {}): Observable<ClonarEditalResponseDTO> {
     return this.http.post<ClonarEditalResponseDTO>(
       `${this.cloneBase}/${templateId}`,
@@ -94,9 +89,7 @@ export class EditalTemplateService {
 
   private buscarImagemTemplateComFallback(id: number): Observable<HttpResponse<Blob>> {
     const urls = [
-      `${this.templateBase}/${id}/imagem`,
-      `${this.templatePublicBase}/${id}/imagem`,
-      `${this.templatePublicAltBase}/${id}/imagem`
+      `${this.templateBase}/${id}/imagem`
     ];
     return this.buscarBlobComFallback(urls);
   }
@@ -104,18 +97,14 @@ export class EditalTemplateService {
   private buscarImagemOrgaoComFallback(orgaoId: number): Observable<HttpResponse<Blob>> {
     const urls = [
       `${this.orgaoAdminBase}/${orgaoId}/imagem`,
-      `${this.orgaoBase}/${orgaoId}/imagem`,
-      `${this.orgaoPublicAltBase}/${orgaoId}/imagem`,
-      `${this.orgaoBase}/public/${orgaoId}/imagem`
+      `${this.orgaoBase}/${orgaoId}/imagem`
     ];
     return this.buscarBlobComFallback(urls);
   }
 
   private buscarOrgaoIdDoTemplate(templateId: number): Observable<number | null> {
     const urls = [
-      `${this.templateBase}/${templateId}`,
-      `${this.templatePublicBase}/${templateId}`,
-      `${this.templatePublicAltBase}/${templateId}`
+      `${this.templateBase}/${templateId}`
     ];
     return this.buscarTemplateComFallback(urls).pipe(
       map((tpl) => {
@@ -162,3 +151,5 @@ export class EditalTemplateService {
     );
   }
 }
+
+

@@ -2,7 +2,8 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 import {
@@ -98,7 +99,19 @@ export class EditalAdminService {
     return this.http.get(`${this.adminTemplateBase}/${id}/imagem`, {
       ...this.options(),
       responseType: 'text'
-    });
+    }).pipe(
+      catchError(() =>
+        this.buscarTemplatePorId(id).pipe(
+          map((tpl) => Number((tpl as EditalTemplateDTO).orgaoId)),
+          switchMap((orgaoId) => {
+            if (!Number.isFinite(orgaoId) || orgaoId <= 0) {
+              return throwError(() => new Error('Imagem nao encontrada para o template informado.'));
+            }
+            return this.buscarImagemOrgao(orgaoId);
+          })
+        )
+      )
+    );
   }
 
   buscarImagemArquivo(id: number): Observable<import('@angular/common/http').HttpResponse<Blob>> {
@@ -106,7 +119,19 @@ export class EditalAdminService {
       ...this.options(),
       observe: 'response',
       responseType: 'blob'
-    });
+    }).pipe(
+      catchError(() =>
+        this.buscarTemplatePorId(id).pipe(
+          map((tpl) => Number((tpl as EditalTemplateDTO).orgaoId)),
+          switchMap((orgaoId) => {
+            if (!Number.isFinite(orgaoId) || orgaoId <= 0) {
+              return throwError(() => new Error('Imagem nao encontrada para o template informado.'));
+            }
+            return this.buscarImagemOrgaoArquivo(orgaoId);
+          })
+        )
+      )
+    );
   }
 
   excluirImagem(id: number): Observable<void> {

@@ -1240,6 +1240,11 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
 
   statusMateriaKey(item: BlocoEstudoItemDTO): string {
+    const statusBackend = String(item?.statusMateriaKey || '').toLowerCase();
+    if (statusBackend === 'revisao' || statusBackend === 'estudo' || statusBackend === 'emdia' || statusBackend === 'indef') {
+      return statusBackend;
+    }
+
     const statusRevisao = this.revisaoStatusPorMateria.get(item.materiaEstudoId);
     if (statusRevisao === 'VENCIDA' || statusRevisao === 'EM_DIA') return 'revisao';
     if (statusRevisao === 'FUTURA') return 'emdia';

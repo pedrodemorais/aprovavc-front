@@ -1,10 +1,12 @@
 import { FlashcardDTO } from '../models/FlashcardDTO';
-import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone, AfterViewInit } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone, AfterViewInit, DestroyRef, inject } from '@angular/core';
 import { ActivatedRoute, Router, ParamMap } from '@angular/router';
-import { forkJoin, of, from } from 'rxjs';
-import { concatMap, toArray } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin, of, from, Observable, Subject, EMPTY } from 'rxjs';
+import { catchError, concatMap, distinctUntilChanged, exhaustMap, filter, finalize, map, shareReplay, switchMap, tap, toArray } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { MateriaService } from '../services/materia.service';
+import { ListarTopicosMateriaResponse, MateriaService } from '../services/materia.service';
 import { Materia } from '../models/materia.model';
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import {
@@ -14,12 +16,56 @@ import {
   TopicoRevisaoRespostaRequest,
   TopicoFinalizadoDTO,
   VocabularioDTO,
-  MateriaTopicosDTO
+  MateriaTopicosDTO,
+  NextTopicContext,
+  TopicoNodeDTO
 } from '../services/sala-estudo.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
+import { environment } from 'src/environments/environment';
+import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
+type TopicoViewModel = {
+  id: number;
+  descricao: string;
+  ativo?: boolean;
+  nivel: number;
+  materiaId?: number;
+  hasFilhos: boolean;
+  _raw?: TopicoNodeDTO;
+  subtopicos?: TopicoNodeDTO[];
+  paiId?: number;
+  topicoPai?: { id?: number | null };
+  pai?: { id?: number | null };
+  dataAtualizacao?: string;
+  dataCriacao?: string;
+  updatedAt?: string;
+  filhos?: TopicoViewModel[];
+  [key: string]: unknown;
+};
+
+type QuillEditorLike = {
+  clipboard?: { addMatcher: (tag: string, matcher: () => { ops: unknown[] }) => void };
+  on?: (name: string, handler: (range: { index: number; length: number } | null) => void) => void;
+  getText?: (index: number, length: number) => string;
+  getLength?: () => number;
+  deleteText?: (index: number, length: number, source?: string) => void;
+  getSelection?: () => { index: number; length: number } | null;
+  root?: HTMLElement;
+};
+
+interface RevisaoTopicoItem {
+  topicoId?: number;
+  proximaRevisao?: string | null;
+  dataProximaRevisao?: string | null;
+  status?: string | null;
+  statusCanonico?: string | null;
+}
+
+interface AnotacoesPayload {
+  anotacoes?: string;
+}
 
 @Component({
   selector: 'app-sala-estudo',
@@ -27,7 +73,11 @@ type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
   styleUrls: ['./sala-estudo.component.css']
 })
 export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly salvarEstudoTrigger$ = new Subject<string>();
   private readonly escopoParametroChave = 'centro_estudo_filtro_pro_prova';
+  private readonly usarRegrasBackV2 = !!environment?.featureFlags?.backendBusinessRulesV2;
+  private readonly saveLogFeatureEnabled = !!environment?.featureFlags?.salaEstudoSaveLog;
   mensagemRevisao?: string;
   materiaId!: number;
   materia?: Materia;
@@ -51,7 +101,18 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   private ultimoSaveHashPorTopico = new Map<number, number>();
   private editorTopicoId: number | null = null;
   private readonly saveLogKey = 'sala-estudo:save-log';
+  private readonly saveLogDebugKey = 'sala-estudo:debug-save-log';
+  private readonly saveLogFlushMs = 4000;
+  private readonly saveLogMaxEntries = 200;
+  private readonly saveLogFlushBatchSize = 12;
+  private saveLogPersistido: Array<Record<string, unknown>> = [];
+  private saveLogBuffer: Array<Record<string, unknown>> = [];
+  private saveLogFlushTimer: ReturnType<typeof setTimeout> | null = null;
+  private saveLogCarregado = false;
+  private saveLogRuntimeEnabled: boolean | null = null;
   private anotacoesReqSeq = 0;
+  private nextTopicReqSeq = 0;
+  private avancandoTopico = false;
   private flashcardsReqSeq = 0;
   private flashcardsRevisaoReqSeq = 0;
   private vocabulariosReqSeq = 0;
@@ -69,7 +130,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('listaTopicosContainer', { static: false }) listaTopicosContainerRef?: ElementRef<HTMLElement>;
 
   private centralizarTopicoTentativas = 0;
-  private centralizacaoProgramadaRefs: any[] = [];
+  private centralizacaoProgramadaRefs: Array<ReturnType<typeof setTimeout>> = [];
   private listaTopicosObserver?: MutationObserver;
   private recentralizarRafId: number | null = null;
 
@@ -77,7 +138,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   flashcardModalDragging = false;
   private flashcardDragOffset = { x: 0, y: 0 };
 
-  private quillEditor?: any;
+  private quillEditor?: QuillEditorLike;
   private ultimoTrechoSelecionado = '';
 
   maxCaracteres = 1200;
@@ -85,8 +146,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   caracteresRestantes = 1200;
   private ajustandoLimiteCaracteres = false;
 
-  topicos: any[] = [];
-  topicoSelecionado?: any | null;
+  topicos: TopicoViewModel[] = [];
+  topicoSelecionado?: TopicoViewModel | null;
 
   private topicoIdPreferido: number | null = null;
   private autoSelecionarUltimoNaoEstudado = false;
@@ -98,7 +159,11 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   private modoPreferido: 'estudar' | 'revisar' = 'estudar';
   private temTempoNaoSalvoFlag = false;
 
-  arvoreTopicos: any[] = [];
+  arvoreTopicos: TopicoNodeDTO[] = [];
+  private ordemVersionAtual: string | null = null;
+  private topicosComMetaCache: { materiaId: number; ordemVersion: string | null; response: ListarTopicosMateriaResponse } | null = null;
+  private topicosComMetaInFlight$: Observable<ListarTopicosMateriaResponse> | null = null;
+  private topicosComMetaInFlightMateriaId: number | null = null;
 
   carregando = false;
   erro?: string;
@@ -131,7 +196,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   private segundosEstudoJaSalvosTopicoAtual: number = 0;
 
   timerAtivo: boolean = false;
-  private timerRef: any;
+  private timerRef?: ReturnType<typeof setInterval>;
 
   pomodoroDuracaoFoco: number = 1500;      // 25 min
   pomodoroDuracaoPausaCurta: number = 300; // 5 min
@@ -169,7 +234,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // =============== SPLIT (QUEBRAR TOPICO) ===============
   mostrarModalSplit: boolean = false;
-  splitTopico: any | null = null;
+  splitTopico: TopicoViewModel | null = null;
   splitNovos: Array<{ id?: number; descricao: string; removendo?: boolean }> = [];
   splitTituloPai: string = '';
   private splitTituloPaiOriginal: string = '';
@@ -212,11 +277,18 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     status: StatusRevisao;
     proximaRevisao?: string | null;
   }>();
+  private overrideStatusRevisaoPorTopico = new Map<number, { status: StatusRevisao; expiresAt: number }>();
 
   private topicosComAnotacoes = new Set<number>();
+  private revisoesViewVersion = 0;
+  private topicosExibidosCacheFonte: TopicoViewModel[] | null = null;
+  private topicosExibidosCacheFiltro: StatusRevisao | null = null;
+  private topicosExibidosCacheRevisoesVersion = -1;
+  private topicosExibidosCacheResultado: TopicoViewModel[] = [];
 
   avaliacaoFlashcardSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
   enviandoAvaliacaoFlashcard: boolean = false;
+  enviandoAvaliacaoAnotacao: boolean = false;
 
   avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
 
@@ -240,46 +312,68 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.carregarTopicosFinalizados();
     this.carregarMateriasDisponiveisTroca();
 
-    this.route.queryParamMap.subscribe(queryParams => {
-      const topicoId = this.getTopicoIdFromQuery(queryParams);
-      const autoTopico = this.getAutoTopicoFromQuery(queryParams);
-      const modoAtualizado = this.getModoFromQuery(queryParams, this.modo);
+    this.salvarEstudoTrigger$
+      .pipe(
+        exhaustMap((motivo) => this.salvarEstudoComResultado(motivo)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
 
-      if (modoAtualizado !== this.modo) {
-        this.modoPreferido = modoAtualizado;
-        this.mudarModo(modoAtualizado);
-      }
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((queryParams) => {
+        const topicoId = this.getTopicoIdFromQuery(queryParams);
+        const autoTopico = this.getAutoTopicoFromQuery(queryParams);
+        const modoAtualizado = this.getModoFromQuery(queryParams, this.modo);
 
-      this.autoSelecionarUltimoNaoEstudado = autoTopico;
-      this.topicoIdPreferido = topicoId;
-
-      if (topicoId && topicoId !== this.topicoSelecionado?.id && this.topicosCarregados) {
-        const candidato = this.topicos.find(t => t.id === topicoId);
-        if (candidato) {
-          this.selecionarTopico(candidato);
-          this.selecionouTopicoInicial = true;
+        if (modoAtualizado !== this.modo) {
+          this.modoPreferido = modoAtualizado;
+          this.mudarModo(modoAtualizado);
         }
-      }
-    });
 
-    this.route.paramMap.subscribe(params => {
-      const idParam = params.get('materiaId') ?? params.get('id');
-      this.materiaId = idParam ? Number(idParam) : 0;
+        this.autoSelecionarUltimoNaoEstudado = autoTopico;
+        this.topicoIdPreferido = topicoId;
 
-      console.log('[SALA-ESTUDO] materiaId =', this.materiaId);
+        if (topicoId && topicoId !== this.topicoSelecionado?.id && this.topicosCarregados) {
+          const candidato = this.topicos.find(t => t.id === topicoId);
+          if (candidato) {
+            this.selecionarTopico(candidato);
+            this.selecionouTopicoInicial = true;
+          }
+        }
+      });
 
-      if (!this.materiaId) {
-        this.erro = 'Materia nao informada na rota.';
-        return;
-      }
-
-      this.carregarMateria();
-      this.carregarTopicos();
-      this.carregarRevisoesDashboard();
-    });
+    this.route.paramMap
+      .pipe(
+        map((params) => {
+          const idParam = params.get('materiaId') ?? params.get('id');
+          return idParam ? Number(idParam) : 0;
+        }),
+        distinctUntilChanged(),
+        tap((materiaId) => {
+          this.materiaId = materiaId;
+          this.erro = undefined;
+          if (!materiaId) {
+            this.erro = 'Materia nao informada na rota.';
+          }
+        }),
+        filter((materiaId) => !!materiaId),
+        switchMap((materiaId) =>
+          this.carregarSalaPorMateria$(materiaId).pipe(
+            catchError((err) => {
+              console.error('[SALA-ESTUDO] Erro ao carregar sala por materia:', err);
+              this.erro = 'Erro ao carregar dados da sala de estudo.';
+              return EMPTY;
+            })
+          )
+        ),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
   }
 
   ngOnDestroy(): void {
+    this.flushSaveLogBuffer(true);
     this.destruirObservadorListaTopicos();
     if (this.recentralizarRafId != null) {
       cancelAnimationFrame(this.recentralizarRafId);
@@ -293,21 +387,21 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.inicializarObservadorListaTopicos();
   }
 
-  canDeactivate(): boolean {
+  canDeactivate(): boolean | Observable<boolean> {
     if (!this.deveAlertarTempoNaoSalvo()) {
       return true;
     }
 
     const salvar = confirm('Voce tem tempo de estudo nao salvo. Deseja salvar antes de sair?');
     if (salvar) {
-      this.salvarEstudo();
-      return true;
+      return this.salvarEstudoComResultado('can-deactivate');
     }
     return false;
   }
 
   @HostListener('window:beforeunload', ['$event'])
   beforeUnload(event: BeforeUnloadEvent): void {
+    this.flushSaveLogBuffer(true);
     if (!this.deveAlertarTempoNaoSalvo()) {
       return;
     }
@@ -386,15 +480,16 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   // EDITOR (QUILL)
   // ================================================================
 
-  onEditorInit(event: any) {
-    const quill = event?.editor || event;
+  onEditorInit(event: unknown) {
+    const eventObj = (event as { editor?: unknown }) || {};
+    const quill = (eventObj.editor || event) as QuillEditorLike;
     this.quillEditor = quill;
 
-    quill.clipboard.addMatcher('IMG', () => ({ ops: [] }));
+    quill.clipboard?.addMatcher('IMG', () => ({ ops: [] }));
 
-    quill.on('selection-change', (range: { index: number; length: number } | null) => {
+    quill.on?.('selection-change', (range: { index: number; length: number } | null) => {
       if (!range || range.length <= 0) return;
-      const texto = quill.getText(range.index, range.length);
+      const texto = quill.getText?.(range.index, range.length) || '';
       if (texto) this.ultimoTrechoSelecionado = texto.trim();
     });
 
@@ -404,19 +499,19 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     atualizarContador();
 
-    quill.on('text-change', () => {
+    quill.on?.('text-change', () => {
       if (this.ajustandoLimiteCaracteres) return;
 
       const length = Math.max(0, (quill.getLength?.() ?? 0) - 1);
       if (length > this.maxCaracteres) {
         this.ajustandoLimiteCaracteres = true;
-        quill.deleteText(this.maxCaracteres, length - this.maxCaracteres, 'api');
+        quill.deleteText?.(this.maxCaracteres, length - this.maxCaracteres, 'api');
         this.ajustandoLimiteCaracteres = false;
       }
       this.atualizarContadorCaracteres(Math.min(length, this.maxCaracteres));
     });
 
-    quill.root.addEventListener('drop', (e: DragEvent) => {
+    quill.root?.addEventListener('drop', (e: DragEvent) => {
       const files = e.dataTransfer?.files;
       if (!files?.length) return;
       const hasImage = Array.from(files).some(f => f.type.startsWith('image/'));
@@ -426,7 +521,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    quill.root.addEventListener('paste', (e: ClipboardEvent) => {
+    quill.root?.addEventListener('paste', (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items?.length) return;
       const hasImage = Array.from(items).some(i => i.type.startsWith('image/'));
@@ -441,38 +536,40 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   // CARREGAMENTO DE DADOS
   // ================================================================
 
-  private carregarMateria(): void {
+  private carregarSalaPorMateria$(materiaId: number): Observable<void> {
     this.carregando = true;
-    this.materiaService.listarMaterias().subscribe({
-      next: (lista) => {
-        this.materia = (lista || []).find(m => m.id === this.materiaId);
-        this.carregando = false;
-
+    return forkJoin({
+      materias: this.materiaService.listarMaterias(),
+      topicosResp: this.obterTopicosComMeta$(materiaId),
+      revisoes: this.salaEstudoService.listarRevisoesDashboard()
+    }).pipe(
+      tap(({ materias, topicosResp, revisoes }) => {
+        this.materia = (materias || []).find(m => m.id === materiaId);
         if (!this.materia) {
           this.erro = 'Materia nao encontrada para este aluno.';
         }
-      },
-      error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao carregar materia:', err);
+
+        this.aplicarTopicosCarregados(topicosResp);
+        this.atualizarMapaRevisoes(revisoes as RevisaoTopicoItem[]);
+        this.revisoesCarregadas = true;
+        this.tentarSelecionarTopicoInicial();
+      }),
+      map(() => void 0),
+      finalize(() => {
         this.carregando = false;
-        this.erro = 'Erro ao carregar dados da materia.';
-      }
-    });
+      })
+    );
   }
 
   private carregarMateriasDisponiveisTroca(): void {
     this.carregandoMateriasTroca = true;
-    this.empresaParametroService.getParametroPorChave(this.escopoParametroChave).subscribe({
-      next: (escopo) => this.carregarMateriasTrocaPorEscopo((escopo || 'todas').trim() || 'todas'),
-      error: () => this.carregarMateriasTrocaPorEscopo('todas')
-    });
-  }
-
-  private carregarMateriasTrocaPorEscopo(escopo: string): void {
-    this.salaEstudoService.listarMateriasParaEstudo(escopo).subscribe({
-      next: (lista: MateriaTopicosDTO[]) => {
+    this.empresaParametroService.getParametroPorChave(this.escopoParametroChave).pipe(
+      map((escopo) => (escopo || 'todas').trim() || 'todas'),
+      catchError(() => of('todas')),
+      switchMap((escopo) => this.salaEstudoService.listarMateriasParaEstudo(escopo)),
+      map((lista: MateriaTopicosDTO[]) => {
         const ids = new Set<number>();
-        const materias = (lista || [])
+        return (lista || [])
           .map((item) => ({ id: Number(item?.materiaId), nome: String(item?.materiaNome || '').trim() }))
           .filter((item) => Number.isFinite(item.id) && item.id > 0 && !!item.nome)
           .filter((item) => {
@@ -480,40 +577,39 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
             ids.add(item.id);
             return true;
           });
-
-        if (materias.length) {
-          this.materiasDisponiveisTroca = materias;
-          this.carregandoMateriasTroca = false;
-          return;
-        }
-
-        this.carregarMateriasTrocaFallback();
-      },
-      error: () => this.carregarMateriasTrocaFallback()
-    });
-  }
-
-  private carregarMateriasTrocaFallback(): void {
-    this.materiaService.listarMaterias().subscribe({
-      next: (lista) => {
-        this.materiasDisponiveisTroca = (lista || [])
-          .filter((m: Materia) => Number.isFinite(Number(m?.id)) && Number(m?.id) > 0 && !!String(m?.nome || '').trim());
+      }),
+      switchMap((materias) => {
+        if (materias.length) return of(materias);
+        return this.materiaService.listarMaterias().pipe(
+          map((lista) => (lista || [])
+            .filter((m: Materia) => Number.isFinite(Number(m?.id)) && Number(m?.id) > 0 && !!String(m?.nome || '').trim()))
+        );
+      }),
+      finalize(() => {
         this.carregandoMateriasTroca = false;
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (materias) => {
+        this.materiasDisponiveisTroca = materias;
       },
       error: () => {
         this.materiasDisponiveisTroca = [];
-        this.carregandoMateriasTroca = false;
       }
     });
   }
 
-  private achatarArvoreTopicos(lista: any[], nivel: number = 0, acumulador: any[] = []): any[] {
-    for (const dto of lista) {
+  private achatarArvoreTopicos(
+    lista: TopicoNodeDTO[],
+    nivel: number = 0,
+    acumulador: TopicoViewModel[] = []
+  ): TopicoViewModel[] {
+    for (const dto of lista || []) {
       const temFilhos = !!(dto.subtopicos && Array.isArray(dto.subtopicos) && dto.subtopicos.length);
 
-      const node = {
-        id: dto.id,
-        descricao: dto.descricao,
+      const node: TopicoViewModel = {
+        id: Number(dto.id),
+        descricao: String(dto.descricao || ''),
         ativo: dto.ativo ?? true,
         nivel,
         materiaId: dto.materiaId,
@@ -524,7 +620,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       acumulador.push(node);
 
       if (temFilhos) {
-        this.achatarArvoreTopicos(dto.subtopicos, nivel + 1, acumulador);
+        this.achatarArvoreTopicos((dto.subtopicos || []) as TopicoNodeDTO[], nivel + 1, acumulador);
       }
     }
     return acumulador;
@@ -534,46 +630,131 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return !!(this.topicoSelecionado && this.topicoSelecionado.ativo !== false);
   }
 
+  get topicoSelecionadoFinalizado(): boolean {
+    return this.isTopicoFinalizado(this.topicoSelecionado);
+  }
+
+  get topicoSelecionadoFinalizadoPendente(): boolean {
+    return this.isTopicoFinalizadoPendente(this.topicoSelecionado);
+  }
+
+  get topicoSelecionadoResetPendente(): boolean {
+    return this.isTopicoResetPendente(this.topicoSelecionado);
+  }
+
   private carregarTopicos(): void {
-    console.log('[SALA-ESTUDO] Carregando topicos da materiaId =', this.materiaId);
-    console.log('[SALA-ESTUDO][TOPICOS] carregarTopicos estado', {
-      topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
-      editorTopicoId: this.editorTopicoId
-    });
     this.registrarSaveLog('topicos-carregar-inicio', {
       topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
       editorTopicoId: this.editorTopicoId
     });
 
-    this.materiaService.listarTopicos(this.materiaId).subscribe({
-      next: (lista) => {
-        const listaSegura = lista || [];
-        console.log('[SALA-ESTUDO] DTO bruto de topicos (arvore):', listaSegura);
+    this.atualizarTopicosComMeta$().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => {
 
-        this.arvoreTopicos = listaSegura;
-        this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
-
-        console.log('[SALA-ESTUDO] Lista achatada (topicos):', this.topicos);
-        console.log('[SALA-ESTUDO][TOPICOS] carregarTopicos ok', {
-          total: this.topicos?.length ?? 0,
-          topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
-          editorTopicoId: this.editorTopicoId
-        });
         this.registrarSaveLog('topicos-carregar-ok', {
           total: this.topicos?.length ?? 0,
           topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
           editorTopicoId: this.editorTopicoId
         });
 
-        this.topicosCarregados = true;
-        this.inicializarObservadorListaTopicos();
-        this.tentarSelecionarTopicoInicial();
       },
       error: (err) => {
         console.error('[SALA-ESTUDO] Erro ao carregar topicos:', err);
         this.erro = 'Erro ao carregar topicos da materia.';
       }
     });
+  }
+
+  private invalidarTopicosComMetaCache(): void {
+    this.topicosComMetaCache = null;
+    this.topicosComMetaInFlight$ = null;
+    this.topicosComMetaInFlightMateriaId = null;
+  }
+
+  private obterTopicosComMeta$(
+    materiaId: number,
+    opts?: { force?: boolean; expectedOrdemVersion?: string | null }
+  ): Observable<ListarTopicosMateriaResponse> {
+    if (!Number.isFinite(materiaId) || materiaId <= 0) {
+      return of({ topicos: [], ordemVersion: null } as ListarTopicosMateriaResponse);
+    }
+
+    const force = !!opts?.force;
+    const expectedOrdemVersion = opts?.expectedOrdemVersion ?? null;
+
+    if (
+      this.topicosComMetaCache &&
+      this.topicosComMetaCache.materiaId === materiaId &&
+      expectedOrdemVersion &&
+      this.topicosComMetaCache.ordemVersion !== expectedOrdemVersion
+    ) {
+      this.topicosComMetaCache = null;
+    }
+
+    if (
+      !force &&
+      this.topicosComMetaCache &&
+      this.topicosComMetaCache.materiaId === materiaId
+    ) {
+      return of(this.topicosComMetaCache.response);
+    }
+
+    if (
+      !force &&
+      this.topicosComMetaInFlight$ &&
+      this.topicosComMetaInFlightMateriaId === materiaId
+    ) {
+      return this.topicosComMetaInFlight$;
+    }
+
+    const req$ = this.materiaService.listarTopicosComMeta(materiaId).pipe(
+      tap((resp: ListarTopicosMateriaResponse) => {
+        this.topicosComMetaCache = {
+          materiaId,
+          ordemVersion: resp?.ordemVersion ?? null,
+          response: resp
+        };
+      }),
+      finalize(() => {
+        this.topicosComMetaInFlight$ = null;
+        this.topicosComMetaInFlightMateriaId = null;
+      }),
+      shareReplay(1)
+    );
+
+    this.topicosComMetaInFlight$ = req$;
+    this.topicosComMetaInFlightMateriaId = materiaId;
+    return req$;
+  }
+
+  private atualizarTopicosComMeta$(
+    materiaId: number = this.materiaId,
+    opts?: { force?: boolean; expectedOrdemVersion?: string | null }
+  ): Observable<ListarTopicosMateriaResponse> {
+    return this.obterTopicosComMeta$(materiaId, opts).pipe(
+      tap((resp: ListarTopicosMateriaResponse) => this.aplicarTopicosCarregados(resp))
+    );
+  }
+
+  private aplicarTopicosCarregados(resp: ListarTopicosMateriaResponse): void {
+    const listaSegura = resp?.topicos || [];
+    this.ordemVersionAtual = resp?.ordemVersion ?? null;
+    if (Number.isFinite(this.materiaId) && this.materiaId > 0) {
+      this.topicosComMetaCache = {
+        materiaId: this.materiaId,
+        ordemVersion: this.ordemVersionAtual,
+        response: resp
+      };
+    }
+
+    this.arvoreTopicos = listaSegura as TopicoNodeDTO[];
+    this.topicos = this.achatarArvoreTopicos(listaSegura as TopicoNodeDTO[], 0, []);
+    this.invalidarTopicosExibidosCache();
+    this.topicosCarregados = true;
+    this.inicializarObservadorListaTopicos();
+    this.tentarSelecionarTopicoInicial();
   }
 
   private getTopicoIdFromQuery(queryParams?: ParamMap): number | null {
@@ -610,7 +791,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.modoRevisao = 'anotacoes';
 
     if (this.topicoSelecionado && this.topicoPermiteEstudo) {
-      this.salaEstudoService.buscarAnotacoes(this.topicoSelecionado.id).subscribe({
+      this.salaEstudoService.buscarAnotacoes(this.topicoSelecionado.id).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: (resp) => {
           this.anotacoes = resp.anotacoes || '';
           this.atualizarMarcaAnotacoes(this.topicoSelecionado?.id, this.hasConteudoAnotacoes(this.anotacoes));
@@ -645,7 +828,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ================================================================
-  // INTERAÇÃO COM TÓPICOS
+  // INTERACAO COM TOPICOS
   // ================================================================
 
   private calcularTempoEstudoAtual(): number {
@@ -691,7 +874,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  selecionarTopico(t: any): void {
+  selecionarTopico(t: TopicoViewModel): void {
     if (this.carregandoAnotacoes) {
       this.mostrarMensagemRevisao('Aguarde o carregamento das anotações.');
       return;
@@ -723,7 +906,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.editorTopicoId = t?.id ?? null;
-    console.log('[SALA-ESTUDO][EDITOR] selecionarTopico -> editorTopicoId =', this.editorTopicoId);
     this.centralizarTopicoSelecionado();
 
     if (this.modo === 'revisar') {
@@ -756,12 +938,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const reqSeq = ++this.anotacoesReqSeq;
     this.ultimaAnotacoesReqInfo = { seq: reqSeq, topicoId: t.id ?? null };
     this.carregandoAnotacoes = true;
-    console.log('[SALA-ESTUDO][ANOTACOES] requisicao', {
-      reqSeq,
-      reqTopicoId: t.id,
-      selecionadoId: this.topicoSelecionado?.id ?? null,
-      editorTopicoIdAntes: this.editorTopicoId
-    });
     this.registrarSaveLog('anotacoes-requisicao', {
       reqSeq,
       reqTopicoId: t.id,
@@ -769,14 +945,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       editorTopicoIdAntes: this.editorTopicoId
     });
 
-    this.salaEstudoService.buscarAnotacoes(t.id).subscribe({
+    this.salaEstudoService.buscarAnotacoes(t.id).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (resp) => {
-        console.log('[SALA-ESTUDO][ANOTACOES] resposta', {
-          reqSeq,
-          reqTopicoId: t.id,
-          selecionadoId: this.topicoSelecionado?.id ?? null,
-          editorTopicoIdAntes: this.editorTopicoId
-        });
         if (reqSeq !== this.anotacoesReqSeq || (this.topicoSelecionado?.id ?? null) !== t.id) {
           console.warn('[SALA-ESTUDO][ANOTACOES] resposta-ignorada', {
             reqSeq,
@@ -796,12 +968,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
           return;
         }
         this.editorTopicoId = t.id ?? null;
-        console.log('[SALA-ESTUDO] buscarAnotacoes resp:', {
-          topicoId: t.id,
-          respTopicoId: resp?.topicoId,
-          tamanho: (resp?.anotacoes || '').length
-        });
-        console.log('[SALA-ESTUDO][EDITOR] buscarAnotacoes -> editorTopicoId =', this.editorTopicoId);
 
         this.anotacoes = resp.anotacoes || '';
         this.atualizarMarcaAnotacoes(t.id, this.hasConteudoAnotacoes(this.anotacoes));
@@ -846,10 +1012,11 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.mostrarMensagemRevisao('Recarregando as anotações do tópico atual...');
     }
 
-    console.log('[SALA-ESTUDO][ANOTACOES] recarregar', { motivo, reqSeq, topicoId });
     this.registrarSaveLog('anotacoes-recarregar', { motivo, reqSeq, topicoId });
 
-    this.salaEstudoService.buscarAnotacoes(topicoId).subscribe({
+    this.salaEstudoService.buscarAnotacoes(topicoId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (resp) => {
         if (reqSeq !== this.anotacoesReqSeq || (this.topicoSelecionado?.id ?? null) !== topicoId) {
           console.warn('[SALA-ESTUDO][ANOTACOES] recarregar-ignorado', { motivo, reqSeq, topicoId });
@@ -984,7 +1151,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const reqSeq = ++this.flashcardsReqSeq;
-    this.salaEstudoService.listarFlashcardsPorTopico(topicoIdReq).subscribe({
+    this.salaEstudoService.listarFlashcardsPorTopico(topicoIdReq).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (lista) => {
         if (reqSeq !== this.flashcardsReqSeq || (this.topicoSelecionado?.id ?? null) !== topicoIdReq) {
           return;
@@ -1013,7 +1182,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return Number.isFinite(id) && id > 0 ? id : null;
   }
 
-  private salvarUltimoTopico(t: any): void {
+  private salvarUltimoTopico(t: TopicoViewModel): void {
     if (!t?.id || !this.materiaId) return;
     const key = `${this.ultimoTopicoKeyPrefix}${this.materiaId}`;
     localStorage.setItem(key, String(t.id));
@@ -1023,7 +1192,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private obterProximoTopicoApos(folhas: any[], topicoId: number): any | null {
+  private obterProximoTopicoApos(folhas: TopicoViewModel[], topicoId: number): TopicoViewModel | null {
     const index = folhas.findIndex(t => t.id === topicoId);
     if (index < 0) return null;
 
@@ -1035,13 +1204,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return null;
   }
 
-  isTopicoFinalizado(t: any): boolean {
+  isTopicoFinalizado(t: TopicoViewModel | null | undefined): boolean {
     const id = t?.id;
     if (!id) return false;
     return this.topicosFinalizados.has(id);
   }
 
-  isTopicoFinalizadoLinha(t: any): boolean {
+  isTopicoFinalizadoLinha(t: TopicoViewModel | null | undefined): boolean {
     const id = t?.id;
     if (!id) return false;
 
@@ -1050,29 +1219,29 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const dto = this.encontrarDtoPorId(this.arvoreTopicos, id);
     if (!dto) return false;
 
-    const filhos = (dto.subtopicos || dto.filhos || []) as any[];
+    const filhos = (dto.subtopicos || dto.filhos || []) as TopicoNodeDTO[];
     if (!filhos.length) return false;
 
     return this.todosFilhosFinalizados(filhos);
   }
 
-  isTopicoFinalizadoPendente(t: any): boolean {
+  isTopicoFinalizadoPendente(t: TopicoViewModel | null | undefined): boolean {
     const id = t?.id;
     if (!id) return false;
     return this.topicosFinalizadosPendentes.has(id);
   }
 
-  isTopicoResetPendente(t: any): boolean {
+  isTopicoResetPendente(t: TopicoViewModel | null | undefined): boolean {
     const id = t?.id;
     if (!id) return false;
     return this.topicosResetPendentes.has(id);
   }
 
-  private todosFilhosFinalizados(lista: any[]): boolean {
+  private todosFilhosFinalizados(lista: TopicoNodeDTO[]): boolean {
     for (const filho of lista || []) {
       if (filho?.ativo === false) continue;
 
-      const sub = (filho?.subtopicos || filho?.filhos || []) as any[];
+      const sub = (filho?.subtopicos || filho?.filhos || []) as TopicoNodeDTO[];
       if (sub.length) {
         if (!this.todosFilhosFinalizados(sub)) return false;
         continue;
@@ -1085,21 +1254,29 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private carregarTopicosFinalizados(): void {
-    this.salaEstudoService.listarTopicosFinalizados().subscribe({
-      next: (lista: TopicoFinalizadoDTO[]) => {
+    this.carregarTopicosFinalizados$()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
+
+  private carregarTopicosFinalizados$(): Observable<void> {
+    return this.salaEstudoService.listarTopicosFinalizados().pipe(
+      tap((lista: TopicoFinalizadoDTO[]) => {
         this.topicosFinalizados = new Set((lista || [])
           .map((item) => item?.topicoId)
           .filter((id): id is number => Number.isFinite(id)));
 
         this.topicosFinalizadosCarregados = true;
         this.tentarSelecionarTopicoInicial();
-      },
-      error: () => {
+      }),
+      map(() => void 0),
+      catchError(() => {
         this.topicosFinalizados = new Set();
         this.topicosFinalizadosCarregados = true;
         this.tentarSelecionarTopicoInicial();
-      }
-    });
+        return of(void 0);
+      })
+    );
   }
 
   // ================================================================
@@ -1290,7 +1467,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   private pararTimerInterno(): void {
     if (this.timerRef) {
       clearInterval(this.timerRef);
-      this.timerRef = null;
+      this.timerRef = undefined;
     }
     this.timerBaseMs = null;
     this.pomodoroFaseInicioMs = null;
@@ -1389,11 +1566,15 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   // ================================================================
 
   salvarEstudo(motivo: string = 'auto'): void {
+    this.salvarEstudoTrigger$.next(motivo);
+  }
+
+  private salvarEstudoComResultado(motivo: string = 'auto'): Observable<boolean> {
     if (!this.topicoSelecionado) {
       this.erro = 'Selecione um topico antes de salvar o estudo.';
-      return;
+      return of(false);
     }
-    if (this.salvandoEstudo) return;
+    if (this.salvandoEstudo) return of(false);
 
     const topicoAtualId = this.topicoSelecionado?.id ?? null;
     if (!topicoAtualId || (this.editorTopicoId && this.editorTopicoId !== topicoAtualId)) {
@@ -1406,8 +1587,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       });
       this.registrarSaveLog('bloqueado-topico-mismatch', { motivo, topicoAtualId, editorTopicoId: this.editorTopicoId });
       this.recarregarAnotacoesSeNecessario('mismatch');
-      try { alert('Detectamos um conflito: o editor está vinculado a outro tópico. O salvamento foi bloqueado para evitar gravação no tópico errado.'); } catch {}
-      return;
+      try { alert('Detectamos um conflito entre editor e topico selecionado. O salvamento foi bloqueado para evitar gravacao no topico errado.'); } catch {}
+      return of(false);
     }
 
     if (this.modo === 'estudar') {
@@ -1445,22 +1626,22 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (tempoParaSalvar <= 0 && ultimoHash === anotacoesHash) {
       this.registrarSaveLog('ignorado-sem-alteracao', { motivo, topicoId: payload.topicoId, tempoParaSalvar });
-      return;
+      return of(true);
     }
 
     if (ultimoKey === saveKey && (agora - ultimoMs) < 1500) {
       this.registrarSaveLog('ignorado-duplicado', { motivo, topicoId: payload.topicoId, tempoParaSalvar, intervaloMs: agora - ultimoMs });
-      return;
+      return of(true);
     }
 
     this.registrarSaveLog('enviado', { motivo, topicoId: payload.topicoId, tempoParaSalvar, modo: this.modo, modoTemporizador: this.modoTemporizador });
 
     this.salvandoEstudo = true;
 
-    this.salaEstudoService.salvarEstudo(payload).subscribe({
-      next: (resp) => {
+    return this.salaEstudoService.salvarEstudo(payload).pipe(
+      switchMap((resp) => {
         const topicoAindaSelecionado = (this.topicoSelecionado?.id ?? null) === payload.topicoId;
-        this.registrarSaveLog('ok', { motivo, topicoId: payload.topicoId, retornoTopicoId: (resp as any)?.topicoId ?? null });
+        this.registrarSaveLog('ok', { motivo, topicoId: payload.topicoId, retornoTopicoId: resp?.topicoId ?? null });
 
         if (topicoAindaSelecionado) {
           this.segundosEstudoJaSalvosTopicoAtual += tempoParaSalvar;
@@ -1477,28 +1658,29 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         }
 
-        this.mensagemEstudoSalvo = tipoSessao === 'REVISAO' ? 'Revisão salva com sucesso.' : 'Estudo salvo com sucesso.';
+        this.mensagemEstudoSalvo = tipoSessao === 'REVISAO' ? 'Revisao salva com sucesso.' : 'Estudo salvo com sucesso.';
         setTimeout(() => (this.mensagemEstudoSalvo = undefined), 4000);
 
         if (topicoAindaSelecionado && this.modo === 'estudar' && tempoParaSalvar > 0) {
           this.tentarAvancarCicloSilencioso();
         }
 
-        this.recarregarTelaAposSalvar(payload.topicoId);
-      },
-      error: (err) => {
+        return this.recarregarTelaAposSalvar$(payload.topicoId).pipe(map(() => true));
+      }),
+      catchError((err) => {
         console.error('[SALA-ESTUDO] Erro ao salvar estudo:', err);
         this.erro = 'Erro ao salvar o estudo. Tente novamente.';
         this.registrarSaveLog('erro', { motivo, topicoId: payload.topicoId, status: err?.status ?? null });
-      }
-    }).add(() => {
-      this.ultimoSaveKeyPorTopico.set(payload.topicoId, saveKey);
-      this.ultimoSaveMsPorTopico.set(payload.topicoId, Date.now());
-      this.ultimoSaveHashPorTopico.set(payload.topicoId, anotacoesHash);
-      this.salvandoEstudo = false;
-    });
+        return of(false);
+      }),
+      finalize(() => {
+        this.ultimoSaveKeyPorTopico.set(payload.topicoId, saveKey);
+        this.ultimoSaveMsPorTopico.set(payload.topicoId, Date.now());
+        this.ultimoSaveHashPorTopico.set(payload.topicoId, anotacoesHash);
+        this.salvandoEstudo = false;
+      })
+    );
   }
-
   private hashTexto(valor: string): number {
     let hash = 5381;
     for (let i = 0; i < valor.length; i += 1) {
@@ -1508,79 +1690,47 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return hash >>> 0;
   }
 
-  private recarregarTelaAposSalvar(topicoSalvoId?: number): void {
+  private recarregarTelaAposSalvar$(topicoSalvoId?: number): Observable<void> {
     const topicoIdNoInicioReq = this.topicoSelecionado?.id ?? null;
-    if (!this.materiaId) return;
+    if (!this.materiaId) return of(void 0);
 
     const reqs = {
-      topicos: this.materiaService.listarTopicos(this.materiaId),
       revisoes: this.salaEstudoService.listarRevisoesDashboard(),
       finalizados: this.salaEstudoService.listarTopicosFinalizados(),
       anotacoes: topicoIdNoInicioReq ? this.salaEstudoService.buscarAnotacoes(topicoIdNoInicioReq) : of(null)
     };
 
-    forkJoin(reqs).subscribe({
-      next: ({ topicos, revisoes, finalizados, anotacoes }) => {
-        const listaSegura = topicos || [];
-        this.arvoreTopicos = listaSegura;
-        this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
-        this.topicosCarregados = true;
-
+    return forkJoin(reqs).pipe(
+      tap(({ revisoes, finalizados, anotacoes }) => {
         this.revisoesPorTopico.clear();
+        this.revisoesViewVersion += 1;
+        this.invalidarTopicosExibidosCache();
         const selecionadoId = this.topicoSelecionado?.id;
-        const revisadoId = this.ultimoTopicoRevisadoId;
 
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        (revisoes || []).forEach((item: any) => {
+        (revisoes || []).forEach((item: RevisaoTopicoItem) => {
           if (!item.topicoId) return;
 
           const proxima: string | null = item.proximaRevisao || item.dataProximaRevisao || null;
 
-          let status: StatusRevisao = 'SEM';
-          const statusRevisaoRaw = String(item.statusRevisao || '').toUpperCase();
-          const statusRaw = String(item.status || '').toUpperCase();
-
-          if (statusRevisaoRaw) {
-            if (statusRevisaoRaw === 'ATRASADA') status = 'ATRASADA';
-            else if (statusRevisaoRaw === 'HOJE') status = 'HOJE';
-            else if (statusRevisaoRaw === 'EM_DIA') status = 'HOJE';
-            else if (statusRevisaoRaw === 'FUTURA') status = 'FUTURA';
-            else status = 'SEM';
-          } else if (statusRaw) {
-            if (statusRaw === 'VENCIDA') status = 'ATRASADA';
-            else if (statusRaw === 'EM_DIA') status = 'HOJE';
-            else if (statusRaw === 'FUTURA') status = 'FUTURA';
-            else status = 'SEM';
-          } else if (proxima) {
-            const dataRev = this.construirDataLocal(proxima);
-            const hojeTime = hoje.getTime();
-            const revTime = dataRev.getTime();
-            const hojeFlag = revTime === hojeTime;
-            const atrasadoFlag = revTime < hojeTime;
-
-            if (atrasadoFlag) status = 'ATRASADA';
-            else if (hojeFlag) status = 'HOJE';
-            else status = 'FUTURA';
-          }
+          const status: StatusRevisao = extrairStatusCanonicoRevisao(item, hoje);
 
           this.revisoesPorTopico.set(item.topicoId, { status, proximaRevisao: proxima });
 
-          if (selecionadoId && item.topicoId === selecionadoId) {
-            console.log('[SALA-ESTUDO] Status recebido do back (topico selecionado):', { topicoId: item.topicoId, status, proximaRevisao: proxima, statusRevisaoRaw, statusRaw });
-          }
-          if (revisadoId && item.topicoId === revisadoId) {
-            console.log('[SALA-ESTUDO] Status recebido do back (topico revisado):', { topicoId: item.topicoId, status, proximaRevisao: proxima, statusRevisaoRaw, statusRaw });
-          }
         });
+
+        // Reprocessa filtros/lista com os status efetivamente carregados
+        this.revisoesViewVersion += 1;
+        this.invalidarTopicosExibidosCache();
 
         this.revisoesCarregadas = true;
         this.tentarSelecionarTopicoInicial();
 
         const concluido = new Set((finalizados || [])
-          .map((item: any) => item?.topicoId)
-          .filter((id: any): id is number => Number.isFinite(id)));
+          .map((item: TopicoFinalizadoDTO) => item?.topicoId)
+          .filter((id: number): id is number => Number.isFinite(id)));
 
         this.topicosFinalizadosPendentes.forEach((finalizado, id) => {
           if (finalizado) concluido.add(id);
@@ -1595,13 +1745,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         if (
           topicoIdNoInicioReq &&
           anotacoes &&
-          (anotacoes as any)?.anotacoes !== undefined &&
+          (anotacoes as AnotacoesPayload)?.anotacoes !== undefined &&
           topicoAtualId === topicoIdNoInicioReq
         ) {
           // No modo estudar, manter o estado atual do Quill evita inserir quebras
           // de linha/alterar cursor ao salvar manualmente.
           if (this.modo === 'revisar') {
-            const resp: any = anotacoes;
+            const resp = anotacoes as AnotacoesPayload;
             this.anotacoes = resp.anotacoes || '';
             this.atualizarMarcaAnotacoes(topicoIdNoInicioReq, this.hasConteudoAnotacoes(this.anotacoes));
             this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
@@ -1614,37 +1764,100 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
             topicoAtualId
           });
         }
-      },
-      error: () => { /* ignora erro de refresh */ }
-    });
+      }),
+      map(() => void 0),
+      catchError(() => of(void 0))
+    );
   }
 
-  private registrarSaveLog(tipo: string, dados: Record<string, any>): void {
-    if (typeof window === 'undefined') return;
+  private isSaveLogEnabled(): boolean {
+    if (this.saveLogRuntimeEnabled != null) {
+      return this.saveLogRuntimeEnabled;
+    }
+    if (typeof window === 'undefined') {
+      this.saveLogRuntimeEnabled = false;
+      return false;
+    }
+    try {
+      const debugRaw = localStorage.getItem(this.saveLogDebugKey);
+      const debugLigado = debugRaw === '1' || debugRaw === 'true';
+      this.saveLogRuntimeEnabled = this.saveLogFeatureEnabled || debugLigado;
+    } catch {
+      this.saveLogRuntimeEnabled = this.saveLogFeatureEnabled;
+    }
+    return this.saveLogRuntimeEnabled;
+  }
 
+  private carregarSaveLogPersistido(): void {
+    if (this.saveLogCarregado || typeof window === 'undefined') return;
+    this.saveLogCarregado = true;
     try {
       const raw = localStorage.getItem(this.saveLogKey);
       const lista = raw ? JSON.parse(raw) : [];
-
-      const entrada = {
-        ts: new Date().toISOString(),
-        tipo,
-        materiaId: this.materiaId ?? null,
-        topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
-        editorTopicoId: this.editorTopicoId,
-        ...dados
-      };
-
-      lista.push(entrada);
-      const corte = lista.slice(-200);
-      localStorage.setItem(this.saveLogKey, JSON.stringify(corte));
+      this.saveLogPersistido = Array.isArray(lista) ? (lista as Array<Record<string, unknown>>) : [];
     } catch {
-      // ignora falha de log
+      this.saveLogPersistido = [];
     }
   }
 
+  private agendarFlushSaveLog(): void {
+    if (this.saveLogFlushTimer != null) return;
+    this.saveLogFlushTimer = setTimeout(() => {
+      this.saveLogFlushTimer = null;
+      this.flushSaveLogBuffer();
+    }, this.saveLogFlushMs);
+  }
+
+  private flushSaveLogBuffer(force = false): void {
+    if (!this.isSaveLogEnabled() || typeof window === 'undefined') return;
+    if (!force && this.saveLogBuffer.length === 0) return;
+
+    if (this.saveLogFlushTimer != null) {
+      clearTimeout(this.saveLogFlushTimer);
+      this.saveLogFlushTimer = null;
+    }
+
+    this.carregarSaveLogPersistido();
+
+    if (this.saveLogBuffer.length > 0) {
+      this.saveLogPersistido.push(...this.saveLogBuffer);
+      this.saveLogBuffer = [];
+    }
+
+    this.saveLogPersistido = this.saveLogPersistido.slice(-this.saveLogMaxEntries);
+    try {
+      localStorage.setItem(this.saveLogKey, JSON.stringify(this.saveLogPersistido));
+    } catch {
+      // ignora falha de persistencia
+    }
+  }
+
+  private registrarSaveLog(tipo: string, dados: Record<string, unknown>): void {
+    if (!this.isSaveLogEnabled() || typeof window === 'undefined') return;
+
+    this.carregarSaveLogPersistido();
+
+    const entrada = {
+      ts: new Date().toISOString(),
+      tipo,
+      materiaId: this.materiaId ?? null,
+      topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
+      editorTopicoId: this.editorTopicoId,
+      ...dados
+    };
+
+    this.saveLogBuffer.push(entrada);
+    if (this.saveLogBuffer.length >= this.saveLogFlushBatchSize) {
+      this.flushSaveLogBuffer();
+      return;
+    }
+    this.agendarFlushSaveLog();
+  }
+
   private tentarAvancarCicloSilencioso(): void {
-    this.blocosService.avancarCiclo().subscribe({
+    this.blocosService.avancarCiclo().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => this.blocosService.notificarBlocosAlterados(),
       error: () => {}
     });
@@ -1673,7 +1886,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const selecionadoId = selecionado?.id;
     if (!this.materiaId || !selecionadoId) return;
 
-    const raw = selecionado?._raw || {};
+    const raw: TopicoNodeDTO = (selecionado?._raw || {}) as TopicoNodeDTO;
     const parentIdRaw =
       raw?.topicoPaiId ??
       raw?.paiId ??
@@ -1785,7 +1998,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.carregandoVocabularios = true;
     this.erroVocabularios = undefined;
 
-    this.salaEstudoService.listarVocabularios(topicoIdReq).subscribe({
+    this.salaEstudoService.listarVocabularios(topicoIdReq).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (lista) => {
         if (reqSeq !== this.vocabulariosReqSeq || (this.topicoSelecionado?.id ?? null) !== topicoIdReq) {
           return;
@@ -1856,7 +2071,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.salvandoVocabulario = true;
     this.erroVocabularios = undefined;
 
-    this.salaEstudoService.criarVocabulario(payload).subscribe({
+    this.salaEstudoService.criarVocabulario(payload).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.salvandoVocabulario = false;
         this.resetVocabularioForm();
@@ -1914,18 +2131,26 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.salvandoListaVocabulario = true;
     this.erroVocabularios = undefined;
+    const topicoIdAtual = this.topicoSelecionado?.id;
+    if (!topicoIdAtual) {
+      this.salvandoListaVocabulario = false;
+      this.erroVocabularios = 'Selecione um topico antes de importar vocabulario.';
+      return;
+    }
 
     const requisicoes = itensValidos.map((item) =>
       this.salaEstudoService.criarVocabulario({
         materiaId: this.materiaId,
-        topicoId: this.topicoSelecionado.id,
+        topicoId: topicoIdAtual,
         termo: item.termo,
         definicao: item.definicao,
         tags: this.vocabularioTags?.trim() || undefined
       })
     );
 
-    forkJoin(requisicoes).subscribe({
+    forkJoin(requisicoes).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.salvandoListaVocabulario = false;
         this.vocabularioListaTexto = '';
@@ -1987,7 +2212,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const confirmou = window.confirm('Deseja realmente excluir este vocabulario?');
     if (!confirmou) return;
 
-    this.salaEstudoService.excluirVocabulario(item.id).subscribe({
+    this.salaEstudoService.excluirVocabulario(item.id).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.vocabularios = this.vocabularios.filter(v => v.id !== item.id);
         if (this.vocabularioIndexAtual >= this.vocabularios.length) {
@@ -2041,9 +2268,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private obterTrechoSelecionado(): string {
     if (this.quillEditor) {
-      const range = this.quillEditor.getSelection();
+      const range = this.quillEditor.getSelection?.();
       if (range && range.length > 0) {
-        const texto = this.quillEditor.getText(range.index, range.length);
+        const texto = this.quillEditor.getText?.(range.index, range.length) || '';
         return texto ? texto.trim() : '';
       }
     }
@@ -2137,7 +2364,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   // SPLIT (QUEBRAR TÓPICO) - CORRIGIDO (ESCOPOS E CHAVES)
   // ================================================================
 
-  abrirModalSplit(topico: any, event?: Event): void {
+  abrirModalSplit(topico: TopicoViewModel, event?: Event): void {
     if (event) event.stopPropagation();
     if (!this.podeQuebrarTopico(topico)) return;
 
@@ -2145,7 +2372,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.splitTituloPai = (topico?.descricao || '').toString();
     this.splitTituloPaiOriginal = this.splitTituloPai;
 
-    const filhos = (topico?._raw?.subtopicos || topico?.subtopicos || []) as any[];
+    const filhos = (topico?._raw?.subtopicos || topico?.subtopicos || []) as TopicoNodeDTO[];
 
     const itens = (filhos || [])
       .map((f) => ({
@@ -2212,10 +2439,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     item.removendo = true;
     this.splitErro = undefined;
 
-    this.materiaService.excluirTopico(this.materiaId, item.id).subscribe({
+    this.materiaService.excluirTopico(this.materiaId, item.id).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         const idx = this.splitNovos.indexOf(item);
         if (idx >= 0) this.splitNovos.splice(idx, 1);
+        this.invalidarTopicosComMetaCache();
         this.carregarTopicos();
       },
       error: (err) => {
@@ -2228,6 +2458,18 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  trackByMateriaId(index: number, item: Materia): number {
+    return Number(item?.id ?? index);
+  }
+
+  trackByStatusRevisao(index: number, item: { status: StatusRevisao }): string {
+    return String(item?.status ?? index);
+  }
+
+  trackByVocabularioId(index: number, item: VocabularioDTO): number {
+    return Number(item?.id ?? index);
   }
 
   salvarSplit(): void {
@@ -2307,18 +2549,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.splitErro = undefined;
     this.splitSalvando = true;
-    console.log('[SALA-ESTUDO][SPLIT] salvarSplit inicio', {
-      topicoPaiId: this.splitTopico?.id ?? null,
-      topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
-      editorTopicoId: this.editorTopicoId
-    });
     this.registrarSaveLog('split-salvar-inicio', {
       topicoPaiId: this.splitTopico?.id ?? null,
       topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
       editorTopicoId: this.editorTopicoId
     });
 
-    const requests: any[] = [];
+    const requests: Array<Observable<unknown>> = [];
     const operacoesSplit: Array<{ tipo: 'titulo' | 'edicao' | 'novo'; id?: number }> = [];
 
     if (tituloAlterado) {
@@ -2361,7 +2598,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       concatMap((req) => req),
       toArray()
     ).subscribe({
-      next: (respostas: any[]) => {
+      next: (respostas: unknown[]) => {
         const topicoPaiId = this.splitTopico?.id ?? null;
         const topicoSelecionadoAntesId = this.topicoSelecionado?.id ?? null;
         const eraSelecionado = topicoSelecionadoAntesId === topicoPaiId;
@@ -2369,22 +2606,15 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         let alvoIdPreferido: number | null = null;
         const idxPrimeiroNovo = operacoesSplit.findIndex((op) => op.tipo === 'novo');
         if (idxPrimeiroNovo >= 0) {
-          alvoIdPreferido = this.getTopicoIdFromDto(respostas[idxPrimeiroNovo]);
+          alvoIdPreferido = this.getTopicoIdFromDto(respostas[idxPrimeiroNovo] as TopicoNodeDTO);
         }
         if (!alvoIdPreferido) {
           const idxPrimeiraEdicao = operacoesSplit.findIndex((op) => op.tipo === 'edicao');
           if (idxPrimeiraEdicao >= 0) {
-            alvoIdPreferido = operacoesSplit[idxPrimeiraEdicao]?.id ?? this.getTopicoIdFromDto(respostas[idxPrimeiraEdicao]);
+            alvoIdPreferido = operacoesSplit[idxPrimeiraEdicao]?.id ?? this.getTopicoIdFromDto(respostas[idxPrimeiraEdicao] as TopicoNodeDTO);
           }
         }
 
-        console.log('[SALA-ESTUDO][SPLIT] salvarSplit ok', {
-          topicoPaiId,
-          eraSelecionado,
-          topicoSelecionadoId: topicoSelecionadoAntesId,
-          alvoIdPreferido,
-          editorTopicoId: this.editorTopicoId
-        });
         this.registrarSaveLog('split-salvar-ok', {
           topicoPaiId,
           eraSelecionado,
@@ -2410,15 +2640,22 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     topicoPaiId: number | null,
     topicoSelecionadoAntesId: number | null
   ): void {
-    if (!this.materiaId) return;
+    this.recarregarTopicosAposSplit$(alvoIdPreferido, topicoPaiId, topicoSelecionadoAntesId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
 
-    this.materiaService.listarTopicos(this.materiaId).subscribe({
-      next: (lista) => {
-        const listaSegura = lista || [];
-        this.arvoreTopicos = listaSegura;
-        this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
+  private recarregarTopicosAposSplit$(
+    alvoIdPreferido: number | null,
+    topicoPaiId: number | null,
+    topicoSelecionadoAntesId: number | null
+  ): Observable<void> {
+    if (!this.materiaId) return of(void 0);
+    this.invalidarTopicosComMetaCache();
 
-        let alvo: any | null = null;
+    return this.atualizarTopicosComMeta$(this.materiaId, { force: true }).pipe(
+      tap(() => {
+        let alvo: TopicoViewModel | null = null;
 
         if (alvoIdPreferido) {
           alvo = this.topicos.find(t => t.id === alvoIdPreferido) || null;
@@ -2448,16 +2685,21 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         if (alvo) {
           this.selecionarTopico(alvo);
         }
-      },
-      error: (err) => {
+      }),
+      map(() => void 0),
+      catchError((err) => {
         console.error('[SALA-ESTUDO] Erro ao recarregar topicos apos editar topico:', err);
-        this.carregarTopicos();
-      }
-    });
+        return of(void 0);
+      })
+    );
   }
 
-  private getSplitErroMensagem(err: any): string {
-    const mensagem = err?.error?.mensagem || err?.error?.message || err?.error?.erro || err?.message;
+  private getSplitErroMensagem(err: unknown): string {
+    const erroObj = err as {
+      error?: { mensagem?: string; message?: string; erro?: string };
+      message?: string;
+    };
+    const mensagem = erroObj?.error?.mensagem || erroObj?.error?.message || erroObj?.error?.erro || erroObj?.message;
     if (mensagem && String(mensagem).toLowerCase().includes('ja possui estudo')) {
       return 'Nao e possivel quebrar este topico, pois ele ja possui estudo.';
     }
@@ -2465,7 +2707,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ================================================================
-  // FLASHCARDS - CRIAR / REMOVER / REVISÃO
+  // FLASHCARDS - CRIAR / REMOVER / REVISAO
   // ================================================================
 
   temEstudoNoTopicoId(id: number): boolean {
@@ -2530,12 +2772,14 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       topicoId: this.topicoSelecionado.id,
       frente,
       verso,
-      tipo: this.flashcardTipo as any,
-      dificuldade: this.flashcardDificuldade as any,
+      tipo: this.flashcardTipo as FlashcardDTO['tipo'],
+      dificuldade: this.flashcardDificuldade as FlashcardDTO['dificuldade'],
       tags: this.formatarTagsFlashcard(this.flashcardTags)
     };
 
-    this.salaEstudoService.criarFlashcard(payload).subscribe({
+    this.salaEstudoService.criarFlashcard(payload).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.mensagemFlashcardSucesso = 'Flashcard salvo com sucesso.';
         this.flashcardFrente = '';
@@ -2580,7 +2824,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isVerdadeiroFalso(card: FlashcardDTO | null): boolean {
-    return (card as any)?.tipo === 'VERDADEIRO_FALSO';
+    return card?.tipo === ('VERDADEIRO_FALSO' as unknown as FlashcardDTO['tipo']);
   }
 
   responderVerdadeiroFalso(resposta: boolean, event?: Event): void {
@@ -2644,7 +2888,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const confirmou = window.confirm('Deseja realmente excluir este flashcard?');
     if (!confirmou) return;
 
-    this.salaEstudoService.excluirFlashcard(this.flashcardAtual.id).subscribe({
+    this.salaEstudoService.excluirFlashcard(this.flashcardAtual.id).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => this.carregarFlashcards(),
       error: (err) => {
         console.error('[FLASHCARD] Erro ao excluir:', err);
@@ -2669,7 +2915,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.carregandoFlashcardsRevisao = true;
     this.erroFlashcardsRevisao = undefined;
 
-    this.salaEstudoService.listarFlashcardsParaRevisao(topicoIdReq).subscribe({
+    this.salaEstudoService.listarFlashcardsParaRevisao(topicoIdReq).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (lista) => {
         if (reqSeq !== this.flashcardsRevisaoReqSeq || (this.topicoSelecionado?.id ?? null) !== topicoIdReq) {
           return;
@@ -2710,25 +2958,28 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.enviandoAvaliacaoFlashcard = true;
 
-    this.salaEstudoService.responderRevisaoFlashcard(req).subscribe({
+    this.salaEstudoService.responderRevisaoFlashcard(req).pipe(
+      switchMap(() => this.recarregarTopicosAposRevisao$()),
+      finalize(() => {
+        this.enviandoAvaliacaoFlashcard = false;
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.proximoFlashcard();
-        this.recarregarTopicosAposRevisao();
         this.avaliacaoFlashcardSelecionada = null;
-        this.enviandoAvaliacaoFlashcard = false;
-
         this.mostrarMensagemRevisao('Revisao do flashcard registrada!');
         this.temTempoNaoSalvoFlag = false;
       },
       error: (err) => {
         console.error('[REVISAO] Erro ao registrar resposta do flashcard:', err);
         alert('Erro ao registrar resposta da revisao. Tente novamente.');
-        this.enviandoAvaliacaoFlashcard = false;
       }
     });
   }
 
   avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+    if (this.enviandoAvaliacaoAnotacao) return;
     this.avaliacaoSelecionada = avaliacao;
     if (!this.topicoSelecionado) return;
 
@@ -2742,18 +2993,23 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const proximo = this.obterProximoTopicoRevisao();
 
     this.registrarTempoRevisao();
-    this.mostrarMensagemRevisao('Revisão das anotações registrada!');
     this.temTempoNaoSalvoFlag = false;
+    this.enviandoAvaliacaoAnotacao = true;
 
-    if (proximo && this.topicoSelecionado?.id !== proximo.id) {
-      this.selecionarTopico(proximo);
-    }
-
-    this.salaEstudoService.responderRevisaoTopico(req).subscribe({
-      next: () => this.recarregarTopicosAposRevisao(),
+    this.salaEstudoService.responderRevisaoTopico(req).pipe(
+      tap(() => this.aplicarStatusLocalAposRevisao(req.topicoId, avaliacao)),
+      switchMap(() => this.recarregarTopicosAposRevisao$(req.topicoId, proximo?.id ?? null)),
+      finalize(() => {
+        this.enviandoAvaliacaoAnotacao = false;
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => {
+        this.mostrarMensagemRevisao('Revisao das anotacoes registrada!');
+      },
       error: (err) => {
-        console.error('[REVISÃO] Erro ao registrar revisão de anotações:', err);
-        alert('Erro ao registrar revisão das anotações. Tente novamente.');
+        console.error('[REVISAO] Erro ao registrar revisao de anotacoes:', err);
+        alert('Erro ao registrar revisao das anotacoes. Tente novamente.');
       }
     });
   }
@@ -2787,7 +3043,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ================================================================
-  // NAVEGAÇÃO ENTRE TÓPICOS (REVISÃO/ESTUDO)
+  // NAVEGACAO ENTRE TOPICOS (REVISAO/ESTUDO)
   // ================================================================
 
   get podeVoltarRevisao(): boolean {
@@ -2802,7 +3058,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selecionarTopico(anterior);
   }
 
-  private obterTopicoAnteriorRevisao(): any | null {
+  private obterTopicoAnteriorRevisao(): TopicoViewModel | null {
     const lista = this.getTopicosFolha();
     if (!lista.length) return null;
 
@@ -2831,7 +3087,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selecionarTopico(anterior);
   }
 
-  private obterTopicoAnteriorEstudo(): any | null {
+  private obterTopicoAnteriorEstudo(): TopicoViewModel | null {
     const lista = this.getTopicosFolha();
     if (!lista.length) return null;
 
@@ -2848,13 +3104,18 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   irParaProximaRevisao(): void {
+    if (this.usarRegrasBackV2) {
+      this.irParaProximoTopicoViaBackend('revisar');
+      return;
+    }
+
     const proximo = this.obterProximoTopicoRevisao();
     if (!proximo) return;
     if (this.topicoSelecionado?.id === proximo.id) return;
     this.selecionarTopico(proximo);
   }
 
-  private obterProximoTopicoRevisao(): any | null {
+  private obterProximoTopicoRevisao(): TopicoViewModel | null {
     const lista = this.getTopicosParaRevisao();
     if (!lista.length) return null;
 
@@ -2871,7 +3132,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return lista[0];
   }
 
-  private getTopicosParaRevisao(): any[] {
+  private getTopicosParaRevisao(): TopicoViewModel[] {
     return (this.topicos || []).filter(t => t.ativo !== false);
   }
 
@@ -2881,13 +3142,18 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   irParaProximoEstudo(): void {
+    if (this.usarRegrasBackV2) {
+      this.irParaProximoTopicoViaBackend('estudar');
+      return;
+    }
+
     const proximo = this.obterProximoTopicoEstudo();
     if (!proximo) return;
     if (this.topicoSelecionado?.id === proximo.id) return;
     this.selecionarTopico(proximo);
   }
 
-  private obterProximoTopicoEstudo(): any | null {
+  private obterProximoTopicoEstudo(): TopicoViewModel | null {
     const lista = this.getTopicosFolha();
     if (!lista.length) return null;
 
@@ -2898,13 +3164,341 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return lista[0];
   }
 
-  private getTopicosFolha(): any[] {
+  private getTopicosFolha(): TopicoViewModel[] {
     return (this.topicos || []).filter(t => !t.hasFilhos && t.ativo !== false);
   }
 
-  private isRevisaoPrioritaria(topico: any): boolean {
+  private isRevisaoPrioritaria(topico: TopicoViewModel): boolean {
     const info = this.revisoesPorTopico.get(topico.id);
     return info?.status === 'ATRASADA' || info?.status === 'HOJE';
+  }
+
+  private extrairConflitoOrdemNoNextTopic(err: unknown): { ordemVersionBack: string | null; contexto: NextTopicContext } | null {
+    const httpErr = err as HttpErrorResponse;
+    if (!httpErr || httpErr.status !== 409) return null;
+
+    const body = (httpErr.error || {}) as Record<string, unknown>;
+    const detalhes = ((body['detalhes'] as Record<string, unknown>) || (body['details'] as Record<string, unknown>) || {}) as Record<string, unknown>;
+    const meta = ((body['meta'] as Record<string, unknown>) || {}) as Record<string, unknown>;
+
+    const contexto =
+      (body['contexto'] as NextTopicContext) ||
+      (detalhes['contexto'] as NextTopicContext) ||
+      (meta['contexto'] as NextTopicContext) ||
+      {};
+
+    const motivoRaw =
+      String(
+        body['motivo'] ??
+        body['codigo'] ??
+        body['code'] ??
+        detalhes['motivo'] ??
+        detalhes['codigo'] ??
+        meta['motivo'] ??
+        contexto?.motivo ??
+        ''
+      ).toUpperCase();
+
+    if (motivoRaw !== 'ORDEM_DESATUALIZADA') return null;
+
+    const ordemVersionBackRaw =
+      body['ordemVersion'] ??
+      detalhes['ordemVersion'] ??
+      meta['ordemVersion'] ??
+      contexto?.ordemVersion ??
+      null;
+
+    const ordemVersionBack = ordemVersionBackRaw != null ? String(ordemVersionBackRaw) : null;
+    return { ordemVersionBack, contexto };
+  }
+
+  private resolverConflitoOrdemNoNextTopic(
+    reqSeq: number,
+    modo: 'estudar' | 'revisar',
+    retryAposRefresh: boolean,
+    topicoAtualId: number | null,
+    ordemVersionBack: string | null,
+    contexto: NextTopicContext = {}
+  ): void {
+    console.warn('[SALA-ESTUDO][NEXT] ordem desatualizada, recarregando topicos antes de continuar.', {
+      reqSeq,
+      ordemVersionAtual: this.ordemVersionAtual,
+      ordemVersionBack,
+      contexto
+    });
+
+    if (ordemVersionBack) {
+      this.ordemVersionAtual = ordemVersionBack;
+      this.invalidarTopicosComMetaCache();
+    }
+    if (retryAposRefresh) {
+      console.warn('[SALA-ESTUDO][NEXT] ORDEM_DESATUALIZADA persistiu apos refresh; interrompendo novo retry.', {
+        reqSeq,
+        materiaId: this.materiaId,
+        topicoAtualId
+      });
+      this.avancandoTopico = false;
+      return;
+    }
+
+    this.invalidarTopicosComMetaCache();
+    this.atualizarTopicosComMeta$(this.materiaId, {
+      force: true,
+      expectedOrdemVersion: this.ordemVersionAtual
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (respTopicos) => {
+        this.ordemVersionAtual = respTopicos?.ordemVersion ?? this.ordemVersionAtual ?? null;
+        if (!this.ordemVersionAtual) {
+          this.ordemVersionAtual = this.obterOrdemVersionFallbackLocal();
+        }
+        this.avancandoTopico = false;
+        this.irParaProximoTopicoViaBackend(modo, true);
+      },
+      error: (erroRefresh) => {
+        console.error('[SALA-ESTUDO][NEXT] falha ao recarregar topicos apos ORDEM_DESATUALIZADA.', {
+          reqSeq,
+          materiaId: this.materiaId,
+          erro: erroRefresh
+        });
+        this.avancandoTopico = false;
+      }
+    });
+  }
+
+  private irParaProximoTopicoViaBackend(modo: 'estudar' | 'revisar', retryAposRefresh = false): void {
+    if (this.avancandoTopico) {
+      console.warn('[SALA-ESTUDO][NEXT] requisição de avanço já em andamento; ignorando novo clique.', {
+        modo,
+        materiaId: this.materiaId,
+        topicoAtualId: this.topicoSelecionado?.id ?? null
+      });
+      return;
+    }
+
+    if (!this.materiaId) {
+      console.warn('[SALA-ESTUDO][NEXT] materiaId invalido para next-topic.', {
+        modo,
+        materiaId: this.materiaId
+      });
+      return;
+    }
+
+    if (!this.ordemVersionAtual) {
+      if (retryAposRefresh) {
+        console.warn('[SALA-ESTUDO][NEXT] ordemVersion ausente mesmo apos refresh; cancelando avanço.', {
+          modo,
+          materiaId: this.materiaId,
+          topicoAtualId: this.topicoSelecionado?.id ?? null
+        });
+        return;
+      }
+
+      this.avancandoTopico = true;
+      this.atualizarTopicosComMeta$(this.materiaId, { force: true }).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: (respTopicos) => {
+          this.ordemVersionAtual = respTopicos?.ordemVersion ?? this.ordemVersionAtual ?? null;
+          if (!this.ordemVersionAtual) {
+            this.ordemVersionAtual = this.obterOrdemVersionFallbackLocal();
+          }
+          this.avancandoTopico = false;
+
+          if (!this.ordemVersionAtual) {
+            console.warn('[SALA-ESTUDO][NEXT] backend de topicos nao retornou ordemVersion; avanço cancelado.', {
+              modo,
+              materiaId: this.materiaId
+            });
+            return;
+          }
+
+          this.irParaProximoTopicoViaBackend(modo, true);
+        },
+        error: (erroRefresh) => {
+          console.error('[SALA-ESTUDO][NEXT] falha ao carregar ordemVersion antes do avanço.', {
+            modo,
+            materiaId: this.materiaId,
+            erro: erroRefresh
+          });
+          this.avancandoTopico = false;
+        }
+      });
+      return;
+    }
+
+    this.avancandoTopico = true;
+    const reqSeq = ++this.nextTopicReqSeq;
+    const topicoAtualId = this.topicoSelecionado?.id ?? null;
+    if (!topicoAtualId || !Number.isFinite(topicoAtualId)) {
+      console.warn('[SALA-ESTUDO][NEXT] sem currentTopicoId válido, avanço ignorado.', {
+        modo,
+        materiaId: this.materiaId,
+        topicoAtualId
+      });
+      this.avancandoTopico = false;
+      return;
+    }
+    this.salaEstudoService.obterProximoTopico(
+      this.materiaId,
+      modo,
+      undefined,
+      topicoAtualId,
+      this.ordemVersionAtual
+    ).subscribe({
+      next: (resp) => {
+        if (reqSeq !== this.nextTopicReqSeq) {
+          return;
+        }
+
+        const topicoId = Number(resp?.topicoId);
+        const motivo = String(resp?.motivo || '').toUpperCase();
+        const contexto: NextTopicContext = resp?.contexto || {};
+        const topicosVisuais = (this.topicos || []).filter((t) => t?.ativo !== false);
+        const idxLocalAtual = topicosVisuais.findIndex((t) => t?.id === topicoAtualId);
+        const idxLocalRetornado = topicosVisuais.findIndex((t) => t?.id === topicoId);
+        const atualLocal = idxLocalAtual >= 0 ? topicosVisuais[idxLocalAtual] : null;
+        const retornadoLocal = idxLocalRetornado >= 0 ? topicosVisuais[idxLocalRetornado] : null;
+        const indiceAtualBack = Number(contexto?.indiceAtual);
+        const indiceRetornadoBack = Number(contexto?.indiceRetornado);
+        if (Number.isFinite(indiceAtualBack) && Number.isFinite(indiceRetornadoBack)) {
+          if (indiceRetornadoBack !== indiceAtualBack + 1) {
+            console.warn('[SALA-ESTUDO][NEXT] backend não avançou +1 na ordem canônica.', {
+              indiceAtualBack,
+              indiceRetornadoBack,
+              ordemVersion: contexto?.ordemVersion ?? null
+            });
+          }
+        }
+
+        if (idxLocalAtual >= 0 && idxLocalRetornado >= 0 && idxLocalRetornado !== idxLocalAtual + 1) {
+          console.warn('[SALA-ESTUDO][NEXT] divergência entre sequência visual local e retorno do backend.', {
+            idxLocalAtual,
+            idxLocalRetornado,
+            topicoAtualId,
+            topicoIdRetornado: topicoId
+          });
+        }
+        const semProximo =
+          motivo === 'FIM_DA_LISTA' ||
+          motivo === 'LISTA_VAZIA';
+        if (motivo === 'ORDEM_DESATUALIZADA') {
+          const ordemVersionBack = resp?.ordemVersion ?? contexto?.ordemVersion ?? null;
+          this.resolverConflitoOrdemNoNextTopic(
+            reqSeq,
+            modo,
+            retryAposRefresh,
+            topicoAtualId,
+            ordemVersionBack != null ? String(ordemVersionBack) : null,
+            contexto
+          );
+          return;
+        }
+        if (semProximo || !Number.isFinite(topicoId) || topicoId <= 0) {
+          this.avancandoTopico = false;
+          return;
+        }
+        const selecionado = this.selecionarTopicoPorId(topicoId);
+        if (!selecionado) {
+          console.warn('[SALA-ESTUDO][NEXT] topico retornado nao pode ser aplicado localmente. Recarregando topicos.', {
+            reqSeq,
+            modo,
+            materiaId: this.materiaId,
+            topicoAtualId,
+            topicoIdRetornado: topicoId,
+            motivo: motivo || null
+          });
+          this.invalidarTopicosComMetaCache();
+          this.atualizarTopicosComMeta$(this.materiaId, { force: true })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: () => {
+                this.selecionarTopicoPorId(topicoId);
+              },
+              error: () => {
+                this.erro = 'Erro ao sincronizar topicos da materia.';
+              }
+            });
+        }
+        this.avancandoTopico = false;
+      },
+      error: (err) => {
+        if (reqSeq !== this.nextTopicReqSeq) {
+          return;
+        }
+        const conflito = this.extrairConflitoOrdemNoNextTopic(err);
+        if (conflito) {
+          this.resolverConflitoOrdemNoNextTopic(
+            reqSeq,
+            modo,
+            retryAposRefresh,
+            topicoAtualId,
+            conflito.ordemVersionBack,
+            conflito.contexto
+          );
+          return;
+        }
+        console.error('[SALA-ESTUDO][NEXT] erro ao consultar next-topic.', {
+          reqSeq,
+          modo,
+          materiaId: this.materiaId,
+          erro: err
+        });
+        this.avancandoTopico = false;
+      }
+    });
+  }
+
+  private obterOrdemVersionFallbackLocal(): string | null {
+    const candidatos: Array<string | null | undefined> = [];
+    const visitar = (lista: Array<{ dataAtualizacao?: string; dataCriacao?: string; updatedAt?: string; filhos?: unknown[] }> ) => {
+      (lista || []).forEach((item) => {
+        if (!item) return;
+        candidatos.push(item?.dataAtualizacao, item?.dataCriacao, item?.updatedAt);
+        if (Array.isArray(item?.filhos) && item.filhos.length) {
+          visitar(item.filhos as Array<{ dataAtualizacao?: string; dataCriacao?: string; updatedAt?: string; filhos?: unknown[] }>);
+        }
+      });
+    };
+    visitar((this.arvoreTopicos || []) as Array<{ dataAtualizacao?: string; dataCriacao?: string; updatedAt?: string; filhos?: unknown[] }>);
+    visitar((this.topicos || []) as Array<{ dataAtualizacao?: string; dataCriacao?: string; updatedAt?: string; filhos?: unknown[] }>);
+
+    let maxTime = Number.NaN;
+    candidatos.forEach((valor) => {
+      if (!valor) return;
+      const dt = new Date(valor);
+      const t = dt.getTime();
+      if (Number.isFinite(t) && (Number.isNaN(maxTime) || t > maxTime)) {
+        maxTime = t;
+      }
+    });
+
+    if (!Number.isFinite(maxTime)) {
+      return null;
+    }
+
+    return new Date(maxTime).toISOString().replace('Z', '');
+  }
+
+  private selecionarTopicoPorId(topicoId: number): boolean {
+    const candidato = (this.topicos || []).find((t) => t?.id === topicoId);
+    if (!candidato) {
+      console.warn('[SALA-ESTUDO][NEXT] tópico retornado não existe na lista carregada.', {
+        topicoId,
+        totalTopicos: (this.topicos || []).length
+      });
+      return false;
+    }
+    if (this.topicoSelecionado?.id === candidato.id) {
+      console.warn('[SALA-ESTUDO][NEXT] backend retornou tópico atual (sem avanço).', {
+        topicoIdAtual: this.topicoSelecionado?.id ?? null,
+        topicoIdRetornado: candidato.id
+      });
+      return false;
+    }
+    this.selecionarTopico(candidato);
+    return true;
   }
 
   // ================================================================
@@ -2922,78 +3516,12 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return data;
   }
 
-  private carregarRevisoesDashboard(): void {
-    this.salaEstudoService.listarRevisoesDashboard().subscribe({
-      next: (itens) => {
-        this.revisoesPorTopico.clear();
-        const selecionadoId = this.topicoSelecionado?.id;
-        const revisadoId = this.ultimoTopicoRevisadoId;
-
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-
-        (itens || []).forEach((item: any) => {
-          if (!item.topicoId) return;
-
-          const proxima: string | null = item.proximaRevisao || item.dataProximaRevisao || null;
-
-          let status: StatusRevisao = 'SEM';
-          const statusRevisaoRaw = String(item.statusRevisao || '').toUpperCase();
-          const statusRaw = String(item.status || '').toUpperCase();
-
-          if (statusRevisaoRaw) {
-            if (statusRevisaoRaw === 'ATRASADA') status = 'ATRASADA';
-            else if (statusRevisaoRaw === 'HOJE') status = 'HOJE';
-            else if (statusRevisaoRaw === 'EM_DIA') status = 'HOJE';
-            else if (statusRevisaoRaw === 'FUTURA') status = 'FUTURA';
-            else status = 'SEM';
-          } else if (statusRaw) {
-            if (statusRaw === 'VENCIDA') status = 'ATRASADA';
-            else if (statusRaw === 'EM_DIA') status = 'HOJE';
-            else if (statusRaw === 'FUTURA') status = 'FUTURA';
-            else status = 'SEM';
-          } else if (proxima) {
-            const dataRev = this.construirDataLocal(proxima);
-            const hojeTime = hoje.getTime();
-            const revTime = dataRev.getTime();
-            const hojeFlag = revTime === hojeTime;
-            const atrasadoFlag = revTime < hojeTime;
-
-            if (atrasadoFlag) status = 'ATRASADA';
-            else if (hojeFlag) status = 'HOJE';
-            else status = 'FUTURA';
-          }
-
-          this.revisoesPorTopico.set(item.topicoId, { status, proximaRevisao: proxima });
-
-          if (selecionadoId && item.topicoId === selecionadoId) {
-            console.log('[SALA-ESTUDO] Status recebido do back (topico selecionado):', { topicoId: item.topicoId, status, proximaRevisao: proxima, statusRevisaoRaw, statusRaw });
-          }
-          if (revisadoId && item.topicoId === revisadoId) {
-            console.log('[SALA-ESTUDO] Status recebido do back (topico revisado):', { topicoId: item.topicoId, status, proximaRevisao: proxima, statusRevisaoRaw, statusRaw });
-          }
-        });
-
-        this.revisoesCarregadas = true;
-        this.tentarSelecionarTopicoInicial();
-      },
-      error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao carregar revisões dashboard:', err);
-      }
-    });
-  }
-
   private tentarSelecionarTopicoInicial(): void {
     if (this.selecionouTopicoInicial || !this.topicosCarregados) return;
     if (this.autoSelecionarUltimoNaoEstudado && !this.revisoesCarregadas) return;
     if (!this.topicosFinalizadosCarregados) return;
 
-    let alvo: any | undefined;
-    console.log('[SALA-ESTUDO][TOPICOS] tentarSelecionarTopicoInicial entrada', {
-      topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
-      editorTopicoId: this.editorTopicoId,
-      topicoIdPreferido: this.topicoIdPreferido
-    });
+    let alvo: TopicoViewModel | undefined;
     this.registrarSaveLog('topicos-tentar-inicial', {
       topicoSelecionadoId: this.topicoSelecionado?.id ?? null,
       editorTopicoId: this.editorTopicoId,
@@ -3043,10 +3571,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       if (alvo) {
-        console.log('[SALA-ESTUDO][TOPICOS] selecionarTopicoInicial', {
-          alvoId: alvo?.id ?? null,
-          motivo: 'alvo-definido'
-        });
         this.registrarSaveLog('topicos-selecionar-inicial', {
           alvoId: alvo?.id ?? null,
           motivo: 'alvo-definido'
@@ -3062,10 +3586,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!alvo) alvo = this.topicos[0];
 
     if (alvo) {
-      console.log('[SALA-ESTUDO][TOPICOS] selecionarTopicoInicial', {
-        alvoId: alvo?.id ?? null,
-        motivo: 'fallback'
-      });
       this.registrarSaveLog('topicos-selecionar-inicial', {
         alvoId: alvo?.id ?? null,
         motivo: 'fallback'
@@ -3088,12 +3608,14 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.topicosFinalizadosPendentes.add(topicoId);
       this.topicosFinalizados.delete(topicoId);
 
-      this.salaEstudoService.desfinalizarTopico(topicoId).subscribe({
+      this.salaEstudoService.desfinalizarTopico(topicoId).pipe(
+        switchMap(() => this.carregarTopicosFinalizados$()),
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: () => {
           this.topicosFinalizadosPendentes.delete(topicoId);
           this.mensagemTopicoFinalizado = 'Finalizado removido.';
           setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
-          this.carregarTopicosFinalizados();
         },
         error: () => {
           this.topicosFinalizadosPendentes.delete(topicoId);
@@ -3117,13 +3639,15 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.topicosFinalizadosPendentes.add(topicoId);
 
-    this.salaEstudoService.finalizarTopico(topicoId).subscribe({
+    this.salaEstudoService.finalizarTopico(topicoId).pipe(
+      switchMap(() => this.carregarTopicosFinalizados$()),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.topicosFinalizadosPendentes.delete(topicoId);
         this.topicosFinalizados.add(topicoId);
         this.mensagemTopicoFinalizado = 'Topico finalizado.';
         setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
-        this.carregarTopicosFinalizados();
         this.recarregarTopicosAposRevisao(topicoId, proximoPreferidoId);
       },
       error: () => {
@@ -3154,7 +3678,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.topicosResetPendentes.add(topicoId);
 
-    this.salaEstudoService.resetarTopico(topicoId).subscribe({
+    this.salaEstudoService.resetarTopico(topicoId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.topicosResetPendentes.delete(topicoId);
         this.mensagemTopicoFinalizado = 'Topico zerado.';
@@ -3169,12 +3695,16 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private obterPrimeiroNaoEstudado(folhas: any[]): any | null {
+  private obterPrimeiroNaoEstudado(folhas: TopicoViewModel[]): TopicoViewModel | null {
     const candidato = folhas.find(t => !this.temEstudoNoTopico(t));
     return candidato || null;
   }
 
-  private precisaConfirmarContinuacao(folhas: any[], primeiroNaoEstudado: any, proximoAposUltimoEstudado: any | null): boolean {
+  private precisaConfirmarContinuacao(
+    folhas: TopicoViewModel[],
+    primeiroNaoEstudado: TopicoViewModel,
+    proximoAposUltimoEstudado: TopicoViewModel | null
+  ): boolean {
     if (!folhas.length) return false;
     if (!primeiroNaoEstudado?.id) return false;
     if (!proximoAposUltimoEstudado?.id) return false;
@@ -3185,7 +3715,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return folhas.slice(0, index).some(t => this.temEstudoNoTopico(t));
   }
 
-  private obterProximoNaoEstudadoAposUltimoEstudado(folhas: any[]): any | null {
+  private obterProximoNaoEstudadoAposUltimoEstudado(folhas: TopicoViewModel[]): TopicoViewModel | null {
     let ultimoEstudadoIndex = -1;
 
     for (let i = 0; i < folhas.length; i += 1) {
@@ -3213,7 +3743,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private encontrarDtoPorId(lista: any[], id: number): any | null {
+  private encontrarDtoPorId(lista: TopicoNodeDTO[], id: number): TopicoNodeDTO | null {
     for (const dto of lista) {
       if (dto.id === id) return dto;
       if (dto.subtopicos && dto.subtopicos.length) {
@@ -3224,20 +3754,27 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return null;
   }
 
-  private normalizarStatusRevisao(raw: any): StatusRevisao | null {
+  private normalizarStatusRevisao(raw: unknown): StatusRevisao | null {
     const status = String(raw || '').toUpperCase();
     if (status === 'EM_DIA') return 'HOJE';
+    if (status === 'VENCIDA') return 'ATRASADA';
     if (status === 'ATRASADA' || status === 'HOJE' || status === 'FUTURA' || status === 'SEM') {
       return status as StatusRevisao;
     }
     return null;
   }
 
-  private getStatusFromDto(dto: any): StatusRevisao {
+  private getStatusFromDto(dto: TopicoNodeDTO): StatusRevisao {
     if (!dto?.id) return 'SEM';
+
+    const statusOverride = this.getStatusOverrideRevisao(dto.id);
+    if (statusOverride) return statusOverride;
 
     const info = this.revisoesPorTopico.get(dto.id);
     if (info?.status) return info.status;
+
+    const statusCanonico = this.normalizarStatusRevisao(dto.statusCanonico);
+    if (statusCanonico) return statusCanonico;
 
     const statusDto = this.normalizarStatusRevisao(dto.statusRevisao);
     if (statusDto) return statusDto;
@@ -3247,6 +3784,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private getStatusSimplesTopico(topicoId: number | undefined): StatusRevisao {
     if (!topicoId) return 'SEM';
+
+    const statusOverride = this.getStatusOverrideRevisao(topicoId);
+    if (statusOverride) return statusOverride;
 
     const info = this.revisoesPorTopico.get(topicoId);
     if (!info) {
@@ -3258,7 +3798,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return info.status ?? 'SEM';
   }
 
-  private getStatusRevisaoTopicoView(t: any): StatusRevisao {
+  private getStatusRevisaoTopicoView(t: TopicoViewModel): StatusRevisao {
     if (!t || !t.id) return 'SEM';
 
     const dto = this.encontrarDtoPorId(this.arvoreTopicos, t.id);
@@ -3267,11 +3807,11 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.getStatusFromDto(dto);
   }
 
-  temEstudoNoTopico(t: any): boolean {
+  temEstudoNoTopico(t: TopicoViewModel): boolean {
     return this.getStatusRevisaoTopicoView(t) !== 'SEM';
   }
 
-  podeQuebrarTopico(t: any): boolean {
+  podeQuebrarTopico(t: TopicoViewModel): boolean {
     return !!t?.id;
   }
 
@@ -3324,7 +3864,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     else this.topicosComAnotacoes.delete(topicoId);
   }
 
-  classeSemaforoRevisaoSala(t: any) {
+  classeSemaforoRevisaoSala(t: TopicoViewModel) {
     const status = this.getStatusRevisaoTopicoView(t);
     return {
       'badge-sem-revisao': status === 'SEM',
@@ -3334,13 +3874,31 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     };
   }
 
-  get topicosExibidos(): any[] {
-    if (!this.filtroSemaforoSelecionado) return this.topicos || [];
-    return (this.topicos || []).filter(t => this.getStatusRevisaoTopicoView(t) === this.filtroSemaforoSelecionado);
+  get topicosExibidos(): TopicoViewModel[] {
+    const fonte = this.topicos || [];
+    const filtro = this.filtroSemaforoSelecionado;
+    if (
+      this.topicosExibidosCacheFonte === fonte &&
+      this.topicosExibidosCacheFiltro === filtro &&
+      this.topicosExibidosCacheRevisoesVersion === this.revisoesViewVersion
+    ) {
+      return this.topicosExibidosCacheResultado;
+    }
+
+    const resultado = !filtro
+      ? fonte
+      : fonte.filter(t => this.getStatusRevisaoTopicoView(t) === filtro);
+
+    this.topicosExibidosCacheFonte = fonte;
+    this.topicosExibidosCacheFiltro = filtro;
+    this.topicosExibidosCacheRevisoesVersion = this.revisoesViewVersion;
+    this.topicosExibidosCacheResultado = resultado;
+    return resultado;
   }
 
   alternarFiltroSemaforo(status: StatusRevisao): void {
     this.filtroSemaforoSelecionado = this.filtroSemaforoSelecionado === status ? null : status;
+    this.invalidarTopicosExibidosCache();
   }
 
   isFiltroSemaforoAtivo(status: StatusRevisao): boolean {
@@ -3354,17 +3912,22 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private recarregarTopicosAposRevisao(proximoAposId?: number | null, proximoPreferidoId?: number | null): void {
-    if (!this.materiaId) return;
+    this.recarregarTopicosAposRevisao$(proximoAposId, proximoPreferidoId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
+
+  private recarregarTopicosAposRevisao$(proximoAposId?: number | null, proximoPreferidoId?: number | null): Observable<void> {
+    if (!this.materiaId) return of(void 0);
 
     const idSelecionado = this.topicoSelecionado?.id;
 
-    this.carregarRevisoesDashboard();
-
-    this.materiaService.listarTopicos(this.materiaId).subscribe({
-      next: (lista) => {
-        const listaSegura = lista || [];
-        this.arvoreTopicos = listaSegura;
-        this.topicos = this.achatarArvoreTopicos(listaSegura, 0, []);
+    return forkJoin({
+      revisoes: this.salaEstudoService.listarRevisoesDashboard()
+    }).pipe(
+      tap(({ revisoes }) => {
+        this.atualizarMapaRevisoes(revisoes);
+        this.revisoesCarregadas = true;
 
         if (proximoPreferidoId) {
           const preferido = this.topicos.find(t => t.id === proximoPreferidoId);
@@ -3388,14 +3951,89 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
             this.topicoSelecionado = encontrado;
           }
         }
-      },
-      error: (err) => {
-        console.error('[SALA-ESTUDO] Erro ao recarregar tópicos após revisão:', err);
-      }
-    });
+      }),
+      map(() => void 0),
+      catchError((err) => {
+        console.error('[SALA-ESTUDO] Erro ao recarregar topicos apos revisao:', err);
+        return of(void 0);
+      })
+    );
   }
 
-  private obterProximoTopicoParaEstudo(atualId: number): any | null {
+  private atualizarMapaRevisoes(itens: RevisaoTopicoItem[] | null | undefined): void {
+    const proximoMapa = new Map<number, { status: StatusRevisao; proximaRevisao?: string | null }>();
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    (itens || []).forEach((item: RevisaoTopicoItem) => {
+      if (!item?.topicoId) return;
+
+      const topicoId = Number(item.topicoId);
+      const proxima: string | null = item.proximaRevisao || item.dataProximaRevisao || null;
+      const statusBackend: StatusRevisao = extrairStatusCanonicoRevisao(item, hoje);
+      const statusOverride = this.getStatusOverrideRevisao(topicoId);
+
+      if (statusOverride && statusOverride !== statusBackend) {
+        proximoMapa.set(topicoId, { status: statusOverride, proximaRevisao: proxima });
+      } else {
+        this.overrideStatusRevisaoPorTopico.delete(topicoId);
+        proximoMapa.set(topicoId, { status: statusBackend, proximaRevisao: proxima });
+      }
+    });
+
+    for (const [topicoId] of this.overrideStatusRevisaoPorTopico) {
+      const statusOverride = this.getStatusOverrideRevisao(topicoId);
+      if (!statusOverride) continue;
+      if (!proximoMapa.has(topicoId)) {
+        const atual = this.revisoesPorTopico.get(topicoId);
+        proximoMapa.set(topicoId, { status: statusOverride, proximaRevisao: atual?.proximaRevisao ?? null });
+      }
+    }
+
+    this.revisoesPorTopico.clear();
+    for (const [topicoId, info] of proximoMapa) {
+      this.revisoesPorTopico.set(topicoId, info);
+    }
+
+    this.revisoesViewVersion += 1;
+    this.invalidarTopicosExibidosCache();
+  }
+
+  private aplicarStatusLocalAposRevisao(
+    topicoId: number,
+    avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'
+  ): void {
+    if (!topicoId) return;
+
+    const status: StatusRevisao =
+      avaliacao === 'ERREI' ? 'ATRASADA' :
+      avaliacao === 'DIFICIL' ? 'HOJE' :
+      'FUTURA';
+
+    const atual = this.revisoesPorTopico.get(topicoId);
+    this.revisoesPorTopico.set(topicoId, {
+      status,
+      proximaRevisao: atual?.proximaRevisao ?? null
+    });
+    this.overrideStatusRevisaoPorTopico.set(topicoId, {
+      status,
+      expiresAt: Date.now() + 120000
+    });
+    this.revisoesViewVersion += 1;
+    this.invalidarTopicosExibidosCache();
+  }
+
+  private getStatusOverrideRevisao(topicoId: number): StatusRevisao | null {
+    const override = this.overrideStatusRevisaoPorTopico.get(topicoId);
+    if (!override) return null;
+    if (Date.now() > override.expiresAt) {
+      this.overrideStatusRevisaoPorTopico.delete(topicoId);
+      return null;
+    }
+    return override.status;
+  }
+
+  private obterProximoTopicoParaEstudo(atualId: number): TopicoViewModel | null {
     const lista = this.getTopicosParaRevisao();
     if (!lista.length) return null;
 
@@ -3443,7 +4081,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => { this.mensagemRevisao = undefined; }, 4000);
   }
 
-  private getTopicoIdFromDto(dto: any): number | null {
+  private getTopicoIdFromDto(dto: TopicoNodeDTO | TopicoViewModel | null | undefined): number | null {
     const id =
       dto?.id ??
       dto?.topicoId ??
@@ -3454,6 +4092,23 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     return id ? Number(id) : null;
   }
+
+  trackByTopicoId(index: number, t: TopicoViewModel): number {
+    return Number(t?.id ?? index);
+  }
+
+  private invalidarTopicosExibidosCache(): void {
+    this.topicosExibidosCacheFonte = null;
+    this.topicosExibidosCacheFiltro = null;
+    this.topicosExibidosCacheRevisoesVersion = -1;
+    this.topicosExibidosCacheResultado = [];
+  }
 }
+
+
+
+
+
+
 
 

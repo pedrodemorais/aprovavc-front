@@ -24,7 +24,7 @@
             <button
               type="button"
               class="menu-troca-materia-item"
-              *ngFor="let m of materiasDisponiveisTroca"
+              *ngFor="let m of materiasDisponiveisTroca; trackBy: trackByMateriaId"
               [class.ativo]="m.id === materiaId"
               (click)="trocarMateria(m, $event)">
               <span>{{ m.nome }}</span>
@@ -68,7 +68,7 @@
           </button>
           <div class="filtro-semaforo" role="group" aria-label="Filtrar tópicos por semáforo">
             <button
-              *ngFor="let opcao of opcoesFiltroSemaforo"
+              *ngFor="let opcao of opcoesFiltroSemaforo; trackBy: trackByStatusRevisao"
               type="button"
               class="btn-filtro-semaforo"
               [class.ativo]="isFiltroSemaforoAtivo(opcao.status)"
@@ -99,8 +99,9 @@
         <div class="topicos-loading-overlay" *ngIf="carregandoAnotacoes">
           <span>Carregando anota&ccedil;&otilde;es...</span>
         </div>
-        <ul class="lista-topicos" *ngIf="topicosExibidos && topicosExibidos.length; else semTopicos" #listaTopicos>
-          <li *ngFor="let t of topicosExibidos" class="item-topico" [class.topico-pai]="t.hasFilhos"
+        <ng-container *ngIf="topicosExibidos as topicosLista">
+        <ul class="lista-topicos" *ngIf="topicosLista.length; else semTopicos" #listaTopicos>
+          <li *ngFor="let t of topicosLista; trackBy: trackByTopicoId" class="item-topico" [class.topico-pai]="t.hasFilhos"
             [class.finalizado]="isTopicoFinalizadoLinha(t)"
             [class.selecionado]="topicoSelecionado?.id === t.id"
             [attr.data-topico-id]="t.id"
@@ -131,6 +132,7 @@
             </div>
           </li>
         </ul>
+        </ng-container>
       </div>
       <ng-template #semTopicos>
         <p class="muted" *ngIf="topicos?.length && filtroSemaforoSelecionado; else semTopicosCadastro">
@@ -744,12 +746,12 @@
                     <span>Salvar</span>
                   </button>
                 <button type="button" class="btn-modo-timer"
-                  [disabled]="!topicoPermiteEstudo || isTopicoFinalizadoPendente(topicoSelecionado)" (click)="finalizarTopico()">
-                  <i class="pi" [ngClass]="isTopicoFinalizado(topicoSelecionado) ? 'pi-undo' : 'pi-flag'"></i>
-                  <span>{{ isTopicoFinalizado(topicoSelecionado) ? 'Desfazer' : 'Finalizar' }}</span>
+                  [disabled]="!topicoPermiteEstudo || topicoSelecionadoFinalizadoPendente" (click)="finalizarTopico()">
+                  <i class="pi" [ngClass]="topicoSelecionadoFinalizado ? 'pi-undo' : 'pi-flag'"></i>
+                  <span>{{ topicoSelecionadoFinalizado ? 'Desfazer' : 'Finalizar' }}</span>
                 </button>
                 <button type="button" class="btn-modo-timer btn-reset"
-                  [disabled]="!topicoPermiteEstudo || isTopicoResetPendente(topicoSelecionado)" (click)="resetarTopico()">
+                  [disabled]="!topicoPermiteEstudo || topicoSelecionadoResetPendente" (click)="resetarTopico()">
                   <i class="pi pi-refresh"></i>
                   <span>Zerar</span>
                 </button>
@@ -1121,7 +1123,7 @@
           Nenhum vocabulário cadastrado neste tópico.
         </div>
         <ul *ngIf="!carregandoVocabularios && vocabularios.length">
-          <li class="vocabulario-item" *ngFor="let v of vocabularios">
+          <li class="vocabulario-item" *ngFor="let v of vocabularios; trackBy: trackByVocabularioId">
             <div class="vocabulario-item-texto">
               <strong>{{ v.termo }}</strong>
               <span class="vocabulario-item-sep">-</span>

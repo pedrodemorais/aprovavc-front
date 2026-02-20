@@ -7,8 +7,8 @@ export interface RevisaoDashboardItem {
   dataProximaRevisao: string; // vem como ISO string do back
   qtdPendentes?: number;
   status: 'VENCIDA' | 'EM_DIA' | 'FUTURA';
-   // ⬇️ novos campos para o semáforo
-  proximaRevisao?: string | null; 
+  statusCanonico?: 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA' | string;
+  // campos legados/auxiliares
+  proximaRevisao?: string | null;
   statusRevisao?: 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA' | string;
-
 }

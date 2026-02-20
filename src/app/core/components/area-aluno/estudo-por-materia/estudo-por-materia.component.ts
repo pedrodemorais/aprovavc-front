@@ -10,12 +10,14 @@ import { EditalService } from '../services/edital.service';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 import { EditalTemplateService } from '../services/edital-template.service';
 import { MateriaService } from '../services/materia.service';
+import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 
 type TopicoComRevisao = Topico & {
   proximaRevisao?: string | null;
   statusRevisao?: StatusRevisao | string;
+  statusCanonico?: StatusRevisao | string;
 };
 
 interface InfoRevisaoTopico {
@@ -434,7 +436,8 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       nivel,
       filhos,
       proximaRevisao: dto?.proximaRevisao ?? dto?.dataProximaRevisao ?? null,
-      statusRevisao: dto?.statusRevisao
+      statusRevisao: dto?.statusRevisao,
+      statusCanonico: dto?.statusCanonico
     } as any;
 
     return topico;
@@ -459,30 +462,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
             (item as any).dataProximaRevisao ||
             null;
 
-          const statusRevisaoRaw = String((item as any).statusRevisao || '').toUpperCase();
-          const statusRaw = String((item as any).status || '').toUpperCase();
-
-          let status: StatusRevisao = 'SEM';
-
-          if (statusRevisaoRaw) {
-            if (statusRevisaoRaw === 'ATRASADA') status = 'ATRASADA';
-            else if (statusRevisaoRaw === 'HOJE') status = 'HOJE';
-            else if (statusRevisaoRaw === 'FUTURA') status = 'FUTURA';
-            else status = 'SEM';
-          } else if (statusRaw) {
-            if (statusRaw === 'VENCIDA') status = 'ATRASADA';
-            else if (statusRaw === 'EM_DIA') status = 'HOJE';
-            else if (statusRaw === 'FUTURA') status = 'FUTURA';
-            else status = 'SEM';
-          } else if (proxima) {
-            const dataRev = this.construirDataLocal(proxima);
-            const hojeTime = hoje.getTime();
-            const revTime = dataRev.getTime();
-
-            if (revTime < hojeTime) status = 'ATRASADA';
-            else if (revTime === hojeTime) status = 'HOJE';
-            else status = 'FUTURA';
-          }
+          const status = extrairStatusCanonicoRevisao(item, hoje);
 
           this.revisoesPorTopico.set(item.topicoId, {
             status,
@@ -738,6 +718,11 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   private getStatusRevisaoTopico(topico: Topico): StatusRevisao {
+    const statusCanonico = String((topico as any)?.statusCanonico || '').toUpperCase();
+    if (statusCanonico === 'ATRASADA' || statusCanonico === 'HOJE' || statusCanonico === 'FUTURA' || statusCanonico === 'SEM') {
+      return statusCanonico as StatusRevisao;
+    }
+
     const statusDto = (topico as any)?.statusRevisao;
     if (statusDto === 'ATRASADA' || statusDto === 'HOJE' || statusDto === 'FUTURA' || statusDto === 'SEM') {
       return statusDto;
@@ -923,7 +908,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       this.salaEstudoService.desfinalizarTopico(id).subscribe({
         next: () => {
           this.topicosFinalizadosPendentes.delete(id);
-          this.atualizarConclusaoPais(topico);
           this.carregarTopicosFinalizados();
         },
         error: () => {
@@ -946,7 +930,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.salaEstudoService.finalizarTopico(id).subscribe({
       next: () => {
         this.topicosFinalizadosPendentes.delete(id);
-        this.atualizarConclusaoPais(topico);
         this.carregarTopicosFinalizados();
       },
       error: () => {
@@ -979,9 +962,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       next: () => {
         this.concluidosPorTopico.delete(id);
         this.atualizarResumoExpandida();
-        if (topico) {
-          this.atualizarConclusaoPais(topico);
-        }
+        this.carregarTopicosFinalizados();
       },
       error: () => {
         this.mensagemErro = 'Nao foi possivel desfazer o finalizado.';
