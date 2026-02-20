@@ -5,6 +5,7 @@ import { SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
 import { Topico } from '../models/topico.model';
 import { TreeNode } from 'primeng/api';
+import { extrairStatusCanonicoRevisao, inferirStatusCanonicoPorData, statusCanonicoParaDashboard } from '../utils/revisao-status.util';
 
 type StatusRevisao = 'VENCIDA' | 'EM_DIA' | 'FUTURA';
 
@@ -77,7 +78,7 @@ export class RevisoesComponent implements OnInit {
     this.salaEstudoService.limparCacheRevisoesDashboard();
     this.salaEstudoService.listarRevisoesDashboard().subscribe({
       next: (itens) => {
-        this.revisoesTodas = itens || [];
+        this.revisoesTodas = this.normalizarRevisoes(itens || []);
         this.aplicarFiltro();
         this.carregando = false;
       },
@@ -112,7 +113,7 @@ export class RevisoesComponent implements OnInit {
   }
 
   private aplicarFiltro(): void {
-    const base = this.revisoesTodas.length ? this.revisoesTodas : this.revisoes;
+    const base = this.normalizarRevisoes(this.revisoesTodas.length ? this.revisoesTodas : this.revisoes);
     let lista = [...base];
     if (this.filtroStatus !== 'todas') {
       const statusMap: Record<string, string> = {
@@ -132,6 +133,26 @@ export class RevisoesComponent implements OnInit {
     if (this.revisaoSelecionada && !this.revisoes.some((item) => item.materiaId === this.revisaoSelecionada?.materiaId && item.topicoId === this.revisaoSelecionada?.topicoId)) {
       this.revisaoSelecionada = null;
     }
+  }
+
+  private normalizarRevisoes(lista: RevisaoDashboardItem[]): RevisaoDashboardItem[] {
+    const hoje = new Date();
+    return (lista || []).map((item) => {
+      const proxima =
+        item?.dataProximaRevisao ||
+        item?.proximaRevisao ||
+        null;
+      const statusCanonicoInferidoPorData = proxima ? inferirStatusCanonicoPorData(proxima, hoje) : null;
+      const statusCanonico = statusCanonicoInferidoPorData || extrairStatusCanonicoRevisao(item, hoje);
+      const statusDashboard = statusCanonicoParaDashboard(statusCanonico) || 'FUTURA';
+
+      return {
+        ...item,
+        statusCanonico: item?.statusCanonico || statusCanonico,
+        status: statusDashboard,
+        dataProximaRevisao: proxima || item?.dataProximaRevisao
+      };
+    });
   }
 
   private carregarNiveisTopicosDasRevisoes(): void {

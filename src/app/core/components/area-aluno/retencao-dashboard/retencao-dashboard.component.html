@@ -1,0 +1,271 @@
+<div class="retencao-page">
+  <p-toast></p-toast>
+
+  <div class="retencao-header">
+    <h2>Retencao</h2>
+    <div class="retencao-filtros">
+      <label for="janelaSelect">Janela</label>
+      <select id="janelaSelect" [(ngModel)]="janelaSelecionada" (ngModelChange)="onJanelaChange()">
+        <option *ngFor="let op of janelaOptions" [ngValue]="op.value">{{ op.label }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="retencao-abas">
+    <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'geral'" (click)="selecionarAba('geral')">Visao geral</button>
+    <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'criticos'" (click)="selecionarAba('criticos')">Topicos criticos</button>
+  </div>
+
+  <div class="premium-banner" *ngIf="premiumBloqueado">
+    <span>Recurso disponivel no plano premium.</span>
+    <button type="button" class="btn-planos" (click)="irParaPlanos()">Ver planos</button>
+  </div>
+
+  <ng-container *ngIf="abaSelecionada === 'geral'">
+    <section class="card">
+      <h3>Resumo do edital</h3>
+      <div class="resumo-grid" *ngIf="resumo as r; else resumoLoading">
+        <div class="resumo-item">
+          <span class="label">Total topicos</span>
+          <strong>{{ r.totalTopicos }}</strong>
+        </div>
+        <div class="resumo-item">
+          <span class="label">Consolidados</span>
+          <strong>{{ r.topicosConsolidados }}</strong>
+          <div class="bar"><div class="fill consolidado" [style.width.%]="r.percentualConsolidado"></div></div>
+          <span class="pct">{{ formatarPercentual(r.percentualConsolidado) }}</span>
+        </div>
+        <div class="resumo-item">
+          <span class="label">Em risco</span>
+          <strong>{{ r.topicosEmRisco }}</strong>
+          <div class="bar"><div class="fill risco" [style.width.%]="r.percentualEmRisco"></div></div>
+          <span class="pct">{{ formatarPercentual(r.percentualEmRisco) }}</span>
+        </div>
+        <div class="resumo-item">
+          <span class="label">Criticos</span>
+          <strong>{{ r.topicosCriticos }}</strong>
+          <div class="bar"><div class="fill critico" [style.width.%]="r.percentualCritico"></div></div>
+          <span class="pct">{{ formatarPercentual(r.percentualCritico) }}</span>
+        </div>
+        <div class="resumo-item">
+          <span class="label">Sem dados</span>
+          <strong>{{ r.topicosSemDados }}</strong>
+          <div class="bar"><div class="fill semdados" [style.width.%]="r.percentualSemDados"></div></div>
+          <span class="pct">{{ formatarPercentual(r.percentualSemDados) }}</span>
+        </div>
+      </div>
+      <ng-template #resumoLoading>
+        <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo...' : 'Sem dados.' }}</div>
+      </ng-template>
+    </section>
+
+    <section class="card">
+      <h3>Topicos em risco</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Topico</th>
+              <th>Classificacao</th>
+              <th>Score</th>
+              <th>Dias s/ evento</th>
+              <th>Prox. revisao</th>
+              <th>Erros</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of topicosEmRisco">
+              <td>{{ t.nomeTopico || ('Topico ' + t.topicoId) }}</td>
+              <td><span [class]="classeClassificacao(t.classificacao)">{{ t.classificacao }}</span></td>
+              <td>{{ formatarScore(t.score) }}</td>
+              <td>{{ t.diasDesdeUltimoEvento ?? '-' }}</td>
+              <td>{{ formatarDataIso(t.proximaRevisao) }}</td>
+              <td>{{ t.totalErrosNaJanela ?? '-' }}</td>
+              <td class="acoes">
+                <button type="button" class="btn-sec" (click)="abrirDetalhes(t)">Detalhes</button>
+                <button
+                  type="button"
+                  class="btn-pri"
+                  [disabled]="t.materiaId == null"
+                  [pTooltip]="t.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+                  [tooltipDisabled]="t.materiaId != null"
+                  tooltipPosition="top"
+                  (click)="revisarAgora(t.materiaId, t.topicoId)">
+                  Revisar agora
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!carregandoRisco && topicosEmRisco.length === 0">
+              <td colspan="7" class="placeholder">Nenhum topico em risco encontrado.</td>
+            </tr>
+            <tr *ngIf="carregandoRisco">
+              <td colspan="7" class="placeholder">Carregando topicos em risco...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Erros reincidentes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Topico</th>
+              <th>Erros</th>
+              <th>Tentativas</th>
+              <th>Taxa erro</th>
+              <th>Ultima ocorrencia</th>
+              <th>Caixinha</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of errosReincidentes">
+              <td>{{ e.nomeTopico || ('Topico ' + e.topicoId) }}</td>
+              <td>{{ e.totalErros }}</td>
+              <td>{{ e.totalTentativas }}</td>
+              <td>{{ formatarPercentual(e.taxaErro) }}</td>
+              <td>{{ formatarDataIso(e.ultimaOcorrencia) }}</td>
+              <td>{{ e.caixinhaAtual ?? '-' }}</td>
+              <td class="acoes">
+                <button type="button" class="btn-sec" (click)="abrirDetalhes({ topicoId: e.topicoId, nomeTopico: e.nomeTopico })">
+                  Detalhes
+                </button>
+                <button
+                  type="button"
+                  class="btn-pri"
+                  [disabled]="e.materiaId == null"
+                  [pTooltip]="e.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+                  [tooltipDisabled]="e.materiaId != null"
+                  tooltipPosition="top"
+                  (click)="revisarAgora(e.materiaId, e.topicoId)">
+                  Revisar agora
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!carregandoErros && errosReincidentes.length === 0">
+              <td colspan="7" class="placeholder">Nenhum erro reincidente encontrado.</td>
+            </tr>
+            <tr *ngIf="carregandoErros">
+              <td colspan="7" class="placeholder">Carregando erros reincidentes...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+
+  <section class="card" *ngIf="abaSelecionada === 'criticos'">
+    <h3>Topicos criticos</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Materia</th>
+            <th>Topico</th>
+            <th>Score</th>
+            <th>Risk</th>
+            <th>Dias s/ evento</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of topicosCriticos">
+            <td>{{ c.nomeMateria || '-' }}</td>
+            <td>{{ c.nomeTopico || ('Topico ' + c.topicoId) }}</td>
+            <td>{{ formatarScore(c.score) }}</td>
+            <td>{{ formatarRisk(c.risk) }}</td>
+            <td>{{ c.diasDesdeUltimoEvento ?? '-' }}</td>
+            <td class="acoes">
+              <button
+                type="button"
+                class="btn-pri"
+                [disabled]="c.materiaId == null"
+                [pTooltip]="c.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+                [tooltipDisabled]="c.materiaId != null"
+                tooltipPosition="top"
+                (click)="revisarAgora(c.materiaId, c.topicoId)">
+                Revisar agora
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!carregandoCriticos && topicosCriticos.length === 0">
+            <td colspan="6" class="placeholder">Nenhum topico critico encontrado.</td>
+          </tr>
+          <tr *ngIf="carregandoCriticos">
+            <td colspan="6" class="placeholder">Carregando topicos criticos...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p-dialog
+    header="Detalhes do topico"
+    [(visible)]="detalhesVisivel"
+    [modal]="true"
+    [dismissableMask]="true"
+    [style]="{ width: '900px', maxWidth: '95vw' }">
+    <div class="detalhes" *ngIf="detalhesVisivel">
+      <h4>{{ topicoDetalheNome }}</h4>
+      <div *ngIf="carregandoDetalhes" class="placeholder">Carregando detalhes...</div>
+
+      <div *ngIf="!carregandoDetalhes">
+        <h5>Serie (30 dias)</h5>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Score</th>
+                <th>Eventos</th>
+                <th>Erros</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of serieDetalhe">
+                <td>{{ formatarDataIso(p.data) }}</td>
+                <td>{{ formatarScore(p.scoreDia) }}</td>
+                <td>{{ p.eventosNoDia }}</td>
+                <td>{{ p.errosNoDia }}</td>
+              </tr>
+              <tr *ngIf="serieDetalhe.length === 0">
+                <td colspan="4" class="placeholder">Sem serie para este topico.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>Historico (30 dias)</h5>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Respondido em</th>
+                <th>Avaliacao</th>
+                <th>Tipo</th>
+                <th>Caixinha (antes/depois)</th>
+                <th>Prox. revisao (antes/depois)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let h of historicoDetalhe">
+                <td>{{ formatarDataIso(h.respondidoEm) }}</td>
+                <td>{{ formatarAvaliacao(h.avaliacao) }}</td>
+                <td>{{ h.tipoItem }}</td>
+                <td>{{ h.caixinhaAntes ?? '-' }} / {{ h.caixinhaDepois ?? '-' }}</td>
+                <td>{{ formatarDataIso(h.proximaRevisaoAntes) }} / {{ formatarDataIso(h.proximaRevisaoDepois) }}</td>
+              </tr>
+              <tr *ngIf="historicoDetalhe.length === 0">
+                <td colspan="5" class="placeholder">Sem historico para este topico.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </p-dialog>
+</div>

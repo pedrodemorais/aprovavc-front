@@ -37,11 +37,14 @@ import { EstudoEmAndamentoGuard } from './core/components/area-aluno/guards/estu
 import { BibliotecaComponent } from './core/components/area-aluno/biblioteca/biblioteca.component';
 import { BibliotecaResumoComponent } from './core/components/area-aluno/biblioteca/biblioteca-resumo.component';
 import { CadernoErrosComponent } from './core/components/area-aluno/caderno-erros/caderno-erros.component';
+import { RetencaoDashboardComponent } from './core/components/area-aluno/retencao-dashboard/retencao-dashboard.component';
+import { HojeComponent } from './core/components/area-aluno/hoje/hoje.component';
 
 
 const routes: Routes = [
   { path: 'admin/painel', redirectTo: 'area-restrita/admin/painel', pathMatch: 'full' },
   { path: 'admin/cadastro-base', redirectTo: 'area-restrita/admin/cadastro-base', pathMatch: 'full' },
+  { path: 'retencao', redirectTo: 'area-restrita/retencao', pathMatch: 'full' },
 
   { path: 'ativacao', component: AtivacaoComponent },
 
@@ -63,6 +66,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'hoje', component: HojeComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'dashboard', component: DashboardRevisaoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
@@ -72,6 +76,7 @@ const routes: Routes = [
       { path: 'caderno-erros', component: CadernoErrosComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'blocos-estudo', component: BlocosEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'progresso', component: ProgressoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'retencao', component: RetencaoDashboardComponent, canActivate: [PlanoAtivoGuard] },
         { path: 'revisoes', component: RevisoesComponent },
         { path: 'cadastro-editais/:id', component: CadastroEditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },
         { path: 'cadastro-editais', component: CadastroEditaisComponent, canActivate: [PlanoAtivoGuard], canDeactivate: [EstudoEmAndamentoGuard] },

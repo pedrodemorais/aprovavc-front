@@ -63,6 +63,8 @@ import { CadastroBaseComponent } from './area-admin/pages/painel-admin/cadastro-
 import { BibliotecaComponent } from './components/area-aluno/biblioteca/biblioteca.component';
 import { BibliotecaResumoComponent } from './components/area-aluno/biblioteca/biblioteca-resumo.component';
 import { CadernoErrosComponent } from './components/area-aluno/caderno-erros/caderno-erros.component';
+import { RetencaoDashboardComponent } from './components/area-aluno/retencao-dashboard/retencao-dashboard.component';
+import { HojeComponent } from './components/area-aluno/hoje/hoje.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -91,6 +93,8 @@ registerLocaleData(localePt);
     BibliotecaComponent,
     BibliotecaResumoComponent,
     CadernoErrosComponent,
+    RetencaoDashboardComponent,
+    HojeComponent,
 
   ],
   imports: [

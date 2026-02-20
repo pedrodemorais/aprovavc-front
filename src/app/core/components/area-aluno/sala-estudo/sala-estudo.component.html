@@ -1,7 +1,14 @@
 <div class="sala-container" *ngIf="!carregando; else loadingTpl"
   [class.coluna-esquerda-oculta]="colunaEsquerdaOculta"
-  [class.flashcard-foco-mobile]="modo === 'revisar' && modoRevisao === 'flashcards' && !!flashcards?.length">
+  [class.flashcard-foco-mobile]="modo === 'revisar' && modoRevisao === 'flashcards' && !!flashcards.length">
+  <p-toast></p-toast>
 
+  <div class="aviso-revisao-direcionada" *ngIf="revisaoDirecionadaAtiva">
+    <span>Revisão direcionada</span>
+    <button type="button" class="btn-limpar-filtro-direcionado" (click)="limparFiltroTopicoDirecionado()">
+      Limpar filtro
+    </button>
+  </div>
 
 
   <!-- CORPO DA SALA -->
@@ -42,6 +49,7 @@
       <span class="salvo-msg sala-processando-msg" *ngIf="carregandoAnotacoes">Carregando anota&ccedil;&otilde;es...</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemRevisao">{{ mensagemRevisao }}</span>
+      <span class="salvo-msg sala-retencao-feedback-msg" *ngIf="feedbackRetencao">{{ feedbackRetencao }}</span>
       <span class="salvo-msg sala-topico-finalizado-msg" *ngIf="mensagemTopicoFinalizado">{{ mensagemTopicoFinalizado }}</span>
     </span>
     <button type="button" class="btn-toggle-coluna btn-toggle-coluna--titulo"
@@ -440,7 +448,7 @@
 
                 <!-- Flashcards (mantem seu bloco atual aqui dentro) -->
                 <ng-container *ngIf="modoRevisao === 'flashcards'">
-                  <ng-container *ngIf="flashcards?.length; else semFlashcardsTpl">
+                  <ng-container *ngIf="flashcards.length; else semFlashcardsTpl">
                     <div class="flashcard-review-container">
                       <!-- (opcional) status da sessao -->
                       <!-- CARTAO -->
@@ -909,7 +917,7 @@
           <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardFrente" name="flashcardFrente"
             [attr.maxlength]="maxFlashcardFrente" placeholder="Digite a pergunta..."></textarea>
           <span class="flashcard-counter">
-            {{ (flashcardFrente?.length || 0) }}/{{ maxFlashcardFrente }}
+            {{ (flashcardFrente.length || 0) }}/{{ maxFlashcardFrente }}
           </span>
         </label>
 
@@ -934,7 +942,7 @@
           <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardVerso" name="flashcardVerso"
             [attr.maxlength]="maxFlashcardVerso" placeholder="Digite a resposta..." [disabled]="flashcardTipo === 'VERDADEIRO_FALSO'"></textarea>
           <span class="flashcard-counter">
-            {{ (flashcardVerso?.length || 0) }}/{{ maxFlashcardVerso }}
+            {{ (flashcardVerso.length || 0) }}/{{ maxFlashcardVerso }}
           </span>
         </label>
       </div>

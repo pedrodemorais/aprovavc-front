@@ -80,7 +80,7 @@
               (error)="onEditalImagemErro()"
               alt="Logo do orgao"
             />
-            <span *ngIf="!activeEditalImagemUrl">{{ edital.nome?.slice(0, 1) }}</span>
+            <span *ngIf="!activeEditalImagemUrl">{{ edital.nome.slice(0, 1) }}</span>
           </div>
           <div class="edital-dashboard-info">
             <h2 class="edital-nome">
@@ -317,5 +317,4 @@
 
   </div>
 </div>
-
 

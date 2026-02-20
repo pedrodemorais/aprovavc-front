@@ -31,6 +31,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
   menuOffset = 0;
   userInitials = '';
   isHome = true;
+  isHojeFocus = false;
 
   sonsFocoAberto = false;
   userMenuAberto = false;
@@ -76,6 +77,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe((e: any) => {
         const url = e.urlAfterRedirects || e.url;
         this.isHome = url === '/area-restrita';
+        this.isHojeFocus = url.startsWith('/area-restrita/hoje');
         this.menuAberto = false;
         this.agendarMenuOffset();
       });
@@ -289,7 +291,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         label: 'Hoje',
         icon: 'pi pi-calendar',
-        routerLink: ['/area-restrita/dashboard'],
+        routerLink: ['/area-restrita/hoje'],
         disabled: isLocked
       },
       {
@@ -312,6 +314,13 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         label: 'Progresso',
         icon: 'pi pi-chart-line',
         routerLink: ['/area-restrita/progresso'],
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
+      {
+        label: 'Retencao',
+        icon: 'pi pi-heart',
+        routerLink: ['/area-restrita/retencao'],
         disabled: isLocked || !this.hasMaterias,
         title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
       },

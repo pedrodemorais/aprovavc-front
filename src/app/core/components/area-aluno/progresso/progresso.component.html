@@ -77,8 +77,8 @@
             <div
               class="duo-trend"
               *ngIf="tendenciaCobertura != null"
-              [class.duo-trend--up]="(tendenciaCobertura ?? 0) > 0"
-              [class.duo-trend--down]="(tendenciaCobertura ?? 0) < 0">
+              [class.duo-trend--up]="tendenciaCobertura > 0"
+              [class.duo-trend--down]="tendenciaCobertura < 0">
               {{ formatarTendencia(tendenciaCobertura) }}
             </div>
           </div>
@@ -116,8 +116,8 @@
             <div
               class="duo-trend"
               *ngIf="tendenciaDominio != null && !dominioSemDados"
-              [class.duo-trend--up]="(tendenciaDominio ?? 0) > 0"
-              [class.duo-trend--down]="(tendenciaDominio ?? 0) < 0">
+              [class.duo-trend--up]="tendenciaDominio > 0"
+              [class.duo-trend--down]="tendenciaDominio < 0">
               {{ formatarTendencia(tendenciaDominio) }}
             </div>
           </div>

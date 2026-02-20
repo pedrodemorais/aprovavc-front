@@ -1,0 +1,33 @@
+export enum PrioridadeFilaHoje {
+  ATRASADA = 'ATRASADA',
+  CRITICO = 'CRITICO',
+  EM_RISCO = 'EM_RISCO',
+  ERRO_REINCIDENTE = 'ERRO_REINCIDENTE',
+  ALTA = 'ALTA',
+  MEDIA = 'MEDIA',
+  BAIXA = 'BAIXA'
+}
+
+export enum TipoFilaHoje {
+  TOPICO = 'TOPICO',
+  FLASHCARD = 'FLASHCARD',
+  ERRO = 'ERRO'
+}
+
+export interface HojeFilaItemDTO {
+  topicoId: number;
+  materiaId: number | null;
+  materiaNome: string | null;
+  topicoNome: string | null;
+  prioridade: PrioridadeFilaHoje;
+  motivo: string | null;
+  tempoEstimadoMinutos: number | null;
+  deepLink: string;
+  tipo: TipoFilaHoje;
+}
+
+export interface HojeFilaResponseDTO {
+  totalItens: number;
+  tempoEstimadoMinutos: number;
+  itens: HojeFilaItemDTO[];
+}

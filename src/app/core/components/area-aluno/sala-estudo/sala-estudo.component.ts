@@ -2,6 +2,7 @@ import { FlashcardDTO } from '../models/FlashcardDTO';
 import { Component, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, NgZone, AfterViewInit, DestroyRef, inject } from '@angular/core';
 import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { MessageService } from 'primeng/api';
 import { forkJoin, of, from, Observable, Subject, EMPTY } from 'rxjs';
 import { catchError, concatMap, distinctUntilChanged, exhaustMap, filter, finalize, map, shareReplay, switchMap, tap, toArray } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,6 +25,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 import { environment } from 'src/environments/environment';
 import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
+import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analytics.service';
+import { RetencaoPontoDTO } from 'src/app/core/models/retencao-analytics.models';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 type TopicoViewModel = {
@@ -150,6 +153,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   topicoSelecionado?: TopicoViewModel | null;
 
   private topicoIdPreferido: number | null = null;
+  revisaoDirecionadaAtiva = false;
   private autoSelecionarUltimoNaoEstudado = false;
 
   private topicosCarregados = false;
@@ -291,6 +295,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   enviandoAvaliacaoAnotacao: boolean = false;
 
   avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
+  feedbackRetencao?: string;
+  private scoreRetencaoPorTopico = new Map<number, number>();
+  private feedbackRetencaoTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -299,8 +306,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     private salaEstudoService: SalaEstudoService,
     private empresaParametroService: EmpresaParametroService,
     private blocosService: BlocosEstudoService,
+    private retencaoAnalyticsService: RetencaoAnalyticsService,
     private sanitizer: DomSanitizer,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private messageService: MessageService
   ) {}
 
   // ================================================================
@@ -311,6 +320,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.carregarPreferenciaPausaAba();
     this.carregarTopicosFinalizados();
     this.carregarMateriasDisponiveisTroca();
+    this.revisaoDirecionadaAtiva = !!this.getTopicoIdFromQuery(this.route.snapshot.queryParamMap);
 
     this.salvarEstudoTrigger$
       .pipe(
@@ -339,6 +349,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
           if (candidato) {
             this.selecionarTopico(candidato);
             this.selecionouTopicoInicial = true;
+          } else if (this.revisaoDirecionadaAtiva) {
+            this.notificarTopicoDirecionadoNaoEncontrado(topicoId);
+            this.limparFiltroTopicoDirecionado();
           }
         }
       });
@@ -375,6 +388,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.flushSaveLogBuffer(true);
     this.destruirObservadorListaTopicos();
+    if (this.feedbackRetencaoTimer) {
+      clearTimeout(this.feedbackRetencaoTimer);
+      this.feedbackRetencaoTimer = null;
+    }
     if (this.recentralizarRafId != null) {
       cancelAnimationFrame(this.recentralizarRafId);
       this.recentralizarRafId = null;
@@ -2968,6 +2985,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.proximoFlashcard();
         this.avaliacaoFlashcardSelecionada = null;
+        this.atualizarFeedbackRetencaoTopico(this.topicoSelecionado?.id ?? null);
         this.mostrarMensagemRevisao('Revisao do flashcard registrada!');
         this.temTempoNaoSalvoFlag = false;
       },
@@ -3005,6 +3023,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
+        this.atualizarFeedbackRetencaoTopico(req.topicoId);
         this.mostrarMensagemRevisao('Revisao das anotacoes registrada!');
       },
       error: (err) => {
@@ -3534,6 +3553,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         // Quando o topico vem explicitamente na URL (dashboard/revisoes),
         // deve abrir exatamente nele, mesmo que ja esteja finalizado.
         alvo = candidato;
+      } else if (this.revisaoDirecionadaAtiva) {
+        this.notificarTopicoDirecionadoNaoEncontrado(this.topicoIdPreferido);
+        this.limparFiltroTopicoDirecionado();
       }
     }
 
@@ -4076,9 +4098,75 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  limparFiltroTopicoDirecionado(): void {
+    this.revisaoDirecionadaAtiva = false;
+    this.topicoIdPreferido = null;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { topicoId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+  }
+
+  private notificarTopicoDirecionadoNaoEncontrado(topicoId: number): void {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Tópico não encontrado',
+      detail: `O tópico ${topicoId} não pertence a esta matéria.`
+    });
+  }
+
   private mostrarMensagemRevisao(texto: string): void {
     this.mensagemRevisao = texto;
     setTimeout(() => { this.mensagemRevisao = undefined; }, 4000);
+  }
+
+  private mostrarFeedbackRetencao(texto: string): void {
+    this.feedbackRetencao = texto;
+    if (this.feedbackRetencaoTimer) {
+      clearTimeout(this.feedbackRetencaoTimer);
+    }
+    this.feedbackRetencaoTimer = setTimeout(() => {
+      this.feedbackRetencao = undefined;
+      this.feedbackRetencaoTimer = null;
+    }, 2000);
+  }
+
+  private atualizarFeedbackRetencaoTopico(topicoId: number | null): void {
+    if (!topicoId) return;
+
+    const scoreAnterior = this.scoreRetencaoPorTopico.get(topicoId);
+
+    this.retencaoAnalyticsService.buscarSerieTopico(topicoId, 30).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (serie: RetencaoPontoDTO[]) => {
+        const scoreAtual = this.extrairUltimoScoreRetencao(serie);
+        if (scoreAtual === null) return;
+
+        const mensagem = scoreAnterior !== undefined
+          ? `Retencao estimada: ${scoreAnterior.toFixed(2)} -> ${scoreAtual.toFixed(2)}`
+          : `Retencao atual: ${scoreAtual.toFixed(2)}`;
+
+        this.scoreRetencaoPorTopico.set(topicoId, scoreAtual);
+        this.mostrarFeedbackRetencao(mensagem);
+      },
+      error: () => {
+        // Sem impacto no fluxo principal de revisao.
+      }
+    });
+  }
+
+  private extrairUltimoScoreRetencao(serie: RetencaoPontoDTO[] | null | undefined): number | null {
+    if (!Array.isArray(serie) || !serie.length) return null;
+    for (let i = serie.length - 1; i >= 0; i -= 1) {
+      const score = serie[i]?.scoreDia;
+      if (typeof score === 'number' && Number.isFinite(score)) {
+        return score;
+      }
+    }
+    return null;
   }
 
   private getTopicoIdFromDto(dto: TopicoNodeDTO | TopicoViewModel | null | undefined): number | null {

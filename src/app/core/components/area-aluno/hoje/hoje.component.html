@@ -1,0 +1,118 @@
+<div class="hoje-page">
+  <p-toast></p-toast>
+
+  <div class="hoje-shell" *ngIf="!loading; else loadingTpl">
+    <header class="hoje-topo">
+      <div class="hoje-topo-head">
+        <h1>Sua revisao de hoje</h1>
+        <span *ngIf="mostrarStreak" [class]="streakClasse">{{ streakTexto }}</span>
+      </div>
+      <p class="frase-impacto">{{ fraseImpacto }}</p>
+
+      <p class="resumo-dia">Tempo estimado do dia: {{ tempoEstimadoLabel }}</p>
+      <div class="hoje-progresso">{{ progressoTexto }}</div>
+      <div class="hoje-progresso-bar" *ngIf="totalItens > 0">
+        <span class="hoje-progresso-fill" [style.width.%]="progressoPercentual"></span>
+      </div>
+      <div class="hoje-feedback-conclusao" *ngIf="feedbackConclusaoItem">{{ feedbackConclusaoItem }}</div>
+
+      <div class="edital-progresso destaque-edital" *ngIf="resumoEdital">
+        <div class="edital-progresso-head">
+          <span>Edital consolidado: {{ percentualEditalConsolidadoLabel }}</span>
+        </div>
+        <div class="edital-progresso-bar">
+          <span class="edital-progresso-fill" [style.width]="percentualEditalConsolidadoWidth"></span>
+        </div>
+        <div class="edital-objetivo" *ngIf="faltamTopicosConsolidar !== null">
+          Faltam {{ faltamTopicosConsolidar }} topicos para consolidar.
+        </div>
+      </div>
+
+      <div class="cognitivo-topo" *ngIf="mostrarBlocoCognitivo">
+        <div [class]="retencao14dClasse">
+          <div class="cognitivo-titulo">{{ retencao14dIcone }} {{ retencao14dTitulo }}</div>
+          <div class="cognitivo-subtitulo">{{ retencao14dSubtitulo }}</div>
+        </div>
+      </div>
+
+      <div class="edital-estimativa" *ngIf="diasEstimadosConsolidacao !== null">
+        Estimativa de consolidacao: ~{{ diasEstimadosConsolidacao }} dias
+        <span>(com base no seu ritmo recente)</span>
+      </div>
+    </header>
+
+    <section class="hoje-vazio" *ngIf="totalItens === 0">
+      <h2>Hoje voce esta em dia.</h2>
+      <p>Volte amanha para continuar consolidando.</p>
+    </section>
+
+    <section class="hoje-card" *ngIf="totalItens > 0 && !revisaoConcluida && itemAtual" [class.hoje-card-entrando]="cardEntrando">
+      <div class="hoje-card-head">
+        <span class="materia">{{ itemAtual.materiaNome || 'Materia' }}</span>
+        <span [class]="prioridadeClasse(itemAtual.prioridade)">{{ prioridadeLabel(itemAtual.prioridade) }}</span>
+      </div>
+
+      <h2 class="topico">{{ itemAtual.topicoNome || 'Topico sem nome' }}</h2>
+      <p class="motivo" *ngIf="itemAtual.motivo">{{ itemAtual.motivo }}</p>
+      <div class="tempo-item">Tempo estimado do item: {{ formatarTempoSegundos((itemAtual.tempoEstimadoMinutos || 0) * 60) }}</div>
+
+      <button type="button" class="btn-comecar" [disabled]="modoExecucao" (click)="comecarRevisao()">
+        <span class="btn-loading-dot" *ngIf="modoExecucao" aria-hidden="true"></span>
+        {{ modoExecucao ? 'Abrindo...' : 'Comecar revisao' }}
+      </button>
+
+      <button
+        type="button"
+        class="btn-secundario btn-secundario-critico"
+        *ngIf="mostrarBotaoCriticos"
+        (click)="verTopicosCriticos()">
+        {{ textoBotaoCriticos }}
+      </button>
+    </section>
+
+    <section class="hoje-fim" *ngIf="revisaoConcluida">
+      <h2>Revisao concluida!</h2>
+      <p>Voce consolidou {{ consolidadoHoje }} topicos hoje.</p>
+
+      <div class="fim-metricas">
+        <div class="fim-metrica">
+          <span class="fim-label">Total revisado</span>
+          <strong>{{ consolidadoHoje }}</strong>
+        </div>
+        <div class="fim-metrica">
+          <span class="fim-label">Tempo total investido</span>
+          <strong>{{ tempoTotalInvestidoLabel }}</strong>
+        </div>
+        <div class="fim-metrica" *ngIf="resumoEdital">
+          <span class="fim-label">Edital consolidado</span>
+          <strong>{{ percentualEditalConsolidadoLabel }}</strong>
+        </div>
+      </div>
+
+      <p class="edital-estimativa" *ngIf="diasEstimadosConsolidacao !== null">
+        Estimativa de consolidacao: ~{{ diasEstimadosConsolidacao }} dias
+        <span>(com base no seu ritmo recente)</span>
+      </p>
+
+      <div class="fim-acoes">
+        <button type="button" class="btn-secundario" (click)="continuarEstudando()">
+          Continuar estudando
+        </button>
+        <button
+          type="button"
+          class="btn-secundario btn-secundario-critico"
+          *ngIf="mostrarBotaoCriticos"
+          (click)="verTopicosCriticos()">
+          {{ textoBotaoCriticos }}
+        </button>
+        <button type="button" class="btn-comecar" (click)="verTopicosEmRisco()">
+          Ver topicos em risco
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="hoje-loading">Carregando fila de hoje...</div>
+</ng-template>

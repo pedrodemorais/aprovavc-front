@@ -154,7 +154,7 @@
           Cole um topico por linha. Use tab ou espacos para criar subtopicos.
           <br />
           <span *ngIf="topicoSelecionado">
-            Importando dentro de: <strong>{{ topicoSelecionado?.descricao }}</strong>
+            Importando dentro de: <strong>{{ topicoSelecionado.descricao }}</strong>
           </span>
           <span *ngIf="!topicoSelecionado">
             Importando na raiz da materia.
@@ -180,7 +180,7 @@ Direito Administrativo
     <div class="modal-acoes">
       <button type="button" class="btn secundario" (click)="fecharModalLote()">Cancelar</button>
       <button type="button" class="btn primario" (click)="importarTopicosEmLote()"
-        [disabled]="!textoLoteTopicos?.trim() || salvandoLote">
+        [disabled]="!textoLoteTopicos.trim() || salvandoLote">
         {{ salvandoLote ? 'Importando...' : 'Importar' }}
       </button>
     </div>
@@ -250,7 +250,7 @@ Direito Administrativo
       </button>
 
       <button type="button" class="btn primario" (click)="importarEditalCompleto()"
-        [disabled]="salvandoEdital || !textoEdital?.trim()">
+        [disabled]="salvandoEdital || !textoEdital.trim()">
         {{ salvandoEdital ? 'Importando...' : 'Importar agora' }}
       </button>
     </div>
