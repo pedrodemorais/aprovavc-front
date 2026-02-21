@@ -54,6 +54,15 @@
           <span class="pct">{{ formatarPercentual(r.percentualSemDados) }}</span>
         </div>
       </div>
+      <div class="resumo-pizza" *ngIf="resumo as r">
+        <div class="pizza" [style.background]="resumoPizzaStyle" aria-label="Distribuicao de retencao"></div>
+        <div class="pizza-legenda">
+          <span class="leg-item"><i class="leg-dot consolidado"></i>Consolidado ({{ r.topicosConsolidados }})</span>
+          <span class="leg-item"><i class="leg-dot risco"></i>Em risco ({{ r.topicosEmRisco }})</span>
+          <span class="leg-item"><i class="leg-dot critico"></i>Criticos ({{ r.topicosCriticos }})</span>
+          <span class="leg-item"><i class="leg-dot semdados"></i>Sem dados ({{ r.topicosSemDados }})</span>
+        </div>
+      </div>
       <ng-template #resumoLoading>
         <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo...' : 'Sem dados.' }}</div>
       </ng-template>

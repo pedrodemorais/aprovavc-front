@@ -30,4 +30,13 @@ export interface HojeFilaResponseDTO {
   totalItens: number;
   tempoEstimadoMinutos: number;
   itens: HojeFilaItemDTO[];
+  insights?: HojeFilaInsightsDTO | null;
+}
+
+export interface HojeFilaInsightsDTO {
+  streakDias?: number | null;
+  consolidadosSemana?: number | null;
+  tendencia7dPercent?: number | null;
+  tendencia7dLabel?: string | null;
+  consolidadosSemanaLabel?: string | null;
 }

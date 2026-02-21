@@ -37,6 +37,20 @@
   font-size: 13px;
 }
 
+.insights-hoje {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.insight-item {
+  margin: 0;
+  font-size: 13px;
+  color: #355646;
+  font-weight: 600;
+}
+
 .resumo-dia {
   margin-top: 14px;
   font-weight: 600;
@@ -51,16 +65,19 @@
 
 .hoje-progresso-bar {
   margin-top: 8px;
-  height: 4px;
+  height: 8px;
   border-radius: 999px;
-  background: #dfe9e1;
+  background: #ccd9cf;
+  border: 1px solid #b8c9bc;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(19, 38, 26, 0.12);
 }
 
 .hoje-progresso-fill {
   display: block;
   height: 100%;
-  background: #2f8f4b;
+  background: linear-gradient(90deg, #178c3f 0%, #2fa65a 100%);
+  box-shadow: 0 0 10px rgba(23, 140, 63, 0.35);
   transition: width 300ms ease;
 }
 
@@ -145,16 +162,19 @@
 }
 
 .edital-progresso-bar {
-  height: 6px;
+  height: 10px;
   border-radius: 999px;
-  background: #dfe9e1;
+  background: #cad8ce;
+  border: 1px solid #b2c5b8;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(19, 38, 26, 0.14);
 }
 
 .edital-progresso-fill {
   display: block;
   height: 100%;
-  background: #0f8a3c;
+  background: linear-gradient(90deg, #0f8a3c 0%, #16a34a 100%);
+  box-shadow: 0 0 12px rgba(15, 138, 60, 0.38);
 }
 
 .edital-objetivo {

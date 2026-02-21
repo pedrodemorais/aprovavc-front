@@ -5,9 +5,13 @@
     <header class="hoje-topo">
       <div class="hoje-topo-head">
         <h1>Sua revisao de hoje</h1>
-        <span *ngIf="mostrarStreak" [class]="streakClasse">{{ streakTexto }}</span>
+        <span [class]="streakClasse">{{ streakTexto }}</span>
       </div>
       <p class="frase-impacto">{{ fraseImpacto }}</p>
+      <div class="insights-hoje">
+        <p class="insight-item">{{ tendencia7DiasTexto }}</p>
+        <p class="insight-item">{{ consolidadoSemanaTexto }}</p>
+      </div>
 
       <p class="resumo-dia">Tempo estimado do dia: {{ tempoEstimadoLabel }}</p>
       <div class="hoje-progresso">{{ progressoTexto }}</div>

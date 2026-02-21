@@ -79,8 +79,7 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   get tempoEstimadoLabel(): string {
-    if (this.totalItens <= 0) return '0 min';
-    return `~${this.calcularTempoTotal()} min`;
+    return this.formatarTempoMinutos(this.calcularTempoTotal(), this.totalItens > 0);
   }
 
   get revisaoConcluida(): boolean {
@@ -107,7 +106,7 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   get percentualEditalConsolidadoLabel(): string {
-    return `${Math.round(this.percentualEditalConsolidado)}%`;
+    return `${this.percentualEditalConsolidado.toFixed(1)}%`;
   }
 
   get percentualEditalConsolidadoWidth(): string {
@@ -116,13 +115,14 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   get streakClasse(): string {
-    if (this.streakDias >= 7) return 'streak-badge streak-forte';
-    if (this.streakDias >= 2) return 'streak-badge streak-ok';
+    const dias = this.streakDiasAtual;
+    if (dias >= 7) return 'streak-badge streak-forte';
+    if (dias >= 2) return 'streak-badge streak-ok';
     return 'streak-badge streak-neutro';
   }
 
   get mostrarStreak(): boolean {
-    return this.streakDias > 0;
+    return true;
   }
 
   get streakTexto(): string {
@@ -140,6 +140,56 @@ export class HojeComponent implements OnInit, OnDestroy {
     return this.totalItens > 0
       ? 'Foco total na sua consolidacao.'
       : 'Memoria consolidada por hoje.';
+  }
+
+  get consolidadoSemana(): number {
+    const backend = Number(this.fila?.insights?.consolidadosSemana);
+    if (Number.isFinite(backend) && backend >= 0) return backend;
+    return this.somarHistoricoPeriodo(7, 0);
+  }
+
+  get consolidadoSemanaTexto(): string {
+    const labelBackend = this.fila?.insights?.consolidadosSemanaLabel;
+    if (labelBackend) return labelBackend;
+    const qtd = this.consolidadoSemana;
+    if (qtd === 1) {
+      return '🔥 Voce consolidou 1 topico esta semana.';
+    }
+    return `🔥 Voce consolidou ${qtd} topicos esta semana.`;
+  }
+
+  get tendencia7DiasPercent(): number | null {
+    const backend = Number(this.fila?.insights?.tendencia7dPercent);
+    if (Number.isFinite(backend)) {
+      return Number(backend.toFixed(1));
+    }
+
+    const atual7 = this.somarHistoricoPeriodo(7, 0);
+    const anterior7 = this.somarHistoricoPeriodo(7, 7);
+
+    if (atual7 === 0 && anterior7 === 0) {
+      return null;
+    }
+
+    const totalTopicos = Number(this.resumoEdital?.totalTopicos || 0);
+    if (Number.isFinite(totalTopicos) && totalTopicos > 0) {
+      const variacaoPctPontos = ((atual7 - anterior7) / totalTopicos) * 100;
+      return Number(variacaoPctPontos.toFixed(1));
+    }
+
+    if (anterior7 <= 0) {
+      return atual7 > 0 ? 100 : 0;
+    }
+
+    const variacaoRelativa = ((atual7 - anterior7) / anterior7) * 100;
+    return Number(variacaoRelativa.toFixed(1));
+  }
+
+  get tendencia7DiasTexto(): string {
+    const valor = this.tendencia7DiasPercent;
+    if (valor === null) return '0% na sua consolidação (últimos 7 dias)';
+    const sinal = valor > 0 ? '+' : '';
+    return `${sinal}${valor}% na sua consolidação (últimos 7 dias)`;
   }
 
   get progressoPercentual(): number {
@@ -314,7 +364,7 @@ export class HojeComponent implements OnInit, OnDestroy {
     if (!Number.isFinite(valor) || valor <= 0) {
       return temItens ? '~1 min' : '0 min';
     }
-    return `${Math.ceil(valor)} min`;
+    return this.formatarMinutosParaLabel(Math.ceil(valor), true);
   }
 
   formatarTempoSegundos(seg: number): string {
@@ -325,7 +375,25 @@ export class HojeComponent implements OnInit, OnDestroy {
     if (valor < 60) {
       return '~1 min';
     }
-    return `${Math.ceil(valor / 60)} min`;
+    return this.formatarMinutosParaLabel(Math.ceil(valor / 60), false);
+  }
+
+  private formatarMinutosParaLabel(totalMinutos: number, aproximado: boolean): string {
+    const minutos = Math.max(1, Math.ceil(Number(totalMinutos) || 0));
+    const prefixo = aproximado ? '~' : '';
+
+    if (minutos < 60) {
+      return `${prefixo}${minutos} min`;
+    }
+
+    const horas = Math.floor(minutos / 60);
+    const restoMinutos = minutos % 60;
+
+    if (restoMinutos === 0) {
+      return `${prefixo}${horas}h`;
+    }
+
+    return `${prefixo}${horas}h ${restoMinutos}min`;
   }
 
   calcularTempoTotal(): number {
@@ -347,10 +415,11 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   formatarStreak(): string {
-    if (this.streakDias <= 0) return '';
-    if (this.streakDias === 1) return '🔥 1 dia seguido';
-    if (this.streakDias >= 7) return `🔥🔥 ${this.streakDias} dias seguidos`;
-    return `🔥 ${this.streakDias} dias seguidos`;
+    const dias = this.streakDiasAtual;
+    if (dias <= 0) return '🔥 0 dias seguidos';
+    if (dias === 1) return '🔥 1 dia seguido';
+    if (dias >= 7) return `🔥🔥 ${dias} dias seguidos`;
+    return `🔥 ${dias} dias seguidos`;
   }
 
   private carregarFila(): void {
@@ -361,8 +430,14 @@ export class HojeComponent implements OnInit, OnDestroy {
         const filaNormalizada: HojeFilaResponseDTO = {
           totalItens: Number(resp?.totalItens || 0),
           tempoEstimadoMinutos: Number(resp?.tempoEstimadoMinutos || 0),
-          itens: Array.isArray(resp?.itens) ? resp.itens : []
+          itens: Array.isArray(resp?.itens) ? resp.itens : [],
+          insights: resp?.insights ?? null
         };
+
+        const streakBackend = Number(filaNormalizada?.insights?.streakDias);
+        if (Number.isFinite(streakBackend) && streakBackend >= 0) {
+          this.streakDias = streakBackend;
+        }
 
         if (filaNormalizada.totalItens > 0 || filaNormalizada.itens.length > 0) {
           this.aplicarFila(filaNormalizada);
@@ -772,6 +847,30 @@ export class HojeComponent implements OnInit, OnDestroy {
       soma += Number(historico[chave] || 0);
     }
     return soma / 7;
+  }
+
+  private somarHistoricoPeriodo(dias: number, deslocamentoDias: number): number {
+    const historico = this.lerHistoricoConcluidos();
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+
+    let soma = 0;
+    for (let i = 0; i < dias; i += 1) {
+      const d = new Date(base);
+      d.setDate(base.getDate() - deslocamentoDias - i);
+      const chave = d.toISOString().slice(0, 10);
+      soma += Number(historico[chave] || 0);
+    }
+
+    return soma;
+  }
+
+  private get streakDiasAtual(): number {
+    const backend = Number(this.fila?.insights?.streakDias);
+    if (Number.isFinite(backend) && backend >= 0) {
+      return backend;
+    }
+    return Math.max(0, Number(this.streakDias || 0));
   }
 }
 

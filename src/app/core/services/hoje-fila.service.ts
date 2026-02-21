@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { HojeFilaItemDTO, HojeFilaResponseDTO, PrioridadeFilaHoje, TipoFilaHoje } from '../models/hoje-fila.models';
+import { HojeFilaInsightsDTO, HojeFilaItemDTO, HojeFilaResponseDTO, PrioridadeFilaHoje, TipoFilaHoje } from '../models/hoje-fila.models';
 
 interface HojeFilaItemRaw {
   topicoId?: number | null;
@@ -31,6 +31,13 @@ interface HojeFilaResponseRaw {
   itens?: HojeFilaItemRaw[] | null;
   fila?: HojeFilaItemRaw[] | null;
   items?: HojeFilaItemRaw[] | null;
+  insights?: {
+    streakDias?: number | null;
+    consolidadosSemana?: number | null;
+    tendencia7dPercent?: number | null;
+    tendencia7dLabel?: string | null;
+    consolidadosSemanaLabel?: string | null;
+  } | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -57,7 +64,19 @@ export class HojeFilaService {
     return {
       totalItens: Number((Array.isArray(raw) ? itensRaw.length : (raw?.totalItens ?? raw?.total)) || itensRaw.length || 0),
       tempoEstimadoMinutos: Number(Array.isArray(raw) ? 0 : (raw?.tempoEstimadoMinutos ?? raw?.tempoEstimadoMin ?? 0)),
-      itens: itensRaw.map((item) => this.normalizarItem(item))
+      itens: itensRaw.map((item) => this.normalizarItem(item)),
+      insights: Array.isArray(raw) ? null : this.normalizarInsights(raw?.insights)
+    };
+  }
+
+  private normalizarInsights(raw: HojeFilaResponseRaw['insights']): HojeFilaInsightsDTO | null {
+    if (!raw) return null;
+    return {
+      streakDias: this.toNullableNumber(raw.streakDias),
+      consolidadosSemana: this.toNullableNumber(raw.consolidadosSemana),
+      tendencia7dPercent: this.toNullableNumber(raw.tendencia7dPercent),
+      tendencia7dLabel: (raw.tendencia7dLabel ?? null) || null,
+      consolidadosSemanaLabel: (raw.consolidadosSemanaLabel ?? null) || null
     };
   }
 

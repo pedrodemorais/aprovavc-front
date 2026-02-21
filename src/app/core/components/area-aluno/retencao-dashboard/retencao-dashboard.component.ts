@@ -169,6 +169,32 @@ export class RetencaoDashboardComponent implements OnInit {
     return `${numero.toFixed(1)}%`;
   }
 
+  get resumoPizzaStyle(): string {
+    const consolidado = this.clampPercent(this.resumo?.percentualConsolidado);
+    const risco = this.clampPercent(this.resumo?.percentualEmRisco);
+    const critico = this.clampPercent(this.resumo?.percentualCritico);
+    const semDados = this.clampPercent(this.resumo?.percentualSemDados);
+
+    const p1 = consolidado;
+    const p2 = p1 + risco;
+    const p3 = p2 + critico;
+    const p4 = Math.min(100, p3 + semDados);
+
+    return `conic-gradient(
+      #22a447 0% ${p1}%,
+      #ff9800 ${p1}% ${p2}%,
+      #e53935 ${p2}% ${p3}%,
+      #9aa5b1 ${p3}% ${p4}%,
+      #edf0f3 ${p4}% 100%
+    )`;
+  }
+
+  private clampPercent(valor: number | null | undefined): number {
+    const n = Number(valor ?? 0);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(100, n));
+  }
+
   formatarScore(valor: number | null): string {
     if (valor == null || Number.isNaN(valor)) {
       return '-';
