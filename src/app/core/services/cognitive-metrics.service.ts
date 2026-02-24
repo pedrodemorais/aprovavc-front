@@ -81,9 +81,14 @@ export class CognitiveMetricsService {
       nomeTopico: this.toNullableString(this.pick(raw, ['nomeTopico', 'topicoDescricao', 'descricao'])),
       score: this.toNullableNumber(this.pick(raw, ['score', 'scoreRetencao'])),
       risk: this.toNullableNumber(this.pick(raw, ['risk', 'forgettingRisk', 'riscoEsquecimento'])),
-      stability: this.toNullableNumber(this.pick(raw, ['stability', 'stabilityIndex', 'estabilidade'])),
+      stability: this.toNullableNumber(this.pick(raw, ['stability', 'stabilityIndex', 'estabilidade', 'stabilityDias'])),
       diasDesdeUltimoEvento: this.toNullableNumber(this.pick(raw, ['diasDesdeUltimoEvento', 'diasSemEvento'])),
-      classificacao: this.toNullableString(this.pick(raw, ['classificacao', 'status']))
+      classificacao: this.toNullableString(this.pick(raw, ['classificacao', 'status'])),
+      dataUltimoEvento: this.toNullableString(this.pick(raw, ['dataUltimoEvento', 'dataUltimoEventoEm', 'ultimoEventoEm'])),
+      ultimoEventoEm: this.toNullableString(this.pick(raw, ['ultimoEventoEm', 'dataUltimoEvento', 'dataUltimoEventoEm'])),
+      ultimaRevisao: this.toNullableString(this.pick(raw, ['ultimaRevisao', 'dataUltimaRevisao', 'lastReviewAt'])),
+      ultimaRevisaoEm: this.toNullableString(this.pick(raw, ['ultimaRevisaoEm', 'ultimaRevisao', 'dataUltimaRevisao', 'lastReviewAt'])),
+      dataUltimaRevisao: this.toNullableString(this.pick(raw, ['dataUltimaRevisao', 'ultimaRevisaoEm', 'ultimaRevisao', 'lastReviewAt']))
     };
   }
 
@@ -107,4 +112,3 @@ export class CognitiveMetricsService {
     return trimmed ? trimmed : null;
   }
 }
-

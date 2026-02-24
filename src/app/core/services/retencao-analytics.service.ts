@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import {
   EditalResumoRetencaoDTO,
   ErroReincidenteDTO,
+  RetencaoAnalyticsResponseDTO,
   RetencaoPontoDTO,
   RevisaoEventoHistoricoDTO,
   TopicoRiscoDTO
@@ -43,5 +44,10 @@ export class RetencaoAnalyticsService {
   buscarHistoricoTopico(topicoId: number, dias = 30): Observable<RevisaoEventoHistoricoDTO[]> {
     const params = new HttpParams().set('dias', String(dias));
     return this.http.get<RevisaoEventoHistoricoDTO[]>(`${this.baseUrl}/retencao/topicos/${topicoId}/historico`, { params });
+  }
+
+  buscarAnalyticsRetencao(janela: 7 | 14 | 30): Observable<RetencaoAnalyticsResponseDTO> {
+    const params = new HttpParams().set('janela', String(janela));
+    return this.http.get<RetencaoAnalyticsResponseDTO>(`${this.baseUrl}/retencao/analytics`, { params });
   }
 }

@@ -27,10 +27,15 @@ export function statusCanonicoParaDashboard(
 }
 
 export function construirDataLocal(isoDate: string): Date {
-  const [anoStr, mesStr, diaStr] = String(isoDate || '').split('-');
-  const ano = Number(anoStr);
-  const mes = Number(mesStr);
-  const dia = Number(diaStr);
+  const valor = String(isoDate || '').trim();
+  if (!valor) return new Date(NaN);
+
+  const match = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return new Date(NaN);
+
+  const ano = Number(match[1]);
+  const mes = Number(match[2]);
+  const dia = Number(match[3]);
   const data = new Date(ano, mes - 1, dia);
   data.setHours(0, 0, 0, 0);
   return data;

@@ -39,6 +39,7 @@ import { BibliotecaResumoComponent } from './core/components/area-aluno/bibliote
 import { CadernoErrosComponent } from './core/components/area-aluno/caderno-erros/caderno-erros.component';
 import { RetencaoDashboardComponent } from './core/components/area-aluno/retencao-dashboard/retencao-dashboard.component';
 import { HojeComponent } from './core/components/area-aluno/hoje/hoje.component';
+import { FocoComponent } from './core/components/area-aluno/foco/foco.component';
 
 
 const routes: Routes = [
@@ -67,6 +68,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'hoje', component: HojeComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'foco', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'dashboard', component: DashboardRevisaoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },

@@ -214,6 +214,28 @@ export interface NextTopicContext {
   [key: string]: unknown;
 }
 
+export interface RevisaoDashboardResumoDTO {
+  vencidas: number;
+  hoje: number;
+  emDia: number;
+  total: number;
+}
+
+export interface RevisaoDashboardMetaDTO {
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+  generatedAt?: string;
+  timezone?: string;
+}
+
+export interface RevisaoDashboardResponseDTO {
+  resumo: RevisaoDashboardResumoDTO;
+  itens: RevisaoDashboardItem[];
+  meta?: RevisaoDashboardMetaDTO;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SalaEstudoService {
 
@@ -228,13 +250,18 @@ export class SalaEstudoService {
   private revisoesDashboardCache: RevisaoDashboardItem[] | null = null;
   private revisoesDashboardCacheTs = 0;
   private revisoesDashboardInFlight$: Observable<RevisaoDashboardItem[]> | null = null;
+  private revisoesDashboardUnificadoCache: RevisaoDashboardResponseDTO | null = null;
+  private revisoesDashboardUnificadoCacheTs = 0;
+  private revisoesDashboardUnificadoInFlight$: Observable<RevisaoDashboardResponseDTO> | null = null;
 
   constructor(private http: HttpClient) {}
 
   // ================= ESTUDO / ANOTAÇÕES =================
 
   salvarEstudo(req: EstudoTopicoRequest): Observable<EstudoTopicoResponse> {
-    return this.http.post<EstudoTopicoResponse>(`${this.apiUrl}/estudos`, req);
+    return this.http.post<EstudoTopicoResponse>(`${this.apiUrl}/estudos`, req).pipe(
+      tap(() => this.limparCacheRevisoesDashboard())
+    );
   }
 
   finalizarTopico(topicoId: number): Observable<void> {
@@ -529,10 +556,75 @@ export class SalaEstudoService {
     return this.revisoesDashboardInFlight$;
   }
 
+  listarRevisoesDashboardUnificado(params?: {
+    alunoId?: number;
+    materiaId?: number;
+    status?: string;
+    tipo?: string;
+    janelaDias?: number;
+    page?: number;
+    size?: number;
+  }): Observable<RevisaoDashboardResponseDTO> {
+    const agora = Date.now();
+    const cacheValido =
+      !!this.revisoesDashboardUnificadoCache &&
+      (agora - this.revisoesDashboardUnificadoCacheTs) < this.cacheRevisoesDashboardTtlMs;
+
+    if (cacheValido && !params) {
+      return of(this.revisoesDashboardUnificadoCache as RevisaoDashboardResponseDTO);
+    }
+
+    if (this.revisoesDashboardUnificadoInFlight$ && !params) {
+      return this.revisoesDashboardUnificadoInFlight$;
+    }
+
+    let httpParams = new HttpParams().set('_t', String(Date.now()));
+    if (params?.alunoId) httpParams = httpParams.set('alunoId', String(params.alunoId));
+    if (params?.materiaId) httpParams = httpParams.set('materiaId', String(params.materiaId));
+    if (params?.status) httpParams = httpParams.set('status', String(params.status));
+    if (params?.tipo) httpParams = httpParams.set('tipo', String(params.tipo));
+    if (params?.janelaDias) httpParams = httpParams.set('janelaDias', String(params.janelaDias));
+    if (params?.page != null) httpParams = httpParams.set('page', String(params.page));
+    if (params?.size != null) httpParams = httpParams.set('size', String(params.size));
+
+    const headers = new HttpHeaders({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0'
+    });
+
+    const req$ = this.http.get<RevisaoDashboardResponseDTO>(`${environment.apiUrl}/revisoes/dashboard`, {
+      params: httpParams,
+      headers
+    }).pipe(
+      tap((resp) => {
+        if (!params) {
+          this.revisoesDashboardUnificadoCache = resp || null;
+          this.revisoesDashboardUnificadoCacheTs = Date.now();
+        }
+      }),
+      finalize(() => {
+        if (!params) {
+          this.revisoesDashboardUnificadoInFlight$ = null;
+        }
+      }),
+      shareReplay(1)
+    );
+
+    if (!params) {
+      this.revisoesDashboardUnificadoInFlight$ = req$;
+    }
+
+    return req$;
+  }
+
   limparCacheRevisoesDashboard(): void {
     this.revisoesDashboardCache = null;
     this.revisoesDashboardCacheTs = 0;
     this.revisoesDashboardInFlight$ = null;
+    this.revisoesDashboardUnificadoCache = null;
+    this.revisoesDashboardUnificadoCacheTs = 0;
+    this.revisoesDashboardUnificadoInFlight$ = null;
   }
 
 

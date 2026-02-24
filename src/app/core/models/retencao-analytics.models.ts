@@ -75,3 +75,21 @@ export interface RevisaoEventoHistoricoDTO {
   proximaRevisaoAntes: string | null;
   proximaRevisaoDepois: string | null;
 }
+
+export interface RetencaoAnalyticsSerieDTO {
+  data: string;
+  consolidados: number;
+  emRisco: number;
+  criticos: number;
+  semDados: number;
+  consolidacaoPercent: number;
+  criticosCount: number;
+}
+
+export interface RetencaoAnalyticsResponseDTO {
+  janelaDias: number;
+  totalTopicos: number;
+  dominioScore: number;
+  tempoMedioDiasAteConsolidar: number | null;
+  serie: RetencaoAnalyticsSerieDTO[];
+}

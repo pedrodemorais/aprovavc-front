@@ -20,5 +20,9 @@ export interface TopicoCognitivoDTO {
   stability: number | null;
   diasDesdeUltimoEvento: number | null;
   classificacao: string | null;
+  dataUltimoEvento?: string | null;
+  ultimoEventoEm?: string | null;
+  ultimaRevisao?: string | null;
+  ultimaRevisaoEm?: string | null;
+  dataUltimaRevisao?: string | null;
 }
-

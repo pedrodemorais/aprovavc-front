@@ -1,0 +1,193 @@
+.foco-page {
+  min-height: calc(100dvh - 64px);
+  padding: 20px;
+  background: linear-gradient(180deg, #f7fbf8 0%, #eef6f1 100%);
+}
+
+.foco-shell {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.foco-card {
+  border-radius: 14px;
+}
+
+.hero-card {
+  border: 1px solid #dae7de;
+  background: #ffffff;
+}
+
+.hero-kicker {
+  display: inline-flex;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #e9f5ec;
+  color: #185c33;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.hero-refreshing,
+.hero-updated {
+  font-size: 12px;
+  color: #4a6455;
+}
+
+.cards-refresh-strip {
+  margin-bottom: 2px;
+}
+
+h1 {
+  margin: 10px 0 8px;
+  color: #183224;
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.hero-sub {
+  margin: 0;
+  color: #496252;
+  font-size: 15px;
+}
+
+.hero-detail {
+  margin: 10px 0 0;
+  color: #355342;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.hero-cta-row {
+  margin-top: 14px;
+}
+
+:host ::ng-deep .hero-cta.p-button {
+  min-width: 260px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card-head h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #1f3529;
+}
+
+.card-caption {
+  margin-top: 4px;
+  display: inline-block;
+  font-size: 12px;
+  color: #5f7266;
+}
+
+.metric-list {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.metric-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #e0ebe3;
+  border-radius: 10px;
+  padding: 9px 10px;
+  color: #2d4437;
+}
+
+.metric-line strong {
+  font-size: 18px;
+  color: #1b3527;
+}
+
+.metric-line--progress {
+  display: block;
+}
+
+.metric-progress-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.metric-delta {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5f7266;
+}
+
+.metric-line--focus {
+  background: #f7fbf8;
+}
+
+.metric-note {
+  margin: 0;
+  font-size: 12px;
+  color: #4a6455;
+}
+
+.empty-state {
+  margin-top: 10px;
+  border: 1px dashed #d4e4d9;
+  border-radius: 10px;
+  padding: 12px;
+  color: #4a6455;
+}
+
+.copy-neutral {
+  color: #7b5f2a;
+  font-weight: 600;
+}
+
+.error-card h2 {
+  margin: 0 0 6px;
+  color: #8c2b2b;
+}
+
+.error-card p {
+  margin: 0 0 12px;
+  color: #6f4a4a;
+}
+
+.skeleton-row {
+  margin-bottom: 10px;
+}
+
+@media (max-width: 900px) {
+  .foco-page {
+    padding: 14px;
+  }
+
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  :host ::ng-deep .hero-cta.p-button {
+    width: 100%;
+    min-width: 0;
+  }
+}

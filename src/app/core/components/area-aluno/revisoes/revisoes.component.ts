@@ -1,11 +1,12 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, HostListener, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 import { SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
 import { Topico } from '../models/topico.model';
 import { TreeNode } from 'primeng/api';
-import { extrairStatusCanonicoRevisao, inferirStatusCanonicoPorData, statusCanonicoParaDashboard } from '../utils/revisao-status.util';
+import { extrairStatusCanonicoRevisao, statusCanonicoParaDashboard } from '../utils/revisao-status.util';
+import { EditalService } from '../services/edital.service';
 
 type StatusRevisao = 'VENCIDA' | 'EM_DIA' | 'FUTURA';
 
@@ -35,13 +36,16 @@ export class RevisoesComponent implements OnInit {
   private revisoesTodas: RevisaoDashboardItem[] = [];
   private materiasTopicosCarregados = new Set<number>();
   private topicosPorMateria = new Map<number, Topico[]>();
+  private materiaIdsEditalAtivo = new Set<number>();
+  private filtroEditalAtivoDisponivel = false;
   treeNodes: TreeNode[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private salaEstudoService: SalaEstudoService,
-    private materiaService: MateriaService
+    private materiaService: MateriaService,
+    private editalService: EditalService
   ) {}
 
   ngOnInit(): void {
@@ -54,7 +58,7 @@ export class RevisoesComponent implements OnInit {
     });
 
     if (this.modo === 'automatico') {
-      this.carregarRevisoes();
+      this.carregarEscopoEditalAtivo(() => this.carregarRevisoes());
     }
   }
 
@@ -72,13 +76,15 @@ export class RevisoesComponent implements OnInit {
   }
 
   private carregarRevisoes(): void {
+    if (this.carregando) return;
     this.carregando = true;
     this.erro = undefined;
 
     this.salaEstudoService.limparCacheRevisoesDashboard();
-    this.salaEstudoService.listarRevisoesDashboard().subscribe({
-      next: (itens) => {
-        this.revisoesTodas = this.normalizarRevisoes(itens || []);
+    this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
+      next: (resp) => {
+        const itens = resp?.itens || [];
+        this.revisoesTodas = this.normalizarRevisoes(itens);
         this.aplicarFiltro();
         this.carregando = false;
       },
@@ -89,32 +95,50 @@ export class RevisoesComponent implements OnInit {
     });
   }
 
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    if (this.modo === 'automatico') {
+      this.carregarRevisoes();
+    }
+  }
+
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (this.modo === 'automatico' && typeof document !== 'undefined' && !document.hidden) {
+      this.carregarRevisoes();
+    }
+  }
+
   get revisoesFiltradas(): RevisaoDashboardItem[] {
     return this.revisoes;
   }
 
   get contagemRevisoes(): { vencidas: number; hoje: number; emDia: number } {
-    const base = this.revisoesTodas.length ? this.revisoesTodas : this.revisoes;
-    let vencidas = 0;
-    let hoje = 0;
-    let emDia = 0;
+    const baseBruta = this.revisoesTodas.length ? this.revisoesTodas : this.revisoes;
+    const base = this.filtrarPorEditalAtivo(baseBruta);
+    const vencidas = new Set<string>();
+    const hoje = new Set<string>();
+    const emDia = new Set<string>();
 
     for (const item of base) {
+      const chave = `${Number(item?.materiaId || 0)}:${Number(item?.topicoId || 0)}`;
+      if (chave === '0:0') continue;
+
       if (item.status === 'VENCIDA') {
-        vencidas += 1;
+        vencidas.add(chave);
       } else if (item.status === 'EM_DIA') {
-        hoje += 1;
+        hoje.add(chave);
       } else if (item.status === 'FUTURA') {
-        emDia += 1;
+        emDia.add(chave);
       }
     }
 
-    return { vencidas, hoje, emDia };
+    return { vencidas: vencidas.size, hoje: hoje.size, emDia: emDia.size };
   }
 
   private aplicarFiltro(): void {
     const base = this.normalizarRevisoes(this.revisoesTodas.length ? this.revisoesTodas : this.revisoes);
-    let lista = [...base];
+    let lista = this.filtrarPorEditalAtivo(base);
     if (this.filtroStatus !== 'todas') {
       const statusMap: Record<string, string> = {
         atrasadas: 'VENCIDA',
@@ -142,8 +166,10 @@ export class RevisoesComponent implements OnInit {
         item?.dataProximaRevisao ||
         item?.proximaRevisao ||
         null;
-      const statusCanonicoInferidoPorData = proxima ? inferirStatusCanonicoPorData(proxima, hoje) : null;
-      const statusCanonico = statusCanonicoInferidoPorData || extrairStatusCanonicoRevisao(item, hoje);
+      // Mesma regra do Centro de Estudo:
+      // prioriza status canônico do backend (statusCanonico/statusRevisao/status),
+      // e só usa data como fallback dentro do util.
+      const statusCanonico = extrairStatusCanonicoRevisao(item, hoje);
       const statusDashboard = statusCanonicoParaDashboard(statusCanonico) || 'FUTURA';
 
       return {
@@ -156,8 +182,10 @@ export class RevisoesComponent implements OnInit {
   }
 
   private carregarNiveisTopicosDasRevisoes(): void {
+    const baseBruta = this.revisoesTodas.length ? this.revisoesTodas : this.revisoes;
+    const base = this.filtrarPorEditalAtivo(baseBruta);
     const materiaIds = new Set<number>();
-    for (const item of this.revisoes || []) {
+    for (const item of base || []) {
       if (item.materiaId) {
         materiaIds.add(item.materiaId);
       }
@@ -237,6 +265,33 @@ export class RevisoesComponent implements OnInit {
         }
       });
 
+      // Garante que revisões órfãs (não encontradas na árvore de tópicos)
+      // também apareçam na lista, mantendo consistência com os contadores.
+      const coletarTopicoIdsIncluidos = (listaNodes: TreeNode[], out: Set<number>): void => {
+        (listaNodes || []).forEach((node) => {
+          const src = (node?.data as any)?.source as RevisaoDashboardItem | undefined;
+          if (src?.topicoId) out.add(Number(src.topicoId));
+          if (node?.children?.length) coletarTopicoIdsIncluidos(node.children, out);
+        });
+      };
+      const incluidos = new Set<number>();
+      coletarTopicoIdsIncluidos(filhos, incluidos);
+      (grupo.itens || []).forEach((item) => {
+        const tid = Number(item?.topicoId);
+        if (!Number.isFinite(tid) || tid <= 0 || incluidos.has(tid)) return;
+        filhos.push({
+          data: {
+            label: item.topicoDescricao,
+            status: item.status,
+            dataProximaRevisao: item.dataProximaRevisao,
+            source: item,
+            hasChildren: false,
+            isTopico: true
+          } as RevisaoTreeRow,
+          leaf: true
+        } as TreeNode);
+      });
+
       if (!filhos.length) {
         return;
       }
@@ -261,8 +316,8 @@ export class RevisoesComponent implements OnInit {
 
     const revisao = revisaoMap.get(id);
     let include = !!revisao;
-    let melhorStatus: StatusRevisao | undefined = revisao?.status as StatusRevisao | undefined;
-    let melhorData: string | null | undefined = revisao?.dataProximaRevisao;
+    const statusProprio: StatusRevisao | undefined = revisao?.status as StatusRevisao | undefined;
+    const dataPropria: string | null | undefined = revisao?.dataProximaRevisao;
 
     const childNodes: TreeNode[] = [];
     filhos.forEach((filho) => {
@@ -271,28 +326,18 @@ export class RevisoesComponent implements OnInit {
         return;
       }
       include = true;
-      if (res.status && this.rankStatus(res.status) > this.rankStatus(melhorStatus)) {
-        melhorStatus = res.status;
-        melhorData = res.data;
-      } else if (res.status && res.status === melhorStatus && res.data && melhorData) {
-        if (this.construirDataLocal(res.data).getTime() < this.construirDataLocal(melhorData).getTime()) {
-          melhorData = res.data;
-        }
-      } else if (res.status && res.status === melhorStatus && res.data && !melhorData) {
-        melhorData = res.data;
-      }
       childNodes.push(res.node);
     });
 
     if (!include) {
-      return { include: false, status: melhorStatus, data: melhorData };
+      return { include: false, status: statusProprio, data: dataPropria };
     }
 
     const node: TreeNode = {
       data: {
         label: topico?.descricao || '',
-        status: (melhorStatus || 'FUTURA') as StatusRevisao,
-        dataProximaRevisao: melhorData || undefined,
+        status: statusProprio,
+        dataProximaRevisao: dataPropria || undefined,
         source: revisao,
         hasChildren: childNodes.length > 0,
         isTopico: true
@@ -302,7 +347,7 @@ export class RevisoesComponent implements OnInit {
       expanded: true
     };
 
-    return { include: true, status: melhorStatus, data: melhorData, node };
+    return { include: true, status: statusProprio, data: dataPropria, node };
   }
 
 
@@ -349,25 +394,6 @@ export class RevisoesComponent implements OnInit {
     };
   }
 
-  private rankStatus(status?: StatusRevisao): number {
-    if (!status) return 0;
-    if (status === 'VENCIDA') return 3;
-    if (status === 'EM_DIA') return 2;
-    if (status === 'FUTURA') return 1;
-    return 0;
-  }
-
-  private construirDataLocal(isoDate: string): Date {
-    const [anoStr, mesStr, diaStr] = isoDate.split('-');
-    const ano = Number(anoStr);
-    const mes = Number(mesStr);
-    const dia = Number(diaStr);
-
-    const data = new Date(ano, mes - 1, dia);
-    data.setHours(0, 0, 0, 0);
-    return data;
-  }
-
   selecionarRevisao(item: RevisaoDashboardItem): void {
     this.revisaoSelecionada = item;
   }
@@ -388,5 +414,41 @@ export class RevisoesComponent implements OnInit {
       return;
     }
     this.revisaoSelecionada = null;
+  }
+
+  private carregarEscopoEditalAtivo(onComplete?: () => void): void {
+    this.editalService.listarComInclude(['materias']).subscribe({
+      next: (editais) => {
+        const ativo = (editais || []).find((e) => e?.ativo);
+        const materiaIds = new Set<number>();
+        for (const materia of ativo?.materias || []) {
+          if ((materia as any)?.ativo === false) continue;
+          const materiaId = Number((materia as any)?.materiaId);
+          if (Number.isFinite(materiaId) && materiaId > 0) {
+            materiaIds.add(materiaId);
+          }
+        }
+
+        this.materiaIdsEditalAtivo = materiaIds;
+        this.filtroEditalAtivoDisponivel = true;
+        this.aplicarFiltro();
+        onComplete?.();
+      },
+      error: () => {
+        this.filtroEditalAtivoDisponivel = false;
+        this.aplicarFiltro();
+        onComplete?.();
+      }
+    });
+  }
+
+  private filtrarPorEditalAtivo<T extends { materiaId?: number | null }>(itens: T[]): T[] {
+    const lista = Array.isArray(itens) ? itens : [];
+    if (this.modo !== 'automatico') return lista;
+    if (!this.filtroEditalAtivoDisponivel) return lista;
+    return lista.filter((item) => {
+      const materiaId = Number(item?.materiaId || 0);
+      return materiaId > 0 && this.materiaIdsEditalAtivo.has(materiaId);
+    });
   }
 }

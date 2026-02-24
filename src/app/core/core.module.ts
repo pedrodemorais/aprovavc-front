@@ -32,6 +32,9 @@ import { TreeTableModule } from 'primeng/treetable';
 import { TreeModule } from 'primeng/tree';
 import { PickListModule } from 'primeng/picklist';
 import { DataViewModule } from 'primeng/dataview';
+import { CardModule } from 'primeng/card';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { SkeletonModule } from 'primeng/skeleton';
 
 import { QuillModule } from 'ngx-quill';
 import { NgxMaskModule } from 'ngx-mask';
@@ -65,6 +68,7 @@ import { BibliotecaResumoComponent } from './components/area-aluno/biblioteca/bi
 import { CadernoErrosComponent } from './components/area-aluno/caderno-erros/caderno-erros.component';
 import { RetencaoDashboardComponent } from './components/area-aluno/retencao-dashboard/retencao-dashboard.component';
 import { HojeComponent } from './components/area-aluno/hoje/hoje.component';
+import { FocoComponent } from './components/area-aluno/foco/foco.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -95,6 +99,7 @@ registerLocaleData(localePt);
     CadernoErrosComponent,
     RetencaoDashboardComponent,
     HojeComponent,
+    FocoComponent,
 
   ],
   imports: [
@@ -130,6 +135,9 @@ registerLocaleData(localePt);
     TreeModule,
     PickListModule,
     DataViewModule,
+    CardModule,
+    ProgressBarModule,
+    SkeletonModule,
 
     QuillModule.forRoot(),
     NgxMaskModule.forChild(),

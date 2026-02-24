@@ -40,3 +40,27 @@ export interface HojeFilaInsightsDTO {
   tendencia7dLabel?: string | null;
   consolidadosSemanaLabel?: string | null;
 }
+
+export interface HojeResumoDTO {
+  dataReferencia: string;
+  timezone: string;
+  streakDias: number | null;
+  estudouHoje: boolean;
+  diasAtivosUltimos7: number;
+  diasAtivosUltimos30: number;
+  itensConcluidosHoje: number;
+  tempoEstudoHojeMinutos: number;
+  atualizadoEm: string | null;
+}
+
+export type StatusHojeStreak = 'NAO_INICIOU' | 'INICIOU' | 'CONCLUIU';
+
+export interface DashboardStreakResumoDTO {
+  streakAtual: number;
+  melhorStreak: number;
+  consistencia30DiasQtd: number;
+  consistencia30DiasTotal: number;
+  consistencia30DiasPercent: number;
+  statusHoje: StatusHojeStreak;
+  dataReferencia: string;
+}

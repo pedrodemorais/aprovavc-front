@@ -27,6 +27,7 @@ import { environment } from 'src/environments/environment';
 import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analytics.service';
 import { RetencaoPontoDTO } from 'src/app/core/models/retencao-analytics.models';
+import { RefreshBusService } from 'src/app/core/services/refresh-bus.service';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 type TopicoViewModel = {
@@ -298,6 +299,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   feedbackRetencao?: string;
   private scoreRetencaoPorTopico = new Map<number, number>();
   private feedbackRetencaoTimer: ReturnType<typeof setTimeout> | null = null;
+  private refreshBusTimers: Array<ReturnType<typeof setTimeout>> = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -309,7 +311,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     private retencaoAnalyticsService: RetencaoAnalyticsService,
     private sanitizer: DomSanitizer,
     private ngZone: NgZone,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private refreshBusService: RefreshBusService
   ) {}
 
   // ================================================================
@@ -335,10 +338,16 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         const topicoId = this.getTopicoIdFromQuery(queryParams);
         const autoTopico = this.getAutoTopicoFromQuery(queryParams);
         const modoAtualizado = this.getModoFromQuery(queryParams, this.modo);
+        const filtroSemaforo = this.getFiltroSemaforoFromQuery(queryParams);
 
         if (modoAtualizado !== this.modo) {
           this.modoPreferido = modoAtualizado;
           this.mudarModo(modoAtualizado);
+        }
+
+        if (this.filtroSemaforoSelecionado !== filtroSemaforo) {
+          this.filtroSemaforoSelecionado = filtroSemaforo;
+          this.invalidarTopicosExibidosCache();
         }
 
         this.autoSelecionarUltimoNaoEstudado = autoTopico;
@@ -395,6 +404,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.recentralizarRafId != null) {
       cancelAnimationFrame(this.recentralizarRafId);
       this.recentralizarRafId = null;
+    }
+    if (this.refreshBusTimers.length) {
+      this.refreshBusTimers.forEach((timer) => clearTimeout(timer));
+      this.refreshBusTimers = [];
     }
     this.limparCentralizacaoProgramada();
     this.encerrarArrasteFlashcard();
@@ -558,16 +571,16 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return forkJoin({
       materias: this.materiaService.listarMaterias(),
       topicosResp: this.obterTopicosComMeta$(materiaId),
-      revisoes: this.salaEstudoService.listarRevisoesDashboard()
+      revisoesResp: this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 })
     }).pipe(
-      tap(({ materias, topicosResp, revisoes }) => {
+      tap(({ materias, topicosResp, revisoesResp }) => {
         this.materia = (materias || []).find(m => m.id === materiaId);
         if (!this.materia) {
           this.erro = 'Materia nao encontrada para este aluno.';
         }
 
         this.aplicarTopicosCarregados(topicosResp);
-        this.atualizarMapaRevisoes(revisoes as RevisaoTopicoItem[]);
+        this.atualizarMapaRevisoes((revisoesResp?.itens || []) as RevisaoTopicoItem[]);
         this.revisoesCarregadas = true;
         this.tentarSelecionarTopicoInicial();
       }),
@@ -802,6 +815,26 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (rawRevisar === '1' || rawRevisar === 'true' || rawRevisar === 'sim') return 'revisar';
     if (rawRevisao === '1' || rawRevisao === 'true' || rawRevisao === 'sim') return 'revisar';
     return fallback;
+  }
+
+  private getFiltroSemaforoFromQuery(queryParams?: ParamMap): StatusRevisao | null {
+    const params = queryParams ?? this.route.snapshot.queryParamMap;
+    const raw = (params.get('filtro') || '').trim().toLowerCase();
+    if (!raw) return null;
+
+    if (raw === 'atrasadas' || raw === 'atrasada' || raw === 'vencidas' || raw === 'vencida') {
+      return 'ATRASADA';
+    }
+    if (raw === 'hoje') {
+      return 'HOJE';
+    }
+    if (raw === 'emdia' || raw === 'em_dia' || raw === 'futura' || raw === 'futuras') {
+      return 'FUTURA';
+    }
+    if (raw === 'sem' || raw === 'ainiciar' || raw === 'a_iniciar') {
+      return 'SEM';
+    }
+    return null;
   }
 
   ativarRevisaoAnotacoes(): void {
@@ -1622,6 +1655,14 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (tempoParaSalvar < 0) tempoParaSalvar = 0;
 
     const tipoSessao: EstudoTopicoRequest['tipoSessao'] = this.modo === 'revisar' ? 'REVISAO' : 'ESTUDO';
+    const anotacoesHash = this.hashTexto(this.anotacoes || '');
+    const ultimoHash = this.ultimoSaveHashPorTopico.get(this.topicoSelecionado.id);
+
+    // Garante persistencia de "estudo realizado" no backend quando houve mudanca real
+    // de conteudo, mesmo que o delta de tempo arredonde para 0s.
+    if (tipoSessao === 'ESTUDO' && tempoParaSalvar <= 0 && ultimoHash !== anotacoesHash) {
+      tempoParaSalvar = 1;
+    }
 
     const payload: EstudoTopicoRequest = {
       materiaId: this.materiaId,
@@ -1634,11 +1675,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       pomodoroCiclosConcluidos: this.modoTemporizador === 'pomodoro' ? this.pomodoroCiclosConcluidos : undefined
     };
 
-    const anotacoesHash = this.hashTexto(this.anotacoes || '');
     const saveKey = `${payload.topicoId}|${payload.tipoSessao}|${payload.modoTemporizador}|${tempoParaSalvar}|${anotacoesHash}`;
     const ultimoKey = this.ultimoSaveKeyPorTopico.get(payload.topicoId);
     const ultimoMs = this.ultimoSaveMsPorTopico.get(payload.topicoId) || 0;
-    const ultimoHash = this.ultimoSaveHashPorTopico.get(payload.topicoId);
     const agora = Date.now();
 
     if (tempoParaSalvar <= 0 && ultimoHash === anotacoesHash) {
@@ -1712,31 +1751,21 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.materiaId) return of(void 0);
 
     const reqs = {
-      revisoes: this.salaEstudoService.listarRevisoesDashboard(),
+      topicosResp: this.obterTopicosComMeta$(this.materiaId, { force: true }),
+      revisoesResp: this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }),
       finalizados: this.salaEstudoService.listarTopicosFinalizados(),
       anotacoes: topicoIdNoInicioReq ? this.salaEstudoService.buscarAnotacoes(topicoIdNoInicioReq) : of(null)
     };
 
     return forkJoin(reqs).pipe(
-      tap(({ revisoes, finalizados, anotacoes }) => {
+      tap(({ topicosResp, revisoesResp, finalizados, anotacoes }) => {
+        this.aplicarTopicosCarregados(topicosResp);
+        this.overrideStatusRevisaoPorTopico.clear();
         this.revisoesPorTopico.clear();
         this.revisoesViewVersion += 1;
         this.invalidarTopicosExibidosCache();
         const selecionadoId = this.topicoSelecionado?.id;
-
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-
-        (revisoes || []).forEach((item: RevisaoTopicoItem) => {
-          if (!item.topicoId) return;
-
-          const proxima: string | null = item.proximaRevisao || item.dataProximaRevisao || null;
-
-          const status: StatusRevisao = extrairStatusCanonicoRevisao(item, hoje);
-
-          this.revisoesPorTopico.set(item.topicoId, { status, proximaRevisao: proxima });
-
-        });
+        this.atualizarMapaRevisoes((revisoesResp?.itens || []) as RevisaoTopicoItem[]);
 
         // Reprocessa filtros/lista com os status efetivamente carregados
         this.revisoesViewVersion += 1;
@@ -2987,6 +3016,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.avaliacaoFlashcardSelecionada = null;
         this.atualizarFeedbackRetencaoTopico(this.topicoSelecionado?.id ?? null);
         this.mostrarMensagemRevisao('Revisao do flashcard registrada!');
+        this.notificarRevisaoConcluida('flashcard', this.topicoSelecionado?.id ?? undefined);
         this.temTempoNaoSalvoFlag = false;
       },
       error: (err) => {
@@ -3025,6 +3055,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.atualizarFeedbackRetencaoTopico(req.topicoId);
         this.mostrarMensagemRevisao('Revisao das anotacoes registrada!');
+        this.notificarRevisaoConcluida('anotacao', req.topicoId);
       },
       error: (err) => {
         console.error('[REVISAO] Erro ao registrar revisao de anotacoes:', err);
@@ -3152,7 +3183,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private getTopicosParaRevisao(): TopicoViewModel[] {
-    return (this.topicos || []).filter(t => t.ativo !== false);
+    const base = this.filtroSemaforoSelecionado ? this.topicosExibidos : (this.topicos || []);
+    return (base || []).filter(t => !t.hasFilhos && t.ativo !== false);
   }
 
   get podeIrParaProximoEstudo(): boolean {
@@ -3560,8 +3592,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (!alvo) {
-      const folhas = this.topicos.filter(t => !t.hasFilhos && t.ativo !== false);
+      const topicosBase = this.filtroSemaforoSelecionado ? this.topicosExibidos : this.topicos;
+      const folhas = topicosBase.filter(t => !t.hasFilhos && t.ativo !== false);
       const ultimoTopicoId = this.obterUltimoTopicoId();
+
+      if (this.filtroSemaforoSelecionado && folhas.length) {
+        alvo = folhas[0];
+      }
 
       if (ultimoTopicoId) {
         const ultimoTopico = folhas.find(t => t.id === ultimoTopicoId);
@@ -3670,6 +3707,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.topicosFinalizados.add(topicoId);
         this.mensagemTopicoFinalizado = 'Topico finalizado.';
         setTimeout(() => (this.mensagemTopicoFinalizado = undefined), 4000);
+        this.notificarRevisaoConcluida('finalizacao-topico', topicoId);
         this.recarregarTopicosAposRevisao(topicoId, proximoPreferidoId);
       },
       error: () => {
@@ -3796,10 +3834,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (info?.status) return info.status;
 
     const statusCanonico = this.normalizarStatusRevisao(dto.statusCanonico);
-    if (statusCanonico) return statusCanonico;
+    if (statusCanonico && statusCanonico !== 'SEM') return statusCanonico;
 
     const statusDto = this.normalizarStatusRevisao(dto.statusRevisao);
-    if (statusDto) return statusDto;
+    if (statusDto && statusDto !== 'SEM') return statusDto;
+
+    if (statusCanonico === 'SEM') return 'SEM';
+    if (statusDto === 'SEM') return 'SEM';
 
     return 'SEM';
   }
@@ -3945,10 +3986,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const idSelecionado = this.topicoSelecionado?.id;
 
     return forkJoin({
-      revisoes: this.salaEstudoService.listarRevisoesDashboard()
+      revisoesResp: this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 })
     }).pipe(
-      tap(({ revisoes }) => {
-        this.atualizarMapaRevisoes(revisoes);
+      tap(({ revisoesResp }) => {
+        this.atualizarMapaRevisoes((revisoesResp?.itens || []) as RevisaoTopicoItem[]);
         this.revisoesCarregadas = true;
 
         if (proximoPreferidoId) {
@@ -3995,11 +4036,29 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       const statusBackend: StatusRevisao = extrairStatusCanonicoRevisao(item, hoje);
       const statusOverride = this.getStatusOverrideRevisao(topicoId);
 
-      if (statusOverride && statusOverride !== statusBackend) {
-        proximoMapa.set(topicoId, { status: statusOverride, proximaRevisao: proxima });
-      } else {
+      const statusFinal = (statusOverride && statusOverride !== statusBackend)
+        ? statusOverride
+        : statusBackend;
+      if (!statusOverride || statusOverride === statusBackend) {
         this.overrideStatusRevisaoPorTopico.delete(topicoId);
-        proximoMapa.set(topicoId, { status: statusBackend, proximaRevisao: proxima });
+      }
+
+      const atual = proximoMapa.get(topicoId);
+      if (!atual) {
+        proximoMapa.set(topicoId, { status: statusFinal, proximaRevisao: proxima });
+      } else {
+        const atualPeso = this.prioridadeStatus(atual.status);
+        const novoPeso = this.prioridadeStatus(statusFinal);
+        if (novoPeso > atualPeso) {
+          proximoMapa.set(topicoId, { status: statusFinal, proximaRevisao: proxima ?? atual.proximaRevisao ?? null });
+        } else if (novoPeso === atualPeso) {
+          const dataAtual = atual.proximaRevisao || null;
+          const dataNova = proxima || null;
+          const manterNova = !!dataNova && (!dataAtual || dataNova < dataAtual);
+          if (manterNova) {
+            proximoMapa.set(topicoId, { status: statusFinal, proximaRevisao: dataNova });
+          }
+        }
       }
     });
 
@@ -4131,6 +4190,21 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.feedbackRetencao = undefined;
       this.feedbackRetencaoTimer = null;
     }, 2000);
+  }
+
+  private notificarRevisaoConcluida(
+    origem: 'anotacao' | 'flashcard' | 'finalizacao-topico',
+    topicoId?: number
+  ): void {
+    console.debug('[SALA-ESTUDO] Revisao concluida', { origem, topicoId });
+    this.refreshBusService.emitRevisaoConcluida({ origem, topicoId });
+
+    // Retry curto para mitigar eventual consistencia do backend.
+    const retryTimer = setTimeout(() => {
+      this.refreshBusService.emitRevisaoConcluida({ origem, topicoId });
+      this.refreshBusTimers = this.refreshBusTimers.filter((timer) => timer !== retryTimer);
+    }, 2000);
+    this.refreshBusTimers.push(retryTimer);
   }
 
   private atualizarFeedbackRetencaoTopico(topicoId: number | null): void {

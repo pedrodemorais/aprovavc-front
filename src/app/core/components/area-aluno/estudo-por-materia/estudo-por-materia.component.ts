@@ -4,12 +4,10 @@ import { Router } from '@angular/router';
 import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
 import { SalaEstudoService, MateriaTopicosDTO } from '../services/sala-estudo.service';
-import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 import { Edital } from '../models/Edital';
 import { EditalService } from '../services/edital.service';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 import { EditalTemplateService } from '../services/edital-template.service';
-import { MateriaService } from '../services/materia.service';
 import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
@@ -79,7 +77,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
   constructor(
     private salaEstudoService: SalaEstudoService,
-    private materiaService: MateriaService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
     private empresaParametroService: EmpresaParametroService,
@@ -95,6 +92,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
   @HostListener('window:focus')
   onWindowFocus(): void {
+    this.carregarRevisoesDashboard();
     this.carregarTopicosFinalizados();
   }
 
@@ -145,7 +143,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         this.materias = materias;
         this.materiasFiltradasPorEscopo = true;
         this.carregandoMaterias = false;
-        this.hidratarTopicosComMateriaService(materias);
       },
       error: (err) => {
         console.error('[MATERIAS] Erro ao carregar matérias:', err);
@@ -447,8 +444,10 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // DASHBOARD / SEMÃFORO
   // ==========================
   private carregarRevisoesDashboard(): void {
-    this.salaEstudoService.listarRevisoesDashboard().subscribe({
-      next: (itens: RevisaoDashboardItem[]) => {
+    this.salaEstudoService.limparCacheRevisoesDashboard();
+    this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
+      next: (resp) => {
+        const itens = resp?.itens || [];
         this.revisoesPorTopico.clear();
 
         const hoje = new Date();
@@ -464,11 +463,41 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
           const status = extrairStatusCanonicoRevisao(item, hoje);
 
-          this.revisoesPorTopico.set(item.topicoId, {
-            status,
-            proximaRevisao: proxima,
-            materiaId: item.materiaId
-          });
+          const topicoId = Number(item.topicoId);
+          const atual = this.revisoesPorTopico.get(topicoId);
+          if (!atual) {
+            this.revisoesPorTopico.set(topicoId, {
+              status,
+              proximaRevisao: proxima,
+              materiaId: item.materiaId
+            });
+            return;
+          }
+
+          const pesoAtual = this.prioridadeStatus(atual.status);
+          const pesoNovo = this.prioridadeStatus(status);
+
+          if (pesoNovo > pesoAtual) {
+            this.revisoesPorTopico.set(topicoId, {
+              status,
+              proximaRevisao: proxima ?? atual.proximaRevisao ?? null,
+              materiaId: item.materiaId
+            });
+            return;
+          }
+
+          if (pesoNovo === pesoAtual) {
+            const dataAtual = atual.proximaRevisao || null;
+            const dataNova = proxima || null;
+            const manterNova = !!dataNova && (!dataAtual || dataNova < dataAtual);
+            if (manterNova) {
+              this.revisoesPorTopico.set(topicoId, {
+                status,
+                proximaRevisao: dataNova,
+                materiaId: item.materiaId
+              });
+            }
+          }
         });
       },
       error: (err) => console.error('[DASHBOARD-REVISAO] Erro ao carregar revisÃµes:', err)
@@ -624,26 +653,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.activeEditalImagemTemplateId = null;
   }
 
-  private hidratarTopicosComMateriaService(materias: Materia[]): void {
-    (materias || []).forEach((m) => {
-      const materiaId = this.asId((m as any)?.id ?? (m as any)?.materiaId);
-      if (!materiaId) return;
-      this.materiaService.listarTopicos(materiaId).subscribe({
-        next: (lista) => {
-          const topicos = (lista || []).map((dto: any) => this.converterDtoParaTopico(dto, 0));
-          this.topicosPorMateria.set(materiaId, topicos);
-          if (this.materiaExpandida?.id === materiaId) {
-            this.topicos = topicos;
-            this.atualizarResumoExpandida();
-          }
-        },
-        error: (err) => {
-          console.warn('[MATERIAS] Falha ao carregar topicos completos:', err);
-        }
-      });
-    });
-  }
-
   listarDescendentes(topico: Topico): Topico[] {
     const out: Topico[] = [];
     const walk = (t: Topico) => {
@@ -680,31 +689,11 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
   private getStatusRevisaoMateria(m: Materia): StatusRevisao {
     if (!m?.id) return 'SEM';
-
-    // Se estiver expandida, calcula com a Ã¡rvore em tela
-    if (this.materiaExpandida && this.materiaExpandida.id === m.id && this.topicos?.length) {
-      let pior: StatusRevisao = 'SEM';
-
-      const acumulaStatus = (t: Topico) => {
-        const st = this.getStatusRevisaoTopicoComFilhos(t);
-        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) pior = st;
-        (t.filhos || []).forEach(acumulaStatus);
-      };
-
-      this.topicos.forEach(acumulaStatus);
-      return pior;
-    }
-
-    // Caso nÃ£o esteja expandida, usa o dashboard
-    let pior: StatusRevisao = 'SEM';
-    this.revisoesPorTopico.forEach((info) => {
-      if (info.materiaId === m.id) {
-        const st = info.status;
-        if (this.prioridadeStatus(st) > this.prioridadeStatus(pior)) pior = st;
-      }
-    });
-
-    return pior;
+    const resumo = this.getResumoMateriaLinha(m);
+    if (resumo.atrasadas > 0) return 'ATRASADA';
+    if (resumo.hoje > 0) return 'HOJE';
+    if (resumo.emDia > 0) return 'FUTURA';
+    return 'SEM';
   }
 
   classeSemaforoMateria(m: Materia) {
@@ -718,6 +707,10 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   }
 
   private getStatusRevisaoTopico(topico: Topico): StatusRevisao {
+    if ((topico as any).id && this.revisoesPorTopico.has((topico as any).id)) {
+      return this.revisoesPorTopico.get((topico as any).id)!.status;
+    }
+
     const statusCanonico = String((topico as any)?.statusCanonico || '').toUpperCase();
     if (statusCanonico === 'ATRASADA' || statusCanonico === 'HOJE' || statusCanonico === 'FUTURA' || statusCanonico === 'SEM') {
       return statusCanonico as StatusRevisao;
@@ -726,10 +719,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     const statusDto = (topico as any)?.statusRevisao;
     if (statusDto === 'ATRASADA' || statusDto === 'HOJE' || statusDto === 'FUTURA' || statusDto === 'SEM') {
       return statusDto;
-    }
-
-    if ((topico as any).id && this.revisoesPorTopico.has((topico as any).id)) {
-      return this.revisoesPorTopico.get((topico as any).id)!.status;
     }
 
     if ((topico as any).proximaRevisao) {

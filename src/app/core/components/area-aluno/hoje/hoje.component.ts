@@ -2,19 +2,73 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { HojeFilaItemDTO, HojeFilaResponseDTO, PrioridadeFilaHoje, TipoFilaHoje } from 'src/app/core/models/hoje-fila.models';
-import { EditalResumoRetencaoDTO } from 'src/app/core/models/retencao-analytics.models';
+import {
+  DashboardStreakResumoDTO,
+  HojeFilaItemDTO,
+  HojeFilaResponseDTO,
+  PrioridadeFilaHoje,
+  TipoFilaHoje
+} from 'src/app/core/models/hoje-fila.models';
+import { EditalResumoRetencaoDTO, RetencaoAnalyticsResponseDTO, RetencaoAnalyticsSerieDTO } from 'src/app/core/models/retencao-analytics.models';
 import { RetencaoCognitivaResumoDTO, TopicoCognitivoDTO } from 'src/app/core/models/cognitive-metrics.models';
 import { CognitiveMetricsService } from 'src/app/core/services/cognitive-metrics.service';
 import { RevisaoDashboardItem } from 'src/app/core/components/area-aluno/models/RevisaoDashboardItem';
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
 import { HojeTrackingService } from 'src/app/core/services/hoje-tracking.service';
 import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analytics.service';
-import { SalaEstudoService } from 'src/app/core/components/area-aluno/services/sala-estudo.service';
+import {
+  RevisaoDashboardResumoDTO,
+  SalaEstudoService
+} from 'src/app/core/components/area-aluno/services/sala-estudo.service';
+import { EditalService } from 'src/app/core/components/area-aluno/services/edital.service';
+import { Edital } from 'src/app/core/components/area-aluno/models/Edital';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { extrairStatusCanonicoRevisao, statusCanonicoParaDashboard } from 'src/app/core/components/area-aluno/utils/revisao-status.util';
 
 interface HojeExecucaoState {
   pendingAdvance: boolean;
   lastIndex: number;
+  day: string;
+  queueKey: string;
+}
+
+interface HojeUiViewModel {
+  estado: {
+    score: number;
+    label: string;
+    descricao: string;
+    streakTexto: string;
+    streakMeta: string;
+    badgeLabel: string;
+    badgeClass: string;
+  };
+  progresso: {
+    titulo: string;
+    hojeTexto: string;
+    hojeBarraPct: number;
+    editalTexto: string;
+    editalBarraPct: number;
+    faltamTexto: string;
+    evolucaoTexto: string;
+    estimativaTexto: string | null;
+  };
+  risco: {
+    mostrar: boolean;
+    titulo: string;
+    texto: string;
+    qtdTexto: string | null;
+  };
+  heroItem: {
+    materia: string;
+    titulo: string;
+    tempoTexto: string;
+    statusTexto: string;
+  };
+}
+
+interface TopicoMateriaRef {
+  materiaId: number;
+  materiaNome: string | null;
 }
 
 @Component({
@@ -23,44 +77,68 @@ interface HojeExecucaoState {
   styleUrls: ['./hoje.component.css']
 })
 export class HojeComponent implements OnInit, OnDestroy {
+  // Guardrails da projecao para reduzir oscilacao e evitar estimativas incoerentes.
+  private readonly PROJECAO_JANELA_DIAS = 7;
+  private readonly PROJECAO_MIN_SERIE_PONTOS = 3;
+  private readonly PROJECAO_MIN_DIAS_JANELA = 3;
+  private readonly PROJECAO_MIN_DELTA_TOPICOS = 2;
+  private readonly TEMPO_MEDIO_MIN = 0.05;
+  private readonly TEMPO_MEDIO_MAX = 120;
+  private readonly ONE_DAY_MS = 86400000;
+  private readonly estabilidadeSnapshotKey = 'hoje:estabilidade-global-snapshot:v1';
+
   loading = false;
   fila: HojeFilaResponseDTO = { totalItens: 0, tempoEstimadoMinutos: 0, itens: [] };
+  streakResumo: DashboardStreakResumoDTO | null = null;
   indiceAtual = 0;
   itemAtual: HojeFilaItemDTO | null = null;
   modoExecucao = false;
   resumoEdital: EditalResumoRetencaoDTO | null = null;
   resumoCognitivo14d: RetencaoCognitivaResumoDTO | null = null;
-  streakDias = 0;
+  streakDias: number | null = null;
   filaConcluidaRegistrada = false;
   feedbackConclusaoItem?: string;
   cardEntrando = false;
+  qtdTopicosEmRiscoJanela30: number | null = null;
   private cognitivoPorTopico = new Map<number, TopicoCognitivoDTO>();
   private feedbackConclusaoPendente: { topicoId: number; prioridade: PrioridadeFilaHoje | null | undefined } | null = null;
   private feedbackConclusaoTimer: ReturnType<typeof setTimeout> | null = null;
-
-  private readonly stateKey = 'hoje:fila:execucao';
-  private readonly streakDaysKey = 'hoje:streak:dias-validos';
-  private readonly filaConcluidaDiaKey = 'hoje:fila:concluida-dia';
-  private readonly cognitivoSnapshotKey = 'hoje:cognitivo:snapshot-topico';
-  private readonly retencaoSnapshotKey = 'hoje:cognitivo:snapshot-retencao14d';
-  private readonly historicoConcluidosKey = 'hoje:historico:concluidos-por-dia';
+  private estadoExecucaoMemoria: HojeExecucaoState | null = null;
+  private ultimoDiaFilaConcluidaMemoria: string | null = null;
+  private snapshotCognitivoAntesMemoria: { topicoId: number; risk: number | null; stability: number | null } | null = null;
+  private snapshotRetencaoAntesMemoria: number | null = null;
+  private topicoMateriaMap = new Map<number, TopicoMateriaRef>();
+  private materiaIdsEditalAtivo = new Set<number>();
+  private editalAtivoResolvido = false;
+  private editalAtivoAtual: Edital | null = null;
+  private analyticsRetencao30: RetencaoAnalyticsResponseDTO | null = null;
+  private resumoRevisoes: RevisaoDashboardResumoDTO | null = null;
+  private contagemRevisoesCards: { vencidas: number; hoje: number; emDia: number } | null = null;
+  private estabilidadeGlobalOntem: number | null = null;
+  iniciandoRevisaoPrioritaria = false;
 
   constructor(
     private hojeFilaService: HojeFilaService,
     private salaEstudoService: SalaEstudoService,
     private retencaoAnalyticsService: RetencaoAnalyticsService,
     private cognitiveMetricsService: CognitiveMetricsService,
+    private editalService: EditalService,
     private hojeTrackingService: HojeTrackingService,
     private router: Router,
     private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
-    this.streakDias = this.calcularStreak();
+    this.limparEstadoExecucaoLegado();
+    this.carregarMapaTopicoMateria();
+    this.carregarStreakResumo();
     this.carregarFila();
+    this.carregarResumoRevisoes();
     this.carregarResumoEdital();
+    this.carregarAnalyticsRetencao();
     this.carregarResumoCognitivo();
     this.carregarTopicosCognitivos();
+    this.carregarQtdTopicosEmRiscoJanela30();
   }
 
   ngOnDestroy(): void {
@@ -71,7 +149,10 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   get totalItens(): number {
-    return Number(this.fila?.totalItens || this.fila?.itens?.length || 0);
+    if (Array.isArray(this.fila?.itens)) {
+      return this.fila.itens.length;
+    }
+    return Number(this.fila?.totalItens || 0);
   }
 
   get tempoEstimadoMinutos(): number {
@@ -101,7 +182,58 @@ export class HojeComponent implements OnInit, OnDestroy {
     return this.formatarTempoMinutos(this.tempoTotalInvestidoMinutos, this.consolidadoHoje > 0);
   }
 
+  get qtdRevisoesAtrasadas(): number {
+    if (this.contagemRevisoesCards) {
+      return Number(this.contagemRevisoesCards.vencidas || 0);
+    }
+    if (this.resumoRevisoes) {
+      return Number(this.resumoRevisoes.vencidas || 0);
+    }
+    const itens = Array.isArray(this.fila?.itens) ? this.fila.itens : [];
+    return itens.filter((item) => item?.prioridade === PrioridadeFilaHoje.ATRASADA).length;
+  }
+
+  get qtdRevisoesVenceHoje(): number {
+    if (this.contagemRevisoesCards) {
+      return Number(this.contagemRevisoesCards.hoje || 0);
+    }
+    if (this.resumoRevisoes) {
+      return Number(this.resumoRevisoes.hoje || 0);
+    }
+    const itens = Array.isArray(this.fila?.itens) ? this.fila.itens : [];
+    return itens.filter((item) => item?.prioridade === PrioridadeFilaHoje.ALTA).length;
+  }
+
+  get qtdRevisoesEmDia(): number {
+    if (this.contagemRevisoesCards) {
+      return Number(this.contagemRevisoesCards.emDia || 0);
+    }
+    if (this.resumoRevisoes) {
+      return Number(this.resumoRevisoes.emDia || 0);
+    }
+    const itens = Array.isArray(this.fila?.itens) ? this.fila.itens : [];
+    return itens.filter((item) =>
+      item?.prioridade !== PrioridadeFilaHoje.ATRASADA &&
+      item?.prioridade !== PrioridadeFilaHoje.ALTA
+    ).length;
+  }
+
+  get podeComecarRevisaoPrioritaria(): boolean {
+    return (this.qtdRevisoesAtrasadas + this.qtdRevisoesVenceHoje) > 0;
+  }
+
+  get temPendenciasGeraisRevisao(): boolean {
+    return this.podeComecarRevisaoPrioritaria;
+  }
+
   get percentualEditalConsolidado(): number {
+    const consolidados = Number(this.resumoEdital?.topicosConsolidados);
+    const totalEdital = this.totalTopicosEditalAtivo;
+
+    if (Number.isFinite(consolidados) && totalEdital !== null && totalEdital > 0) {
+      return (consolidados / totalEdital) * 100;
+    }
+
     return Number(this.resumoEdital?.percentualConsolidado || 0);
   }
 
@@ -116,6 +248,7 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   get streakClasse(): string {
     const dias = this.streakDiasAtual;
+    if (dias === null) return 'streak-badge streak-neutro';
     if (dias >= 7) return 'streak-badge streak-forte';
     if (dias >= 2) return 'streak-badge streak-ok';
     return 'streak-badge streak-neutro';
@@ -126,7 +259,130 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   get streakTexto(): string {
-    return this.formatarStreak();
+    const dias = this.streakDiasAtual;
+    return dias === 1 ? '🔥 1 dia sem faltar' : `🔥 ${dias} dias sem faltar`;
+  }
+
+  get streakBadgeLabel(): string {
+    switch (this.streakResumo?.statusHoje) {
+      case 'CONCLUIU':
+        return 'Mantida';
+      case 'INICIOU':
+        return 'Quase la';
+      case 'NAO_INICIOU':
+        return 'Em aberto';
+      default:
+        return 'Em aberto';
+    }
+  }
+
+  get streakBadgeClass(): string {
+    switch (this.streakResumo?.statusHoje) {
+      case 'CONCLUIU':
+        return 'streak-chip streak-chip--done';
+      case 'INICIOU':
+        return 'streak-chip streak-chip--progress';
+      default:
+        return 'streak-chip streak-chip--open';
+    }
+  }
+
+  get streakStatusSubtitulo(): string {
+    switch (this.streakResumo?.statusHoje) {
+      case 'CONCLUIU':
+        return 'Sequencia mantida. Boa!';
+      case 'INICIOU':
+        return 'Voce comecou - finalize 1 item para manter a sequencia.';
+      case 'NAO_INICIOU':
+      default:
+        return 'Ainda da tempo de manter sua sequencia hoje.';
+    }
+  }
+
+  get streakMelhorTexto(): string {
+    return 'Melhor: ' + Number(this.streakResumo?.melhorStreak || 0) + ' dias';
+  }
+
+  get streakConsistenciaTexto(): string {
+    const qtd = Number(this.streakResumo?.consistencia30DiasQtd || 0);
+    const total = Number(this.streakResumo?.consistencia30DiasTotal || 30);
+    const pct = Number(this.streakResumo?.consistencia30DiasPercent || 0).toFixed(1);
+    return `Consistencia (30d): ${qtd}/${total} (${pct}%)`;
+  }
+
+  get mostrarCtaStreakComecar(): boolean {
+    return this.streakResumo?.statusHoje === 'NAO_INICIOU' && this.totalItens > 0 && !!this.itemAtual && !this.revisaoConcluida;
+  }
+
+  get ui(): HojeUiViewModel {
+    const consistenciaPct = Number(this.streakResumo?.consistencia30DiasPercent || 0).toFixed(1);
+    const consistenciaPctLabel = consistenciaPct.endsWith('.0')
+      ? `${Math.round(Number(consistenciaPct))}%`
+      : `${consistenciaPct}%`;
+
+    const scoreEstado = this.calcularScoreEstadoPlaceholder();
+    const evolucaoTexto = this.montarTextoEvolucao7d() || 'Evolucao (7d): sem dados no backend';
+    const riskTopicos = this.qtdTopicosEmRiscoJanela30 ?? this.quantidadeTopicosCriticos;
+    const mostrarRisco = riskTopicos > 0;
+    const riskPercent = this.percentualTopicosCriticosInteiro;
+    const scoreEdital = Math.max(0, Math.min(100, Number(this.percentualEditalConsolidado.toFixed(1))));
+    const temPendenciaHoje = this.temPendenciasGeraisRevisao;
+
+    const estadoResolvido = this.resolverEstadoEstudo({
+      scoreEstado,
+      temPendenciaHoje,
+      mostrarRisco,
+      riskPercent,
+      riskTopicos
+    });
+
+    return {
+      estado: {
+        score: scoreEstado,
+        label: estadoResolvido.label,
+        descricao: estadoResolvido.descricao,
+        streakTexto: this.streakTexto,
+        streakMeta: `Melhor: ${Number(this.streakResumo?.melhorStreak || 0)} | Consistencia (30d): ${consistenciaPctLabel}` ,
+        badgeLabel: this.streakBadgeLabel,
+        badgeClass: this.streakBadgeClass
+      },
+      progresso: {
+        titulo: 'Progresso interpretado',
+        hojeTexto: this.progressoTexto === 'Fila finalizada'
+          ? 'Hoje: fila finalizada (100%)'
+          : this.totalItens > 0
+            ? `Hoje: Item ${this.indiceAtual + 1} de ${this.totalItens} (${this.progressoPercentualLabel})`
+            : 'Hoje: sem itens pendentes',
+        hojeBarraPct: this.progressoPercentual,
+        editalTexto: `Edital: ${this.percentualEditalConsolidadoLabel} consolidado`,
+        editalBarraPct: scoreEdital,
+        faltamTexto: this.faltamTopicosConsolidar !== null
+          ? `Faltam ${this.faltamTopicosConsolidar} topicos no edital ativo`
+          : '',
+        evolucaoTexto,
+        estimativaTexto: this.diasEstimadosConsolidacao !== null
+          ? `Ritmo atual: ~${this.diasEstimadosConsolidacao} dias para consolidar o edital`
+          : this.baseProjecaoInsuficiente
+            ? 'Projecao indisponivel (base pequena). Faca mais revisoes para ativar.'
+            : 'Projecao ainda nao disponivel.'
+      },
+      risco: {
+        mostrar: mostrarRisco,
+        titulo: 'Risco atual',
+        texto: `${riskPercent}% dos topicos estao em nivel critico${riskTopicos ? ` (${riskTopicos})` : ''}.`,
+        qtdTexto: riskTopicos > 0
+          ? `${riskTopicos} ${riskTopicos === 1 ? 'topico critico' : 'topicos criticos'} para revisar`
+          : null
+      },
+      heroItem: {
+        materia: this.itemAtual?.materiaNome || 'Materia',
+        titulo: this.itemAtual?.topicoNome || 'Topico sem nome',
+        tempoTexto: this.itemAtual
+          ? this.formatarTempoSegundos((this.itemAtual.tempoEstimadoMinutos || 0) * 60)
+          : '~1 min',
+        statusTexto: this.itemAtual ? this.prioridadeLabel(this.itemAtual.prioridade) : 'Prioridade'
+      }
+    };
   }
 
   get progressoTexto(): string {
@@ -145,7 +401,10 @@ export class HojeComponent implements OnInit, OnDestroy {
   get consolidadoSemana(): number {
     const backend = Number(this.fila?.insights?.consolidadosSemana);
     if (Number.isFinite(backend) && backend >= 0) return backend;
-    return this.somarHistoricoPeriodo(7, 0);
+    const serie = this.analyticsRetencao30?.serie || [];
+    const atual = serie.length ? Number(serie[serie.length - 1]?.consolidados) : NaN;
+    if (Number.isFinite(atual) && atual >= 0) return atual;
+    return 0;
   }
 
   get consolidadoSemanaTexto(): string {
@@ -153,9 +412,9 @@ export class HojeComponent implements OnInit, OnDestroy {
     if (labelBackend) return labelBackend;
     const qtd = this.consolidadoSemana;
     if (qtd === 1) {
-      return '🔥 Voce consolidou 1 topico esta semana.';
+      return 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ Voce consolidou 1 topico esta semana.';
     }
-    return `🔥 Voce consolidou ${qtd} topicos esta semana.`;
+    return `ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ Voce consolidou ${qtd} topicos esta semana.`;
   }
 
   get tendencia7DiasPercent(): number | null {
@@ -164,37 +423,108 @@ export class HojeComponent implements OnInit, OnDestroy {
       return Number(backend.toFixed(1));
     }
 
-    const atual7 = this.somarHistoricoPeriodo(7, 0);
-    const anterior7 = this.somarHistoricoPeriodo(7, 7);
-
-    if (atual7 === 0 && anterior7 === 0) {
-      return null;
-    }
-
-    const totalTopicos = Number(this.resumoEdital?.totalTopicos || 0);
-    if (Number.isFinite(totalTopicos) && totalTopicos > 0) {
-      const variacaoPctPontos = ((atual7 - anterior7) / totalTopicos) * 100;
-      return Number(variacaoPctPontos.toFixed(1));
-    }
-
-    if (anterior7 <= 0) {
-      return atual7 > 0 ? 100 : 0;
-    }
-
-    const variacaoRelativa = ((atual7 - anterior7) / anterior7) * 100;
-    return Number(variacaoRelativa.toFixed(1));
+    const snapshots = this.obterSnapshotsRetencao7d();
+    if (!snapshots) return null;
+    const delta = snapshots.atual.consolidacaoPercent - snapshots.base.consolidacaoPercent;
+    return Number(delta.toFixed(1));
   }
 
   get tendencia7DiasTexto(): string {
     const valor = this.tendencia7DiasPercent;
-    if (valor === null) return '0% na sua consolidação (últimos 7 dias)';
+    if (valor === null) return '0% na sua consolidaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o (ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºltimos 7 dias)';
     const sinal = valor > 0 ? '+' : '';
-    return `${sinal}${valor}% na sua consolidação (últimos 7 dias)`;
+    return `${sinal}${valor}% na sua consolidaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o (ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºltimos 7 dias)`;
+  }
+
+  private montarTextoEvolucao7d(): string | null {
+    if (!this.temBaseConfiavelParaTendencia()) {
+      return null;
+    }
+
+    const deltaPercentual = this.tendencia7DiasPercent;
+    if (deltaPercentual === null) {
+      return null;
+    }
+
+    const snapshots = this.obterSnapshotsRetencao7d();
+    if (!snapshots) return null;
+    const deltaTopicos = snapshots.atual.consolidados - snapshots.base.consolidados;
+    const sinalPp = deltaPercentual > 0 ? '+' : '';
+    const sinalTopico = deltaTopicos > 0 ? '+' : '';
+    const topicoLabel = Math.abs(deltaTopicos) === 1 ? 'topico' : 'topicos';
+
+    return `Evolucao (7d): ${sinalPp}${deltaPercentual} p.p. na consolidacao (${sinalTopico}${deltaTopicos} ${topicoLabel})`;
+  }
+
+  private calcularScoreEstadoPlaceholder(): number {
+    const retencaoPercent = this.retencao14d === null ? 50 : Math.round(this.retencao14d * 100);
+    const editalPercent = Math.round(this.percentualEditalConsolidado);
+    const streakPeso = Math.min(100, this.streakDiasAtual * 8);
+    const bruto = (retencaoPercent * 0.5) + (editalPercent * 0.35) + (streakPeso * 0.15);
+    return Math.max(0, Math.min(100, Math.round(bruto)));
+  }
+
+  private mapearLabelEstado(score: number): string {
+    if (score >= 80) return 'Em dia';
+    if (score >= 60) return 'Bom ritmo';
+    if (score >= 40) return 'Ajustar ritmo';
+    return 'Priorizar revisao';
+  }
+
+  private montarDescricaoEstado(score: number): string {
+    if (score >= 80) return 'Seu estudo esta estavel. Continue nesse ritmo.';
+    if (score >= 60) return 'Bom progresso, com risco controlado no curto prazo.';
+    if (score >= 40) return 'Voce esta avancando, mas vale reforcar revisoes.';
+    return 'Priorize revisoes agora para recuperar a estabilidade.';
+  }
+
+  private resolverEstadoEstudo(input: {
+    scoreEstado: number;
+    temPendenciaHoje: boolean;
+    mostrarRisco: boolean;
+    riskPercent: number;
+    riskTopicos: number;
+  }): { label: string; descricao: string } {
+    const { scoreEstado, temPendenciaHoje, mostrarRisco, riskPercent, riskTopicos } = input;
+
+    if (temPendenciaHoje) {
+      return {
+        label: 'Priorizar revisao agora',
+        descricao: 'Voce ainda tem revisoes pendentes para hoje.'
+      };
+    }
+
+    if (mostrarRisco) {
+      const sufixoQtd = riskTopicos > 0 ? ` (${riskTopicos} topicos)` : '';
+      return {
+        label: 'Hoje: em dia',
+        descricao: `Sem pendencias hoje. Atencao: ${riskPercent}% dos topicos estao em risco no curto prazo${sufixoQtd}.`
+      };
+    }
+
+    return {
+      label: 'Hoje: em dia',
+      descricao: this.montarDescricaoEstado(scoreEstado)
+    };
+  }
+
+  private temBaseConfiavelParaTendencia(): boolean {
+    const backend = Number(this.fila?.insights?.tendencia7dPercent);
+    if (Number.isFinite(backend)) {
+      return true;
+    }
+    return !!this.obterSnapshotsRetencao7d();
+  }
+
+  private deveMostrarRiscoCognitivo(): boolean {
+    if (this.retencao14d === null) {
+      return false;
+    }
+    return (this.retencao14d * 100) < 50;
   }
 
   get progressoPercentual(): number {
-    if (!this.totalItens) return 0;
-    if (this.revisaoConcluida) return 100;
+    if (this.revisaoConcluida || !this.totalItens) return 100;
     const atual = this.indiceAtual + 1;
     return Math.max(0, Math.min(100, Math.round((atual / this.totalItens) * 100)));
   }
@@ -203,11 +533,60 @@ export class HojeComponent implements OnInit, OnDestroy {
     return `${this.progressoPercentual}%`;
   }
 
+  get progressoHojeClasse(): string {
+    const pct = this.progressoPercentual;
+    if (pct >= 100) return 'progresso-mini-card--completo';
+    if (pct >= 67) return 'progresso-mini-card--alto';
+    if (pct >= 34) return 'progresso-mini-card--medio';
+    return 'progresso-mini-card--baixo';
+  }
+
+  get progressoHojeStatusLabel(): string {
+    const pct = this.progressoPercentual;
+    if (pct >= 100) return 'COMPLETO';
+    if (pct >= 67) return 'ALTO';
+    if (pct >= 34) return 'MEDIO';
+    return 'BAIXO';
+  }
+
+  get progressoHojeGaugeClasse(): string {
+    const pct = this.progressoPercentual;
+    if (pct >= 67) return 'progress-level--verde';
+    if (pct >= 34) return 'progress-level--laranja';
+    return 'progress-level--vermelho';
+  }
+
+  get progressoHojeNeedleAngle(): number {
+    return -90 + (this.progressoPercentual * 180) / 100;
+  }
+
+  get progressoHojeArcDasharray(): string {
+    const total = 157.1; // semicircunferencia aproximada para r=50
+    const filled = (total * this.progressoPercentual) / 100;
+    return `${filled.toFixed(1)} ${total.toFixed(1)}`;
+  }
+
   get faltamTopicosConsolidar(): number | null {
-    const total = Number(this.resumoEdital?.totalTopicos);
+    const total = this.totalTopicosEditalAtivo ?? Number(this.resumoEdital?.totalTopicos);
     const consolidados = Number(this.resumoEdital?.topicosConsolidados);
     if (!Number.isFinite(total) || !Number.isFinite(consolidados)) return null;
     return Math.max(0, total - consolidados);
+  }
+
+  get totalTopicosEditalAtivo(): number | null {
+    const total = this.topicoMateriaMap.size;
+    return total > 0 ? total : null;
+  }
+
+  get editalEscopoLabel(): string {
+    const edital = this.editalAtivoAtual;
+    if (!edital) return 'Edital ativo';
+
+    const nome = String(edital?.nome || '').trim();
+    const cargo = String(edital?.cargo || '').trim();
+
+    if (nome && cargo) return `${nome} - ${cargo}`;
+    return nome || cargo || 'Edital ativo';
   }
 
   get mostrarBlocoCognitivo(): boolean {
@@ -222,6 +601,70 @@ export class HojeComponent implements OnInit, OnDestroy {
   get retencao14dPercentLabel(): string {
     if (this.retencao14d === null) return '';
     return `${Math.round(this.retencao14d * 100)}%`;
+  }
+
+  get retencao14dPercentualInteiro(): number {
+    if (this.retencao14d === null) return 0;
+    return Math.max(0, Math.min(100, Math.round(this.retencao14d * 100)));
+  }
+
+  get riscoGeralPercentualInteiro(): number {
+    const total = this.totalTopicosEditalAtivo ?? Number(this.resumoEdital?.totalTopicos);
+    const criticos = Number(this.resumoEdital?.topicosCriticos ?? this.qtdTopicosEmRiscoJanela30 ?? 0);
+    const emRisco = Number(this.resumoEdital?.topicosEmRisco ?? 0);
+
+    if (Number.isFinite(total) && total > 0) {
+      const numerador = Math.max(0, criticos) + Math.max(0, emRisco);
+      const percentual = (numerador / total) * 100;
+      if (percentual > 0 && percentual < 1) return 1;
+      return Math.max(0, Math.min(100, Math.round(percentual)));
+    }
+
+    return this.retencao14dPercentualInteiro;
+  }
+
+  get quantidadeTopicosRiscoGeral(): number {
+    const criticos = Number(this.resumoEdital?.topicosCriticos ?? this.qtdTopicosEmRiscoJanela30 ?? 0);
+    const emRisco = Number(this.resumoEdital?.topicosEmRisco ?? 0);
+    const total = Math.max(0, criticos) + Math.max(0, emRisco);
+    return Number.isFinite(total) ? total : (this.quantidadeTopicosCriticosParaRevisar || 0);
+  }
+
+  get textoTopicosRiscoGeral(): string {
+    const qtd = this.quantidadeTopicosRiscoGeral;
+    if (qtd === 1) return '1 topico em risco';
+    return `${qtd} topicos em risco`;
+  }
+
+  get riscoGeralFaixaLabel(): string {
+    const v = this.riscoGeralPercentualInteiro;
+    if (v >= 75) return 'Critico';
+    if (v >= 50) return 'Alto';
+    if (v >= 25) return 'Moderado';
+    return 'Baixo';
+  }
+
+  get riscoGeralFaixaClasse(): string {
+    const v = this.riscoGeralPercentualInteiro;
+    if (v >= 75) return 'risk-level--critico';
+    if (v >= 50) return 'risk-level--alto';
+    if (v >= 25) return 'risk-level--moderado';
+    return 'risk-level--baixo';
+  }
+
+  get riscoGeralNeedleAngle(): number {
+    const pct = this.riscoGeralPercentualInteiro;
+    return -90 + (pct * 180) / 100;
+  }
+
+  get riscoGeralArcDasharray(): string {
+    const total = 157.1; // semicircunferencia aproximada para r=50
+    const filled = (total * this.riscoGeralPercentualInteiro) / 100;
+    return `${filled.toFixed(1)} ${total.toFixed(1)}`;
+  }
+
+  get quantidadeTopicosCriticosParaRevisar(): number {
+    return this.qtdTopicosEmRiscoJanela30 ?? this.quantidadeTopicosCriticos;
   }
 
   get retencao14dClasse(): string {
@@ -247,24 +690,135 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   get retencao14dIcone(): string {
     if (this.retencao14d === null) return '';
-    if (this.retencao14d >= 0.7) return '🔥';
-    if (this.retencao14d >= 0.4) return '📊';
-    return '⚠️';
+    if (this.retencao14d >= 0.7) return 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥';
+    if (this.retencao14d >= 0.4) return 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â ';
+    return 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â';
   }
 
   get mediaTopicosPorDia7d(): number {
-    const media = this.obterMediaTopicosUltimos7Dias();
-    return Math.max(1, media);
+    const snapshots = this.obterSnapshotsRetencao7d();
+    if (!snapshots) return 0;
+    const dias = Math.max(1, snapshots.dias);
+    const delta = snapshots.atual.consolidados - snapshots.base.consolidados;
+    if (!Number.isFinite(delta) || delta <= 0) return 0;
+    // Nao arredonda no motor de calculo; arredondamento fica para a camada de exibicao.
+    return delta / dias;
   }
 
   get diasEstimadosConsolidacao(): number | null {
     const restantes = this.faltamTopicosConsolidar;
     if (restantes === null) return null;
-    return Math.ceil(restantes / this.mediaTopicosPorDia7d);
+
+    const metrica7d = this.metricaProjecao7d;
+    if (metrica7d?.baseInsuficiente) {
+      return null;
+    }
+
+    const media = metrica7d?.mediaTopicosPorDia7d ?? this.mediaTopicosPorDia7d;
+    if (Number.isFinite(media) && media > 0) {
+      return Math.ceil(restantes / media);
+    }
+
+    const tempoMedio = Number(this.analyticsRetencao30?.tempoMedioDiasAteConsolidar);
+    const tempoMedioValido =
+      Number.isFinite(tempoMedio) &&
+      tempoMedio >= this.TEMPO_MEDIO_MIN &&
+      tempoMedio <= this.TEMPO_MEDIO_MAX;
+
+    if (tempoMedioValido) {
+      return Math.ceil(restantes * tempoMedio);
+    }
+
+    return null;
+  }
+
+  get baseProjecaoInsuficiente(): boolean {
+    return !!this.metricaProjecao7d?.baseInsuficiente;
+  }
+
+  private get metricaProjecao7d():
+    | { mediaTopicosPorDia7d: number; deltaTopicos: number; diasJanela: number; baseInsuficiente: boolean }
+    | null {
+    const snapshots = this.obterSnapshotsRetencao7d();
+    if (!snapshots) return null;
+
+    const deltaTopicos = Number(snapshots.atual.consolidados) - Number(snapshots.base.consolidados);
+    const diasJanela = Math.max(1, Number(snapshots.dias || 0));
+    const mediaTopicosPorDia7d = Number.isFinite(deltaTopicos) && deltaTopicos > 0
+      ? deltaTopicos / diasJanela
+      : 0;
+
+    const serieLen = Array.isArray(this.analyticsRetencao30?.serie) ? this.analyticsRetencao30!.serie.length : 0;
+    const baseInsuficiente =
+      serieLen < this.PROJECAO_MIN_SERIE_PONTOS ||
+      diasJanela < this.PROJECAO_MIN_DIAS_JANELA ||
+      !Number.isFinite(deltaTopicos) ||
+      deltaTopicos < this.PROJECAO_MIN_DELTA_TOPICOS;
+
+    return { mediaTopicosPorDia7d, deltaTopicos, diasJanela, baseInsuficiente };
   }
 
   get mostrarBotaoCriticos(): boolean {
     return this.quantidadeTopicosCriticos > 0;
+  }
+
+  get resistenciaGlobalMemoriaPercent(): number | null {
+    return this.calcularMediaEstabilidade(Array.from(this.cognitivoPorTopico.values()));
+  }
+
+  get resistenciaGlobalMemoriaLabel(): string {
+    const valor = this.resistenciaGlobalMemoriaPercent;
+    return valor === null ? '--' : `${valor}%`;
+  }
+
+  get resistenciaRevisadosHojePercent(): number | null {
+    const revisadosHoje = Array.from(this.cognitivoPorTopico.values()).filter((item) => this.foiRevisadoHoje(item));
+    return this.calcularMediaEstabilidade(revisadosHoje);
+  }
+
+  get resistenciaRevisadosHojeLabel(): string {
+    const valor = this.resistenciaRevisadosHojePercent;
+    return valor === null ? 'Nenhuma revisão registrada hoje.' : `${valor}%`;
+  }
+
+  get qtdTopicosRevisadosHojeCognitivo(): number {
+    let qtd = 0;
+    for (const item of this.cognitivoPorTopico.values()) {
+      if (this.foiRevisadoHoje(item)) qtd += 1;
+    }
+    return qtd;
+  }
+
+  get variacaoResistenciaGlobalOntem(): number | null {
+    const hoje = this.resistenciaGlobalMemoriaPercent;
+    if (hoje === null || this.estabilidadeGlobalOntem === null) return null;
+    return Number((hoje - this.estabilidadeGlobalOntem).toFixed(1));
+  }
+
+  get variacaoResistenciaGlobalLabel(): string {
+    const delta = this.variacaoResistenciaGlobalOntem;
+    if (delta === null) return 'Sem base de ontem';
+    if (delta > 0) return `▲ +${delta}%`;
+    if (delta < 0) return `▼ ${delta}%`;
+    return '0.0%';
+  }
+
+  get teveRevisoesHojeCognitivo(): boolean {
+    return this.qtdTopicosRevisadosHojeCognitivo > 0;
+  }
+
+  get mensagemContextualEstabilidade(): string | null {
+    const deltaGlobal = this.variacaoResistenciaGlobalOntem;
+    if (deltaGlobal !== null && deltaGlobal < 0 && this.teveRevisoesHojeCognitivo) {
+      return 'Mesmo revisando hoje, alguns tópicos não revisados degradaram ao longo do tempo.';
+    }
+
+    const revisadosHoje = this.resistenciaRevisadosHojePercent;
+    if (revisadosHoje !== null && revisadosHoje > 0) {
+      return 'Boa evolução nos tópicos trabalhados hoje.';
+    }
+
+    return null;
   }
 
   get quantidadeTopicosCriticos(): number {
@@ -275,6 +829,36 @@ export class HojeComponent implements OnInit, OnDestroy {
       }
     }
     return qtd;
+  }
+
+  get quantidadeTopicosEmRiscoTotal(): number {
+    let qtd = 0;
+    for (const item of this.cognitivoPorTopico.values()) {
+      const classificacao = String(item?.classificacao || '').toUpperCase();
+      if (classificacao === 'CRITICO' || classificacao === 'EM_RISCO') {
+        qtd += 1;
+      }
+    }
+    return qtd;
+  }
+
+  get percentualTopicosCriticosInteiro(): number {
+    const qtdCriticos = this.qtdTopicosEmRiscoJanela30 ?? this.quantidadeTopicosCriticos;
+    const total = this.totalTopicosEditalAtivo;
+
+    if (!Number.isFinite(qtdCriticos) || qtdCriticos <= 0) {
+      return 0;
+    }
+
+    if (total !== null && total > 0) {
+      const percentual = (qtdCriticos / total) * 100;
+      if (percentual > 0 && percentual < 1) {
+        return 1;
+      }
+      return Math.max(0, Math.min(100, Math.round(percentual)));
+    }
+
+    return this.retencao14dPercentualInteiro;
   }
 
   get textoBotaoCriticos(): string {
@@ -291,12 +875,76 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.modoExecucao = true;
     this.salvarEstadoExecucao({
       pendingAdvance: true,
-      lastIndex: this.indiceAtual
+      lastIndex: this.indiceAtual,
+      day: this.obterDiaAtualIso(),
+      queueKey: this.gerarAssinaturaFilaAtual()
     });
 
     this.router.navigateByUrl(this.itemAtual.deepLink).finally(() => {
       // Em navegacao normal o componente sera destruido; fallback para falha de navegacao.
       this.modoExecucao = false;
+    });
+  }
+
+  comecarRevisaoPrioritaria(): void {
+    if (this.iniciandoRevisaoPrioritaria || !this.podeComecarRevisaoPrioritaria) {
+      return;
+    }
+
+    this.iniciandoRevisaoPrioritaria = true;
+
+    forkJoin({
+      atrasadas: this.salaEstudoService.listarRevisoesDashboardUnificado({
+        status: 'ATRASADA',
+        page: 0,
+        size: 5000
+      }).pipe(catchError(() => of(null))),
+      hoje: this.salaEstudoService.listarRevisoesDashboardUnificado({
+        status: 'HOJE',
+        page: 0,
+        size: 5000
+      }).pipe(catchError(() => of(null)))
+    }).pipe(
+      map(({ atrasadas, hoje }) => {
+        const atrasadasFiltradas = this.filtrarPorEditalAtivo((atrasadas?.itens || []) as RevisaoDashboardItem[]);
+        const primeiroAtrasado = atrasadasFiltradas[0] || null;
+        if (primeiroAtrasado?.materiaId) {
+          return {
+            materiaId: Number(primeiroAtrasado.materiaId),
+            topicoId: Number(primeiroAtrasado.topicoId || 0),
+            filtro: 'atrasadas'
+          };
+        }
+
+        const hojeFiltradas = this.filtrarPorEditalAtivo((hoje?.itens || []) as RevisaoDashboardItem[]);
+        const primeiroHoje = hojeFiltradas[0] || null;
+        return {
+          materiaId: Number(primeiroHoje?.materiaId || 0),
+          topicoId: Number(primeiroHoje?.topicoId || 0),
+          filtro: 'hoje'
+        };
+      })
+    ).subscribe({
+      next: (alvo) => {
+        const materiaId = Number(alvo?.materiaId || 0);
+        if (!materiaId) {
+          this.iniciandoRevisaoPrioritaria = false;
+          return;
+        }
+
+        this.router.navigate(['/area-restrita/sala-estudo', materiaId], {
+          queryParams: {
+            modo: 'revisar',
+            filtro: alvo.filtro,
+            topicoId: Number((alvo as any)?.topicoId || 0) || null
+          }
+        }).finally(() => {
+          this.iniciandoRevisaoPrioritaria = false;
+        });
+      },
+      error: () => {
+        this.iniciandoRevisaoPrioritaria = false;
+      }
     });
   }
 
@@ -416,10 +1064,10 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   formatarStreak(): string {
     const dias = this.streakDiasAtual;
-    if (dias <= 0) return '🔥 0 dias seguidos';
-    if (dias === 1) return '🔥 1 dia seguido';
-    if (dias >= 7) return `🔥🔥 ${dias} dias seguidos`;
-    return `🔥 ${dias} dias seguidos`;
+    if (dias <= 0) return 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ 0 dias seguidos';
+    if (dias === 1) return 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ 1 dia seguido';
+    if (dias >= 7) return `ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ ${dias} dias seguidos`;
+    return `ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ ${dias} dias seguidos`;
   }
 
   private carregarFila(): void {
@@ -428,31 +1076,28 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.hojeFilaService.getFilaHoje().subscribe({
       next: (resp) => {
         const filaNormalizada: HojeFilaResponseDTO = {
-          totalItens: Number(resp?.totalItens || 0),
+          totalItens: Array.isArray(resp?.itens) ? resp.itens.length : Number(resp?.totalItens || 0),
           tempoEstimadoMinutos: Number(resp?.tempoEstimadoMinutos || 0),
           itens: Array.isArray(resp?.itens) ? resp.itens : [],
           insights: resp?.insights ?? null
         };
+        const filaEnriquecida = this.aplicarMapaMateriaNaFila(filaNormalizada);
+        const filaFiltrada = this.filtrarFilaPorEditalAtivo(filaEnriquecida);
 
-        const streakBackend = Number(filaNormalizada?.insights?.streakDias);
-        if (Number.isFinite(streakBackend) && streakBackend >= 0) {
-          this.streakDias = streakBackend;
-        }
-
-        if (filaNormalizada.totalItens > 0 || filaNormalizada.itens.length > 0) {
-          this.aplicarFila(filaNormalizada);
+        if (filaFiltrada.totalItens > 0 || filaFiltrada.itens.length > 0) {
+          this.aplicarFila(filaFiltrada);
           this.loading = false;
           return;
         }
 
-        this.salaEstudoService.listarRevisoesDashboard().subscribe({
-          next: (revisoes) => {
-            const fallback = this.montarFilaFallback(revisoes || []);
-            this.aplicarFila(fallback);
+        this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
+          next: (respRevisoes) => {
+            const fallback = this.montarFilaFallback(respRevisoes?.itens || []);
+            this.aplicarFila(this.filtrarFilaPorEditalAtivo(fallback));
             this.loading = false;
           },
           error: () => {
-            this.aplicarFila(filaNormalizada);
+            this.aplicarFila(filaFiltrada);
             this.loading = false;
           }
         });
@@ -464,10 +1109,75 @@ export class HojeComponent implements OnInit, OnDestroy {
         this.messageService.add({
           severity: 'error',
           summary: 'Hoje',
-          detail: err?.error?.message || 'Não foi possível carregar a fila de hoje.'
+          detail: err?.error?.message || 'NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o foi possÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel carregar a fila de hoje.'
         });
       }
     });
+  }
+
+  private carregarStreakResumo(): void {
+    this.hojeFilaService.getDashboardStreak().subscribe({
+      next: (resumo) => {
+        this.streakResumo = resumo;
+        const streakBackend = Number(resumo?.streakAtual);
+        this.streakDias = Number.isFinite(streakBackend) && streakBackend >= 0 ? streakBackend : 0;
+      },
+      error: () => {
+        this.streakResumo = null;
+        this.streakDias = 0;
+      }
+    });
+  }
+
+  private carregarResumoRevisoes(): void {
+    this.salaEstudoService.limparCacheRevisoesDashboard();
+    this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
+      next: (resp) => {
+        const itensFiltrados = this.filtrarPorEditalAtivo((resp?.itens || []) as RevisaoDashboardItem[]);
+        this.contagemRevisoesCards = this.calcularContagemRevisoesCards(itensFiltrados);
+        this.resumoRevisoes = this.contagemRevisoesCards
+          ? {
+              vencidas: this.contagemRevisoesCards.vencidas,
+              hoje: this.contagemRevisoesCards.hoje,
+              emDia: this.contagemRevisoesCards.emDia,
+              total: this.contagemRevisoesCards.vencidas + this.contagemRevisoesCards.hoje + this.contagemRevisoesCards.emDia
+            }
+          : null;
+      },
+      error: () => {
+        this.resumoRevisoes = null;
+        this.contagemRevisoesCards = null;
+      }
+    });
+  }
+
+  private calcularContagemRevisoesCards(itens: RevisaoDashboardItem[]): { vencidas: number; hoje: number; emDia: number } {
+    const vencidas = new Set<string>();
+    const hoje = new Set<string>();
+    const emDia = new Set<string>();
+    const hojeRef = new Date();
+
+    for (const item of itens || []) {
+      const chave = `${Number(item?.materiaId || 0)}:${Number(item?.topicoId || 0)}`;
+      if (chave === '0:0') continue;
+
+      const statusCanonico = extrairStatusCanonicoRevisao(item, hojeRef);
+      const statusDashboard = statusCanonicoParaDashboard(statusCanonico) || 'FUTURA';
+
+      if (statusDashboard === 'VENCIDA') {
+        vencidas.add(chave);
+      } else if (statusDashboard === 'EM_DIA') {
+        hoje.add(chave);
+      } else if (statusDashboard === 'FUTURA') {
+        emDia.add(chave);
+      }
+    }
+
+    return {
+      vencidas: vencidas.size,
+      hoje: hoje.size,
+      emDia: emDia.size
+    };
   }
 
   private aplicarFila(fila: HojeFilaResponseDTO): void {
@@ -478,8 +1188,9 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   private montarFilaFallback(revisoes: RevisaoDashboardItem[]): HojeFilaResponseDTO {
-    const itens = (revisoes || [])
+    const itens = this.filtrarPorEditalAtivo(revisoes || [])
       .filter((r) => Number(r?.topicoId) > 0)
+      .filter((r) => this.revisaoEhPendenteParaHoje(r))
       .map((r) => this.mapearRevisaoDashboardParaHoje(r));
 
     return {
@@ -512,6 +1223,124 @@ export class HojeComponent implements OnInit, OnDestroy {
     };
   }
 
+  private aplicarMapaMateriaNaFila(fila: HojeFilaResponseDTO): HojeFilaResponseDTO {
+    if (!fila?.itens?.length || !this.topicoMateriaMap.size) {
+      return fila;
+    }
+
+    const itens = fila.itens.map((item) => {
+      const topicoId = Number(item?.topicoId || 0);
+      const ref = this.topicoMateriaMap.get(topicoId);
+      if (!ref) {
+        return item;
+      }
+
+      const materiaId = ref.materiaId;
+      const materiaNome = ref.materiaNome ?? item.materiaNome ?? null;
+
+      return {
+        ...item,
+        materiaId,
+        materiaNome,
+        deepLink: materiaId
+          ? `/area-restrita/sala-estudo/${materiaId}?topicoId=${topicoId}`
+          : item.deepLink
+      };
+    });
+
+    return { ...fila, itens };
+  }
+
+  private carregarMapaTopicoMateria(): void {
+    this.editalService.listarComInclude(['materias', 'topicos']).pipe(
+      switchMap((editais) => {
+        const ativos = (editais || []).filter((e) => e?.ativo && Number(e?.id) > 0);
+        if (!ativos.length) {
+          return of([] as Edital[]);
+        }
+
+        const pendentes = ativos.filter((edital) => !this.editalTemTopicos(edital));
+        if (!pendentes.length) {
+          return of(ativos);
+        }
+
+        const requisicoes = pendentes.map((edital) =>
+          this.editalService.buscarPorId(Number(edital.id)).pipe(catchError(() => of(edital)))
+        );
+        if (!requisicoes.length) {
+          return of(ativos);
+        }
+
+        return forkJoin(requisicoes).pipe(
+          map((hidratados) => {
+            const porId = new Map<number, Edital>();
+            (hidratados || []).forEach((e) => {
+              const id = Number(e?.id);
+              if (id > 0) porId.set(id, e);
+            });
+
+            return ativos.map((edital) => porId.get(Number(edital.id)) || edital);
+          })
+        );
+      })
+    ).subscribe({
+      next: (editais) => {
+        const lista = editais || [];
+        this.editalAtivoAtual = lista.find((e) => e?.ativo) || lista[0] || null;
+        this.rebuildTopicoMateriaMap(lista);
+        this.editalAtivoResolvido = true;
+        this.recarregarDadosComFiltroEditalAtivo();
+      },
+      error: () => {
+        this.topicoMateriaMap.clear();
+        this.materiaIdsEditalAtivo.clear();
+        this.editalAtivoAtual = null;
+        this.editalAtivoResolvido = false;
+      }
+    });
+  }
+
+  private editalTemTopicos(edital: Edital | null | undefined): boolean {
+    return Boolean((edital?.materias || []).some((m: any) => Array.isArray(m?.topicos) && m.topicos.length > 0));
+  }
+
+  private rebuildTopicoMateriaMap(editais: Edital[]): void {
+    const mapa = new Map<number, TopicoMateriaRef>();
+    const materiaIds = new Set<number>();
+
+    for (const edital of editais || []) {
+      for (const materia of (edital as any)?.materias || []) {
+        if ((materia as any)?.ativo === false) continue;
+        const materiaId = Number((materia as any)?.materiaId ?? (materia as any)?.id);
+        const materiaNome = String((materia as any)?.materiaNome ?? (materia as any)?.nome ?? '').trim() || null;
+        if (!Number.isFinite(materiaId) || materiaId <= 0) continue;
+        materiaIds.add(materiaId);
+
+        this.indexarTopicosMateria(mapa, (materia as any)?.topicos || [], {
+          materiaId,
+          materiaNome
+        });
+      }
+    }
+
+    this.topicoMateriaMap = mapa;
+    this.materiaIdsEditalAtivo = materiaIds;
+  }
+
+  private indexarTopicosMateria(mapa: Map<number, TopicoMateriaRef>, topicos: any[], ref: TopicoMateriaRef): void {
+    for (const topico of topicos || []) {
+      const topicoId = Number((topico as any)?.id ?? (topico as any)?.topicoId);
+      if (Number.isFinite(topicoId) && topicoId > 0 && !mapa.has(topicoId)) {
+        mapa.set(topicoId, ref);
+      }
+
+      const filhos = (topico as any)?.subtopicos ?? (topico as any)?.filhos ?? (topico as any)?.children ?? [];
+      if (Array.isArray(filhos) && filhos.length > 0) {
+        this.indexarTopicosMateria(mapa, filhos, ref);
+      }
+    }
+  }
+
   private normalizarPrioridadeFallback(status: string | undefined): PrioridadeFilaHoje {
     const key = String(status || '').toUpperCase();
     if (key === 'ATRASADA' || key === 'VENCIDA') return PrioridadeFilaHoje.ATRASADA;
@@ -519,6 +1348,16 @@ export class HojeComponent implements OnInit, OnDestroy {
     if (key === 'CRITICO') return PrioridadeFilaHoje.CRITICO;
     if (key === 'EM_RISCO') return PrioridadeFilaHoje.EM_RISCO;
     return PrioridadeFilaHoje.MEDIA;
+  }
+
+  private revisaoEhPendenteParaHoje(item: RevisaoDashboardItem): boolean {
+    const statusCanonico = String(item?.statusCanonico || item?.statusRevisao || '').toUpperCase();
+    if (statusCanonico === 'ATRASADA' || statusCanonico === 'HOJE') {
+      return true;
+    }
+
+    const status = String(item?.status || '').toUpperCase();
+    return status === 'VENCIDA' || status === 'EM_DIA';
   }
 
   private atualizarItemAtual(): void {
@@ -532,9 +1371,20 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   private aplicarRetornoExecucao(): void {
     const state = this.lerEstadoExecucao();
-    if (!state) {
+    const day = this.obterDiaAtualIso();
+    const queueKey = this.gerarAssinaturaFilaAtual();
+
+    if (!state || state.day !== day || state.queueKey !== queueKey) {
       this.indiceAtual = 0;
       this.modoExecucao = false;
+      if (this.totalItens > 0) {
+        this.salvarEstadoExecucao({
+          pendingAdvance: false,
+          lastIndex: 0,
+          day,
+          queueKey
+        });
+      }
       return;
     }
 
@@ -550,35 +1400,64 @@ export class HojeComponent implements OnInit, OnDestroy {
       }
       this.carregarResumoCognitivo(true);
       this.carregarTopicosCognitivos(true, itemConcluido?.prioridade);
-      this.marcarDiaValidoStreakSeNecessario();
+      this.carregarStreakResumo();
       this.salvarEstadoExecucao({
         pendingAdvance: false,
-        lastIndex: this.indiceAtual
+        lastIndex: this.indiceAtual,
+        day,
+        queueKey
       });
       this.modoExecucao = false;
       return;
     }
 
     this.indiceAtual = Math.min(Math.max(0, state.lastIndex), this.totalItens);
+    this.salvarEstadoExecucao({
+      pendingAdvance: false,
+      lastIndex: this.indiceAtual,
+      day,
+      queueKey
+    });
     this.modoExecucao = false;
   }
 
   private lerEstadoExecucao(): HojeExecucaoState | null {
-    try {
-      const raw = sessionStorage.getItem(this.stateKey);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as HojeExecucaoState;
-      if (typeof parsed?.pendingAdvance !== 'boolean' || typeof parsed?.lastIndex !== 'number') {
-        return null;
-      }
-      return parsed;
-    } catch {
+    const parsed = this.estadoExecucaoMemoria;
+    if (
+      !parsed ||
+      typeof parsed.pendingAdvance !== 'boolean' ||
+      typeof parsed.lastIndex !== 'number' ||
+      typeof parsed.day !== 'string' ||
+      typeof parsed.queueKey !== 'string'
+    ) {
+      this.removerEstadoExecucao();
       return null;
     }
+    return parsed;
   }
 
   private salvarEstadoExecucao(state: HojeExecucaoState): void {
-    sessionStorage.setItem(this.stateKey, JSON.stringify(state));
+    this.estadoExecucaoMemoria = { ...state };
+  }
+
+  private removerEstadoExecucao(): void {
+    this.estadoExecucaoMemoria = null;
+  }
+
+  private limparEstadoExecucaoLegado(): void {
+    this.removerEstadoExecucao();
+  }
+
+  private obterDiaAtualIso(): string {
+    return this.formatarDiaLocal(new Date());
+  }
+
+  private gerarAssinaturaFilaAtual(): string {
+    const itens = Array.isArray(this.fila?.itens) ? this.fila.itens : [];
+    const assinaturaItens = itens
+      .map((item) => `${item?.tipo || 'TOPICO'}:${Number(item?.topicoId || 0)}:${String(item?.prioridade || '')}`)
+      .join('|');
+    return `${this.totalItens}::${assinaturaItens}`;
   }
 
   private carregarResumoEdital(): void {
@@ -588,6 +1467,17 @@ export class HojeComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.resumoEdital = null;
+      }
+    });
+  }
+
+  private carregarAnalyticsRetencao(): void {
+    this.retencaoAnalyticsService.buscarAnalyticsRetencao(30).subscribe({
+      next: (analytics) => {
+        this.analyticsRetencao30 = analytics || null;
+      },
+      error: () => {
+        this.analyticsRetencao30 = null;
       }
     });
   }
@@ -610,15 +1500,129 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.cognitiveMetricsService.getTopicosCognitivos(14, null, 120).subscribe({
       next: (topicos) => {
         this.cognitivoPorTopico.clear();
-        (topicos || []).forEach((t) => {
+        const filtrados = this.filtrarTopicosCognitivosPorEditalAtivo(topicos || []);
+        filtrados.forEach((t) => {
           if (t?.topicoId) this.cognitivoPorTopico.set(t.topicoId, t);
         });
+        this.atualizarSnapshotEstabilidadeGlobal();
         if (resolverFeedback) {
           this.resolverFeedbackConclusaoPendente(prioridadeFallback);
         }
       },
       error: () => {
         this.cognitivoPorTopico.clear();
+        this.estabilidadeGlobalOntem = null;
+      }
+    });
+  }
+
+  private atualizarSnapshotEstabilidadeGlobal(): void {
+    const hoje = this.obterDiaAtualIso();
+    const ontem = this.obterDiaIsoOffset(-1);
+    const estabilidadeAtual = this.resistenciaGlobalMemoriaPercent;
+    if (estabilidadeAtual === null) {
+      this.estabilidadeGlobalOntem = null;
+      return;
+    }
+
+    const snapshots = this.lerSnapshotsEstabilidade();
+    const snapOntem = snapshots.find((s) => s?.dia === ontem);
+    this.estabilidadeGlobalOntem = Number.isFinite(Number(snapOntem?.valor))
+      ? Number(snapOntem?.valor)
+      : null;
+
+    const semHoje = snapshots.filter((s) => s?.dia !== hoje);
+    semHoje.push({ dia: hoje, valor: estabilidadeAtual });
+    const recentes = semHoje
+      .filter((s) => s && typeof s.dia === 'string' && Number.isFinite(Number(s.valor)))
+      .sort((a, b) => a.dia.localeCompare(b.dia))
+      .slice(-15);
+
+    this.salvarSnapshotsEstabilidade(recentes);
+  }
+
+  private lerSnapshotsEstabilidade(): Array<{ dia: string; valor: number }> {
+    try {
+      const raw = localStorage.getItem(this.estabilidadeSnapshotKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private salvarSnapshotsEstabilidade(snapshots: Array<{ dia: string; valor: number }>): void {
+    try {
+      localStorage.setItem(this.estabilidadeSnapshotKey, JSON.stringify(snapshots));
+    } catch {
+      // sem impacto no fluxo da tela
+    }
+  }
+
+  private obterDiaIsoOffset(offsetDias: number): string {
+    const data = new Date();
+    data.setHours(0, 0, 0, 0);
+    data.setDate(data.getDate() + offsetDias);
+    return this.formatarDiaLocal(data);
+  }
+
+  private calcularMediaEstabilidade(topicos: TopicoCognitivoDTO[]): number | null {
+    const valores = (topicos || [])
+      .map((item) => this.normalizarPercent(item?.stability))
+      .filter((v): v is number => v !== null);
+
+    if (!valores.length) return null;
+    const media = valores.reduce((acc, v) => acc + v, 0) / valores.length;
+    return Number(media.toFixed(1));
+  }
+
+  private normalizarPercent(valor: number | null | undefined): number | null {
+    const n = Number(valor);
+    if (!Number.isFinite(n)) return null;
+    if (n <= 1) return Math.max(0, Math.min(100, n * 100));
+    return Math.max(0, Math.min(100, n));
+  }
+
+  private foiRevisadoHoje(item: TopicoCognitivoDTO | null | undefined): boolean {
+    if (!item) return false;
+
+    const datasRevisao = [
+      item.ultimaRevisaoEm,
+      item.ultimaRevisao,
+      item.dataUltimaRevisao
+    ].filter((v) => !!v);
+
+    if (datasRevisao.length > 0) {
+      return datasRevisao.some((valor) => this.dataEhHoje(valor));
+    }
+
+    const datasEvento = [item.dataUltimoEvento, item.ultimoEventoEm].filter((v) => !!v);
+    if (datasEvento.length > 0) {
+      return datasEvento.some((valor) => this.dataEhHoje(valor));
+    }
+
+    const diasDesdeUltimoEvento = Number(item.diasDesdeUltimoEvento);
+    return Number.isFinite(diasDesdeUltimoEvento) && diasDesdeUltimoEvento === 0;
+  }
+
+  private dataEhHoje(valor: unknown): boolean {
+    if (!valor) return false;
+    const data = new Date(String(valor));
+    if (!Number.isFinite(data.getTime())) return false;
+    return this.formatarDiaLocal(data) === this.obterDiaAtualIso();
+  }
+
+  private carregarQtdTopicosEmRiscoJanela30(): void {
+    this.retencaoAnalyticsService.buscarTopicosEmRisco(30, 200).subscribe({
+      next: (topicos) => {
+        this.qtdTopicosEmRiscoJanela30 = Array.isArray(topicos)
+          ? topicos
+            .filter((t) => this.pertenceAoEditalAtivoPorTopicoOuMateria((t as any)?.topicoId, (t as any)?.materiaId))
+            .filter((t) => String((t as any)?.classificacao || '').toUpperCase() === 'CRITICO').length
+          : 0;
+      },
+      error: () => {
+        this.qtdTopicosEmRiscoJanela30 = null;
       }
     });
   }
@@ -633,7 +1637,7 @@ export class HojeComponent implements OnInit, OnDestroy {
 
     if (snapshotAntes && snapshotAntes.topicoId === topicoId && cognitivoAtual) {
       if (snapshotAntes.risk !== null && cognitivoAtual.risk !== null && cognitivoAtual.risk < snapshotAntes.risk) {
-        this.mostrarFeedbackConclusaoCustom('✔ Risco de esquecimento reduzido');
+        this.mostrarFeedbackConclusaoCustom('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Risco de esquecimento reduzido');
         this.feedbackConclusaoPendente = null;
         this.limparSnapshotCognitivoAntes();
         return;
@@ -643,7 +1647,7 @@ export class HojeComponent implements OnInit, OnDestroy {
         cognitivoAtual.stability !== null &&
         cognitivoAtual.stability > snapshotAntes.stability
       ) {
-        this.mostrarFeedbackConclusaoCustom('✔ Estabilidade fortalecida');
+        this.mostrarFeedbackConclusaoCustom('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Estabilidade fortalecida');
         this.feedbackConclusaoPendente = null;
         this.limparSnapshotCognitivoAntes();
         return;
@@ -659,7 +1663,7 @@ export class HojeComponent implements OnInit, OnDestroy {
       this.feedbackConclusaoPendente = null;
       this.limparSnapshotCognitivoAntes();
       this.limparSnapshotRetencaoAntes();
-      this.mostrarFeedbackConclusaoCustom('✔ Retencao 14d aumentou');
+      this.mostrarFeedbackConclusaoCustom('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Retencao 14d aumentou');
       return;
     }
 
@@ -667,10 +1671,10 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.limparSnapshotCognitivoAntes();
     this.limparSnapshotRetencaoAntes();
     if (prioridade) {
-      this.mostrarFeedbackConclusaoCustom('✔ Topico reforcado');
+      this.mostrarFeedbackConclusaoCustom('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Topico reforcado');
       return;
     }
-    this.mostrarFeedbackConclusaoCustom('✔ Topico reforcado');
+    this.mostrarFeedbackConclusaoCustom('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Topico reforcado');
   }
 
   private mostrarFeedbackConclusaoCustom(texto: string): void {
@@ -694,7 +1698,6 @@ export class HojeComponent implements OnInit, OnDestroy {
   private registrarConclusaoItemSeNecessario(lastIndex: number): void {
     const itemConcluido = this.fila?.itens?.[lastIndex];
     if (!itemConcluido) return;
-    this.incrementarHistoricoConcluidosDia();
     this.hojeTrackingService.registrarItemConcluido(
       itemConcluido.tipo,
       itemConcluido.prioridade,
@@ -704,57 +1707,14 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   private registrarConclusaoFilaSeNecessario(): void {
     if (!this.revisaoConcluida || this.filaConcluidaRegistrada) return;
-    const hoje = new Date().toISOString().slice(0, 10);
-    const ultimoDiaConcluido = localStorage.getItem(this.filaConcluidaDiaKey);
-    if (ultimoDiaConcluido === hoje) {
+    const hoje = this.obterDiaAtualIso();
+    if (this.ultimoDiaFilaConcluidaMemoria === hoje) {
       this.filaConcluidaRegistrada = true;
       return;
     }
     this.hojeTrackingService.registrarFilaConcluida(this.totalItens, this.tempoTotalInvestidoMinutos);
-    localStorage.setItem(this.filaConcluidaDiaKey, hoje);
+    this.ultimoDiaFilaConcluidaMemoria = hoje;
     this.filaConcluidaRegistrada = true;
-  }
-
-  private marcarDiaValidoStreakSeNecessario(): void {
-    if (this.totalItens <= 0 || this.indiceAtual <= 0) return;
-    const hoje = new Date().toISOString().slice(0, 10);
-    const dias = this.lerDiasValidosStreak();
-    if (!dias.includes(hoje)) {
-      dias.push(hoje);
-      localStorage.setItem(this.streakDaysKey, JSON.stringify(dias));
-      this.streakDias = this.calcularStreak();
-    }
-  }
-
-  private lerDiasValidosStreak(): string[] {
-    try {
-      const raw = localStorage.getItem(this.streakDaysKey);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.filter((d) => typeof d === 'string') : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private calcularStreak(): number {
-    const dias = this.lerDiasValidosStreak()
-      .map((d) => d.slice(0, 10))
-      .filter(Boolean);
-    if (!dias.length) return 0;
-
-    const set = new Set(dias);
-    let streak = 0;
-    const current = new Date();
-    current.setHours(0, 0, 0, 0);
-
-    while (true) {
-      const dia = current.toISOString().slice(0, 10);
-      if (!set.has(dia)) break;
-      streak += 1;
-      current.setDate(current.getDate() - 1);
-    }
-
-    return streak;
   }
 
   private salvarSnapshotCognitivoAntes(topicoId: number): void {
@@ -764,11 +1724,11 @@ export class HojeComponent implements OnInit, OnDestroy {
       this.limparSnapshotCognitivoAntes();
       return;
     }
-    sessionStorage.setItem(this.cognitivoSnapshotKey, JSON.stringify({
+    this.snapshotCognitivoAntesMemoria = {
       topicoId,
       risk: atual.risk ?? null,
       stability: atual.stability ?? null
-    }));
+    };
   }
 
   private salvarSnapshotRetencaoAntes(): void {
@@ -776,102 +1736,142 @@ export class HojeComponent implements OnInit, OnDestroy {
       this.limparSnapshotRetencaoAntes();
       return;
     }
-    sessionStorage.setItem(this.retencaoSnapshotKey, String(this.retencao14d));
+    this.snapshotRetencaoAntesMemoria = this.retencao14d;
   }
 
   private lerSnapshotRetencaoAntes(): number | null {
-    const raw = sessionStorage.getItem(this.retencaoSnapshotKey);
-    if (!raw) return null;
-    const valor = Number(raw);
-    return Number.isFinite(valor) ? valor : null;
+    return Number.isFinite(Number(this.snapshotRetencaoAntesMemoria))
+      ? Number(this.snapshotRetencaoAntesMemoria)
+      : null;
   }
 
   private limparSnapshotRetencaoAntes(): void {
-    sessionStorage.removeItem(this.retencaoSnapshotKey);
+    this.snapshotRetencaoAntesMemoria = null;
   }
 
   private lerSnapshotCognitivoAntes(): { topicoId: number; risk: number | null; stability: number | null } | null {
-    try {
-      const raw = sessionStorage.getItem(this.cognitivoSnapshotKey);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as { topicoId?: number; risk?: number | null; stability?: number | null };
-      if (!parsed || typeof parsed.topicoId !== 'number') return null;
-      return {
-        topicoId: parsed.topicoId,
-        risk: Number.isFinite(Number(parsed.risk)) ? Number(parsed.risk) : null,
-        stability: Number.isFinite(Number(parsed.stability)) ? Number(parsed.stability) : null
-      };
-    } catch {
+    const parsed = this.snapshotCognitivoAntesMemoria;
+    if (!parsed || typeof parsed.topicoId !== 'number') {
       return null;
     }
+    return {
+      topicoId: parsed.topicoId,
+      risk: Number.isFinite(Number(parsed.risk)) ? Number(parsed.risk) : null,
+      stability: Number.isFinite(Number(parsed.stability)) ? Number(parsed.stability) : null
+    };
   }
 
   private limparSnapshotCognitivoAntes(): void {
-    sessionStorage.removeItem(this.cognitivoSnapshotKey);
+    this.snapshotCognitivoAntesMemoria = null;
   }
 
-  private incrementarHistoricoConcluidosDia(): void {
-    const hoje = new Date().toISOString().slice(0, 10);
-    const historico = this.lerHistoricoConcluidos();
-    historico[hoje] = Number(historico[hoje] || 0) + 1;
-    localStorage.setItem(this.historicoConcluidosKey, JSON.stringify(historico));
+  private formatarDiaLocal(data: Date): string {
+    const yyyy = data.getFullYear();
+    const mm = String(data.getMonth() + 1).padStart(2, '0');
+    const dd = String(data.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
-  private lerHistoricoConcluidos(): Record<string, number> {
-    try {
-      const raw = localStorage.getItem(this.historicoConcluidosKey);
-      const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : {};
-      const saida: Record<string, number> = {};
-      Object.keys(parsed || {}).forEach((k) => {
-        const v = Number(parsed[k]);
-        if (Number.isFinite(v) && v >= 0) {
-          saida[k] = v;
+  private obterSnapshotsRetencao7d():
+    | { base: RetencaoAnalyticsSerieDTO; atual: RetencaoAnalyticsSerieDTO; dias: number }
+    | null {
+    const serie = this.analyticsRetencao30?.serie || [];
+    if (!Array.isArray(serie) || serie.length < 2) return null;
+
+    const atual = serie[serie.length - 1];
+    if (!atual) return null;
+
+    const dataAtual = new Date(atual.data).getTime();
+    const targetBaseTime = Number.isFinite(dataAtual)
+      ? (dataAtual - (this.PROJECAO_JANELA_DIAS * this.ONE_DAY_MS))
+      : null;
+
+    let base: RetencaoAnalyticsSerieDTO | null = null;
+    let baseTime = Number.NEGATIVE_INFINITY;
+
+    if (targetBaseTime !== null) {
+      for (const ponto of serie) {
+        const ts = new Date(String(ponto?.data || '')).getTime();
+        if (!Number.isFinite(ts)) continue;
+        if (ts <= targetBaseTime && ts > baseTime) {
+          base = ponto;
+          baseTime = ts;
         }
-      });
-      return saida;
-    } catch {
-      return {};
+      }
     }
+
+    if (!base) {
+      base = serie[0] || null;
+    }
+    if (!base) return null;
+
+    const dataBase = new Date(base.data).getTime();
+    const dias = Number.isFinite(dataAtual) && Number.isFinite(dataBase)
+      ? Math.max(1, Math.ceil((dataAtual - dataBase) / this.ONE_DAY_MS))
+      : Math.max(1, serie.length - 1);
+
+    return { base, atual, dias };
   }
 
-  private obterMediaTopicosUltimos7Dias(): number {
-    const historico = this.lerHistoricoConcluidos();
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-
-    let soma = 0;
-    for (let i = 0; i < 7; i += 1) {
-      const d = new Date(base);
-      d.setDate(base.getDate() - i);
-      const chave = d.toISOString().slice(0, 10);
-      soma += Number(historico[chave] || 0);
+  get streakDiasAtual(): number {
+    const valor = Number(this.streakDias);
+    if (Number.isFinite(valor) && valor >= 0) {
+      const statusHoje = this.streakResumo?.statusHoje;
+      const melhor = Number(this.streakResumo?.melhorStreak || 0);
+      // Protege a UI de resposta incoerente: "INICIOU/CONCLUIU" nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o deve exibir 0
+      if (valor === 0 && (statusHoje === 'INICIOU' || statusHoje === 'CONCLUIU') && melhor > 0) {
+        return 1;
+      }
+      return valor;
     }
-    return soma / 7;
+    return 0;
   }
 
-  private somarHistoricoPeriodo(dias: number, deslocamentoDias: number): number {
-    const historico = this.lerHistoricoConcluidos();
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-
-    let soma = 0;
-    for (let i = 0; i < dias; i += 1) {
-      const d = new Date(base);
-      d.setDate(base.getDate() - deslocamentoDias - i);
-      const chave = d.toISOString().slice(0, 10);
-      soma += Number(historico[chave] || 0);
-    }
-
-    return soma;
+  private filtrarFilaPorEditalAtivo(fila: HojeFilaResponseDTO): HojeFilaResponseDTO {
+    const itens = this.filtrarPorEditalAtivo(Array.isArray(fila?.itens) ? fila.itens : []);
+    const tempoEstimadoMinutos = itens.reduce((acc, item) => acc + Number(item?.tempoEstimadoMinutos || 0), 0);
+    return {
+      ...fila,
+      totalItens: itens.length,
+      tempoEstimadoMinutos,
+      itens
+    };
   }
 
-  private get streakDiasAtual(): number {
-    const backend = Number(this.fila?.insights?.streakDias);
-    if (Number.isFinite(backend) && backend >= 0) {
-      return backend;
+  private filtrarTopicosCognitivosPorEditalAtivo(topicos: TopicoCognitivoDTO[]): TopicoCognitivoDTO[] {
+    const lista = Array.isArray(topicos) ? topicos : [];
+    return lista.filter((item) => this.pertenceAoEditalAtivoPorTopicoOuMateria(item?.topicoId, item?.materiaId));
+  }
+
+  private filtrarPorEditalAtivo<T extends { topicoId?: number | null; materiaId?: number | null }>(itens: T[]): T[] {
+    const lista = Array.isArray(itens) ? itens : [];
+    if (!this.editalAtivoResolvido) return lista;
+    if (!this.materiaIdsEditalAtivo.size) return [];
+    return lista.filter((item) => this.pertenceAoEditalAtivoPorTopicoOuMateria(item?.topicoId, item?.materiaId));
+  }
+
+  private pertenceAoEditalAtivoPorTopicoOuMateria(topicoId: unknown, materiaId: unknown): boolean {
+    const materiaIdNum = Number(materiaId);
+    if (Number.isFinite(materiaIdNum) && materiaIdNum > 0) {
+      return this.materiaIdsEditalAtivo.has(materiaIdNum);
     }
-    return Math.max(0, Number(this.streakDias || 0));
+
+    const topicoIdNum = Number(topicoId);
+    if (Number.isFinite(topicoIdNum) && topicoIdNum > 0) {
+      const ref = this.topicoMateriaMap.get(topicoIdNum);
+      return !!ref && this.materiaIdsEditalAtivo.has(ref.materiaId);
+    }
+
+    return false;
+  }
+
+  private recarregarDadosComFiltroEditalAtivo(): void {
+    this.carregarFila();
+    this.carregarResumoRevisoes();
+    this.carregarTopicosCognitivos();
+    this.carregarQtdTopicosEmRiscoJanela30();
   }
 }
+
 
 

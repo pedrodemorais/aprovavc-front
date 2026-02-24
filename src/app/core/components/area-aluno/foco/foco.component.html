@@ -1,0 +1,190 @@
+<div class="foco-page">
+  <p-toast></p-toast>
+
+  <div class="foco-shell" *ngIf="loading">
+    <p-card class="foco-card hero-card">
+      <div class="skeleton-row">
+        <p-skeleton width="55%" height="30px"></p-skeleton>
+      </div>
+      <div class="skeleton-row">
+        <p-skeleton width="92%" height="18px"></p-skeleton>
+      </div>
+      <div class="skeleton-row">
+        <p-skeleton width="44%" height="16px"></p-skeleton>
+      </div>
+      <p-skeleton width="260px" height="44px" borderRadius="12px"></p-skeleton>
+    </p-card>
+
+    <div class="grid-two">
+      <p-card class="foco-card">
+        <p-skeleton width="42%" height="20px"></p-skeleton>
+        <div class="metric-list">
+          <p-skeleton width="100%" height="16px"></p-skeleton>
+          <p-skeleton width="100%" height="16px"></p-skeleton>
+          <p-skeleton width="100%" height="16px"></p-skeleton>
+          <p-skeleton width="100%" height="16px"></p-skeleton>
+        </div>
+      </p-card>
+      <p-card class="foco-card">
+        <p-skeleton width="52%" height="20px"></p-skeleton>
+        <div class="metric-list">
+          <p-skeleton width="100%" height="16px"></p-skeleton>
+          <p-skeleton width="100%" height="16px"></p-skeleton>
+          <p-skeleton width="90%" height="16px"></p-skeleton>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <div class="foco-shell" *ngIf="!loading && erro">
+    <p-card class="foco-card error-card">
+      <h2>Não foi possível carregar seus dados hoje.</h2>
+      <p>Tentar novamente.</p>
+      <button
+        pButton
+        type="button"
+        label="Tentar novamente"
+        class="p-button-outlined"
+        (click)="tentarNovamente()"
+        aria-label="Tentar novamente carregar dados da tela foco"></button>
+    </p-card>
+  </div>
+
+  <div class="foco-shell" *ngIf="!loading && !erro && resumo as r">
+    <div class="cards-refresh-strip" *ngIf="cardsRefreshing">
+      <p-skeleton width="100%" height="6px" borderRadius="999px"></p-skeleton>
+    </div>
+
+    <p-card class="foco-card hero-card">
+      <span class="hero-kicker">Decisão do dia</span>
+      <div class="hero-meta">
+        <span class="hero-refreshing" *ngIf="cardsRefreshing">Atualizando cards...</span>
+        <span class="hero-updated" *ngIf="atualizadoAgora">Atualizado agora: {{ atualizadoAgora }}</span>
+      </div>
+      <h1>
+        <span *ngIf="hasRevisao">⚠️</span>
+        <span *ngIf="!hasRevisao">✅</span>
+        {{ tituloHero }}
+      </h1>
+      <p class="hero-sub">{{ subtituloHero }}</p>
+      <p class="hero-detail" *ngIf="hasRevisao">{{ detalheSeveridade }}</p>
+
+      <div class="hero-cta-row" *ngIf="hasRevisao; else semFilaCta">
+        <button
+          pButton
+          type="button"
+          class="hero-cta"
+          [loading]="iniciandoRevisao"
+          [disabled]="iniciandoRevisao"
+          label="Iniciar revisão agora"
+          (click)="iniciarRevisao()"
+          aria-label="Iniciar revisão agora"></button>
+      </div>
+
+      <ng-template #semFilaCta>
+        <button
+          pButton
+          type="button"
+          class="p-button-outlined"
+          label="Estudar novos tópicos"
+          (click)="irParaEstudar()"
+          aria-label="Ir para estudar novos tópicos"></button>
+      </ng-template>
+    </p-card>
+
+    <div class="grid-two">
+      <p-card class="foco-card">
+        <div class="card-head">
+          <h2>Risco cognitivo</h2>
+          <span class="card-caption">Risco = chance de esquecer se não revisar.</span>
+        </div>
+        <div class="metric-list">
+          <div class="metric-line">
+            <span>Risco 24h</span>
+            <strong>{{ r.risco24h }}</strong>
+          </div>
+          <div class="metric-line">
+            <span>Risco 48h</span>
+            <strong>{{ r.risco48h }}</strong>
+          </div>
+          <div class="metric-line">
+            <span>Risco 7d</span>
+            <strong>{{ r.risco7d }}</strong>
+          </div>
+          <div class="metric-line metric-line--progress">
+            <div class="metric-progress-title">
+              <span title="Media de estabilidade de todos os topicos ativos. Pode oscilar conforme tempo e novos topicos.">
+                Resistencia media da memoria (Global)
+              </span>
+              <strong>
+                {{ r.estabilidadeMedia }}%
+                <small class="metric-delta" title="Variacao em relacao a ontem.">{{ variacaoResistenciaGlobalLabel }}</small>
+              </strong>
+            </div>
+            <p-progressBar [value]="r.estabilidadeMedia"></p-progressBar>
+          </div>
+          <div class="metric-line metric-line--progress metric-line--focus">
+            <div class="metric-progress-title">
+              <span title="Media da estabilidade dos topicos revisados hoje. Pode variar ao incluir novos topicos revisados.">
+                Media de resistencia dos topicos revisados hoje
+              </span>
+              <strong>{{ resistenciaRevisadosHojeLabel }}</strong>
+            </div>
+            <p-progressBar
+              *ngIf="teveRevisoesHoje"
+              [value]="resistenciaRevisadosHojeValorBarra"></p-progressBar>
+          </div>
+          <p class="metric-note" *ngIf="teveRevisoesHoje">
+            {{ qtdRevisadosHoje }} topicos com revisao hoje.
+          </p>
+          <p class="metric-note" *ngIf="mensagemContextualEstabilidade">
+            {{ mensagemContextualEstabilidade }}
+          </p>
+        </div>
+      </p-card>
+
+      <p-card class="foco-card">
+        <div class="card-head">
+          <h2>Projeção de consolidação</h2>
+        </div>
+        <div *ngIf="podeMostrarProjecaoAvancada; else semDadosProj" class="metric-list">
+          <p>Ritmo atual: ~{{ r.projecaoDiasRitmoAtual }} dias para consolidar o edital.</p>
+        </div>
+        <ng-template #semDadosProj>
+          <div class="empty-state">
+            <strong>Sem dados suficientes ainda</strong>
+            <p>Complete algumas revisões para ativar projeções.</p>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+
+    <div class="grid-two">
+      <p-card class="foco-card">
+        <div class="card-head">
+          <h2>Evolução real (7 dias)</h2>
+        </div>
+        <div class="metric-list">
+          <p>{{ r.evolucao7dTopicos }} tópicos consolidados.</p>
+          <p>{{ r.evolucao7dPp }} p.p na consolidação.</p>
+          <p>Retenção média 7d: {{ r.retencaoMedia7d }}%</p>
+          <p class="copy-neutral" *ngIf="copyOscilacao">{{ copyOscilacao }}</p>
+        </div>
+      </p-card>
+
+      <p-card class="foco-card">
+        <div class="card-head">
+          <h2>Consistência</h2>
+        </div>
+        <div class="metric-list">
+          <p>{{ copyStreak }}</p>
+          <p *ngIf="!(r.streakAtual === 0 && r.filaHojeTotal === 0)">Seu recorde: {{ r.streakRecorde }} dias</p>
+          <p *ngIf="r.streakMediaQuebra !== null && r.streakMediaQuebra !== undefined">
+            Quebra média: {{ r.streakMediaQuebra }} dias
+          </p>
+          <p *ngIf="r.streakAtual === 0 && r.filaHojeTotal === 0">Faça 1 revisão rápida para manter a sequência.</p>
+        </div>
+      </p-card>
+    </div>
+  </div>
+</div>

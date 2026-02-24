@@ -2,7 +2,13 @@
   <p-toast></p-toast>
 
   <div class="retencao-header">
-    <h2>Retencao</h2>
+    <div class="retencao-title-line">
+      <h2>Retencao</h2>
+      <div class="retencao-abas retencao-abas-inline">
+        <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'geral'" (click)="selecionarAba('geral')">Visao geral</button>
+        <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'criticos'" (click)="selecionarAba('criticos')">Topicos criticos</button>
+      </div>
+    </div>
     <div class="retencao-filtros">
       <label for="janelaSelect">Janela</label>
       <select id="janelaSelect" [(ngModel)]="janelaSelecionada" (ngModelChange)="onJanelaChange()">
@@ -11,60 +17,175 @@
     </div>
   </div>
 
-  <div class="retencao-abas">
-    <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'geral'" (click)="selecionarAba('geral')">Visao geral</button>
-    <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'criticos'" (click)="selecionarAba('criticos')">Topicos criticos</button>
-  </div>
-
   <div class="premium-banner" *ngIf="premiumBloqueado">
     <span>Recurso disponivel no plano premium.</span>
     <button type="button" class="btn-planos" (click)="irParaPlanos()">Ver planos</button>
   </div>
 
   <ng-container *ngIf="abaSelecionada === 'geral'">
-    <section class="card">
-      <h3>Resumo do edital</h3>
-      <div class="resumo-grid" *ngIf="resumo as r; else resumoLoading">
-        <div class="resumo-item">
-          <span class="label">Total topicos</span>
-          <strong>{{ r.totalTopicos }}</strong>
+    <section class="retencao-resumo-cards">
+      <div class="estado-risk-card">
+        <div class="estado-risk-title-row">
+          <span class="estado-risk-title">Topicos criticos</span>
+          <i
+            class="pi pi-info-circle estado-risk-info"
+            pTooltip="Percentual de topicos em nivel critico no edital ativo."
+            tooltipPosition="top"
+            [showDelay]="120"
+            [hideDelay]="80"
+            tabindex="0"
+            aria-label="Ajuda sobre topicos criticos"></i>
         </div>
-        <div class="resumo-item">
-          <span class="label">Consolidados</span>
-          <strong>{{ r.topicosConsolidados }}</strong>
-          <div class="bar"><div class="fill consolidado" [style.width.%]="r.percentualConsolidado"></div></div>
-          <span class="pct">{{ formatarPercentual(r.percentualConsolidado) }}</span>
+        <div class="estado-risk-main">
+          <img
+            src="assets/img/icon/puzzle.png"
+            alt="Topicos criticos"
+            class="estado-risk-icon" />
+          <span class="estado-risk-value">{{ percentualTopicosCriticosCard }}%</span>
         </div>
-        <div class="resumo-item">
-          <span class="label">Em risco</span>
-          <strong>{{ r.topicosEmRisco }}</strong>
-          <div class="bar"><div class="fill risco" [style.width.%]="r.percentualEmRisco"></div></div>
-          <span class="pct">{{ formatarPercentual(r.percentualEmRisco) }}</span>
+        <div class="estado-risk-prioridade" *ngIf="quantidadeTopicosCriticosCard > 0">
+          Priorizar revisao
         </div>
-        <div class="resumo-item">
-          <span class="label">Criticos</span>
-          <strong>{{ r.topicosCriticos }}</strong>
-          <div class="bar"><div class="fill critico" [style.width.%]="r.percentualCritico"></div></div>
-          <span class="pct">{{ formatarPercentual(r.percentualCritico) }}</span>
-        </div>
-        <div class="resumo-item">
-          <span class="label">Sem dados</span>
-          <strong>{{ r.topicosSemDados }}</strong>
-          <div class="bar"><div class="fill semdados" [style.width.%]="r.percentualSemDados"></div></div>
-          <span class="pct">{{ formatarPercentual(r.percentualSemDados) }}</span>
+        <div class="estado-risk-sub">
+          {{ quantidadeTopicosCriticosCard }} {{ quantidadeTopicosCriticosCard === 1 ? 'topico critico' : 'topicos criticos' }} para revisar
         </div>
       </div>
-      <div class="resumo-pizza" *ngIf="resumo as r">
-        <div class="pizza" [style.background]="resumoPizzaStyle" aria-label="Distribuicao de retencao"></div>
-        <div class="pizza-legenda">
-          <span class="leg-item"><i class="leg-dot consolidado"></i>Consolidado ({{ r.topicosConsolidados }})</span>
-          <span class="leg-item"><i class="leg-dot risco"></i>Em risco ({{ r.topicosEmRisco }})</span>
-          <span class="leg-item"><i class="leg-dot critico"></i>Criticos ({{ r.topicosCriticos }})</span>
-          <span class="leg-item"><i class="leg-dot semdados"></i>Sem dados ({{ r.topicosSemDados }})</span>
+
+      <div class="estado-risk-card">
+        <div class="estado-risk-title-row">
+          <span class="estado-risk-title">Risco geral</span>
+          <i
+            class="pi pi-info-circle estado-risk-info"
+            pTooltip="Percentual de topicos em risco (criticos + em risco) no edital ativo."
+            tooltipPosition="top"
+            [showDelay]="120"
+            [hideDelay]="80"
+            tabindex="0"
+            aria-label="Ajuda sobre risco geral"></i>
+        </div>
+        <div class="risk-gauge-wrap" [ngClass]="riscoGeralFaixaClasseCard">
+          <svg class="risk-gauge" viewBox="0 0 120 70" role="img" aria-label="Medidor de risco geral">
+            <path class="risk-gauge-track" d="M10 60 A50 50 0 0 1 110 60"></path>
+            <path class="risk-gauge-fill" d="M10 60 A50 50 0 0 1 110 60" [attr.stroke-dasharray]="riscoGeralArcDasharrayCard"></path>
+            <line class="risk-gauge-needle" x1="60" y1="60" x2="60" y2="20" [attr.transform]="'rotate(' + riscoGeralNeedleAngleCard + ' 60 60)'"></line>
+            <circle class="risk-gauge-pivot" cx="60" cy="60" r="3.5"></circle>
+          </svg>
+          <div class="risk-gauge-value">{{ percentualRiscoGeralCard }}%</div>
+          <div class="risk-gauge-label">{{ riscoGeralFaixaLabelCard }}</div>
+        </div>
+        <div class="estado-risk-sub">
+          {{ quantidadeTopicosRiscoGeralCard }} {{ quantidadeTopicosRiscoGeralCard === 1 ? 'topico em risco' : 'topicos em risco' }}
         </div>
       </div>
-      <ng-template #resumoLoading>
-        <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo...' : 'Sem dados.' }}</div>
+
+      <div class="estado-risk-card estado-risk-card--consolidado">
+        <div class="estado-risk-title-row">
+          <span class="estado-risk-title">Edital consolidado</span>
+        </div>
+        <div class="estado-risk-scope">{{ editalEscopoLabelCard }}</div>
+        <div class="estado-risk-main">
+          <img
+            src="assets/img/icon/consolidar.png"
+            alt="Edital consolidado"
+            class="estado-risk-icon" />
+          <span class="estado-risk-value">{{ percentualConsolidadoCardLabel }}</span>
+        </div>
+        <div class="estado-risk-sub">
+          Faltam {{ faltamTopicosConsolidarCard }} {{ faltamTopicosConsolidarCard === 1 ? 'topico' : 'topicos' }} no edital ativo
+        </div>
+      </div>
+    </section>
+
+    <div class="retencao-top-grid">
+      <section class="card card-resumo">
+        <h3 class="resumo-titulo">
+          Resumo do edital
+          <i
+            class="pi pi-info-circle resumo-info"
+            pTooltip="Distribuicao atual do seu dominio"
+            tooltipPosition="top"
+            aria-label="Informacoes sobre o resumo do edital">
+          </i>
+        </h3>
+        <div class="resumo-layout" *ngIf="resumo as r; else resumoLoading">
+          <div class="resumo-chart-only">
+            <div class="resumo-donut-wrap">
+              <div class="resumo-donut-ring" [style.background]="resumoPizzaStyle" aria-label="Distribuicao de retencao"></div>
+              <div class="resumo-donut-center">
+                <span class="resumo-donut-value">{{ r.totalTopicos }}</span>
+                <span class="resumo-donut-label">Total topicos</span>
+              </div>
+            </div>
+            <div class="pizza-legenda">
+              <span class="leg-item"><i class="leg-dot consolidado"></i>{{ r.topicosConsolidados }} Consolidados</span>
+              <span class="leg-item"><i class="leg-dot critico"></i>{{ r.topicosCriticos }} Criticos</span>
+              <span class="leg-item"><i class="leg-dot risco"></i>{{ r.topicosEmRisco }} Em risco</span>
+              <span class="leg-item"><i class="leg-dot semdados"></i>{{ r.topicosSemDados }} Sem dados</span>
+            </div>
+          </div>
+        </div>
+        <ng-template #resumoLoading>
+          <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo...' : 'Sem dados.' }}</div>
+        </ng-template>
+      </section>
+
+      <section class="card card-tendencias-cards">
+        <h3>Indicadores estrategicos</h3>
+        <div class="analytics-cards analytics-cards-estrategicos">
+          <div class="analytics-card estado-sistema-card" [ngClass]="estadoSistemaClasse">
+            <div class="analytics-title">Estado do sistema</div>
+            <div class="analytics-value">{{ estadoSistemaVM.score }}/100</div>
+            <div class="analytics-sub">{{ estadoSistemaVM.label }} • {{ estadoSistemaVM.faixaTexto }}</div>
+            <div class="estado-sistema-explain">{{ estadoSistemaVM.explicacaoCurta }}</div>
+            <div class="estado-sistema-gauge" [attr.aria-label]="'Score atual: ' + estadoSistemaVM.score + ' de 100'">
+              <div class="estado-sistema-gauge-fill" [style.width.%]="estadoSistemaVM.score"></div>
+              <span class="estado-sistema-gauge-dot" [style.left.%]="estadoSistemaVM.score"></span>
+            </div>
+            <div class="estado-sistema-urgencia" [ngClass]="'urgencia-' + estadoSistemaVM.urgencia.nivel">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ estadoSistemaVM.urgencia.texto }}</span>
+            </div>
+            <div class="analytics-meta">{{ estadoSistemaVM.delta7dLabel }}</div>
+            <div class="estado-sistema-acao">{{ estadoSistemaVM.proximaAcao.texto }}</div>
+            <button
+              *ngIf="estadoSistemaVM.proximaAcao.ctaAction !== 'none' && estadoSistemaVM.proximaAcao.ctaLabel"
+              type="button"
+              class="estado-sistema-cta"
+              (click)="executarAcaoEstadoSistema()">
+              {{ estadoSistemaVM.proximaAcao.ctaLabel }}
+            </button>
+          </div>
+          <div class="analytics-stack">
+            <div class="analytics-card">
+              <div class="analytics-title">Velocidade de consolidacao</div>
+              <div class="analytics-value">{{ velocidadeDiasValor }}</div>
+              <div class="analytics-sub">tempo medio para consolidar um topico</div>
+              <div class="analytics-meta">{{ velocidadeComparativoLabel }}</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-title">Evolucao (7 dias)</div>
+              <div class="analytics-value">{{ evolucaoValor }}</div>
+              <div class="analytics-sub">{{ evolucaoSub }}</div>
+              <div class="analytics-meta">{{ evolucaoExtra }}</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-title">Projecao de conclusao</div>
+              <div class="analytics-value">{{ projecaoDiasValor }}</div>
+              <div class="analytics-sub">{{ projecaoDiasSub }}</div>
+              <div class="analytics-meta" *ngIf="projecaoDiasExtra">{{ projecaoDiasExtra }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" id="topicos-em-risco">
+      <h3>Tendencias (ultimos {{ janelaSelecionada }} dias)</h3>
+      <div class="analytics-chart-wrap" *ngIf="!carregandoAnalytics && tendenciasChartData; else analyticsLoading">
+        <p-chart type="line" [data]="tendenciasChartData" [options]="tendenciasChartOptions"></p-chart>
+      </div>
+      <ng-template #analyticsLoading>
+        <div class="placeholder">{{ carregandoAnalytics ? 'Carregando tendencias...' : 'Sem serie para a janela selecionada.' }}</div>
       </ng-template>
     </section>
 
@@ -176,7 +297,15 @@
             <th>Materia</th>
             <th>Topico</th>
             <th>Score</th>
-            <th>Risk</th>
+            <th>
+              Risco de esquecimento
+              <i
+                class="pi pi-info-circle resumo-info"
+                pTooltip="Probabilidade estimada de esquecer o topico no curto prazo."
+                tooltipPosition="top"
+                aria-label="Informacao sobre risco de esquecimento">
+              </i>
+            </th>
             <th>Dias s/ evento</th>
             <th>Acoes</th>
           </tr>
@@ -278,3 +407,4 @@
     </div>
   </p-dialog>
 </div>
+

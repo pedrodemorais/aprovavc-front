@@ -95,6 +95,8 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   private blocosSubscription?: Subscription;
   private tentativaAutoAtivarPadrao = false;
   private readonly revisaoAtivaDiaKeyPrefix = 'dashboard:revisao-ativa-dia:';
+  private revisaoAtivaDiasMemoria = new Set<string>();
+  private dataProvaMemoria = new Map<string, string>();
 
   constructor(
     private salaEstudoService: SalaEstudoService,
@@ -1001,15 +1003,13 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   private marcarHistoricoRevisoesDoDia(): void {
-    if (typeof localStorage === 'undefined') return;
     if (this.revisoesPrioritariasTotal > 0) {
-      localStorage.setItem(this.getRevisaoAtivaDiaKey(), '1');
+      this.revisaoAtivaDiasMemoria.add(this.getRevisaoAtivaDiaKey());
     }
   }
 
   private jaTeveRevisaoPendenteHoje(): boolean {
-    if (typeof localStorage === 'undefined') return false;
-    return localStorage.getItem(this.getRevisaoAtivaDiaKey()) === '1';
+    return this.revisaoAtivaDiasMemoria.has(this.getRevisaoAtivaDiaKey());
   }
 
   private getRevisaoAtivaDiaKey(): string {
@@ -1694,22 +1694,22 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
 
   private obterDataProva(edital: Edital | null): string | null {
     if (!edital) return null;
-    return edital.dataProva || localStorage.getItem(this.getDataProvaKey(edital));
+    return edital.dataProva || this.dataProvaMemoria.get(this.getDataProvaKey(edital)) || null;
   }
 
   private salvarDataProvaLocal(edital: Edital, data: string | null): void {
     const key = this.getDataProvaKey(edital);
     if (!data) {
-      localStorage.removeItem(key);
+      this.dataProvaMemoria.delete(key);
       edital.dataProva = null;
       return;
     }
-    localStorage.setItem(key, data);
+    this.dataProvaMemoria.set(key, data);
     edital.dataProva = data;
   }
 
   private removerDataProvaLocal(edital: Edital): void {
-    localStorage.removeItem(this.getDataProvaKey(edital));
+    this.dataProvaMemoria.delete(this.getDataProvaKey(edital));
   }
 
   private getDataProvaKey(edital: Edital): string {
@@ -1717,12 +1717,7 @@ export class DashboardRevisaoComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   private getMediaRevisaoSegundos(): number | null {
-    const totalSegundos = Number(localStorage.getItem('revisao:tempoTotalSegundos')) || 0;
-    const totalItens = Number(localStorage.getItem('revisao:itensTotais')) || 0;
-    if (totalItens < 5 || totalSegundos <= 0) {
-      return null;
-    }
-    return totalSegundos / totalItens;
+    return null;
   }
 
   private atualizarPlanoAtaque(): void {

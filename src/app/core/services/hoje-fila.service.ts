@@ -1,9 +1,18 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { HojeFilaInsightsDTO, HojeFilaItemDTO, HojeFilaResponseDTO, PrioridadeFilaHoje, TipoFilaHoje } from '../models/hoje-fila.models';
+import {
+  DashboardStreakResumoDTO,
+  HojeFilaInsightsDTO,
+  HojeFilaItemDTO,
+  HojeFilaResponseDTO,
+  HojeResumoDTO,
+  PrioridadeFilaHoje,
+  StatusHojeStreak,
+  TipoFilaHoje
+} from '../models/hoje-fila.models';
 
 interface HojeFilaItemRaw {
   topicoId?: number | null;
@@ -40,15 +49,68 @@ interface HojeFilaResponseRaw {
   } | null;
 }
 
+interface HojeResumoRaw {
+  dataReferencia?: string | null;
+  timezone?: string | null;
+  streakDias?: number | null;
+  estudouHoje?: boolean | null;
+  diasAtivosUltimos7?: number | null;
+  diasAtivosUltimos30?: number | null;
+  itensConcluidosHoje?: number | null;
+  tempoEstudoHojeMinutos?: number | null;
+  atualizadoEm?: string | null;
+}
+
+interface DashboardStreakResumoRaw {
+  streakAtual?: number | null;
+  melhorStreak?: number | null;
+  consistencia30DiasQtd?: number | null;
+  consistencia30DiasTotal?: number | null;
+  consistencia30DiasPercent?: number | null;
+  statusHoje?: string | null;
+  dataReferencia?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HojeFilaService {
   private readonly url = `${environment.apiUrl}/sala-estudo/hoje/fila`;
+  private readonly resumoUrl = `${environment.apiUrl}/sala-estudo/hoje/resumo`;
+  private readonly streakUrl = `${environment.apiUrl}/dashboard/streak`;
+  private readonly noCacheHeaders = new HttpHeaders({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0'
+  });
 
   constructor(private http: HttpClient) {}
 
   getFilaHoje(): Observable<HojeFilaResponseDTO> {
-    return this.http.get<HojeFilaResponseRaw | HojeFilaItemRaw[]>(this.url).pipe(
+    const params = new HttpParams().set('_t', String(Date.now()));
+    return this.http.get<HojeFilaResponseRaw | HojeFilaItemRaw[]>(this.url, {
+      params,
+      headers: this.noCacheHeaders
+    }).pipe(
       map((raw) => this.normalizarResposta(raw))
+    );
+  }
+
+  getResumoHoje(): Observable<HojeResumoDTO> {
+    const params = new HttpParams().set('_t', String(Date.now()));
+    return this.http.get<HojeResumoRaw | null>(this.resumoUrl, {
+      params,
+      headers: this.noCacheHeaders
+    }).pipe(
+      map((raw) => this.normalizarResumoHoje(raw))
+    );
+  }
+
+  getDashboardStreak(): Observable<DashboardStreakResumoDTO> {
+    const params = new HttpParams().set('_t', String(Date.now()));
+    return this.http.get<DashboardStreakResumoRaw | null>(this.streakUrl, {
+      params,
+      headers: this.noCacheHeaders
+    }).pipe(
+      map((raw) => this.normalizarDashboardStreak(raw))
     );
   }
 
@@ -77,6 +139,38 @@ export class HojeFilaService {
       tendencia7dPercent: this.toNullableNumber(raw.tendencia7dPercent),
       tendencia7dLabel: (raw.tendencia7dLabel ?? null) || null,
       consolidadosSemanaLabel: (raw.consolidadosSemanaLabel ?? null) || null
+    };
+  }
+
+  private normalizarResumoHoje(raw: HojeResumoRaw | null | undefined): HojeResumoDTO {
+    return {
+      dataReferencia: String(raw?.dataReferencia || ''),
+      timezone: String(raw?.timezone || ''),
+      streakDias: this.toNullableNumber(raw?.streakDias),
+      estudouHoje: Boolean(raw?.estudouHoje),
+      diasAtivosUltimos7: Math.max(0, Number(raw?.diasAtivosUltimos7 || 0)),
+      diasAtivosUltimos30: Math.max(0, Number(raw?.diasAtivosUltimos30 || 0)),
+      itensConcluidosHoje: Math.max(0, Number(raw?.itensConcluidosHoje || 0)),
+      tempoEstudoHojeMinutos: Math.max(0, Number(raw?.tempoEstudoHojeMinutos || 0)),
+      atualizadoEm: raw?.atualizadoEm ?? null
+    };
+  }
+
+  private normalizarDashboardStreak(raw: DashboardStreakResumoRaw | null | undefined): DashboardStreakResumoDTO {
+    const status = String(raw?.statusHoje || '').toUpperCase();
+    const statusHoje: StatusHojeStreak =
+      status === 'CONCLUIU' || status === 'INICIOU' || status === 'NAO_INICIOU'
+        ? (status as StatusHojeStreak)
+        : 'NAO_INICIOU';
+
+    return {
+      streakAtual: Math.max(0, Number(raw?.streakAtual || 0)),
+      melhorStreak: Math.max(0, Number(raw?.melhorStreak || 0)),
+      consistencia30DiasQtd: Math.max(0, Number(raw?.consistencia30DiasQtd || 0)),
+      consistencia30DiasTotal: Math.max(1, Number(raw?.consistencia30DiasTotal || 30)),
+      consistencia30DiasPercent: Number(Number(raw?.consistencia30DiasPercent || 0).toFixed(1)),
+      statusHoje,
+      dataReferencia: String(raw?.dataReferencia || '')
     };
   }
 

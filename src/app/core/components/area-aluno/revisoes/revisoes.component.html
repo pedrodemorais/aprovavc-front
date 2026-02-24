@@ -39,7 +39,7 @@
               <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
               <span
                 class="status-dot"
-                *ngIf="rowData?.isTopico"
+                *ngIf="rowData?.isTopico && rowData?.source"
                 [ngClass]="{
                   'status-vencida': rowData.status === 'VENCIDA',
                   'status-hoje':   rowData.status === 'EM_DIA',

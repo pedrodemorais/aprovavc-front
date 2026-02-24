@@ -849,15 +849,4 @@ body.theme-dark .user-menu-panel {
   }
 }
 
-.dashboard.focus-hoje .menu {
-  display: none;
-}
-
-.dashboard.focus-hoje .content {
-  margin-left: 0 !important;
-}
-
-.dashboard.focus-hoje .topbar-actions {
-  display: none;
-}
 
