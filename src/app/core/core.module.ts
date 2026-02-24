@@ -35,6 +35,7 @@ import { DataViewModule } from 'primeng/dataview';
 import { CardModule } from 'primeng/card';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
+import { DividerModule } from 'primeng/divider';
 
 import { QuillModule } from 'ngx-quill';
 import { NgxMaskModule } from 'ngx-mask';
@@ -138,6 +139,7 @@ registerLocaleData(localePt);
     CardModule,
     ProgressBarModule,
     SkeletonModule,
+    DividerModule,
 
     QuillModule.forRoot(),
     NgxMaskModule.forChild(),

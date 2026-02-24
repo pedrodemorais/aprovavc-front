@@ -179,6 +179,108 @@ export class FocoComponent implements OnInit {
     return null;
   }
 
+  get comparativoBaseGeralLabel(): string {
+    if (this.estabilidadeGlobalOntem === null) {
+      return 'Ainda sem comparacao com ontem.';
+    }
+
+    const ontem = Math.round(this.estabilidadeGlobalOntem);
+    const delta = this.variacaoResistenciaGlobalOntem ?? 0;
+    if (delta > 0) {
+      return `Ontem: ${ontem}% (▲ +${Math.round(delta)})`;
+    }
+    if (delta < 0) {
+      return `Ontem: ${ontem}% (▼ ${Math.round(delta)})`;
+    }
+    return `Ontem: ${ontem}% (0)`;
+  }
+
+  get microcopySaudeMemoriaLinhas(): { linha1: string; linha2: string } {
+    return this.getMicrocopyLinhas();
+  }
+
+  get risco24hLabel(): string {
+    return this.formatarValorRisco(this.resumo?.risco24h);
+  }
+
+  get risco48hLabel(): string {
+    return this.formatarValorRisco(this.resumo?.risco48h);
+  }
+
+  get risco7dLabel(): string {
+    return this.formatarValorRisco(this.resumo?.risco7d);
+  }
+
+  formatNumeroTopicos(n: number): string {
+    const valor = Math.max(0, Math.round(Number(n) || 0));
+    if (valor === 0) return '0 topicos';
+    return valor === 1 ? '1 topico' : `${valor} topicos`;
+  }
+
+  getLabelBaseGeral(percent: number): string {
+    const p = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+    if (p < 40) return 'Em construcao';
+    if (p < 70) return 'Em fortalecimento';
+    return 'Estavel';
+  }
+
+  get baseGeralStatusLabel(): string {
+    return this.getLabelBaseGeral(this.resistenciaGlobalPercent);
+  }
+
+  getStatusSaudeMemoria(): 'urgente' | 'atencao' | 'ok' {
+    const criticosFila = Math.max(
+      0,
+      Math.round(Number(this.resumo?.filaHojeCriticos || 0))
+    );
+
+    const risco48h = Math.max(
+      0,
+      Math.round(Number(this.resumo?.risco48h || 0))
+    );
+
+    if (criticosFila > 0) {
+      return 'urgente';
+    }
+
+    if (risco48h > 0) {
+      return 'atencao';
+    }
+
+    return 'ok';
+  }
+
+  getStatusSaudeMemoriaLabel(): string {
+    const s = this.getStatusSaudeMemoria();
+    if (s === 'urgente') return 'Status: urgente';
+    if (s === 'atencao') return 'Status: atencao';
+    return 'Status: ok';
+  }
+
+  getMicrocopyLinhas(): { linha1: string; linha2: string } {
+    const risco48h = Math.max(0, Math.round(Number(this.resumo?.risco48h || 0)));
+    const risco7d = Math.max(0, Math.round(Number(this.resumo?.risco7d || 0)));
+    const criticosFila = Math.max(0, Math.round(Number(this.resumo?.filaHojeCriticos || 0)));
+    const base = Math.max(0, Math.min(100, Math.round(Number(this.resistenciaGlobalPercent || 0))));
+    const teveHoje = this.teveRevisoesHoje;
+    const mediaHoje = Math.max(0, Math.min(100, Math.round(Number(this.resistenciaRevisadosHojePercent || 0))));
+
+    let linha1 = 'Voce esta em dia. Mantenha o ritmo.';
+    if (criticosFila > 0) linha1 = 'Priorize os criticos hoje para evitar esquecimento.';
+    else if (risco48h > 0) linha1 = 'Priorize os topicos em alerta (48h) para evitar que virem criticos.';
+    else if (risco7d > 0) linha1 = 'Faca revisoes curtas hoje para nao acumular na semana.';
+
+    let linha2 = 'Sua base esta fortalecendo. Continue consistente.';
+    if (base < 40) linha2 = 'Sua base geral ainda esta em construcao — isso e normal no comeco.';
+    else if (base >= 70) linha2 = 'Sua base esta firme. O desafio e manter constancia.';
+
+    if (teveHoje && mediaHoje >= 70 && base < 70) {
+      linha2 = linha2 + ' Boa qualidade hoje.';
+    }
+
+    return { linha1, linha2 };
+  }
+
   iniciarRevisao(): void {
     this.comecarRevisaoPrioritaria();
   }
@@ -278,6 +380,15 @@ export class FocoComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     }).format(data);
+  }
+
+  private formatarValorRisco(valor: number | null | undefined): string {
+    const n = Number(valor);
+    if (!Number.isFinite(n)) return '--';
+    if (!Number.isInteger(n) && n >= 0 && n <= 100) {
+      return `${Math.round(n)}%`;
+    }
+    return this.formatNumeroTopicos(n);
   }
 
   private montarResumo(
@@ -625,16 +736,20 @@ export class FocoComponent implements OnInit {
   private buscarMateriasEditalAtivo() {
     return this.editalService.listarComInclude(['materias']).pipe(
       map((editais) => {
-        const ativo = (editais || []).find((e) => e?.ativo) || null;
         const ids = new Set<number>();
-        const materias = Array.isArray((ativo as any)?.materias) ? ((ativo as any).materias as any[]) : [];
-        materias.forEach((materia) => {
-          if (materia?.ativo === false) return;
-          const materiaId = Number(materia?.materiaId ?? materia?.id ?? 0);
-          if (materiaId > 0) {
-            ids.add(materiaId);
-          }
+
+        const editaisAtivos = (editais || []).filter((e) => e?.ativo);
+        editaisAtivos.forEach((edital) => {
+          const materias = Array.isArray((edital as any)?.materias) ? ((edital as any).materias as any[]) : [];
+          materias.forEach((materia) => {
+            if (materia?.ativo === false) return;
+            const materiaId = Number(materia?.materiaId ?? materia?.id ?? 0);
+            if (materiaId > 0) {
+              ids.add(materiaId);
+            }
+          });
         });
+
         return ids;
       })
     );

@@ -56,17 +56,21 @@
     </div>
 
     <p-card class="foco-card hero-card">
-      <span class="hero-kicker">Decisão do dia</span>
-      <div class="hero-meta">
-        <span class="hero-refreshing" *ngIf="cardsRefreshing">Atualizando cards...</span>
-        <span class="hero-updated" *ngIf="atualizadoAgora">Atualizado agora: {{ atualizadoAgora }}</span>
-      </div>
-      <h1>
+      <h1 class="hero-title-row">
         <span *ngIf="hasRevisao">⚠️</span>
         <span *ngIf="!hasRevisao">✅</span>
         {{ tituloHero }}
+        <button
+          *ngIf="hasRevisao"
+          type="button"
+          class="hero-info-btn"
+          pTooltip="Se ignorados, sua retencao pode cair nas proximas 48h. Vamos proteger sua memoria."
+          tooltipPosition="top"
+          aria-label="Informacao sobre risco de retencao">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+        </button>
       </h1>
-      <p class="hero-sub">{{ subtituloHero }}</p>
+      <p class="hero-sub" *ngIf="!hasRevisao">{{ subtituloHero }}</p>
       <p class="hero-detail" *ngIf="hasRevisao">{{ detalheSeveridade }}</p>
 
       <div class="hero-cta-row" *ngIf="hasRevisao; else semFilaCta">
@@ -92,72 +96,96 @@
       </ng-template>
     </p-card>
 
-    <div class="grid-two">
-      <p-card class="foco-card">
-        <div class="card-head">
-          <h2>Risco cognitivo</h2>
-          <span class="card-caption">Risco = chance de esquecer se não revisar.</span>
-        </div>
-        <div class="metric-list">
-          <div class="metric-line">
-            <span>Risco 24h</span>
-            <strong>{{ r.risco24h }}</strong>
-          </div>
-          <div class="metric-line">
-            <span>Risco 48h</span>
-            <strong>{{ r.risco48h }}</strong>
-          </div>
-          <div class="metric-line">
-            <span>Risco 7d</span>
-            <strong>{{ r.risco7d }}</strong>
-          </div>
-          <div class="metric-line metric-line--progress">
-            <div class="metric-progress-title">
-              <span title="Media de estabilidade de todos os topicos ativos. Pode oscilar conforme tempo e novos topicos.">
-                Resistencia media da memoria (Global)
+    <p-card class="foco-card">
+      <div class="card-head">
+        <h2>
+          🧠 Saude da Memoria (Hoje)
+          <span class="status-chip" [ngClass]="'status-chip--' + getStatusSaudeMemoria()"
+                role="img" [attr.aria-label]="getStatusSaudeMemoriaLabel()">
+            {{ getStatusSaudeMemoria() === 'urgente' ? 'Urgente' : (getStatusSaudeMemoria() === 'atencao' ? 'Atencao' : 'Ok') }}
+          </span>
+        </h2>
+        <span class="card-caption">O que pode enfraquecer se voce nao revisar agora.</span>
+      </div>
+      <div class="metric-list">
+        <div class="risk-pill-grid">
+          <div class="risk-pill" aria-label="Enfraquece em 24 horas">
+            <div class="risk-pill-head">
+              <span class="risk-pill-label">
+                <span role="img" aria-label="Sinal de atencao laranja">🟠</span>
+                Enfraquece em 24h
               </span>
-              <strong>
-                {{ r.estabilidadeMedia }}%
-                <small class="metric-delta" title="Variacao em relacao a ontem.">{{ variacaoResistenciaGlobalLabel }}</small>
-              </strong>
             </div>
-            <p-progressBar [value]="r.estabilidadeMedia"></p-progressBar>
+            <strong class="risk-pill-value">{{ risco24hLabel }}</strong>
+            <p>Tópicos que comecam a escapar se voce nao revisar.</p>
           </div>
-          <div class="metric-line metric-line--progress metric-line--focus">
-            <div class="metric-progress-title">
-              <span title="Media da estabilidade dos topicos revisados hoje. Pode variar ao incluir novos topicos revisados.">
-                Media de resistencia dos topicos revisados hoje
+          <div class="risk-pill" aria-label="Critico em 48 horas">
+            <div class="risk-pill-head">
+              <span class="risk-pill-label">
+                <span role="img" aria-label="Sinal critico vermelho">🔴</span>
+                Critico em 48h
               </span>
-              <strong>{{ resistenciaRevisadosHojeLabel }}</strong>
             </div>
-            <p-progressBar
-              *ngIf="teveRevisoesHoje"
-              [value]="resistenciaRevisadosHojeValorBarra"></p-progressBar>
+            <strong class="risk-pill-value">{{ risco48hLabel }}</strong>
+            <p>Topicos que entram na zona de esquecimento (urgente).</p>
           </div>
-          <p class="metric-note" *ngIf="teveRevisoesHoje">
-            {{ qtdRevisadosHoje }} topicos com revisao hoje.
-          </p>
-          <p class="metric-note" *ngIf="mensagemContextualEstabilidade">
-            {{ mensagemContextualEstabilidade }}
-          </p>
+          <div class="risk-pill" aria-label="Em risco na semana">
+            <div class="risk-pill-head">
+              <span class="risk-pill-label">
+                <span role="img" aria-label="Alerta da semana">🚨</span>
+                Em risco na semana
+              </span>
+            </div>
+            <strong class="risk-pill-value">{{ risco7dLabel }}</strong>
+            <p>Topicos que podem virar divida cognitiva (se nao revisar ate la).</p>
+          </div>
         </div>
-      </p-card>
 
-      <p-card class="foco-card">
-        <div class="card-head">
-          <h2>Projeção de consolidação</h2>
-        </div>
-        <div *ngIf="podeMostrarProjecaoAvancada; else semDadosProj" class="metric-list">
-          <p>Ritmo atual: ~{{ r.projecaoDiasRitmoAtual }} dias para consolidar o edital.</p>
-        </div>
-        <ng-template #semDadosProj>
-          <div class="empty-state">
-            <strong>Sem dados suficientes ainda</strong>
-            <p>Complete algumas revisões para ativar projeções.</p>
+        <p-divider></p-divider>
+
+        <div class="metric-line metric-line--progress">
+          <div class="metric-progress-title">
+            <span>📌 Base geral • {{ baseGeralStatusLabel }}</span>
+            <strong>
+              {{ r.estabilidadeMedia }}%
+            </strong>
           </div>
-        </ng-template>
-      </p-card>
-    </div>
+          <p-progressBar [value]="r.estabilidadeMedia"></p-progressBar>
+          <p class="metric-note">Isso e o quanto sua memoria total esta firme no momento. No comeco e normal ficar baixo.</p>
+          <p class="metric-note">{{ comparativoBaseGeralLabel }}</p>
+        </div>
+
+        <div class="metric-line metric-line--progress metric-line--focus">
+          <div class="metric-progress-title">
+            <span>✅ Hoje</span>
+            <strong>{{ resistenciaRevisadosHojeLabel }}</strong>
+          </div>
+          <p-progressBar
+            *ngIf="teveRevisoesHoje"
+            [value]="resistenciaRevisadosHojeValorBarra"></p-progressBar>
+          <p class="metric-note">Isso mede a resistencia media dos topicos revisados hoje. Voce pode ir bem hoje e ainda estar construindo a base.</p>
+        </div>
+
+        <p class="metric-note">{{ formatNumeroTopicos(qtdRevisadosHoje) }} com revisao hoje.</p>
+        <p class="metric-note metric-note--insight">{{ microcopySaudeMemoriaLinhas.linha1 }}</p>
+        <p class="metric-note metric-note--insight">{{ microcopySaudeMemoriaLinhas.linha2 }}</p>
+      </div>
+    </p-card>
+
+    <p-card class="foco-card">
+      <div class="card-head">
+        <h2>Projeção de consolidação</h2>
+      </div>
+      <div *ngIf="podeMostrarProjecaoAvancada; else semDadosProj" class="metric-list">
+        <p>Ritmo atual: ~{{ r.projecaoDiasRitmoAtual }} dias para consolidar o edital.</p>
+      </div>
+      <ng-template #semDadosProj>
+        <div class="empty-state">
+          <strong>Sem dados suficientes ainda</strong>
+          <p>Complete algumas revisões para ativar projeções.</p>
+        </div>
+      </ng-template>
+    </p-card>
 
     <div class="grid-two">
       <p-card class="foco-card">

@@ -419,13 +419,15 @@ export class RevisoesComponent implements OnInit {
   private carregarEscopoEditalAtivo(onComplete?: () => void): void {
     this.editalService.listarComInclude(['materias']).subscribe({
       next: (editais) => {
-        const ativo = (editais || []).find((e) => e?.ativo);
         const materiaIds = new Set<number>();
-        for (const materia of ativo?.materias || []) {
-          if ((materia as any)?.ativo === false) continue;
-          const materiaId = Number((materia as any)?.materiaId);
-          if (Number.isFinite(materiaId) && materiaId > 0) {
-            materiaIds.add(materiaId);
+        const ativos = (editais || []).filter((e) => e?.ativo);
+        for (const edital of ativos) {
+          for (const materia of edital?.materias || []) {
+            if ((materia as any)?.ativo === false) continue;
+            const materiaId = Number((materia as any)?.materiaId);
+            if (Number.isFinite(materiaId) && materiaId > 0) {
+              materiaIds.add(materiaId);
+            }
           }
         }
 
