@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+﻿import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
@@ -28,7 +28,8 @@ export interface HojeResumoDTO {
   risco24h: number;
   risco48h: number;
   risco7d: number;
-  estabilidadeMedia: number;
+  estabilidadeMedia: number | null;
+  coberturaBasePercent: number;
   retencaoMedia7d: number;
   retencaoMedia14d: number;
   evolucao7dPp: number;
@@ -41,6 +42,8 @@ export interface HojeResumoDTO {
   streakMediaQuebra?: number | null;
   temDados: boolean;
 }
+
+type EstadoCognitivoDia = 'estavel' | 'sob_pressao' | 'alta_pressao';
 
 @Component({
   selector: 'app-foco',
@@ -102,6 +105,22 @@ export class FocoComponent implements OnInit {
     return 'Nenhum topico critico nas proximas 24h. Volte amanha para manter o ritmo.';
   }
 
+  get focoStatusEscopoLabel(): string {
+    return 'STATUS: HOJE';
+  }
+
+  get focoProjecaoEscopoLabel(): string {
+    return 'PROJECAO: CURTO PRAZO';
+  }
+
+  get tooltipClassificacaoFilaHoje(): string {
+    return 'Critico: score < 0.45 | Moderado: 0.45 a 0.75 | Leve: >= 0.75 (fila de hoje).';
+  }
+
+  get tooltipProjecaoCurtoPrazo(): string {
+    return 'Baseado no risco estimado se nao houver revisao ate o prazo.';
+  }
+
   get detalheSeveridade(): string {
     if (!this.resumo || !this.hasRevisao) return '';
     return `${this.resumo.filaHojeCriticos} criticos | ${this.resumo.filaHojeModerados} moderados | ${this.resumo.filaHojeBaixo} leves`;
@@ -122,6 +141,28 @@ export class FocoComponent implements OnInit {
 
   get resistenciaGlobalPercent(): number {
     return Number(this.resumo?.estabilidadeMedia || 0);
+  }
+
+  get baseGeralPercent(): number | null {
+    if (this.resumo?.estabilidadeMedia === null || this.resumo?.estabilidadeMedia === undefined) {
+      return null;
+    }
+    const n = Number(this.resumo.estabilidadeMedia);
+    return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : null;
+  }
+
+  get baseGeralLabel(): string {
+    const v = this.baseGeralPercent;
+    return v === null ? 'Sem base ainda' : `${v}%`;
+  }
+
+  get baseGeralProgressValue(): number {
+    const v = this.baseGeralPercent;
+    return v === null ? 0 : v;
+  }
+
+  get baseGeralSemBase(): boolean {
+    return this.baseGeralPercent === null;
   }
 
   get resistenciaRevisadosHojePercent(): number | null {
@@ -160,8 +201,8 @@ export class FocoComponent implements OnInit {
   get variacaoResistenciaGlobalLabel(): string {
     const delta = this.variacaoResistenciaGlobalOntem;
     if (delta === null) return 'Sem base de ontem';
-    if (delta > 0) return `▲ +${delta}%`;
-    if (delta < 0) return `▼ ${delta}%`;
+    if (delta > 0) return `+${delta}%`;
+    if (delta < 0) return `${delta}%`;
     return '0.0%';
   }
 
@@ -187,10 +228,10 @@ export class FocoComponent implements OnInit {
     const ontem = Math.round(this.estabilidadeGlobalOntem);
     const delta = this.variacaoResistenciaGlobalOntem ?? 0;
     if (delta > 0) {
-      return `Ontem: ${ontem}% (▲ +${Math.round(delta)})`;
+      return `Ontem: ${ontem}% (+${Math.round(delta)})`;
     }
     if (delta < 0) {
-      return `Ontem: ${ontem}% (▼ ${Math.round(delta)})`;
+      return `Ontem: ${ontem}% (${Math.round(delta)})`;
     }
     return `Ontem: ${ontem}% (0)`;
   }
@@ -217,15 +258,15 @@ export class FocoComponent implements OnInit {
     return valor === 1 ? '1 topico' : `${valor} topicos`;
   }
 
-  getLabelBaseGeral(percent: number): string {
-    const p = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
-    if (p < 40) return 'Em construcao';
-    if (p < 70) return 'Em fortalecimento';
-    return 'Estavel';
+  getLabelBaseGeral(coberturaPercent: number): string {
+    const p = Math.max(0, Math.min(100, Math.round(Number(coberturaPercent) || 0)));
+    if (p < 30) return 'Em construcao';
+    if (p < 70) return 'Em progresso';
+    return 'Consistente';
   }
 
   get baseGeralStatusLabel(): string {
-    return this.getLabelBaseGeral(this.resistenciaGlobalPercent);
+    return this.getLabelBaseGeral(this.resumo?.coberturaBasePercent || 0);
   }
 
   getStatusSaudeMemoria(): 'urgente' | 'atencao' | 'ok' {
@@ -257,6 +298,79 @@ export class FocoComponent implements OnInit {
     return 'Status: ok';
   }
 
+  getDeltaBase(): number {
+    const atual = Math.max(0, Math.round(Number(this.resistenciaGlobalPercent || 0)));
+    const ontemResumo = Number((this.resumo as any)?.resistenciaGlobalOntemPercent);
+    const ontemFonte = Number.isFinite(ontemResumo) ? ontemResumo : this.estabilidadeGlobalOntem;
+    const ontem = Math.max(0, Math.round(Number(ontemFonte || 0)));
+    return atual - ontem;
+  }
+
+  getEstadoCognitivoDoDia(): EstadoCognitivoDia {
+    const criticos = Number(this.resumo?.filaHojeCriticos || 0);
+    const moderados = Number(this.resumo?.filaHojeModerados || 0);
+
+    if (criticos > 0 || moderados >= 15) return 'alta_pressao';
+    if (criticos === 0 && moderados >= 5) return 'sob_pressao';
+    if (criticos === 0 && moderados < 5) return 'estavel';
+    return 'estavel';
+  }
+
+  getEstadoCognitivoDescricao(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'Ha urgencias agora. Resolver hoje evita atrasos e esquecimento.';
+    if (s === 'sob_pressao') return 'Alguns topicos entram em alerta nas proximas 48h. Uma revisao curta resolve.';
+    return 'Sua memoria esta protegida hoje. Continue consistente.';
+  }
+
+  getHeroTitulo(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'Hoje voce esta: 🔴 Sob Pressao';
+    if (s === 'sob_pressao') return 'Hoje voce esta: 🟡 Em Alerta';
+    return 'Hoje voce esta: 🟢 Estavel';
+  }
+
+  getHeroDescricao(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'Ha urgencias agora. Resolver hoje evita atrasos e esquecimento.';
+    if (s === 'sob_pressao') return 'Alguns topicos entram em alerta nas proximas 48h. Uma revisao curta resolve.';
+    return 'Sua memoria esta protegida hoje. Continue consistente.';
+  }
+
+  get focoPonteEscopoLabel(): string {
+    return 'Este status considera apenas a fila de hoje. A visao de 30 dias pode indicar pressao acumulada.';
+  }
+
+  getHeroBotaoLabel(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'Resolver urgencias agora';
+    if (s === 'sob_pressao') return 'Fazer revisao rapida';
+    return 'Manter ritmo';
+  }
+
+  getHeroBotaoClasse(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'hero-btn--danger';
+    if (s === 'sob_pressao') return 'hero-btn--warning';
+    return 'hero-btn--success';
+  }
+
+  getHeroClasse(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'hero--danger';
+    if (s === 'sob_pressao') return 'hero--warning';
+    return 'hero--success';
+  }
+
+  executarHeroAcao(): void {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'estavel' && !this.hasRevisao) {
+      this.irParaEstudar();
+      return;
+    }
+    this.iniciarRevisao();
+  }
+
   getMicrocopyLinhas(): { linha1: string; linha2: string } {
     const risco48h = Math.max(0, Math.round(Number(this.resumo?.risco48h || 0)));
     const risco7d = Math.max(0, Math.round(Number(this.resumo?.risco7d || 0)));
@@ -271,7 +385,7 @@ export class FocoComponent implements OnInit {
     else if (risco7d > 0) linha1 = 'Faca revisoes curtas hoje para nao acumular na semana.';
 
     let linha2 = 'Sua base esta fortalecendo. Continue consistente.';
-    if (base < 40) linha2 = 'Sua base geral ainda esta em construcao — isso e normal no comeco.';
+    if (base < 40) linha2 = 'Sua base geral ainda esta em construcao - isso e normal no comeco.';
     else if (base >= 70) linha2 = 'Sua base esta firme. O desafio e manter constancia.';
 
     if (teveHoje && mediaHoje >= 70 && base < 70) {
@@ -422,7 +536,7 @@ export class FocoComponent implements OnInit {
     const emDia = Number(revisoes?.resumo?.emDia || 0);
 
     const topicosCognitivosFiltrados = this.filtrarPorMateriaAtiva(topicosCognitivos || [], materiaIds);
-    const { risco24h, risco48h, risco7d, estabilidadeMedia } = this.calcularRiscoECognicao(topicosCognitivosFiltrados);
+    const { risco24h, risco48h, risco7d, estabilidadeMedia, coberturaBasePercent } = this.calcularRiscoECognicao(topicosCognitivosFiltrados);
     const { evolucao7dPp, evolucao7dTopicos, projecaoDiasRitmoAtual, projecaoDiasMais3PorDia } = this.calcularEvolucaoEProjecao(analytics);
 
     const retencaoMedia7d = this.toPercentValue(cognitivo7d?.retencao7d ?? cognitivo7d?.retencao14d ?? null);
@@ -442,6 +556,7 @@ export class FocoComponent implements OnInit {
       risco48h,
       risco7d,
       estabilidadeMedia,
+      coberturaBasePercent,
       retencaoMedia7d,
       retencaoMedia14d,
       evolucao7dPp,
@@ -460,13 +575,11 @@ export class FocoComponent implements OnInit {
     risco24h: number;
     risco48h: number;
     risco7d: number;
-    estabilidadeMedia: number;
+    estabilidadeMedia: number | null;
+    coberturaBasePercent: number;
   } {
     const lista = Array.isArray(topicos) ? topicos : [];
     const riscos = lista.map((t) => this.normalizarRiskPercent(t?.risk));
-    const estabilidade = lista
-      .map((t) => this.normalizarPercent(t?.stability))
-      .filter((v) => v !== null) as number[];
 
     const risco24h = lista.filter((t, idx) =>
       String(t?.classificacao || '').toUpperCase() === 'CRITICO' || (riscos[idx] ?? 0) >= 80
@@ -480,11 +593,10 @@ export class FocoComponent implements OnInit {
       return classificacao === 'CRITICO' || classificacao === 'EM_RISCO' || (riscos[idx] ?? 0) >= 35;
     }).length;
 
-    const estabilidadeMedia = estabilidade.length
-      ? Math.round(estabilidade.reduce((acc, v) => acc + v, 0) / estabilidade.length)
-      : 0;
+    const estabilidadeMedia = this.calcularBaseGeralPercent(lista);
+    const coberturaBasePercent = this.calcularCoberturaBasePercent(lista);
 
-    return { risco24h, risco48h, risco7d, estabilidadeMedia };
+    return { risco24h, risco48h, risco7d, estabilidadeMedia, coberturaBasePercent };
   }
 
   private calcularEvolucaoEProjecao(analytics: RetencaoAnalyticsResponseDTO | null): {
@@ -591,11 +703,53 @@ export class FocoComponent implements OnInit {
 
   private calcularMediaEstabilidade(topicos: TopicoCognitivoDTO[]): number | null {
     const valores = (topicos || [])
-      .map((item) => this.normalizarPercent(item?.stability))
-      .filter((v): v is number => v !== null);
+      .map((item) => this.normalizarQualidadePercent(item))
+      .filter((v): v is number => v !== null && v > 0);
 
     if (!valores.length) return null;
     return Math.round(valores.reduce((acc, v) => acc + v, 0) / valores.length);
+  }
+
+  private normalizarQualidadePercent(item: TopicoCognitivoDTO | null | undefined): number | null {
+    if (!item) return null;
+
+    const score = this.normalizarPercent(item?.score);
+    if (score !== null) return score;
+
+    const raw = Number(item?.stability);
+    if (!Number.isFinite(raw)) return null;
+
+    // guardrail: valores tipicos de "dias" (ex: 7, 14, 30, 90) nao sao percentuais
+    if (raw > 1 && raw <= 365) return null;
+
+    // guardrail: claramente fora de escala
+    if (raw > 1000) return null;
+
+    return this.normalizarPercent(raw);
+  }
+
+  private obterTopicosComBase(topicos: TopicoCognitivoDTO[]): TopicoCognitivoDTO[] {
+    return (topicos || []).filter((t) => {
+      const q = this.normalizarQualidadePercent(t);
+      return q !== null && q > 0;
+    });
+  }
+
+  private calcularBaseGeralPercent(topicos: TopicoCognitivoDTO[]): number | null {
+    const comBase = this.obterTopicosComBase(topicos);
+    const vals = comBase
+      .map((t) => this.normalizarQualidadePercent(t))
+      .filter((v): v is number => v !== null && v > 0);
+
+    if (!vals.length) return null;
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }
+
+  private calcularCoberturaBasePercent(topicos: TopicoCognitivoDTO[]): number {
+    const total = Math.max(0, (topicos || []).length);
+    if (total === 0) return 0;
+    const comBase = this.obterTopicosComBase(topicos).length;
+    return Math.round((comBase / total) * 100);
   }
 
   private foiRevisadoHoje(item: TopicoCognitivoDTO | null | undefined): boolean {
@@ -819,4 +973,6 @@ export class FocoComponent implements OnInit {
     });
   }
 }
+
+
 

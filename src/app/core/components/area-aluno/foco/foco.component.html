@@ -55,46 +55,31 @@
       <p-skeleton width="100%" height="6px" borderRadius="999px"></p-skeleton>
     </div>
 
-    <p-card class="foco-card hero-card">
-      <h1 class="hero-title-row">
-        <span *ngIf="hasRevisao">⚠️</span>
-        <span *ngIf="!hasRevisao">✅</span>
-        {{ tituloHero }}
-        <button
-          *ngIf="hasRevisao"
-          type="button"
-          class="hero-info-btn"
-          pTooltip="Se ignorados, sua retencao pode cair nas proximas 48h. Vamos proteger sua memoria."
-          tooltipPosition="top"
-          aria-label="Informacao sobre risco de retencao">
-          <i class="pi pi-info-circle" aria-hidden="true"></i>
-        </button>
-      </h1>
-      <p class="hero-sub" *ngIf="!hasRevisao">{{ subtituloHero }}</p>
-      <p class="hero-detail" *ngIf="hasRevisao">{{ detalheSeveridade }}</p>
-
-      <div class="hero-cta-row" *ngIf="hasRevisao; else semFilaCta">
+    <div class="hero-estado" [ngClass]="getHeroClasse()">
+      <div class="hero-content">
+        <span class="scope-badge scope-badge--status">{{ focoStatusEscopoLabel }}</span>
+        <h1 class="hero-title">{{ getHeroTitulo() }}</h1>
+        <p class="hero-desc">{{ getHeroDescricao() }}</p>
         <button
           pButton
           type="button"
-          class="hero-cta"
+          [label]="getHeroBotaoLabel()"
           [loading]="iniciandoRevisao"
           [disabled]="iniciandoRevisao"
-          label="Iniciar revisão agora"
-          (click)="iniciarRevisao()"
-          aria-label="Iniciar revisão agora"></button>
+          [ngClass]="['hero-btn', getHeroBotaoClasse()]"
+          (click)="executarHeroAcao()">
+        </button>
       </div>
-
-      <ng-template #semFilaCta>
-        <button
-          pButton
-          type="button"
-          class="p-button-outlined"
-          label="Estudar novos tópicos"
-          (click)="irParaEstudar()"
-          aria-label="Ir para estudar novos tópicos"></button>
-      </ng-template>
-    </p-card>
+      <p class="hero-mini-info" *ngIf="hasRevisao">
+        {{ detalheSeveridade }}
+        <i
+          class="pi pi-info-circle scope-info"
+          pTooltip="{{ tooltipClassificacaoFilaHoje }}"
+          tooltipPosition="top"
+          aria-label="Definicao de criticos moderados e leves da fila de hoje"></i>
+      </p>
+    </div>
+    <p class="hero-bridge">{{ focoPonteEscopoLabel }}</p>
 
     <p-card class="foco-card">
       <div class="card-head">
@@ -102,10 +87,18 @@
           🧠 Saude da Memoria (Hoje)
           <span class="status-chip" [ngClass]="'status-chip--' + getStatusSaudeMemoria()"
                 role="img" [attr.aria-label]="getStatusSaudeMemoriaLabel()">
-            {{ getStatusSaudeMemoria() === 'urgente' ? 'Urgente' : (getStatusSaudeMemoria() === 'atencao' ? 'Atencao' : 'Ok') }}
+            {{ getStatusSaudeMemoria() === 'urgente' ? 'Sob pressao' : (getStatusSaudeMemoria() === 'atencao' ? 'Em alerta' : 'Estavel') }}
           </span>
         </h2>
-        <span class="card-caption">O que pode enfraquecer se voce nao revisar agora.</span>
+        <span class="card-caption">Esses dados explicam seu estado cognitivo atual.</span>
+        <span class="scope-badge scope-badge--projection">
+          {{ focoProjecaoEscopoLabel }}
+          <i
+            class="pi pi-info-circle scope-info"
+            pTooltip="{{ tooltipProjecaoCurtoPrazo }}"
+            tooltipPosition="top"
+            aria-label="Informacao de escopo de projecao"></i>
+        </span>
       </div>
       <div class="metric-list">
         <div class="risk-pill-grid">
@@ -113,7 +106,7 @@
             <div class="risk-pill-head">
               <span class="risk-pill-label">
                 <span role="img" aria-label="Sinal de atencao laranja">🟠</span>
-                Enfraquece em 24h
+                Enfraquece em 24h (projecao)
               </span>
             </div>
             <strong class="risk-pill-value">{{ risco24hLabel }}</strong>
@@ -123,7 +116,7 @@
             <div class="risk-pill-head">
               <span class="risk-pill-label">
                 <span role="img" aria-label="Sinal critico vermelho">🔴</span>
-                Critico em 48h
+                Critico em 48h (projecao)
               </span>
             </div>
             <strong class="risk-pill-value">{{ risco48hLabel }}</strong>
@@ -133,7 +126,7 @@
             <div class="risk-pill-head">
               <span class="risk-pill-label">
                 <span role="img" aria-label="Alerta da semana">🚨</span>
-                Em risco na semana
+                Em risco na semana (projecao)
               </span>
             </div>
             <strong class="risk-pill-value">{{ risco7dLabel }}</strong>
@@ -147,11 +140,15 @@
           <div class="metric-progress-title">
             <span>📌 Base geral • {{ baseGeralStatusLabel }}</span>
             <strong>
-              {{ r.estabilidadeMedia }}%
+              {{ baseGeralLabel }}
             </strong>
           </div>
-          <p-progressBar [value]="r.estabilidadeMedia"></p-progressBar>
-          <p class="metric-note">Isso e o quanto sua memoria total esta firme no momento. No comeco e normal ficar baixo.</p>
+          <p-progressBar [value]="baseGeralProgressValue"></p-progressBar>
+          <p class="metric-note" *ngIf="baseGeralSemBase; else baseTextoPadrao">Faca algumas revisoes para formar a base.</p>
+          <ng-template #baseTextoPadrao>
+            <p class="metric-note">Isso e o quanto sua memoria total esta firme no momento. No comeco e normal ficar baixo.</p>
+          </ng-template>
+          <p class="metric-note">Cobertura da base: {{ r.coberturaBasePercent }}% dos topicos ja tem memoria formada.</p>
           <p class="metric-note">{{ comparativoBaseGeralLabel }}</p>
         </div>
 
