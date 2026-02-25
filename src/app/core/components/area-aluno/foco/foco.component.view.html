@@ -1,0 +1,183 @@
+<div class="foco-page">
+  <p-toast></p-toast>
+
+  <div class="foco-shell" *ngIf="loading">
+    <p-card class="foco-card">
+      <p-skeleton width="35%" height="14px"></p-skeleton>
+      <div class="skeleton-row"><p-skeleton width="55%" height="30px"></p-skeleton></div>
+      <div class="skeleton-row"><p-skeleton width="92%" height="14px"></p-skeleton></div>
+      <div class="skeleton-row"><p-skeleton width="260px" height="44px" borderRadius="10px"></p-skeleton></div>
+    </p-card>
+  </div>
+
+  <div class="foco-shell" *ngIf="!loading && erro">
+    <p-card class="foco-card error-card">
+      <h2>Nao foi possivel carregar seus dados hoje.</h2>
+      <button pButton type="button" label="Tentar novamente" class="p-button-outlined" (click)="tentarNovamente()"></button>
+    </p-card>
+  </div>
+
+  <div class="foco-shell" *ngIf="!loading && !erro && resumo as r">
+    <div class="cards-refresh-strip" *ngIf="cardsRefreshing">
+      <p-skeleton width="100%" height="4px" borderRadius="999px"></p-skeleton>
+    </div>
+
+    <div class="cockpit-grid">
+      <section class="cockpit-main">
+        <p-card class="foco-card bloco-situacao" [ngClass]="getHeroClasse()">
+          <div class="bloco-titulo">
+            <h2>DIAGNOSTICO OPERACIONAL</h2>
+            <p>Analise da situacao cognitiva de curto prazo.</p>
+          </div>
+
+          <div class="situacao-grid">
+            <div class="situacao-col">
+              <span class="micro-tag">STATUS ATUAL</span>
+              <h1 class="situacao-title">{{ statusLabel }}</h1>
+              <p class="situacao-sub">{{ situacaoResumoCurto }}</p>
+            </div>
+
+            <div class="situacao-col situacao-col--alerta">
+              <span class="micro-tag micro-tag--ghost">IMPACTO SE IGNORAR HOJE</span>
+              <div class="alerta-value">{{ heroUrgenciaTitulo }}</div>
+              <p class="alerta-sub" *ngFor="let linha of diagnosticoImpactoLinhas">{{ linha }}</p>
+            </div>
+
+            <div class="situacao-col situacao-col--acao">
+              <span class="micro-tag micro-tag--ghost">ACAO RECOMENDADA</span>
+              <p class="acao-copy">{{ acaoRecomendadaLabel }}</p>
+              <button
+                pButton
+                type="button"
+                [label]="ctaPrincipalLabel"
+                [loading]="iniciandoRevisao"
+                [disabled]="iniciandoRevisao"
+                [ngClass]="['cta-principal', getHeroBotaoClasse()]"
+                (click)="executarCtaPrincipal()">
+              </button>
+              <button pButton type="button" label="Ver fila completa" class="p-button-outlined cta-secundario" (click)="verFilaCompleta()"></button>
+            </div>
+          </div>
+        </p-card>
+
+        <p-card class="foco-card bloco-ordem">
+          <div class="card-head">
+            <h2>Plano de execucao</h2>
+            <p>Sequencia recomendada com base na pressao atual.</p>
+          </div>
+          <div class="ordem-lista">
+            <div class="ordem-item" *ngFor="let passo of planoHojePassos">
+              <span class="ordem-indice">{{ passo.titulo.split(' - ')[0] }}</span>
+              <div class="ordem-copy">
+                <strong>{{ passo.titulo.split(' - ')[1] }}</strong>
+                <p>{{ passo.descricao }}</p>
+              </div>
+            </div>
+          </div>
+        </p-card>
+
+        <p-card class="foco-card bloco-fila">
+          <div class="card-head card-head-inline">
+            <h2>Fila prioritaria</h2>
+            <span class="micro-tag micro-tag--ghost">TOP 5</span>
+          </div>
+          <p class="card-note">Prioridade calculada automaticamente por risco e proximidade.</p>
+          <p class="card-note card-note--tight">Itens ordenados por risco e prazo.</p>
+          <div *ngIf="topUrgenciasHoje.length > 0; else filaVazia">
+            <div [class]="getFilaItemClass(item)" *ngFor="let item of topUrgenciasHoje">
+              <div class="fila-copy fila-copy--stack">
+                <strong>{{ item.nome }}</strong>
+                <div class="fila-metas">
+                  <span class="fila-tag" [class.fila-tag--critico]="item.nivel === 'CRITICO'" [class.fila-tag--alerta]="item.nivel === 'ALERTA'">{{ item.nivel }}</span>
+                  <span class="fila-meta">Score: {{ item.scoreLabel }}</span>
+                  <span class="fila-meta">Proxima revisao: {{ item.proximaRevisaoLabel }}</span>
+                </div>
+              </div>
+              <div class="fila-actions">
+                <button pButton type="button" class="p-button-sm p-button-outlined" label="Detalhes" (click)="verDetalhesUrgencia(item)"></button>
+                <button pButton type="button" class="p-button-sm" label="Executar" (click)="revisarUrgenciaAgora(item)"></button>
+              </div>
+            </div>
+          </div>
+          <ng-template #filaVazia>
+            <div class="empty-state">
+              <strong>Sem itens priorizados agora.</strong>
+              <button pButton type="button" label="Ver lista de urgencias" (click)="verListaUrgencias()"></button>
+            </div>
+          </ng-template>
+        </p-card>
+      </section>
+
+      <aside class="cockpit-side">
+        <p-card class="foco-card bloco-radar">
+          <div class="card-head card-head-inline">
+            <h2>Mapa de risco por horizonte</h2>
+            <span class="micro-tag micro-tag--ghost" pTooltip="{{ tooltipProjecaoCurtoPrazo }}" tooltipPosition="top">PROJECAO</span>
+          </div>
+          <div class="radar-grid">
+            <div class="radar-col">
+              <span class="radar-label">24H</span>
+              <strong class="radar-value">{{ risco24hLabel }}</strong>
+            </div>
+            <div class="radar-col">
+              <span class="radar-label">48H</span>
+              <strong class="radar-value">{{ risco48hLabel }}</strong>
+            </div>
+            <div class="radar-col">
+              <span class="radar-label">7 DIAS</span>
+              <strong class="radar-value">{{ risco7dLabel }}</strong>
+            </div>
+          </div>
+          <p class="card-note">{{ mapaRiscoInterpretacao }}</p>
+        </p-card>
+
+        <p-card class="foco-card bloco-tendencia">
+          <div class="card-head">
+            <h2>Tendencia recente (7 dias)</h2>
+          </div>
+          <div class="tendencia-grid">
+            <div class="tendencia-item">
+              <span class="tendencia-label">Consolidados</span>
+              <strong>{{ tendenciaConsolidadosLabel }}</strong>
+            </div>
+            <div class="tendencia-item">
+              <span class="tendencia-label">Criticos</span>
+              <strong>{{ tendenciaCriticosLabel }}</strong>
+            </div>
+            <div class="tendencia-item">
+              <span class="tendencia-label">Tempo medio de consolidacao</span>
+              <strong>{{ tendenciaTempoConsolidacaoLabel }}</strong>
+            </div>
+          </div>
+          <p class="card-note">{{ tendenciaOperacionalInterpretacao }}</p>
+        </p-card>
+
+        <p-card class="foco-card bloco-estrutural">
+          <div class="card-head"><h2>Status estrutural</h2></div>
+          <div class="estrutural-row">
+            <span>Base estrutural</span>
+            <strong>{{ baseGeralLabel }}</strong>
+          </div>
+          <p-progressBar [value]="baseGeralProgressValue" styleClass="mini-bar"></p-progressBar>
+          <div class="estrutural-row">
+            <span>Qualidade hoje</span>
+            <strong>{{ resistenciaRevisadosHojeLabel }}</strong>
+          </div>
+          <p-progressBar *ngIf="teveRevisoesHoje" [value]="resistenciaRevisadosHojeValorBarra" styleClass="mini-bar"></p-progressBar>
+          <div class="estrutural-row">
+            <span>Tendencia</span>
+            <span [class]="tendenciaEstruturalClass">{{ tendenciaEstruturalLabel }}</span>
+          </div>
+        </p-card>
+
+        <p-card class="foco-card bloco-nav">
+          <div class="card-head"><h2>Navegacao</h2></div>
+          <div class="nav-actions">
+            <button pButton type="button" class="p-button-outlined" label="Abrir Retencao (30d)" (click)="abrirRetencao()"></button>
+            <button pButton type="button" class="p-button-outlined" label="Ir para Revisoes" (click)="abrirRevisoes()"></button>
+          </div>
+        </p-card>
+      </aside>
+    </div>
+  </div>
+</div>

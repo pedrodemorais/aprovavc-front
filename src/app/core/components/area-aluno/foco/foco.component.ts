@@ -34,6 +34,7 @@ export interface HojeResumoDTO {
   retencaoMedia14d: number;
   evolucao7dPp: number;
   evolucao7dTopicos: number;
+  evolucao7dCriticos: number;
   projecaoDiasRitmoAtual: number;
   projecaoDiasMais3PorDia?: number | null;
   projecaoDiasSoAtraso?: number | null;
@@ -44,10 +45,20 @@ export interface HojeResumoDTO {
 }
 
 type EstadoCognitivoDia = 'estavel' | 'sob_pressao' | 'alta_pressao';
+interface UrgenciaFocoItem {
+  topicoId: number;
+  materiaId: number | null;
+  nome: string;
+  nivel: string;
+  scoreLabel: string;
+  riscoValor: number;
+  riscoLabel: string;
+  proximaRevisaoLabel: string;
+}
 
 @Component({
   selector: 'app-foco',
-  templateUrl: './foco.component.html',
+  templateUrl: './foco.component.view.html',
   styleUrls: ['./foco.component.scss']
 })
 export class FocoComponent implements OnInit {
@@ -325,9 +336,9 @@ export class FocoComponent implements OnInit {
 
   getHeroTitulo(): string {
     const s = this.getEstadoCognitivoDoDia();
-    if (s === 'alta_pressao') return 'Hoje voce esta: 🔴 Sob Pressao';
-    if (s === 'sob_pressao') return 'Hoje voce esta: 🟡 Em Alerta';
-    return 'Hoje voce esta: 🟢 Estavel';
+    if (s === 'alta_pressao') return 'SOB PRESSAO';
+    if (s === 'sob_pressao') return 'EM ALERTA';
+    return 'ESTAVEL';
   }
 
   getHeroDescricao(): string {
@@ -341,17 +352,50 @@ export class FocoComponent implements OnInit {
     return 'Este status considera apenas a fila de hoje. A visao de 30 dias pode indicar pressao acumulada.';
   }
 
-  getHeroBotaoLabel(): string {
+  get statusLabel(): string {
     const s = this.getEstadoCognitivoDoDia();
-    if (s === 'alta_pressao') return 'Resolver urgencias agora';
-    if (s === 'sob_pressao') return 'Fazer revisao rapida';
-    return 'Manter ritmo';
+    if (s === 'alta_pressao') return 'SOB PRESSAO';
+    if (s === 'sob_pressao') return 'EM ALERTA';
+    return 'ESTAVEL';
+  }
+
+  get statusClass(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'status-badge status-badge--danger';
+    if (s === 'sob_pressao') return 'status-badge status-badge--warn';
+    return 'status-badge status-badge--ok';
+  }
+
+  get situacaoResumoCurto(): string {
+    const s = this.getEstadoCognitivoDoDia();
+    if (s === 'alta_pressao') return 'Pressao acumulada exige acao.';
+    if (s === 'sob_pressao') return 'Risco concentrado no curto prazo.';
+    return 'Sem escalada imediata.';
+  }
+
+  get heroUrgenciaTitulo(): string {
+    const risco48h = Math.max(0, Math.round(Number(this.resumo?.risco48h || 0)));
+    if (risco48h > 0) return `${risco48h} TOPICOS EM RISCO (48H)`;
+    return 'SEM RISCO NAS PROXIMAS 48H';
+  }
+
+  get heroUrgenciaSubtitulo(): string {
+    const risco24h = Math.max(0, Math.round(Number(this.resumo?.risco24h || 0)));
+    if (risco24h > 0) return `${risco24h} topicos comecam a enfraquecer sem revisao.`;
+    return 'Sem escalacao imediata.';
+  }
+
+  getHeroBotaoLabel(): string {
+    const risco48h = Number(this.resumo?.risco48h || 0);
+    const risco24h = Number(this.resumo?.risco24h || 0);
+    if (risco48h > 0) return 'EXECUTAR REVISAO CRITICA';
+    if (risco24h > 0) return 'REFORCAR 24H';
+    return 'MANTER RITMO';
   }
 
   getHeroBotaoClasse(): string {
-    const s = this.getEstadoCognitivoDoDia();
-    if (s === 'alta_pressao') return 'hero-btn--danger';
-    if (s === 'sob_pressao') return 'hero-btn--warning';
+    if (Number(this.resumo?.risco48h || 0) > 0) return 'hero-btn--danger';
+    if (Number(this.resumo?.risco24h || 0) > 0) return 'hero-btn--warning';
     return 'hero-btn--success';
   }
 
@@ -395,12 +439,198 @@ export class FocoComponent implements OnInit {
     return { linha1, linha2 };
   }
 
+  get planoHojePassos(): Array<{ titulo: string; descricao: string; concluido: boolean }> {
+    const risco48h = Math.max(0, Math.round(Number(this.resumo?.risco48h || 0)));
+    const risco24h = Math.max(0, Math.round(Number(this.resumo?.risco24h || 0)));
+    const filaHoje = Math.max(0, Math.round(Number(this.resumo?.filaHojeTotal || 0)));
+
+    return [
+      {
+        titulo: `01 - Resolver 48h (${this.formatNumeroTopicos(risco48h)})`,
+        descricao: risco48h > 0 ? 'Prioridade operacional imediata.' : 'Nenhuma urgencia 48h.',
+        concluido: risco48h === 0
+      },
+      {
+        titulo: `02 - Reforcar 24h (${this.formatNumeroTopicos(risco24h)})`,
+        descricao: risco24h > 0 ? 'Evita migracao para criticidade.' : 'Sem reforco obrigatorio.',
+        concluido: risco24h === 0
+      },
+      {
+        titulo: '03 - Estudo novo',
+        descricao: filaHoje > 0 ? 'Executar apos a fila prioritaria.' : 'Janela livre para avancar conteudo.',
+        concluido: false
+      }
+    ];
+  }
+
+  get topUrgenciasHoje(): UrgenciaFocoItem[] {
+    const prioridade = (c: string): number => {
+      const n = String(c || '').toUpperCase();
+      if (n === 'CRITICO') return 0;
+      if (n === 'EM_RISCO') return 1;
+      return 2;
+    };
+
+    return (this.topicosCognitivosAtivos || [])
+      .filter((t) => Number(t?.topicoId || 0) > 0)
+      .map((t) => {
+        const classificacao = String(t?.classificacao || '').toUpperCase();
+        const risco = Number(this.normalizarRiskPercent(t?.risk) ?? 0);
+        const score = this.normalizarPercent(t?.score);
+        return {
+          topicoId: Number(t?.topicoId || 0),
+          materiaId: Number(t?.materiaId || 0) || null,
+          nome: String(t?.nomeTopico || `Topico ${t?.topicoId || ''}`),
+          nivel: classificacao === 'CRITICO' ? 'CRITICO' : (classificacao === 'EM_RISCO' ? 'ALERTA' : 'OK'),
+          scoreLabel: score === null ? '--' : `${Math.round(score)}%`,
+          riscoValor: risco,
+          riscoLabel: this.formatarValorRisco(risco),
+          proximaRevisaoLabel: this.formatarProximaRevisaoOperacional(t, classificacao)
+        } as UrgenciaFocoItem;
+      })
+      .sort((a, b) => {
+        const ac = this.topicosCognitivosAtivos.find((t) => Number(t?.topicoId) === a.topicoId)?.classificacao || '';
+        const bc = this.topicosCognitivosAtivos.find((t) => Number(t?.topicoId) === b.topicoId)?.classificacao || '';
+        const porClasse = prioridade(ac) - prioridade(bc);
+        if (porClasse !== 0) return porClasse;
+        return b.riscoValor - a.riscoValor;
+      })
+      .slice(0, 5);
+  }
+
+  get tendenciaEstruturalLabel(): string {
+    const delta = this.variacaoResistenciaGlobalOntem;
+    if (delta === null) return 'Sem base';
+    if (delta > 0) return 'Em melhora';
+    if (delta < 0) return 'Em queda';
+    return 'Estavel';
+  }
+
+  get tendenciaEstruturalClass(): string {
+    const delta = this.variacaoResistenciaGlobalOntem;
+    if (delta === null) return 'trend trend--neutral';
+    if (delta > 0) return 'trend trend--up';
+    if (delta < 0) return 'trend trend--down';
+    return 'trend trend--neutral';
+  }
+
+  get ctaPrincipalLabel(): string {
+    return this.getHeroBotaoLabel();
+  }
+
+  get diagnosticoImpactoLinhas(): string[] {
+    const risco48h = Math.max(0, Math.round(Number(this.resumo?.risco48h || 0)));
+    const risco24h = Math.max(0, Math.round(Number(this.resumo?.risco24h || 0)));
+    if (risco48h > 0) {
+      return [
+        `${this.formatNumeroTopicos(risco48h)} entram em zona critica nas proximas 48h.`,
+        'Risco medio tende a subir.'
+      ];
+    }
+    if (risco24h > 0) {
+      return [`${this.formatNumeroTopicos(risco24h)} comecam a enfraquecer em 24h.`];
+    }
+    return ['Sem impacto relevante nas proximas 48h.'];
+  }
+
+  get acaoRecomendadaLabel(): string {
+    const risco48h = Math.max(0, Math.round(Number(this.resumo?.risco48h || 0)));
+    const risco24h = Math.max(0, Math.round(Number(this.resumo?.risco24h || 0)));
+    if (risco48h > 0) return 'Priorizar revisao critica antes de iniciar conteudo novo.';
+    if (risco24h > 0) return 'Reforcar topicos de 24h para manter estabilidade.';
+    return 'Manter ritmo e avancar em estudo novo.';
+  }
+
+  get mapaRiscoInterpretacao(): string {
+    const risco24h = Math.max(0, Math.round(Number(this.resumo?.risco24h || 0)));
+    const risco48h = Math.max(0, Math.round(Number(this.resumo?.risco48h || 0)));
+    const risco7d = Math.max(0, Math.round(Number(this.resumo?.risco7d || 0)));
+    if (risco48h > risco24h && risco48h > 0) return 'Concentracao de risco no horizonte de 48h.';
+    if (risco7d >= 10) return 'Acumulo estrutural no medio prazo.';
+    return 'Distribuicao de risco sob controle.';
+  }
+
+  get tendenciaConsolidadosLabel(): string {
+    const delta = Number(this.resumo?.evolucao7dTopicos || 0);
+    const sinal = delta >= 0 ? '+' : '';
+    return `${sinal}${delta} topicos consolidados`;
+  }
+
+  get tendenciaCriticosLabel(): string {
+    const delta = Number(this.resumo?.evolucao7dCriticos || 0);
+    const sinal = delta >= 0 ? '+' : '';
+    return `${sinal}${delta} criticos`;
+  }
+
+  get tendenciaTempoConsolidacaoLabel(): string {
+    const dias = Math.max(0, Math.round(Number(this.resumo?.projecaoDiasRitmoAtual || 0)));
+    return dias > 0 ? `${dias} dias` : '--';
+  }
+
+  get tendenciaOperacionalInterpretacao(): string {
+    const consolidados = Number(this.resumo?.evolucao7dTopicos || 0);
+    const criticos = Number(this.resumo?.evolucao7dCriticos || 0);
+    if (consolidados > Math.max(0, criticos)) return 'Base estrutural em expansao.';
+    if (criticos > 0) return 'Pressao crescente na fila.';
+    return 'Estabilidade mantida.';
+  }
+
+  executarCtaPrincipal(): void {
+    this.executarHeroAcao();
+  }
+
+  verFilaCompleta(): void {
+    this.abrirRevisoes();
+  }
+
+  getFilaItemClass(item: UrgenciaFocoItem): string {
+    if (item.nivel === 'CRITICO') return 'fila-item fila-item--critico';
+    if (item.nivel === 'ALERTA') return 'fila-item fila-item--alerta';
+    return 'fila-item fila-item--ok';
+  }
+
   iniciarRevisao(): void {
     this.comecarRevisaoPrioritaria();
   }
 
   irParaEstudar(): void {
     this.router.navigateByUrl('/area-restrita/estudar-materias');
+  }
+
+  revisarUrgenciaAgora(item: UrgenciaFocoItem): void {
+    const materiaId = Number(item?.materiaId || 0);
+    const topicoId = Number(item?.topicoId || 0);
+    if (!materiaId || !topicoId) {
+      this.comecarRevisaoPrioritaria();
+      return;
+    }
+    this.router.navigate(['/area-restrita/sala-estudo', materiaId], {
+      queryParams: { topicoId, modo: 'revisar' }
+    });
+  }
+
+  verDetalhesUrgencia(item: UrgenciaFocoItem): void {
+    this.router.navigate(['/area-restrita/retencao'], {
+      queryParams: { view: 'criticos', topicoId: item.topicoId }
+    });
+  }
+
+  verListaUrgencias(): void {
+    this.router.navigate(['/area-restrita/retencao'], {
+      queryParams: { view: 'criticos' }
+    });
+  }
+
+  abrirRetencao(): void {
+    this.router.navigate(['/area-restrita/retencao'], {
+      queryParams: { janela: 30 }
+    });
+  }
+
+  abrirRevisoes(): void {
+    this.router.navigate(['/area-restrita/revisoes'], {
+      queryParams: { filtro: 'hoje' }
+    });
   }
 
   tentarNovamente(): void {
@@ -537,7 +767,13 @@ export class FocoComponent implements OnInit {
 
     const topicosCognitivosFiltrados = this.filtrarPorMateriaAtiva(topicosCognitivos || [], materiaIds);
     const { risco24h, risco48h, risco7d, estabilidadeMedia, coberturaBasePercent } = this.calcularRiscoECognicao(topicosCognitivosFiltrados);
-    const { evolucao7dPp, evolucao7dTopicos, projecaoDiasRitmoAtual, projecaoDiasMais3PorDia } = this.calcularEvolucaoEProjecao(analytics);
+    const {
+      evolucao7dPp,
+      evolucao7dTopicos,
+      evolucao7dCriticos,
+      projecaoDiasRitmoAtual,
+      projecaoDiasMais3PorDia
+    } = this.calcularEvolucaoEProjecao(analytics);
 
     const retencaoMedia7d = this.toPercentValue(cognitivo7d?.retencao7d ?? cognitivo7d?.retencao14d ?? null);
     const retencaoMedia14d = this.toPercentValue(cognitivo14d?.retencao14d ?? null);
@@ -561,6 +797,7 @@ export class FocoComponent implements OnInit {
       retencaoMedia14d,
       evolucao7dPp,
       evolucao7dTopicos,
+      evolucao7dCriticos,
       projecaoDiasRitmoAtual,
       projecaoDiasMais3PorDia,
       projecaoDiasSoAtraso: null,
@@ -602,6 +839,7 @@ export class FocoComponent implements OnInit {
   private calcularEvolucaoEProjecao(analytics: RetencaoAnalyticsResponseDTO | null): {
     evolucao7dPp: number;
     evolucao7dTopicos: number;
+    evolucao7dCriticos: number;
     projecaoDiasRitmoAtual: number;
     projecaoDiasMais3PorDia: number | null;
   } {
@@ -612,6 +850,7 @@ export class FocoComponent implements OnInit {
       ? Number((Number(atual.consolidacaoPercent || 0) - Number(base.consolidacaoPercent || 0)).toFixed(1))
       : 0;
     const evolucao7dTopicos = atual && base ? Number(atual.consolidados || 0) - Number(base.consolidados || 0) : 0;
+    const evolucao7dCriticos = atual && base ? Number(atual.criticos || 0) - Number(base.criticos || 0) : 0;
 
     const ritmoAtual = this.calcularDiasRitmoAtual(analytics, atual, base);
     // Cenario otimizado desabilitado temporariamente ate regra de monotonicidade ser aplicada.
@@ -621,9 +860,25 @@ export class FocoComponent implements OnInit {
     return {
       evolucao7dPp,
       evolucao7dTopicos,
+      evolucao7dCriticos,
       projecaoDiasRitmoAtual: ritmoAtual,
       projecaoDiasMais3PorDia
     };
+  }
+
+  private formatarProximaRevisaoOperacional(item: TopicoCognitivoDTO, classificacao: string): string {
+    const ultima = [item?.ultimaRevisaoEm, item?.ultimaRevisao, item?.dataUltimaRevisao, item?.dataUltimoEvento, item?.ultimoEventoEm]
+      .find((v) => !!v);
+    if (ultima) {
+      const dias = this.calcularDiasEntre(String(ultima), new Date().toISOString());
+      if (dias <= 0) return 'hoje';
+      if (dias === 1) return '1 dia';
+      if (dias <= 2) return `${dias} dias`;
+    }
+
+    if (classificacao === 'CRITICO') return 'imediata';
+    if (classificacao === 'EM_RISCO') return 'ate 48h';
+    return 'ate 7 dias';
   }
 
   private calcularDiasRitmoAtual(
