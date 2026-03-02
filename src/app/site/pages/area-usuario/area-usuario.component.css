@@ -13,7 +13,7 @@
   overflow: hidden;
 }
 
-:root {
+:host {
   --ua-white: #ffffff;
   --ua-text: #111827;
   --ua-text-muted: #4b5563;
@@ -28,6 +28,20 @@
   --ua-shadow-topbar: 0 2px 10px rgba(15, 23, 42, 0.35);
   --ua-shadow-panel: 0 16px 40px rgba(17, 24, 39, 0.12);
   --ua-shadow-sound: 0 12px 22px rgba(15, 23, 42, 0.16);
+}
+
+:host-context(body.theme-dark) {
+  --ua-white: #0b1220;
+  --ua-text: #e5e7eb;
+  --ua-text-muted: #94a3b8;
+  --ua-text-soft: #cbd5e1;
+  --ua-border: rgba(255, 255, 255, 0.14);
+  --ua-border-soft: rgba(255, 255, 255, 0.12);
+  --ua-divider-soft: rgba(255, 255, 255, 0.1);
+  --ua-bg-hover: rgba(255, 255, 255, 0.08);
+  --ua-text-section: #94a3b8;
+  --ua-shadow-panel: 0 14px 32px rgba(0, 0, 0, 0.45);
+  --ua-shadow-sound: 0 12px 22px rgba(0, 0, 0, 0.35);
 }
 
 :host-context(html),
@@ -141,6 +155,7 @@ body.dashboard-scroll {
   width: 100%;
   display: flex;
   overflow: hidden;
+  background: #ffffff;
 }
 
 .menu {
@@ -148,6 +163,7 @@ body.dashboard-scroll {
   display: flex;
   align-items: stretch;
   position: relative;
+  background: var(--ua-white);
 }
 
 .sidebar {
@@ -162,11 +178,20 @@ body.dashboard-scroll {
   padding-top: 20px;
 }
 
+.sidebar.menu-expanded,
+.sidebar.menu-expanded .menu-actions,
+.sidebar.menu-expanded .menu-list,
+.sidebar.menu-expanded .menu-item,
+.sidebar.menu-expanded .submenu {
+  background: #ffffff !important;
+}
+
 .content {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
+  background: #ffffff;
 }
 
 /* =======================================
@@ -725,6 +750,11 @@ body.dashboard-scroll {
   color: #e5e7eb !important;
 }
 
+:host-context(body.theme-dark) .container,
+:host-context(body.theme-dark) .content {
+  background: #0b1220 !important;
+}
+
 :host-context(body.theme-dark) .topbar {
   background: rgba(15, 23, 42, 0.72) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -735,13 +765,13 @@ body.dashboard-scroll {
 }
 
 :host-context(body.theme-dark) .sidebar {
-  background: var(--bg-solid);
+  background: #0b1220 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45) !important;
 }
 
 :host-context(body.theme-dark) .menu-link {
-  color: var(--text-2) !important;
+  color: #cbd5e1 !important;
 }
 
 :host-context(body.theme-dark) .menu-link:hover {
@@ -772,8 +802,30 @@ body.dashboard-scroll {
 }
 
 :host-context(body.theme-dark) .sons-foco-panel-head {
-  background: var(--bg-solid);
+  background: #0b1220;
   border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+:host-context(body.theme-dark) .menu,
+:host-context(body.theme-dark) .menu-list {
+  background: #0b1220 !important;
+}
+
+:host-context(body.theme-dark) .menu-item,
+:host-context(body.theme-dark) .submenu {
+  background: #0b1220 !important;
+}
+
+:host-context(body.theme-dark) .sidebar.menu-expanded,
+:host-context(body.theme-dark) .sidebar.menu-expanded .menu-actions,
+:host-context(body.theme-dark) .sidebar.menu-expanded .menu-list,
+:host-context(body.theme-dark) .sidebar.menu-expanded .menu-item,
+:host-context(body.theme-dark) .sidebar.menu-expanded .submenu {
+  background: #0b1220 !important;
+}
+
+:host-context(body.theme-dark) .menu-lock {
+  color: #94a3b8 !important;
 }
 
 :host-context(body.theme-dark) .sons-foco-panel-title,
@@ -801,18 +853,41 @@ body.theme-dark .dashboard {
   color: #e5e7eb !important;
 }
 
+body.theme-dark .container,
+body.theme-dark .content {
+  background: #0b1220 !important;
+}
+
 body.theme-dark .topbar {
   background: rgba(15, 23, 42, 0.72) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 body.theme-dark .sidebar {
-  background: var(--bg-solid) !important;
+  background: #0b1220 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 body.theme-dark .menu-link {
-  color: var(--text-2) !important;
+  color: #cbd5e1 !important;
+}
+
+body.theme-dark .menu,
+body.theme-dark .menu-list {
+  background: #0b1220 !important;
+}
+
+body.theme-dark .menu-item,
+body.theme-dark .submenu {
+  background: #0b1220 !important;
+}
+
+body.theme-dark .sidebar.menu-expanded,
+body.theme-dark .sidebar.menu-expanded .menu-actions,
+body.theme-dark .sidebar.menu-expanded .menu-list,
+body.theme-dark .sidebar.menu-expanded .menu-item,
+body.theme-dark .sidebar.menu-expanded .submenu {
+  background: #0b1220 !important;
 }
 
 body.theme-dark .menu-link.is-active,

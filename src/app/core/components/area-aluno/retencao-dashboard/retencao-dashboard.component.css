@@ -112,6 +112,51 @@
   font-size: 13px;
 }
 
+.hero-topico-destaque {
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hero-topico-destaque__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hero-topico-destaque__label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.hero-topico-destaque__nome {
+  font-size: 15px;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.hero-topico-destaque__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.hero-topico-destaque__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .scope-badge {
   display: inline-flex;
   align-items: center;
@@ -448,6 +493,18 @@
   gap: 6px;
 }
 
+.leg-item--clickable {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.leg-item--clickable:hover {
+  text-decoration: underline;
+}
+
 .leg-dot {
   width: 9px;
   height: 9px;
@@ -459,6 +516,13 @@
 .leg-dot.risco { background: #e67e22; }
 .leg-dot.critico { background: #c0392b; }
 .leg-dot.semdados { background: #bdc3c7; }
+.leg-dot.hoje { background: #2563eb; }
+
+.resumo-hoje-extra {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #415066;
+}
 
 @media (max-width: 640px) {
   .card-resumo {
@@ -502,6 +566,42 @@
 
 .table-wrap {
   overflow-x: auto;
+}
+
+.fila-risco-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.fila-risco-head h3 {
+  margin: 0;
+}
+
+.fila-risco-filtros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fila-risco-filtros label {
+  font-size: 12px;
+  color: #415066;
+}
+
+.fila-risco-filtros input[type='date'] {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.table-wrap--modal {
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 table {

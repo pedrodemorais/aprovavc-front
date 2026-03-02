@@ -33,6 +33,16 @@ export interface EditalResumoRetencaoDTO {
   percentualEmRisco: number;
   percentualCritico: number;
   percentualSemDados: number;
+  janelaDias?: number;
+  escopoCalculo?: 'EDITAL_COMPLETO' | 'BASE_MONITORADA' | 'MISTO' | string;
+  totalTopicosEdital?: number;
+  totalTopicosMonitorados?: number;
+  topicosConsolidadosEdital?: number;
+  topicosConsolidadosMonitorados?: number;
+  percentualConsolidadoEditalCompleto?: number;
+  percentualConsolidadoBaseMonitorada?: number;
+  faltamTopicosEdital?: number;
+  faltamTopicosMonitorados?: number;
 }
 
 export interface TopicoRiscoDTO {
@@ -92,4 +102,34 @@ export interface RetencaoAnalyticsResponseDTO {
   dominioScore: number;
   tempoMedioDiasAteConsolidar: number | null;
   serie: RetencaoAnalyticsSerieDTO[];
+}
+
+export interface RetencaoSemDadosItemDTO {
+  topicoId: number;
+  nomeTopico: string | null;
+  materiaId: number | null;
+  nomeMateria: string | null;
+  score: number | null;
+  classificacao: string;
+  diasDesdeUltimoEvento: number | null;
+  proximaRevisao: string | null;
+}
+
+export interface RetencaoSemDadosResumoDTO {
+  totalSemDados: number;
+  janelaDias: number;
+  asOf: string;
+}
+
+export interface RetencaoSemDadosMetaDTO {
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface RetencaoSemDadosResponseDTO {
+  resumo: RetencaoSemDadosResumoDTO;
+  itens: RetencaoSemDadosItemDTO[];
+  meta: RetencaoSemDadosMetaDTO;
 }

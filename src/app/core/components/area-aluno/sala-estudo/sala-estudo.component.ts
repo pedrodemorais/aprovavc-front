@@ -28,6 +28,7 @@ import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analytics.service';
 import { RetencaoPontoDTO } from 'src/app/core/models/retencao-analytics.models';
 import { RefreshBusService } from 'src/app/core/services/refresh-bus.service';
+import { ExecutionQueueItem, ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 type TopicoViewModel = {
@@ -290,6 +291,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   private topicosExibidosCacheFiltro: StatusRevisao | null = null;
   private topicosExibidosCacheRevisoesVersion = -1;
   private topicosExibidosCacheResultado: TopicoViewModel[] = [];
+  private topicosEscopoSemanaIds = new Set<number>();
 
   avaliacaoFlashcardSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
   enviandoAvaliacaoFlashcard: boolean = false;
@@ -300,6 +302,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   private scoreRetencaoPorTopico = new Map<number, number>();
   private feedbackRetencaoTimer: ReturnType<typeof setTimeout> | null = null;
   private refreshBusTimers: Array<ReturnType<typeof setTimeout>> = [];
+  private modoExecucaoFila = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -312,7 +315,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private ngZone: NgZone,
     private messageService: MessageService,
-    private refreshBusService: RefreshBusService
+    private refreshBusService: RefreshBusService,
+    private executionQueueService: ExecutionQueueService
   ) {}
 
   // ================================================================
@@ -339,6 +343,12 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         const autoTopico = this.getAutoTopicoFromQuery(queryParams);
         const modoAtualizado = this.getModoFromQuery(queryParams, this.modo);
         const filtroSemaforo = this.getFiltroSemaforoFromQuery(queryParams);
+        const topicosEscopoSemana = this.getTopicosEscopoSemanaFromQuery(queryParams);
+        const filaExecucaoAtiva = (queryParams.get('filaExecucao') || '') === '1';
+        this.modoExecucaoFila = this.modoExecucaoFila || filaExecucaoAtiva;
+        if (filaExecucaoAtiva && this.executionQueueService.getSnapshot().length === 0) {
+          this.hidratarFilaExecucaoDaNavegacao();
+        }
 
         if (modoAtualizado !== this.modo) {
           this.modoPreferido = modoAtualizado;
@@ -347,6 +357,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
         if (this.filtroSemaforoSelecionado !== filtroSemaforo) {
           this.filtroSemaforoSelecionado = filtroSemaforo;
+          this.invalidarTopicosExibidosCache();
+        }
+        if (!this.saoMesmosIdsEscopo(this.topicosEscopoSemanaIds, topicosEscopoSemana)) {
+          this.topicosEscopoSemanaIds = topicosEscopoSemana;
           this.invalidarTopicosExibidosCache();
         }
 
@@ -368,27 +382,40 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.route.paramMap
       .pipe(
         map((params) => {
-          const idParam = params.get('materiaId') ?? params.get('id');
-          return idParam ? Number(idParam) : 0;
+          const idParamRaw = params.get('materiaId') ?? params.get('id') ?? '';
+          const materiaId = idParamRaw ? Number(idParamRaw) : 0;
+          return { idParamRaw, materiaId };
         }),
-        distinctUntilChanged(),
-        tap((materiaId) => {
+        distinctUntilChanged((a, b) => a.idParamRaw === b.idParamRaw && a.materiaId === b.materiaId),
+        tap(({ idParamRaw, materiaId }) => {
+          this.modoExecucaoFila = idParamRaw === 'executar';
           this.materiaId = materiaId;
+          if ((this.route.snapshot.queryParamMap.get('filaExecucao') || '') === '1' && this.executionQueueService.getSnapshot().length === 0) {
+            this.hidratarFilaExecucaoDaNavegacao();
+          }
           this.erro = undefined;
-          if (!materiaId) {
+          if (!materiaId && !this.modoExecucaoFila) {
             this.erro = 'Materia nao informada na rota.';
           }
         }),
-        filter((materiaId) => !!materiaId),
-        switchMap((materiaId) =>
-          this.carregarSalaPorMateria$(materiaId).pipe(
+        switchMap(({ idParamRaw, materiaId }) => {
+          if (idParamRaw === 'executar') {
+            this.iniciarExecucaoFilaDoDia();
+            return EMPTY;
+          }
+
+          if (!materiaId) {
+            return EMPTY;
+          }
+
+          return this.carregarSalaPorMateria$(materiaId).pipe(
             catchError((err) => {
               console.error('[SALA-ESTUDO] Erro ao carregar sala por materia:', err);
               this.erro = 'Erro ao carregar dados da sala de estudo.';
               return EMPTY;
             })
-          )
-        ),
+          );
+        }),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
@@ -835,6 +862,146 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       return 'SEM';
     }
     return null;
+  }
+
+  private getTopicosEscopoSemanaFromQuery(queryParams?: ParamMap): Set<number> {
+    const params = queryParams ?? this.route.snapshot.queryParamMap;
+    const raw = (params.get('topicos') || '').trim();
+    if (!raw) return new Set<number>();
+
+    // O fluxo de "Revisar agora" (FOCO) envia o escopo em `topicos` sem `filtro=pressao-semana`.
+    // Se `topicos` existir, ele deve ser respeitado como escopo ativo da sala.
+    const ids = raw
+      .split(',')
+      .map((v) => Number(v.trim()))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    return new Set<number>(ids);
+  }
+
+  private getEscopoTopicosAtivo(): Set<number> {
+    if (this.modoExecucaoFila) {
+      const fila = this.executionQueueService.getSnapshot();
+      if (Array.isArray(fila) && fila.length > 0) {
+        const ids = fila
+          .map((item) => Number(item?.topicoId || 0))
+          .filter((id) => Number.isFinite(id) && id > 0);
+        return new Set<number>(ids);
+      }
+    }
+    return this.topicosEscopoSemanaIds;
+  }
+
+  private saoMesmosIdsEscopo(a: Set<number>, b: Set<number>): boolean {
+    if (a.size !== b.size) return false;
+    for (const id of a) {
+      if (!b.has(id)) return false;
+    }
+    return true;
+  }
+
+  private iniciarExecucaoFilaDoDia(): void {
+    this.hidratarFilaExecucaoDaNavegacao();
+    const fila = this.executionQueueService.getSnapshot();
+
+    if (!fila.length) {
+      this.erro = 'Fila de execucao vazia.';
+      this.router.navigate(['/area-restrita/foco']);
+      return;
+    }
+
+    const primeiro = fila[0];
+    const materiaId = Number(primeiro?.materiaId || 0);
+    const topicoId = Number(primeiro?.topicoId || 0);
+    if (materiaId <= 0 || topicoId <= 0) {
+      this.erro = 'Fila de execucao invalida.';
+      this.router.navigate(['/area-restrita/foco']);
+      return;
+    }
+
+    this.router.navigate(['/area-restrita/sala-estudo', materiaId], {
+      queryParams: {
+        modo: 'revisar',
+        topicoId,
+        filaExecucao: '1'
+      },
+      state: { executionQueue: fila }
+    });
+  }
+
+  private hidratarFilaExecucaoDaNavegacao(): void {
+    if (this.executionQueueService.getSnapshot().length > 0) {
+      return;
+    }
+
+    const stateFila = (history?.state?.executionQueue || null) as ExecutionQueueItem[] | null;
+    if (Array.isArray(stateFila) && stateFila.length) {
+      this.executionQueueService.setFila(stateFila);
+      return;
+    }
+
+    const topicosRaw = String(this.route.snapshot.queryParamMap.get('topicos') || '').trim();
+    if (!topicosRaw) return;
+    const ids = topicosRaw
+      .split(',')
+      .map((v) => Number(v.trim()))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    if (!ids.length) return;
+
+    // Fallback quando veio somente query string: mantemos fila por topico
+    // e tentamos executar na materia atual quando disponivel.
+    const materiaContexto = Number(this.materiaId || 0);
+    const fallbackFila = ids.map((topicoId) => ({
+      topicoId,
+      materiaId: materiaContexto > 0 ? materiaContexto : null
+    }));
+    this.executionQueueService.setFila(fallbackFila);
+  }
+
+  private avancarFilaExecucaoAposConclusao(topicoIdConcluido: number): void {
+    if (!this.modoExecucaoFila) return;
+
+    const proximo = this.executionQueueService.completeAndGetNext(topicoIdConcluido);
+    // Forca recalculo da lista com o escopo pendente atualizado da fila.
+    this.revisoesViewVersion += 1;
+    this.invalidarTopicosExibidosCache();
+
+    if (!proximo) {
+      this.modoExecucaoFila = false;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Fila concluida',
+        detail: 'Revisao do dia finalizada.'
+      });
+      this.router.navigate(['/area-restrita/foco']);
+      return;
+    }
+
+    const proximoTopicoId = Number(proximo.topicoId || 0);
+    const proximaMateriaId = Number(proximo.materiaId || 0);
+    if (proximaMateriaId <= 0 || proximoTopicoId <= 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Fila incompleta',
+        detail: 'Nao foi possivel abrir o proximo item da fila.'
+      });
+      this.router.navigate(['/area-restrita/revisoes']);
+      return;
+    }
+
+    if (proximaMateriaId === Number(this.materiaId || 0)) {
+      this.atualizarQueryTopico(proximoTopicoId);
+      this.selecionarTopicoPorId(proximoTopicoId);
+      return;
+    }
+
+    this.router.navigate(['/area-restrita/sala-estudo', proximaMateriaId], {
+      queryParams: {
+        modo: 'revisar',
+        topicoId: proximoTopicoId,
+        filaExecucao: '1'
+      },
+      state: { executionQueue: this.executionQueueService.getSnapshot() }
+    });
   }
 
   ativarRevisaoAnotacoes(): void {
@@ -3001,6 +3168,12 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       flashcardId: atual.id,
       avaliacao
     };
+    console.warn('[SALA-ESTUDO][REVISAO][FLASHCARD][INICIO]', {
+      flashcardId: Number(req.flashcardId || 0),
+      avaliacao: req.avaliacao,
+      topicoSelecionadoId: Number(this.topicoSelecionado?.id || 0) || null,
+      horarioIso: new Date().toISOString()
+    });
 
     this.enviandoAvaliacaoFlashcard = true;
 
@@ -3012,6 +3185,12 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
+        console.warn('[SALA-ESTUDO][REVISAO][FLASHCARD][SUCESSO]', {
+          flashcardId: Number(req.flashcardId || 0),
+          avaliacao: req.avaliacao,
+          topicoSelecionadoId: Number(this.topicoSelecionado?.id || 0) || null,
+          horarioIso: new Date().toISOString()
+        });
         this.proximoFlashcard();
         this.avaliacaoFlashcardSelecionada = null;
         this.atualizarFeedbackRetencaoTopico(this.topicoSelecionado?.id ?? null);
@@ -3021,6 +3200,14 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (err) => {
         console.error('[REVISAO] Erro ao registrar resposta do flashcard:', err);
+        console.error('[SALA-ESTUDO][REVISAO][FLASHCARD][ERRO]', {
+          flashcardId: Number(req.flashcardId || 0),
+          avaliacao: req.avaliacao,
+          topicoSelecionadoId: Number(this.topicoSelecionado?.id || 0) || null,
+          horarioIso: new Date().toISOString(),
+          mensagem: err?.message || String(err),
+          status: err?.status ?? null
+        });
         alert('Erro ao registrar resposta da revisao. Tente novamente.');
       }
     });
@@ -3035,6 +3222,11 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       topicoId: this.topicoSelecionado.id,
       avaliacao
     };
+    console.warn('[SALA-ESTUDO][REVISAO][TOPICO][INICIO]', {
+      topicoId: Number(req.topicoId || 0),
+      avaliacao: req.avaliacao,
+      horarioIso: new Date().toISOString()
+    });
 
     this.ultimoTopicoRevisadoId = req.topicoId;
 
@@ -3053,12 +3245,25 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: () => {
+        console.warn('[SALA-ESTUDO][REVISAO][TOPICO][SUCESSO]', {
+          topicoId: Number(req.topicoId || 0),
+          avaliacao: req.avaliacao,
+          horarioIso: new Date().toISOString()
+        });
         this.atualizarFeedbackRetencaoTopico(req.topicoId);
         this.mostrarMensagemRevisao('Revisao das anotacoes registrada!');
         this.notificarRevisaoConcluida('anotacao', req.topicoId);
+        this.avancarFilaExecucaoAposConclusao(req.topicoId);
       },
       error: (err) => {
         console.error('[REVISAO] Erro ao registrar revisao de anotacoes:', err);
+        console.error('[SALA-ESTUDO][REVISAO][TOPICO][ERRO]', {
+          topicoId: Number(req.topicoId || 0),
+          avaliacao: req.avaliacao,
+          horarioIso: new Date().toISOString(),
+          mensagem: err?.message || String(err),
+          status: err?.status ?? null
+        });
         alert('Erro ao registrar revisao das anotacoes. Tente novamente.');
       }
     });
@@ -3154,7 +3359,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   irParaProximaRevisao(): void {
-    if (this.usarRegrasBackV2) {
+    if (this.usarRegrasBackV2 && this.getEscopoTopicosAtivo().size === 0) {
       this.irParaProximoTopicoViaBackend('revisar');
       return;
     }
@@ -3183,7 +3388,9 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private getTopicosParaRevisao(): TopicoViewModel[] {
-    const base = this.filtroSemaforoSelecionado ? this.topicosExibidos : (this.topicos || []);
+    const base = (this.filtroSemaforoSelecionado || this.getEscopoTopicosAtivo().size > 0)
+      ? this.topicosExibidos
+      : (this.topicos || []);
     return (base || []).filter(t => !t.hasFilhos && t.ativo !== false);
   }
 
@@ -3592,11 +3799,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (!alvo) {
-      const topicosBase = this.filtroSemaforoSelecionado ? this.topicosExibidos : this.topicos;
+      const topicosBase = (this.filtroSemaforoSelecionado || this.getEscopoTopicosAtivo().size > 0)
+        ? this.topicosExibidos
+        : this.topicos;
       const folhas = topicosBase.filter(t => !t.hasFilhos && t.ativo !== false);
       const ultimoTopicoId = this.obterUltimoTopicoId();
 
-      if (this.filtroSemaforoSelecionado && folhas.length) {
+      if ((this.filtroSemaforoSelecionado || this.getEscopoTopicosAtivo().size > 0) && folhas.length) {
         alvo = folhas[0];
       }
 
@@ -3948,9 +4157,13 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       return this.topicosExibidosCacheResultado;
     }
 
+    const escopoAtivo = this.getEscopoTopicosAtivo();
+    const comEscopo = escopoAtivo.size > 0
+      ? fonte.filter((t) => escopoAtivo.has(Number(t?.id || 0)))
+      : fonte;
     const resultado = !filtro
-      ? fonte
-      : fonte.filter(t => this.getStatusRevisaoTopicoView(t) === filtro);
+      ? comEscopo
+      : comEscopo.filter(t => this.getStatusRevisaoTopicoView(t) === filtro);
 
     this.topicosExibidosCacheFonte = fonte;
     this.topicosExibidosCacheFiltro = filtro;
@@ -3985,10 +4198,26 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const idSelecionado = this.topicoSelecionado?.id;
 
+    const startedAt = Date.now();
+    console.warn('[SALA-ESTUDO][REVISAO][RELOAD][INICIO]', {
+      materiaId: Number(this.materiaId || 0),
+      topicoSelecionadoId: Number(idSelecionado || 0) || null,
+      proximoAposId: Number(proximoAposId || 0) || null,
+      proximoPreferidoId: Number(proximoPreferidoId || 0) || null,
+      horarioIso: new Date(startedAt).toISOString()
+    });
+
     return forkJoin({
       revisoesResp: this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 })
     }).pipe(
       tap(({ revisoesResp }) => {
+        const itens = (revisoesResp?.itens || []) as RevisaoTopicoItem[];
+        console.warn('[SALA-ESTUDO][REVISAO][RELOAD][OK]', {
+          elapsedMs: Date.now() - startedAt,
+          revisoesItens: itens.length,
+          topicoSelecionadoId: Number(this.topicoSelecionado?.id || 0) || null,
+          horarioIso: new Date().toISOString()
+        });
         this.atualizarMapaRevisoes((revisoesResp?.itens || []) as RevisaoTopicoItem[]);
         this.revisoesCarregadas = true;
 
@@ -4018,6 +4247,12 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       map(() => void 0),
       catchError((err) => {
         console.error('[SALA-ESTUDO] Erro ao recarregar topicos apos revisao:', err);
+        console.error('[SALA-ESTUDO][REVISAO][RELOAD][ERRO]', {
+          elapsedMs: Date.now() - startedAt,
+          mensagem: err?.message || String(err),
+          status: err?.status ?? null,
+          horarioIso: new Date().toISOString()
+        });
         return of(void 0);
       })
     );
@@ -4196,11 +4431,20 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     origem: 'anotacao' | 'flashcard' | 'finalizacao-topico',
     topicoId?: number
   ): void {
-    console.debug('[SALA-ESTUDO] Revisao concluida', { origem, topicoId });
+    console.warn('[SALA-ESTUDO][REVISAO][BUS][EMIT]', {
+      origem,
+      topicoId: Number(topicoId || 0) || null,
+      horarioIso: new Date().toISOString()
+    });
     this.refreshBusService.emitRevisaoConcluida({ origem, topicoId });
 
     // Retry curto para mitigar eventual consistencia do backend.
     const retryTimer = setTimeout(() => {
+      console.warn('[SALA-ESTUDO][REVISAO][BUS][RETRY_EMIT]', {
+        origem,
+        topicoId: Number(topicoId || 0) || null,
+        horarioIso: new Date().toISOString()
+      });
       this.refreshBusService.emitRevisaoConcluida({ origem, topicoId });
       this.refreshBusTimers = this.refreshBusTimers.filter((timer) => timer !== retryTimer);
     }, 2000);

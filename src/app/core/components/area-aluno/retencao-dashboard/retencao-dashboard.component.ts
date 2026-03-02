@@ -1,9 +1,10 @@
 ﻿import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { forkJoin } from 'rxjs';
 import { catchError, map, of, switchMap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TopicoCognitivoDTO } from 'src/app/core/models/cognitive-metrics.models';
 import {
   AvaliacaoRevisao,
@@ -13,12 +14,19 @@ import {
   RetencaoAnalyticsResponseDTO,
   RetencaoAnalyticsSerieDTO,
   RetencaoPontoDTO,
+  RetencaoSemDadosResponseDTO,
   RevisaoEventoHistoricoDTO,
   TopicoRiscoDTO
 } from 'src/app/core/models/retencao-analytics.models';
 import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analytics.service';
+import { CognitiveMetricsService } from 'src/app/core/services/cognitive-metrics.service';
+import { DashboardFacadeService } from 'src/app/core/services/dashboard-facade.service';
+import { DashboardFacade } from 'src/app/core/facades/dashboard.facade';
+import { DashboardSummary, FilaItem } from 'src/app/core/models/dashboard-summary.models';
 import { EditalService } from 'src/app/core/components/area-aluno/services/edital.service';
 import { Edital } from 'src/app/core/components/area-aluno/models/Edital';
+import { RefreshBusService } from 'src/app/core/services/refresh-bus.service';
+import { environment } from 'src/environments/environment';
 import {
   getSnapshotComparacao,
   getSnapshotHoje,
@@ -42,6 +50,15 @@ interface TopicoMateriaRef {
   materiaNome: string | null;
 }
 type NivelUsuarioClassificacao = 'CRITICO' | 'MODERADO' | 'LEVE' | 'SEM_DADOS';
+type ResumoFaixa = 'CONSOLIDADO' | 'EM_RISCO' | 'CRITICO' | 'SEM_DADOS';
+
+interface ResumoListaItem {
+  topicoId: number;
+  nomeTopico: string;
+  nomeMateria: string;
+  score: number | null;
+  classificacaoLabel: string;
+}
 
 @Component({
   selector: 'app-retencao-dashboard',
@@ -50,14 +67,16 @@ type NivelUsuarioClassificacao = 'CRITICO' | 'MODERADO' | 'LEVE' | 'SEM_DADOS';
 })
 export class RetencaoDashboardComponent implements OnInit {
   abaSelecionada: 'geral' | 'criticos' = 'geral';
-  janelaSelecionada: 7 | 14 | 30 = 30;
-  janelaOptions: Array<{ label: string; value: 7 | 14 | 30 }> = [
+  janelaSelecionada: 1 | 7 | 14 | 30 = 30;
+  janelaOptions: Array<{ label: string; value: 1 | 7 | 14 | 30 }> = [
+    { label: 'Hoje', value: 1 },
     { label: '7 dias', value: 7 },
     { label: '14 dias', value: 14 },
     { label: '30 dias', value: 30 }
   ];
 
   resumo: EditalResumoRetencaoDTO | null = null;
+  dashboardSummary: DashboardSummary | null = null;
   topicosEmRisco: TopicoRiscoDTO[] = [];
   errosReincidentes: ErroReincidenteDTO[] = [];
 
@@ -80,6 +99,14 @@ export class RetencaoDashboardComponent implements OnInit {
   serieDetalhe: RetencaoPontoDTO[] = [];
   historicoDetalhe: RevisaoEventoHistoricoDTO[] = [];
   carregandoDetalhes = false;
+  topicosCognitivosMonitorados: TopicoCognitivoDTO[] = [];
+
+  resumoListaVisivel = false;
+  renderResumoListaDialog = false;
+  resumoListaFaixa: ResumoFaixa | null = null;
+  resumoListaItensCache: ResumoListaItem[] = [];
+  carregandoResumoLista = false;
+  filtroDataFilaRisco: string | null = null;
 
   readonly classificacao = ClassificacaoRetencaoTopico;
   topicosCriticos: TopicoCognitivoDTO[] = [];
@@ -182,13 +209,19 @@ export class RetencaoDashboardComponent implements OnInit {
 
   constructor(
     private retencaoService: RetencaoAnalyticsService,
+    private cognitiveMetricsService: CognitiveMetricsService,
+    private dashboardFacade: DashboardFacadeService,
+    private dashboardStore: DashboardFacade,
     private editalService: EditalService,
+    private refreshBusService: RefreshBusService,
     private messageService: MessageService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
+    this.janelaSelecionada = this.dashboardStore.janelaAtual;
     const view = String(this.route.snapshot.queryParamMap.get('view') || '').toLowerCase();
     if (view === 'criticos') {
       this.abaSelecionada = 'criticos';
@@ -196,12 +229,16 @@ export class RetencaoDashboardComponent implements OnInit {
     this.carregarMapaTopicoMateria();
     this.carregarResumoETopicos();
     this.carregarErrosReincidentes();
-    this.carregarTopicosCriticos();
+    this.refreshBusService.revisaoConcluida$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.carregarResumoETopicos();
+      });
   }
 
   onJanelaChange(): void {
+    this.dashboardStore.setJanela(this.janelaSelecionada);
     this.carregarResumoETopicos();
-    this.carregarTopicosCriticos();
   }
 
   carregarResumoETopicos(): void {
@@ -210,17 +247,34 @@ export class RetencaoDashboardComponent implements OnInit {
     this.carregandoAnalytics = true;
 
     forkJoin({
-      resumo: this.retencaoService.buscarResumoEdital(this.janelaSelecionada),
-      topicos: this.retencaoService.buscarTopicosEmRisco(this.janelaSelecionada, 50),
-      analytics: this.retencaoService.buscarAnalyticsRetencao(this.janelaSelecionada)
+      summary: this.dashboardStore.loadSummary(this.janelaSelecionada, true),
+      analytics: this.retencaoService.buscarAnalyticsRetencao(this.janelaSelecionada).pipe(catchError(() => of(null))),
+      topicosCognitivos: this.cognitiveMetricsService.getTopicosCognitivos(30, null, 1000).pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ resumo, topicos, analytics }) => {
-        this.resumo = resumo;
-        this.topicosEmRisco = this.aplicarMapaMateria(topicos || []);
+      next: ({ summary, analytics, topicosCognitivos }) => {
+        this.dashboardSummary = summary || null;
+        this.resumo = this.mapSummaryToResumo(summary);
+        this.topicosEmRisco = this.aplicarMapaMateria(this.mapSummaryFilaToTopicos(summary?.filaAtiva?.itens || []));
+        this.logScoreInconsistenciasPayload();
+        this.topicosCognitivosMonitorados = this.aplicarMapaMateria(
+          (Array.isArray(topicosCognitivos) ? topicosCognitivos : []).map((item) => ({
+            ...item,
+            materiaId: item?.materiaId ?? null,
+            nomeMateria: item?.nomeMateria ?? null
+          }))
+        ) as TopicoCognitivoDTO[];
         this.analytics = analytics || null;
-        this.topicosCriticos = this.converterTopicosRiscoParaCriticos(this.topicosEmRisco);
+        this.carregarTopicosCriticos();
         this.montarGraficoTendencias(analytics?.serie || []);
         this.atualizarMetricasEstrategicas();
+        this.logKpiSourceRetencao();
+        this.devDebugSnapshotRetencao('load-ok', {
+          resumo: this.resumo,
+          analytics,
+          topicos: this.topicosEmRisco,
+          summaryModo: summary?.modoAtivo,
+          summaryTotalAgora: summary?.resumoAcionavel?.totalAgora
+        });
         this.carregandoResumo = false;
         this.carregandoRisco = false;
         this.carregandoAnalytics = false;
@@ -232,17 +286,19 @@ export class RetencaoDashboardComponent implements OnInit {
         this.analytics = null;
         this.tendenciasChartData = null;
         this.atualizarMetricasEstrategicas();
+        this.devDebugSnapshotRetencao('load-error', { erroStatus: err?.status, erro: err?.message });
         this.tratarErroHttp(err, 'Falha ao carregar dados de retenÃ§Ã£o');
       }
     });
   }
 
   get dominioScoreLabel(): string {
-    const total = Number(this.resumo?.totalTopicos);
-    const consolidados = Number(this.resumo?.topicosConsolidados);
-    const emRisco = Number(this.resumo?.topicosEmRisco);
-    const criticos = Number(this.resumo?.topicosCriticos);
-    const semDados = Number(this.resumo?.topicosSemDados);
+    const counts = this.obterCountsResumoConsistentes();
+    const total = counts.total;
+    const consolidados = counts.consolidados;
+    const emRisco = counts.emRisco;
+    const criticos = counts.criticos;
+    const semDados = counts.semDados;
 
     let score: number;
     if (
@@ -270,19 +326,16 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   get totalTopicosResumo(): number {
-    const total = Number(this.resumo?.totalTopicos ?? 0);
-    return Number.isFinite(total) && total > 0 ? total : 0;
+    return this.obterCountsResumoConsistentes().total;
   }
 
   get quantidadeTopicosCriticosCard(): number {
-    const qtd = Number(this.resumo?.topicosCriticos ?? 0);
-    return Number.isFinite(qtd) && qtd > 0 ? Math.round(qtd) : 0;
+    return this.obterCountsResumoConsistentes().criticos;
   }
 
   get quantidadeTopicosRiscoGeralCard(): number {
-    const criticos = Number(this.resumo?.topicosCriticos ?? 0);
-    const emRisco = Number(this.resumo?.topicosEmRisco ?? 0);
-    const total = (Number.isFinite(criticos) ? criticos : 0) + (Number.isFinite(emRisco) ? emRisco : 0);
+    const counts = this.obterCountsResumoConsistentes();
+    const total = counts.criticos + counts.emRisco;
     return total > 0 ? Math.round(total) : 0;
   }
 
@@ -330,16 +383,48 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   get percentualConsolidadoCardLabel(): string {
-    const valor = Number(this.resumo?.percentualConsolidado ?? 0);
+    const valor = Number(this.resumo?.percentualConsolidadoEditalCompleto ?? this.resumo?.percentualConsolidado ?? 0);
     const normalizado = Number.isFinite(valor) ? Math.max(0, Math.min(100, valor)) : 0;
     return `${normalizado.toFixed(1)}%`;
   }
 
   get faltamTopicosConsolidarCard(): number {
-    const total = Number(this.resumo?.totalTopicos ?? 0);
-    const consolidados = Number(this.resumo?.topicosConsolidados ?? 0);
+    const faltamEdital = Number(this.resumo?.faltamTopicosEdital);
+    if (Number.isFinite(faltamEdital)) {
+      return Math.max(0, Math.round(faltamEdital));
+    }
+    const total = Number(this.resumo?.totalTopicosEdital ?? this.resumo?.totalTopicos ?? 0);
+    const consolidados = Number(this.resumo?.topicosConsolidadosEdital ?? this.resumo?.topicosConsolidados ?? 0);
     if (!Number.isFinite(total) || !Number.isFinite(consolidados)) return 0;
     return Math.max(0, Math.round(total - consolidados));
+  }
+
+  get exibirBaseMonitoradaCard(): boolean {
+    return (
+      Number.isFinite(Number(this.resumo?.percentualConsolidadoBaseMonitorada)) ||
+      Number.isFinite(Number(this.resumo?.totalTopicosMonitorados)) ||
+      Number.isFinite(Number(this.resumo?.faltamTopicosMonitorados))
+    );
+  }
+
+  get percentualConsolidadoBaseMonitoradaCardLabel(): string {
+    const valor = Number(this.resumo?.percentualConsolidadoBaseMonitorada);
+    if (!Number.isFinite(valor)) return '—';
+    const normalizado = Math.max(0, Math.min(100, valor));
+    return `${normalizado.toFixed(1)}%`;
+  }
+
+  get faltamTopicosMonitoradosCard(): number {
+    const faltamMonitorados = Number(this.resumo?.faltamTopicosMonitorados);
+    if (Number.isFinite(faltamMonitorados)) {
+      return Math.max(0, Math.round(faltamMonitorados));
+    }
+    const total = Number(this.resumo?.totalTopicosMonitorados);
+    const consolidados = Number(this.resumo?.topicosConsolidadosMonitorados);
+    if (Number.isFinite(total) && Number.isFinite(consolidados)) {
+      return Math.max(0, Math.round(total - consolidados));
+    }
+    return 0;
   }
 
   get editalEscopoLabelCard(): string {
@@ -365,7 +450,7 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   get janelaEscopoLabel(): string {
-    return `JANELA: ${this.janelaSelecionada}d`;
+    return this.janelaSelecionada === 1 ? 'JANELA: HOJE' : `JANELA: ${this.janelaSelecionada}d`;
   }
 
   get heroRetencaoTitulo(): string {
@@ -373,23 +458,33 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   get tooltipEscopoJanela(): string {
-    return `Indicador calculado na janela de ${this.janelaSelecionada} dias selecionada.`;
+    return this.janelaSelecionada === 1
+      ? 'Indicador calculado na janela de hoje.'
+      : `Indicador calculado na janela de ${this.janelaSelecionada} dias selecionada.`;
   }
 
   get tooltipRiscoGeralJanela(): string {
-    return `Risco medio na janela: combina topicos criticos e em risco dos ultimos ${this.janelaSelecionada} dias.`;
+    return this.janelaSelecionada === 1
+      ? 'Risco medio na janela: combina topicos criticos e em risco de hoje.'
+      : `Risco medio na janela: combina topicos criticos e em risco dos ultimos ${this.janelaSelecionada} dias.`;
+  }
+
+  get labelTendenciasJanela(): string {
+    return this.janelaSelecionada === 1 ? 'Tendencias (hoje)' : `Tendencias (ultimos ${this.janelaSelecionada} dias)`;
+  }
+
+  get labelEvolucaoJanela(): string {
+    return this.janelaSelecionada === 1 ? 'Evolucao (hoje)' : `Evolucao (${this.janelaSelecionada} dias)`;
   }
 
   get heroCounts(): { criticos: number; moderados: number; leves: number; semDados: number } {
-    const inicial = { criticos: 0, moderados: 0, leves: 0, semDados: 0 };
-    return (this.topicosEmRisco || []).reduce((acc, topico) => {
-      const nivel = this.obterNivelUsuarioTopico(topico?.classificacao, topico?.score);
-      if (nivel === 'CRITICO') acc.criticos += 1;
-      else if (nivel === 'MODERADO') acc.moderados += 1;
-      else if (nivel === 'LEVE') acc.leves += 1;
-      else acc.semDados += 1;
-      return acc;
-    }, inicial);
+    const base = this.dashboardSummary?.informativo?.baseMonitorada;
+    return {
+      criticos: Math.max(0, Math.round(Number(this.dashboardSummary?.resumoAcionavel?.criticos || 0))),
+      moderados: Math.max(0, Math.round(Number(this.dashboardSummary?.resumoAcionavel?.emRisco || 0))),
+      leves: Math.max(0, Math.round(Number(base?.consolidados || 0))),
+      semDados: Math.max(0, Math.round(Number(base?.semDados || 0)))
+    };
   }
 
   get heroEstado(): {
@@ -437,6 +532,41 @@ export class RetencaoDashboardComponent implements OnInit {
     return `Sem pressao operacional relevante na janela de ${this.janelaSelecionada} dias.`;
   }
 
+  get modoAtivoPainelLabel(): string {
+    const modo = String(this.dashboardSummary?.modoAtivo || '').toLowerCase();
+    if (modo === 'manutencao') return 'Modo: Manutencao';
+    return 'Modo: Risco Cognitivo';
+  }
+
+  get tituloFilaAtiva(): string {
+    const modo = String(this.dashboardSummary?.modoAtivo || '').toLowerCase();
+    return modo === 'manutencao' ? 'Fila de manutencao' : 'Fila por risco';
+  }
+
+  get inconsistenciaAcionavelDev(): boolean {
+    if (environment.production) return false;
+    const totalAgora = Number(this.dashboardSummary?.resumoAcionavel?.totalAgora || 0);
+    const itensLen = Array.isArray(this.dashboardSummary?.filaAtiva?.itens)
+      ? this.dashboardSummary!.filaAtiva.itens.length
+      : 0;
+    return totalAgora !== itensLen;
+  }
+
+  get topicoRiscoDestaque(): TopicoRiscoDTO | null {
+    const lista = this.topicosEmRiscoVisiveis || [];
+    return lista.length ? lista[0] : null;
+  }
+
+  get existeTopicoRiscoDestaque(): boolean {
+    return !!this.topicoRiscoDestaque;
+  }
+
+  get topicoRiscoDestaqueNome(): string {
+    const topico = this.topicoRiscoDestaque;
+    if (!topico) return '';
+    return String(topico.nomeTopico || `Topico ${topico.topicoId}`);
+  }
+
   carregarErrosReincidentes(): void {
     this.carregandoErros = true;
     this.retencaoService.buscarErrosReincidentes(30, 20).subscribe({
@@ -457,18 +587,8 @@ export class RetencaoDashboardComponent implements OnInit {
 
   carregarTopicosCriticos(): void {
     this.carregandoCriticos = true;
-    this.retencaoService.buscarTopicosEmRisco(this.janelaSelecionada, 200).subscribe({
-      next: (itens) => {
-        const normalizados = this.aplicarMapaMateria(itens || []);
-        this.topicosCriticos = this.converterTopicosRiscoParaCriticos(normalizados);
-        this.carregandoCriticos = false;
-      },
-      error: (err: HttpErrorResponse) => {
-        this.topicosCriticos = [];
-        this.carregandoCriticos = false;
-        this.tratarErroHttp(err, 'Falha ao carregar topicos criticos');
-      }
-    });
+    this.topicosCriticos = this.converterTopicosRiscoParaCriticos(this.topicosEmRisco || []);
+    this.carregandoCriticos = false;
   }
 
   abrirDetalhes(topico: { topicoId: number; nomeTopico: string | null }): void {
@@ -550,11 +670,7 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   mapClassificacaoParaNivelUsuario(classificacao: string): NivelUsuarioClassificacao {
-    const normalizado = String(classificacao || '').toUpperCase().trim();
-    if (normalizado === 'CRITICO') return 'CRITICO';
-    if (normalizado === 'EM_RISCO') return 'MODERADO';
-    if (normalizado === 'CONSOLIDADO') return 'LEVE';
-    return 'SEM_DADOS';
+    return this.dashboardFacade.mapClassificacaoParaNivel(classificacao);
   }
 
   get statusLabel(): string {
@@ -741,10 +857,12 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   get resumoPizzaStyle(): string {
-    const consolidado = this.clampPercent(this.resumo?.percentualConsolidado);
-    const risco = this.clampPercent(this.resumo?.percentualEmRisco);
-    const critico = this.clampPercent(this.resumo?.percentualCritico);
-    const semDados = this.clampPercent(this.resumo?.percentualSemDados);
+    const counts = this.obterCountsResumoConsistentes();
+    const total = Math.max(0, Number(counts.total || 0));
+    const consolidado = this.clampPercent(total > 0 ? (counts.consolidados / total) * 100 : 0);
+    const risco = this.clampPercent(total > 0 ? (counts.emRisco / total) * 100 : 0);
+    const critico = this.clampPercent(total > 0 ? (counts.criticos / total) * 100 : 0);
+    const semDados = this.clampPercent(total > 0 ? (counts.semDados / total) * 100 : 0);
 
     const p1 = consolidado;
     const p2 = p1 + critico;
@@ -757,6 +875,25 @@ export class RetencaoDashboardComponent implements OnInit {
       #E67E22 ${p2}% ${p3}%,
       #BDC3C7 ${p3}% ${p4}%,
       #edf0f3 ${p4}% 100%
+    )`;
+  }
+
+  get resumoHojePizzaStyle(): string {
+    const counts = this.obterCountsHojeConsistentes();
+    const total = Math.max(0, Number(counts.total || 0));
+    const criticos = this.clampPercent(total > 0 ? (counts.criticos / total) * 100 : 0);
+    const emRisco = this.clampPercent(total > 0 ? (counts.emRisco / total) * 100 : 0);
+    const demais = this.clampPercent(total > 0 ? (counts.demais / total) * 100 : 0);
+
+    const p1 = criticos;
+    const p2 = p1 + emRisco;
+    const p3 = Math.min(100, p2 + demais);
+
+    return `conic-gradient(
+      #C0392B 0% ${p1}%,
+      #E67E22 ${p1}% ${p2}%,
+      #2563EB ${p2}% ${p3}%,
+      #edf0f3 ${p3}% 100%
     )`;
   }
 
@@ -800,6 +937,241 @@ export class RetencaoDashboardComponent implements OnInit {
         }
       ]
     };
+  }
+
+  get resumoConsolidadosCount(): number {
+    return this.obterCountsResumoConsistentes().consolidados;
+  }
+
+  get resumoEmRiscoCount(): number {
+    return this.obterCountsResumoConsistentes().emRisco;
+  }
+
+  get resumoCriticosCount(): number {
+    return this.obterCountsResumoConsistentes().criticos;
+  }
+
+  get resumoSemDadosCount(): number {
+    return this.obterCountsResumoConsistentes().semDados;
+  }
+
+  get resumoHojeTotalCount(): number {
+    return this.obterCountsHojeConsistentes().total;
+  }
+
+  get resumoHojeCriticosCount(): number {
+    return this.obterCountsHojeConsistentes().criticos;
+  }
+
+  get resumoHojeEmRiscoCount(): number {
+    return this.obterCountsHojeConsistentes().emRisco;
+  }
+
+  get resumoHojeDemaisCount(): number {
+    return this.obterCountsHojeConsistentes().demais;
+  }
+
+  get revisadasHojeCount(): number {
+    const hoje = new Date();
+    const lista = Array.isArray(this.topicosCognitivosMonitorados) ? this.topicosCognitivosMonitorados : [];
+    const ids = new Set<number>();
+
+    lista.forEach((item) => {
+      const topicoId = Number(item?.topicoId || 0);
+      if (topicoId <= 0) return;
+      const dataEvento =
+        item?.dataUltimoEvento ||
+        item?.ultimoEventoEm ||
+        item?.ultimaRevisao ||
+        item?.ultimaRevisaoEm ||
+        item?.dataUltimaRevisao ||
+        null;
+      if (!dataEvento) return;
+      if (this.ehMesmoDiaLocal(dataEvento, hoje)) {
+        ids.add(topicoId);
+      }
+    });
+
+    return ids.size;
+  }
+
+  abrirListaResumo(faixa: ResumoFaixa): void {
+    this.resumoListaFaixa = faixa;
+    this.carregandoResumoLista = faixa === 'SEM_DADOS';
+    this.resumoListaItensCache = faixa === 'SEM_DADOS' ? [] : this.montarListaResumoPorFaixa(faixa);
+    this.renderResumoListaDialog = true;
+    this.resumoListaVisivel = false;
+    setTimeout(() => {
+      this.resumoListaVisivel = true;
+    }, 0);
+
+    if (faixa === 'SEM_DADOS') {
+      this.retencaoService.buscarTopicosSemDados({
+        janela: this.janelaSelecionada,
+        page: 0,
+        size: 500
+      }).subscribe({
+        next: (resp: RetencaoSemDadosResponseDTO) => {
+          const itens = Array.isArray(resp?.itens) ? resp.itens : [];
+          this.resumoListaItensCache = itens.map((item) => ({
+            topicoId: Number(item?.topicoId || 0),
+            nomeTopico: String(item?.nomeTopico || `Topico ${item?.topicoId}`),
+            nomeMateria: String(item?.nomeMateria || '-'),
+            score: null,
+            classificacaoLabel: 'SEM DADOS'
+          }));
+          this.carregandoResumoLista = false;
+        },
+        error: () => {
+          this.resumoListaItensCache = [];
+          this.carregandoResumoLista = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Sem dados',
+            detail: 'Nao foi possivel carregar a lista de topicos sem dados.'
+          });
+        }
+      });
+    }
+  }
+
+  onResumoListaHide(): void {
+    this.resumoListaVisivel = false;
+    this.renderResumoListaDialog = false;
+    this.resumoListaItensCache = [];
+    this.carregandoResumoLista = false;
+    this.limparBackdropDialog();
+  }
+
+  onResumoListaVisibleChange(visible: boolean): void {
+    this.resumoListaVisivel = visible;
+    if (!visible) {
+      this.renderResumoListaDialog = false;
+      this.resumoListaItensCache = [];
+      this.carregandoResumoLista = false;
+      this.limparBackdropDialog();
+    }
+  }
+
+  get resumoListaTitulo(): string {
+    if (this.resumoListaFaixa === 'CONSOLIDADO') return 'Topicos consolidados';
+    if (this.resumoListaFaixa === 'EM_RISCO') return 'Topicos em risco';
+    if (this.resumoListaFaixa === 'CRITICO') return 'Topicos criticos';
+    if (this.resumoListaFaixa === 'SEM_DADOS') return 'Topicos sem dados';
+    return 'Topicos';
+  }
+
+  get resumoListaItens(): ResumoListaItem[] {
+    return this.resumoListaItensCache;
+  }
+
+  private obterCountsResumoConsistentes(): {
+    total: number;
+    consolidados: number;
+    emRisco: number;
+    criticos: number;
+    semDados: number;
+  } {
+    const base = this.dashboardSummary?.informativo?.baseMonitorada;
+    const total = Math.max(0, Math.round(Number(base?.total || 0)));
+    const consolidados = Math.max(0, Math.round(Number(base?.consolidados || 0)));
+    const emRisco = Math.max(0, Math.round(Number(base?.emRisco || 0)));
+    const criticos = Math.max(0, Math.round(Number(base?.criticos || 0)));
+    const semDados = Math.max(0, Math.round(Number(base?.semDados || 0)));
+    return { total, consolidados, emRisco, criticos, semDados };
+  }
+
+  private obterCountsHojeConsistentes(): {
+    total: number;
+    criticos: number;
+    emRisco: number;
+    demais: number;
+  } {
+    const total = Math.max(0, Math.round(Number(this.dashboardSummary?.resumoAcionavel?.totalAgora || 0)));
+    const criticos = Math.max(0, Math.round(Number(this.dashboardSummary?.resumoAcionavel?.criticos || 0)));
+    const emRisco = Math.max(0, Math.round(Number(this.dashboardSummary?.resumoAcionavel?.emRisco || 0)));
+    const demais = Math.max(0, total - criticos - emRisco);
+    return { total, criticos, emRisco, demais };
+  }
+
+  private ehMesmoDiaLocal(dataIso: string, referencia: Date): boolean {
+    const data = new Date(dataIso);
+    if (Number.isNaN(data.getTime())) return false;
+    return (
+      data.getFullYear() === referencia.getFullYear() &&
+      data.getMonth() === referencia.getMonth() &&
+      data.getDate() === referencia.getDate()
+    );
+  }
+
+  private logKpiSourceRetencao(): void {
+    console.warn('[KPI_SOURCE]', {
+      tela: 'retencao',
+      source: 'dashboard_summary',
+      janelaDias: this.janelaSelecionada,
+      totalAgora: Number(this.dashboardSummary?.resumoAcionavel?.totalAgora || 0),
+      criticos: Number(this.dashboardSummary?.resumoAcionavel?.criticos || 0),
+      emRisco: Number(this.dashboardSummary?.resumoAcionavel?.emRisco || 0),
+      totalMonitorado: Number(this.dashboardSummary?.informativo?.baseMonitorada?.total || 0)
+    });
+  }
+
+  private topicoPertenceFaixa(item: TopicoCognitivoDTO, faixa: ResumoFaixa): boolean {
+    const classificacao = this.classificacaoResumoTopico(item);
+    if (faixa === 'CONSOLIDADO') return classificacao === 'CONSOLIDADO';
+    if (faixa === 'EM_RISCO') return classificacao === 'EM_RISCO';
+    if (faixa === 'CRITICO') return classificacao === 'CRITICO';
+    return classificacao === 'SEM_DADOS';
+  }
+
+  private classificacaoResumoTopico(item: TopicoCognitivoDTO): ResumoFaixa {
+    const nivel = this.obterNivelUsuarioTopico(item?.classificacao, item?.score);
+    if (nivel === 'CRITICO') return 'CRITICO';
+    if (nivel === 'MODERADO') return 'EM_RISCO';
+    if (nivel === 'LEVE') return 'CONSOLIDADO';
+    return 'SEM_DADOS';
+  }
+
+  private formatarFaixaResumoLabel(faixa: ResumoFaixa): string {
+    if (faixa === 'EM_RISCO') return 'EM RISCO';
+    if (faixa === 'SEM_DADOS') return 'SEM DADOS';
+    return faixa;
+  }
+
+  private montarListaResumoPorFaixa(faixa: ResumoFaixa): ResumoListaItem[] {
+    if (faixa === 'CRITICO' || faixa === 'EM_RISCO') {
+      return this.montarListaResumoPorFilaAtiva(faixa);
+    }
+
+    const lista = Array.isArray(this.topicosCognitivosMonitorados) ? this.topicosCognitivosMonitorados : [];
+    return lista
+      .filter((item) => this.topicoPertenceFaixa(item, faixa))
+      .map((item) => ({
+        topicoId: Number(item?.topicoId || 0),
+        nomeTopico: String(item?.nomeTopico || `Topico ${item?.topicoId}`),
+        nomeMateria: String(item?.nomeMateria || '-'),
+        score: Number.isFinite(Number(item?.score)) ? Number(item?.score) : null,
+        classificacaoLabel: this.formatarFaixaResumoLabel(this.classificacaoResumoTopico(item))
+      }));
+  }
+
+  private montarListaResumoPorFilaAtiva(faixa: 'CRITICO' | 'EM_RISCO'): ResumoListaItem[] {
+    const itens = Array.isArray(this.dashboardSummary?.filaAtiva?.itens) ? this.dashboardSummary!.filaAtiva.itens : [];
+    const filtrados = itens.filter((item) => {
+      const categoria = String(item?.categoria || '').toUpperCase();
+      if (faixa === 'CRITICO') return categoria.includes('CRITICO');
+      return categoria.includes('EM_RISCO') || categoria.includes('RISCO');
+    });
+
+    return filtrados
+      .map((item) => ({
+        topicoId: Number(item?.topicoId || 0),
+        nomeTopico: String(item?.topicoNome || `Topico ${item?.topicoId}`),
+        nomeMateria: '-',
+        score: Number.isFinite(Number(item?.score)) ? Number(item?.score) : null,
+        classificacaoLabel: faixa === 'CRITICO' ? 'CRITICO' : 'EM RISCO'
+      }))
+      .filter((item) => item.topicoId > 0);
   }
 
   private formatarDataCurta(dataIso: string): string {
@@ -871,17 +1243,24 @@ export class RetencaoDashboardComponent implements OnInit {
       return itens || [];
     }
 
-    return itens.map((item) => {
+    return itens.reduce((acc, item) => {
       const topicoId = Number(item?.topicoId || 0);
       const ref = this.topicoMateriaMap.get(topicoId);
-      if (!ref) return item;
+      if (!ref) {
+        acc.push({
+          ...item,
+          nomeMateria: item?.nomeMateria ?? null
+        });
+        return acc;
+      }
 
-      return {
+      acc.push({
         ...item,
         materiaId: ref.materiaId,
         nomeMateria: ref.materiaNome ?? item?.nomeMateria ?? null
-      };
-    });
+      });
+      return acc;
+    }, [] as T[]);
   }
 
   private carregarMapaTopicoMateria(): void {
@@ -1023,7 +1402,12 @@ export class RetencaoDashboardComponent implements OnInit {
     if (valor == null || Number.isNaN(valor)) {
       return '-';
     }
-    return valor.toFixed(2);
+    const n = Number(valor);
+    // Em nossa fila operacional, score 0 costuma indicar ausencia de score calculado.
+    if (!Number.isFinite(n) || n <= 0) {
+      return '-';
+    }
+    return n.toFixed(2);
   }
 
   formatarRisk(valor: number | null): string {
@@ -1097,6 +1481,48 @@ export class RetencaoDashboardComponent implements OnInit {
     }
   }
 
+  get topicosEmRiscoVisiveis(): TopicoRiscoDTO[] {
+    const lista = Array.isArray(this.topicosEmRisco) ? this.topicosEmRisco : [];
+    const dataFiltro = (this.filtroDataFilaRisco || '').trim();
+    if (!dataFiltro) return lista;
+
+    return lista.filter((item) => this.normalizarDataItem(item?.proximaRevisao) === dataFiltro);
+  }
+
+  limparFiltroDataFilaRisco(): void {
+    this.filtroDataFilaRisco = null;
+  }
+
+  private normalizarDataItem(dataIso: string | null | undefined): string | null {
+    if (!dataIso) return null;
+    const data = new Date(dataIso);
+    if (Number.isNaN(data.getTime())) return null;
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  classificacaoTopicoLabel(topico: TopicoRiscoDTO): string {
+    const categoria = String((topico as any)?.categoriaAcionavel || '').toUpperCase();
+    if (categoria.startsWith('MANUTENCAO')) return categoria.replaceAll('_', ' ');
+    const classificacao = String(topico?.classificacao || '').toUpperCase();
+    if (classificacao === 'CRITICO') return 'CRITICO';
+    if (classificacao === 'EM_RISCO') return 'EM_RISCO';
+    if (classificacao === 'CONSOLIDADO') return 'CONSOLIDADO';
+    return 'SEM_DADOS';
+  }
+
+  classeClassificacaoTopico(topico: TopicoRiscoDTO): string {
+    const categoria = String((topico as any)?.categoriaAcionavel || '').toUpperCase();
+    if (categoria.startsWith('MANUTENCAO')) return 'badge badge-consolidado';
+    const classificacao = String(topico?.classificacao || '').toUpperCase();
+    if (classificacao === 'CRITICO') return 'badge badge-critico';
+    if (classificacao === 'EM_RISCO') return 'badge badge-risco';
+    if (classificacao === 'CONSOLIDADO') return 'badge badge-consolidado';
+    return 'badge badge-sem-dados';
+  }
+
   classeClassificacao(classificacao: ClassificacaoRetencaoTopico): string {
     switch (classificacao) {
       case ClassificacaoRetencaoTopico.CRITICO:
@@ -1126,17 +1552,143 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   private obterNivelUsuarioTopico(classificacao: string | null | undefined, score: number | null | undefined): NivelUsuarioClassificacao {
-    const viaClassificacao = this.mapClassificacaoParaNivelUsuario(String(classificacao || ''));
-    if (viaClassificacao !== 'SEM_DADOS') return viaClassificacao;
-    return this.mapScoreParaNivelUsuario(score);
+    return this.dashboardFacade.classificarNivelUsuario(classificacao, score);
   }
 
-  private mapScoreParaNivelUsuario(score: number | null | undefined): NivelUsuarioClassificacao {
-    const n = Number(score);
-    if (!Number.isFinite(n)) return 'SEM_DADOS';
-    if (n < 0.45) return 'CRITICO';
-    if (n < 0.75) return 'MODERADO';
-    return 'LEVE';
+  private mapSummaryToResumo(summary: DashboardSummary | null): EditalResumoRetencaoDTO | null {
+    if (!summary) return null;
+    const base = summary?.informativo?.baseMonitorada;
+    const editalCompleto = summary?.informativo?.editalCompleto;
+    const total = Math.max(0, Number(base?.total || 0));
+    const consolidados = Math.max(0, Number(base?.consolidados || 0));
+    const emRisco = Math.max(0, Number(base?.emRisco || 0));
+    const criticos = Math.max(0, Number(base?.criticos || 0));
+    const semDados = Math.max(0, Number(base?.semDados || 0));
+
+    const totalEdital = Math.max(0, Number(editalCompleto?.total || total));
+    const consolidadosEdital = Math.max(0, Number(editalCompleto?.consolidados || consolidados));
+    const percentualConsolidadoEditalCompleto = totalEdital > 0 ? (consolidadosEdital / totalEdital) * 100 : 0;
+    const percentualConsolidadoBaseMonitorada = total > 0 ? (consolidados / total) * 100 : 0;
+
+    return {
+      totalTopicos: total,
+      topicosConsolidados: consolidados,
+      topicosEmRisco: emRisco,
+      topicosCriticos: criticos,
+      topicosSemDados: semDados,
+      percentualConsolidado: percentualConsolidadoBaseMonitorada,
+      percentualEmRisco: total > 0 ? (emRisco / total) * 100 : 0,
+      percentualCritico: total > 0 ? (criticos / total) * 100 : 0,
+      percentualSemDados: total > 0 ? (semDados / total) * 100 : 0,
+      janelaDias: Number(summary?.janelaDias || this.janelaSelecionada),
+      escopoCalculo: 'MISTO',
+      totalTopicosEdital: totalEdital,
+      totalTopicosMonitorados: total,
+      topicosConsolidadosEdital: consolidadosEdital,
+      topicosConsolidadosMonitorados: consolidados,
+      percentualConsolidadoEditalCompleto,
+      percentualConsolidadoBaseMonitorada,
+      faltamTopicosEdital: Math.max(0, totalEdital - consolidadosEdital),
+      faltamTopicosMonitorados: Math.max(0, total - consolidados)
+    };
+  }
+
+  private mapSummaryFilaToTopicos(itens: FilaItem[]): TopicoRiscoDTO[] {
+    return (Array.isArray(itens) ? itens : [])
+      .map((item) => {
+        const topicoId = Number(item?.topicoId || 0);
+        if (topicoId <= 0) return null;
+        const categoria = String(item?.categoria || '').toUpperCase();
+        const classificacao = categoria.includes('CRITICO')
+          ? ClassificacaoRetencaoTopico.CRITICO
+          : (categoria.includes('RISCO')
+            ? ClassificacaoRetencaoTopico.EM_RISCO
+            : (categoria.includes('SEM_DADOS')
+              ? ClassificacaoRetencaoTopico.SEM_DADOS
+              : ClassificacaoRetencaoTopico.CONSOLIDADO));
+        return {
+          topicoId,
+          materiaId: Number(item?.materiaId || 0) || null,
+          nomeTopico: item?.topicoNome ?? null,
+          classificacao,
+          score: Number.isFinite(Number(item?.score)) ? Number(item?.score) : null,
+          diasDesdeUltimoEvento: Number.isFinite(Number(item?.diasSemEvento)) ? Number(item?.diasSemEvento) : null,
+          proximaRevisao: item?.proxRevisao ?? null,
+          totalErrosNaJanela: Number.isFinite(Number(item?.errosJanela)) ? Number(item?.errosJanela) : null,
+          tendencia: null as any,
+          categoriaAcionavel: categoria
+        } as TopicoRiscoDTO;
+      })
+      .filter((item): item is TopicoRiscoDTO => !!item);
+  }
+
+  private isCategoriaRisco(categoria: unknown): boolean {
+    const valor = String(categoria || '').toUpperCase();
+    return valor.includes('CRITICO') || valor.includes('RISCO');
+  }
+
+  private isCategoriaManutencao(categoria: unknown): boolean {
+    const valor = String(categoria || '').toUpperCase();
+    return valor.startsWith('MANUTENCAO');
+  }
+
+  private logScoreInconsistenciasPayload(): void {
+    const lista = Array.isArray(this.topicosEmRisco) ? this.topicosEmRisco : [];
+    const inconsistentes = lista
+      .filter((item: any) => this.isCategoriaRisco(item?.categoriaAcionavel) && (item?.score == null || Number(item?.score) <= 0))
+      .slice(0, 50)
+      .map((item: any) => ({ topicoId: item?.topicoId, categoria: item?.categoriaAcionavel, score: item?.score }));
+
+    if (inconsistentes.length > 0) {
+      console.error('[RETENCAO][PAYLOAD_INCONSISTENTE][SCORE]', {
+        totalInconsistentes: inconsistentes.length,
+        amostra: inconsistentes
+      });
+    }
+  }
+
+  private devDebugSnapshotRetencao(contexto: string, payload: any): void {
+    if (environment.production) return;
+    const ultimo = this.analytics?.serie?.length ? this.analytics.serie[this.analytics.serie.length - 1] : null;
+    console.debug('[RETENCAO][SNAPSHOT]', {
+      contexto,
+      janela: this.janelaSelecionada,
+      endpoints: [
+        `/dashboard/summary?janelaDias=${this.janelaSelecionada}`,
+        `/sala-estudo/revisoes/retencao/analytics?janela=${this.janelaSelecionada}`
+      ],
+      payloadUsado: {
+        summary: {
+          asOf: this.dashboardSummary?.asOf,
+          modoAtivo: this.dashboardSummary?.modoAtivo,
+          totalAgora: this.dashboardSummary?.resumoAcionavel?.totalAgora,
+          itensLen: this.dashboardSummary?.filaAtiva?.itens?.length
+        },
+        resumo: {
+          totalTopicos: this.resumo?.totalTopicos,
+          topicosConsolidados: this.resumo?.topicosConsolidados,
+          topicosEmRisco: this.resumo?.topicosEmRisco,
+          topicosCriticos: this.resumo?.topicosCriticos,
+          topicosSemDados: this.resumo?.topicosSemDados
+        },
+        analyticsUltimo: ultimo ? {
+          data: ultimo.data,
+          consolidados: ultimo.consolidados,
+          emRisco: ultimo.emRisco,
+          criticos: ultimo.criticos,
+          semDados: ultimo.semDados
+        } : null,
+        topicosEmRiscoCount: this.topicosEmRisco.length,
+        topicosEmRiscoVisiveisCount: this.topicosEmRiscoVisiveis.length
+      },
+      exibido: {
+        hero: this.heroCounts,
+        titulo: this.heroRetencaoTitulo,
+        riscoGeralPercent: this.percentualRiscoGeralCard,
+        criticosPercent: this.percentualTopicosCriticosCard
+      },
+      payload
+    });
   }
 
   private tratarErroHttp(err: HttpErrorResponse, fallbackMsg: string): void {

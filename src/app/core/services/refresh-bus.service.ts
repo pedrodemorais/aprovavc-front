@@ -17,7 +17,12 @@ export class RefreshBusService {
       ...evento,
       timestamp: Date.now()
     };
-    console.debug('[RefreshBus] REVISAO_CONCLUIDA emit', payload);
+    console.warn('[REFRESH_BUS][REVISAO_CONCLUIDA][EMIT]', {
+      origem: payload?.origem ?? 'desconhecida',
+      topicoId: Number(payload?.topicoId || 0) || null,
+      timestamp: payload.timestamp,
+      timestampIso: new Date(payload.timestamp).toISOString()
+    });
     this.revisaoConcluidaSubject.next(payload);
   }
 }

@@ -25,6 +25,7 @@ import { InputMaskModule } from 'primeng/inputmask';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { EditorModule } from 'primeng/editor';
 import { ToastModule } from 'primeng/toast';
@@ -129,6 +130,7 @@ registerLocaleData(localePt);
     ConfirmDialogModule,
     AutoCompleteModule,
     TooltipModule,
+    TagModule,
     OverlayPanelModule,
     EditorModule,
     ToastModule,

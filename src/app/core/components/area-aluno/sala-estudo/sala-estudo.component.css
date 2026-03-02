@@ -2339,7 +2339,14 @@
   }
 }
 :host-context(body.theme-dark) .sala-container {
+  background: #0b1220 !important;
   color: #e5e7eb !important;
+}
+:host-context(body.theme-dark) .sala-titulo {
+  border-bottom-color: rgba(148, 163, 184, 0.25) !important;
+}
+:host-context(body.theme-dark) .bloco {
+  border-left-color: rgba(148, 163, 184, 0.25) !important;
 }
 :host-context(body.theme-dark) .titulo-materia,
 :host-context(body.theme-dark) .titulo-section,
@@ -2365,6 +2372,9 @@
 }
 :host-context(body.theme-dark) .descricao-topico {
   color: #e5e7eba1 !important;
+}
+:host-context(body.theme-dark) .item-topico.topico-pai .descricao-topico {
+  color: #e2e8f0 !important;
 }
 :host-context(body.theme-dark) .lista-de-topicos {
   border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -2487,7 +2497,7 @@
   color: #e5e7eb !important;
 }
 :host-context(body.theme-dark) .editor-overlay {
-  background: rgba(2, 6, 23, 0.45) !important;
+  background: rgba(2, 6, 23, 0.62) !important;
 }
 :host-context(body.theme-dark) .editor-aviso {
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85)) !important;
@@ -2553,6 +2563,38 @@
   outline: none !important;
   border-color: rgba(84, 186, 103, 0.70) !important;
   box-shadow: 0 0 0 2px rgba(84, 186, 103, 0.22) !important;
+}
+:host-context(body.theme-dark) .btn-troca-materia {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+  color: #cbd5e1 !important;
+}
+:host-context(body.theme-dark) .btn-troca-materia:hover {
+  background: rgba(30, 41, 59, 0.95) !important;
+  border-color: rgba(148, 163, 184, 0.55) !important;
+}
+:host-context(body.theme-dark) .menu-troca-materia {
+  background: #0f172a !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.55) !important;
+}
+:host-context(body.theme-dark) .menu-troca-materia-titulo {
+  border-bottom-color: rgba(148, 163, 184, 0.2) !important;
+  color: #e2e8f0 !important;
+}
+:host-context(body.theme-dark) .menu-troca-materia-item {
+  color: #cbd5e1 !important;
+}
+:host-context(body.theme-dark) .menu-troca-materia-item:hover {
+  background: rgba(148, 163, 184, 0.14) !important;
+}
+:host-context(body.theme-dark) .menu-troca-materia-item.ativo {
+  background: rgba(34, 197, 94, 0.2) !important;
+  color: #bbf7d0 !important;
+}
+:host-context(body.theme-dark) .menu-troca-materia-vazio,
+:host-context(body.theme-dark) .menu-troca-materia-carregando {
+  color: #94a3b8 !important;
 }
 :host-context(.dark) .anotacoes-renderizadas{
   background: #0f172a;          

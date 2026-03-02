@@ -1,177 +1,141 @@
-<div class="foco-page">
+﻿<div class="foco-page">
   <p-toast></p-toast>
 
-  <div class="page-shell" *ngIf="loading">
-    <p-card class="section-card">
-      <p-skeleton width="35%" height="14px"></p-skeleton>
-      <div class="skeleton-row"><p-skeleton width="55%" height="30px"></p-skeleton></div>
-      <div class="skeleton-row"><p-skeleton width="92%" height="14px"></p-skeleton></div>
-      <div class="skeleton-row"><p-skeleton width="260px" height="44px" borderRadius="10px"></p-skeleton></div>
-    </p-card>
+  <div class="home-shell" *ngIf="loading">
+    <div class="home-card">
+      <p>Carregando pressao do dia...</p>
+    </div>
   </div>
 
-  <div class="page-shell" *ngIf="!loading && erro">
-    <p-card class="section-card error-card">
-      <h2>Nao foi possivel carregar seus dados hoje.</h2>
-      <button pButton type="button" label="Tentar novamente" class="p-button-outlined" (click)="tentarNovamente()"></button>
-    </p-card>
+  <div class="home-shell" *ngIf="!loading && error">
+    <div class="home-card home-card--error">
+      <h2>Erro ao carregar HOME</h2>
+      <p>{{ error }}</p>
+      <button type="button" (click)="tentarNovamente()">Tentar novamente</button>
+    </div>
   </div>
 
-  <div class="page-shell" *ngIf="!loading && !erro && resumo as r">
-    <div class="cards-refresh-strip" *ngIf="cardsRefreshing">
-      <p-skeleton width="100%" height="4px" borderRadius="999px"></p-skeleton>
-    </div>
-
-    <div class="grid-dashboard">
-      <p-card class="section-card span-8" [ngClass]="getHeroClasse()">
-        <div class="section-head">
-          <h2 class="section-title section-title--sm">DIAGNOSTICO OPERACIONAL</h2>
-          <p class="muted">Analise da situacao cognitiva de curto prazo.</p>
-        </div>
-
-        <div class="diagnostico-flow">
-          <span class="micro-label">STATUS ATUAL</span>
-          <h1 class="situacao-title">{{ statusLabel }}</h1>
-          <p class="aux-text muted">{{ situacaoResumoCurto }}</p>
-          <p class="impacto-principal">{{ heroUrgenciaTitulo }}</p>
-          <p class="aux-text muted" *ngFor="let linha of diagnosticoImpactoLinhas">{{ linha }}</p>
-
-          <div class="acao-stack">
-            <span class="micro-label">ACAO RECOMENDADA</span>
-            <p class="aux-text">{{ acaoRecomendadaLabel }}</p>
-            <button
-              pButton
-              type="button"
-              [label]="ctaPrincipalLabel"
-              [loading]="iniciandoRevisao"
-              [disabled]="iniciandoRevisao"
-              [ngClass]="['cta-principal', getHeroBotaoClasse()]"
-              (click)="executarCtaPrincipal()">
-            </button>
-            <button pButton type="button" label="Ver fila completa" class="p-button-text cta-secundario" (click)="verFilaCompleta()"></button>
+  <div class="home-shell" *ngIf="!loading && !error">
+    <section class="home-card" [class]="heroStatusClass">
+      <div class="hero-layout">
+        <div class="hero-main">
+          <div class="header-row header-row--hero">
+            <h2>Pressao do Dia</h2>
+            <span class="mode-badge">{{ modoHojeLabel }}</span>
           </div>
-        </div>
-      </p-card>
-
-      <p-card class="section-card span-4">
-        <div class="section-head section-head--inline">
-          <h2 class="section-title">Mapa de risco por horizonte</h2>
-          <span class="micro-label" pTooltip="{{ tooltipProjecaoCurtoPrazo }}" tooltipPosition="top">PROJECAO</span>
-        </div>
-
-        <div class="horizonte-row">
-          <div class="horizonte-item">
-            <span class="horizonte-label">24H</span>
-            <strong class="horizonte-value">{{ risco24hLabel }}</strong>
+          <p class="hero-headline">{{ heroFrasePrincipal }}</p>
+          <p class="hero-desc">{{ heroDescricao }}</p>
+          <div class="cap-meta-row">
+            <span class="cap-meta-text">{{ labelExibicaoCap }}</span>
+            <p-tag
+              *ngIf="truncadoCap"
+              severity="info"
+              value="CAP"
+              [pTooltip]="tooltipCap"
+              tooltipPosition="top">
+            </p-tag>
           </div>
-          <div class="horizonte-item">
-            <span class="horizonte-label">48H</span>
-            <strong class="horizonte-value">{{ risco48hLabel }}</strong>
-          </div>
-          <div class="horizonte-item">
-            <span class="horizonte-label">7 DIAS</span>
-            <strong class="horizonte-value">{{ risco7dLabel }}</strong>
-          </div>
-        </div>
 
-        <p class="muted aux-text">{{ mapaRiscoInterpretacao }}</p>
-      </p-card>
-
-      <p-card class="section-card span-8">
-        <div class="section-head">
-          <h2 class="section-title">Plano de execucao</h2>
-          <p class="muted">Sequencia recomendada com base na pressao atual.</p>
-        </div>
-
-        <div class="ordem-lista">
-          <div class="list-row ordem-item" *ngFor="let passo of planoHojePassos">
-            <span class="ordem-indice">{{ passo.titulo.split(' - ')[0] }}</span>
-            <div class="ordem-copy">
-              <strong>{{ passo.titulo.split(' - ')[1] }}</strong>
-              <p class="muted">{{ passo.descricao }}</p>
+          <div class="hero-kpis" *ngIf="mostrarHeroKpis">
+            <div class="kpi-chip">
+              <span>Criticos</span>
+              <strong>{{ criticos }}</strong>
+            </div>
+            <div class="kpi-chip">
+              <span>Em risco</span>
+              <strong>{{ emRisco }}</strong>
+            </div>
+            <div class="kpi-chip">
+              <span>Vencem hoje</span>
+              <strong>{{ vencemHojeTotal }}</strong>
             </div>
           </div>
-        </div>
-      </p-card>
 
-      <p-card class="section-card span-4">
-        <div class="section-head">
-          <h2 class="section-title">Tendencia recente (7 dias)</h2>
         </div>
 
-        <div class="trend-list">
-          <div class="trend-row"><strong>{{ tendenciaConsolidadosLabel }}</strong></div>
-          <div class="trend-row"><strong>{{ tendenciaCriticosLabel }}</strong></div>
-          <div class="trend-row"><strong>{{ tendenciaTempoConsolidacaoLabel }}</strong></div>
+        <div class="hero-cta-wrap">
+          <button
+            type="button"
+            class="hero-cta"
+            [disabled]="!podeExecutarHeroCta"
+            (click)="executarHeroCta()">
+            {{ heroCtaLabel }}
+          </button>
+          <p class="hero-cta-note" *ngIf="mostrarHeroKpis">{{ heroNotaPrioridade }}</p>
         </div>
+      </div>
+    </section>
 
-        <p class="muted aux-text">{{ tendenciaOperacionalInterpretacao }}</p>
-      </p-card>
+    <section class="home-card compact-card">
+      <div class="header-row">
+        <h3>Proximos vencimentos</h3>
+        <span class="muted">Ate {{ ateLabel }}</span>
+      </div>
 
-      <p-card class="section-card span-8">
-        <div class="section-head section-head--inline">
-          <h2 class="section-title">Fila prioritaria</h2>
-          <span class="micro-label">TOP 5</span>
+      <div class="window-row">
+        <button
+          type="button"
+          *ngFor="let janela of janelasDisponiveis"
+          (click)="selecionarJanela(janela)"
+          [class.active]="janelaDiasSelecionada === janela">
+          {{ janela }}d
+        </button>
+      </div>
+
+      <div class="agenda-row">
+        <span class="agenda-chip" *ngFor="let a of agendaJanela">
+          {{ formatLocalDate(a.dia) }}: {{ a.itens || 0 }}
+        </span>
+      </div>
+      <p class="hint">Hoje inclui atrasadas + vencem hoje. Dias futuros mostram apenas vencimentos do dia.</p>
+    </section>
+
+    <section class="home-card compact-card">
+      <div class="progress-inline">
+        <span>Sequencia: <strong>{{ streakDias }} dias</strong></span>
+        <span>Cobertura: <strong>{{ coberturaEstudados }}/{{ coberturaTotal }}</strong></span>
+        <small class="muted">nao estudados: {{ coberturaNaoEstudados }}</small>
+      </div>
+    </section>
+
+    <section class="home-card">
+      <div class="header-row">
+        <h3>Fila HOJE</h3>
+        <div class="fila-filtros" *ngIf="filaHoje.length > 0">
+          <button type="button" [class.active]="filtroFila === 'todos'" (click)="setFiltroFila('todos')">Todos</button>
+          <button type="button" [class.active]="filtroFila === 'criticos'" (click)="setFiltroFila('criticos')">Criticos</button>
+          <button type="button" [class.active]="filtroFila === 'emRisco'" (click)="setFiltroFila('emRisco')">Em risco</button>
         </div>
-        <p class="muted aux-text">Prioridade calculada automaticamente por risco e proximidade.</p>
-        <p class="muted aux-text aux-text--tight">Itens ordenados por risco e prazo.</p>
+      </div>
 
-        <div *ngIf="topUrgenciasHoje.length > 0; else filaVazia">
-          <div [ngClass]="[getFilaItemClass(item), 'list-row']" *ngFor="let item of topUrgenciasHoje">
-            <div class="fila-copy fila-copy--stack">
-              <strong>{{ item.nome }}</strong>
-              <div class="fila-metas">
-                <span class="chip fila-tag" [class.fila-tag--critico]="item.nivel === 'CRITICO'" [class.fila-tag--alerta]="item.nivel === 'ALERTA'">{{ item.nivel }}</span>
-                <span class="chip fila-meta">Score: {{ item.scoreLabel }}</span>
-                <span class="chip fila-meta">Proxima revisao: {{ item.proximaRevisaoLabel }}</span>
-              </div>
-            </div>
-            <div class="fila-actions">
-              <button pButton type="button" class="p-button-sm p-button-outlined" label="Detalhes" (click)="verDetalhesUrgencia(item)"></button>
-              <button pButton type="button" class="p-button-sm" label="Executar" (click)="revisarUrgenciaAgora(item)"></button>
-            </div>
-          </div>
-        </div>
+      <div class="fila-empty" *ngIf="filaHojeFiltrada.length === 0">
+        Voce esta em dia. Sem itens na fila hoje.
+      </div>
 
-        <ng-template #filaVazia>
-          <div class="empty-state">
-            <strong>Sem itens priorizados agora.</strong>
-            <button pButton type="button" label="Ver lista de urgencias" (click)="verListaUrgencias()"></button>
-          </div>
-        </ng-template>
-      </p-card>
-
-      <p-card class="section-card span-4 side-combined">
-        <div class="section-head">
-          <h2 class="section-title">Status estrutural</h2>
-        </div>
-        <div class="estrutural-row">
-          <span>Base estrutural</span>
-          <strong>{{ baseGeralLabel }}</strong>
-        </div>
-        <p-progressBar [value]="baseGeralProgressValue" styleClass="mini-bar"></p-progressBar>
-
-        <div class="estrutural-row">
-          <span>Qualidade hoje</span>
-          <strong>{{ resistenciaRevisadosHojeLabel }}</strong>
-        </div>
-        <p-progressBar *ngIf="teveRevisoesHoje" [value]="resistenciaRevisadosHojeValorBarra" styleClass="mini-bar"></p-progressBar>
-
-        <div class="estrutural-row estrutural-row--last">
-          <span>Tendencia</span>
-          <span [class]="tendenciaEstruturalClass">{{ tendenciaEstruturalLabel }}</span>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <div class="section-head">
-          <h2 class="section-title">Navegacao</h2>
-        </div>
-        <div class="nav-actions">
-          <button pButton type="button" class="p-button-outlined" label="Abrir Retencao (30d)" (click)="abrirRetencao()"></button>
-          <button pButton type="button" class="p-button-outlined" label="Ir para Revisoes" (click)="abrirRevisoes()"></button>
-        </div>
-      </p-card>
-    </div>
+      <table class="fila-table" *ngIf="filaHojeFiltrada.length > 0">
+        <thead>
+          <tr>
+            <th>Materia</th>
+            <th>Topico</th>
+            <th>Classificacao</th>
+            <th>Score</th>
+            <th>Proxima revisao</th>
+            <th>Acao</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filaHojeFiltrada; trackBy: trackByFila">
+            <td>{{ item.materiaNome || '-' }}</td>
+            <td>{{ item.topicoNome || '-' }}</td>
+            <td>{{ item.classificacao || '-' }}</td>
+            <td>{{ formatScore(item.score) }}</td>
+            <td>{{ formatLocalDate(item.proximaRevisao) }}</td>
+            <td class="acao-cell">
+              <button type="button" class="acao-btn" (click)="executarItem(item)">{{ acaoItemLabel(item) }}</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
   </div>
 </div>

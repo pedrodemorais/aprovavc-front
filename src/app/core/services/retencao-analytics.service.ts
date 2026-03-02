@@ -6,6 +6,7 @@ import {
   EditalResumoRetencaoDTO,
   ErroReincidenteDTO,
   RetencaoAnalyticsResponseDTO,
+  RetencaoSemDadosResponseDTO,
   RetencaoPontoDTO,
   RevisaoEventoHistoricoDTO,
   TopicoRiscoDTO
@@ -17,12 +18,12 @@ export class RetencaoAnalyticsService {
 
   constructor(private http: HttpClient) {}
 
-  buscarResumoEdital(janela: 7 | 14 | 30): Observable<EditalResumoRetencaoDTO> {
+  buscarResumoEdital(janela: 1 | 7 | 14 | 30): Observable<EditalResumoRetencaoDTO> {
     const params = new HttpParams().set('janela', String(janela));
     return this.http.get<EditalResumoRetencaoDTO>(`${this.baseUrl}/retencao/edital/resumo`, { params });
   }
 
-  buscarTopicosEmRisco(janela: 7 | 14 | 30, limit = 50): Observable<TopicoRiscoDTO[]> {
+  buscarTopicosEmRisco(janela: 1 | 7 | 14 | 30, limit = 50): Observable<TopicoRiscoDTO[]> {
     const params = new HttpParams()
       .set('janela', String(janela))
       .set('limit', String(limit));
@@ -46,8 +47,31 @@ export class RetencaoAnalyticsService {
     return this.http.get<RevisaoEventoHistoricoDTO[]>(`${this.baseUrl}/retencao/topicos/${topicoId}/historico`, { params });
   }
 
-  buscarAnalyticsRetencao(janela: 7 | 14 | 30): Observable<RetencaoAnalyticsResponseDTO> {
+  buscarAnalyticsRetencao(janela: 1 | 7 | 14 | 30): Observable<RetencaoAnalyticsResponseDTO> {
     const params = new HttpParams().set('janela', String(janela));
     return this.http.get<RetencaoAnalyticsResponseDTO>(`${this.baseUrl}/retencao/analytics`, { params });
+  }
+
+  buscarTopicosSemDados(params?: {
+    janela?: 1 | 7 | 14 | 30;
+    editalId?: number | null;
+    page?: number;
+    size?: number;
+    search?: string | null;
+  }): Observable<RetencaoSemDadosResponseDTO> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.set('janela', String(params?.janela ?? 30));
+    httpParams = httpParams.set('page', String(params?.page ?? 0));
+    httpParams = httpParams.set('size', String(params?.size ?? 500));
+    if (Number.isFinite(Number(params?.editalId)) && Number(params?.editalId) > 0) {
+      httpParams = httpParams.set('editalId', String(params?.editalId));
+    }
+    if (params?.search && String(params.search).trim()) {
+      httpParams = httpParams.set('search', String(params.search).trim());
+    }
+
+    return this.http.get<RetencaoSemDadosResponseDTO>(`${environment.apiUrl}/retencao/topicos/sem-dados`, {
+      params: httpParams
+    });
   }
 }

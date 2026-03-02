@@ -42,6 +42,10 @@
         aria-label="Escopo da janela selecionada"></i>
     </span>
     <p class="hero-operacional-desc">{{ heroDescricao }}</p>
+    <p class="hero-operacional-desc">{{ modoAtivoPainelLabel }}</p>
+    <p class="hero-operacional-desc" *ngIf="inconsistenciaAcionavelDev">
+      <span class="badge badge-critico">INCONSISTENCIA DEV</span>
+    </p>
     <p class="hero-operacional-counts">
       {{ heroCounts.criticos }} criticos |
       {{ heroCounts.moderados }} moderados
@@ -52,6 +56,31 @@
         | <span pTooltip="Consolidados nao entram nesta lista de risco." tooltipPosition="top" class="hero-operacional-leves-info">leves: —</span>
       </ng-template>
     </p>
+
+    <div class="hero-topico-destaque" *ngIf="existeTopicoRiscoDestaque && topicoRiscoDestaque as topico">
+      <div class="hero-topico-destaque__head">
+        <span class="hero-topico-destaque__label">Topico em risco agora</span>
+        <span [class]="classeClassificacaoTopico(topico)">{{ classificacaoTopicoLabel(topico) }}</span>
+      </div>
+      <strong class="hero-topico-destaque__nome">{{ topicoRiscoDestaqueNome }}</strong>
+      <div class="hero-topico-destaque__meta">
+        <span>Score: {{ formatarScore(topico.score) }}</span>
+        <span>Prox. revisao: {{ formatarDataIso(topico.proximaRevisao) }}</span>
+      </div>
+      <div class="hero-topico-destaque__actions">
+        <button type="button" class="btn-sec" (click)="abrirDetalhes(topico)">Detalhes</button>
+        <button
+          type="button"
+          class="btn-pri"
+          [disabled]="topico.materiaId == null"
+          [pTooltip]="topico.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+          [tooltipDisabled]="topico.materiaId != null"
+          tooltipPosition="top"
+          (click)="revisarAgora(topico.materiaId, topico.topicoId)">
+          Revisar agora
+        </button>
+      </div>
+    </div>
   </section>
 
   <ng-container *ngIf="abaSelecionada === 'geral'">
@@ -128,6 +157,9 @@
         <div class="estado-risk-sub">
           Faltam {{ faltamTopicosConsolidarCard }} {{ faltamTopicosConsolidarCard === 1 ? 'topico' : 'topicos' }} no edital ativo
         </div>
+        <div class="estado-risk-sub" *ngIf="exibirBaseMonitoradaCard">
+          Base monitorada: {{ percentualConsolidadoBaseMonitoradaCardLabel }} · faltam {{ faltamTopicosMonitoradosCard }} {{ faltamTopicosMonitoradosCard === 1 ? 'topico' : 'topicos' }}
+        </div>
       </div>
     </section>
 
@@ -147,20 +179,68 @@
             <div class="resumo-donut-wrap">
               <div class="resumo-donut-ring" [style.background]="resumoPizzaStyle" aria-label="Distribuicao de retencao"></div>
               <div class="resumo-donut-center">
-                <span class="resumo-donut-value">{{ r.totalTopicos }}</span>
+                <span class="resumo-donut-value">{{ totalTopicosResumo }}</span>
                 <span class="resumo-donut-label">Total topicos</span>
               </div>
             </div>
             <div class="pizza-legenda">
-              <span class="leg-item"><i class="leg-dot consolidado"></i>{{ r.topicosConsolidados }} Consolidados</span>
-              <span class="leg-item"><i class="leg-dot critico"></i>{{ r.topicosCriticos }} Criticos</span>
-              <span class="leg-item"><i class="leg-dot risco"></i>{{ r.topicosEmRisco }} Em risco</span>
-              <span class="leg-item"><i class="leg-dot semdados"></i>{{ r.topicosSemDados }} Sem dados</span>
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('CONSOLIDADO')">
+                <i class="leg-dot consolidado"></i>{{ resumoConsolidadosCount }} Consolidados
+              </button>
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('CRITICO')">
+                <i class="leg-dot critico"></i>{{ resumoCriticosCount }} Criticos
+              </button>
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('EM_RISCO')">
+                <i class="leg-dot risco"></i>{{ resumoEmRiscoCount }} Em risco
+              </button>
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('SEM_DADOS')">
+                <i class="leg-dot semdados"></i>{{ resumoSemDadosCount }} Sem dados
+              </button>
             </div>
           </div>
         </div>
         <ng-template #resumoLoading>
           <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo...' : 'Sem dados.' }}</div>
+        </ng-template>
+      </section>
+
+      <section class="card card-resumo">
+        <h3 class="resumo-titulo">
+          Resumo de hoje
+          <i
+            class="pi pi-info-circle resumo-info"
+            pTooltip="Distribuicao operacional da fila de hoje (mesma base do Foco)"
+            tooltipPosition="top"
+            aria-label="Informacoes sobre o resumo de hoje">
+          </i>
+        </h3>
+        <div class="resumo-layout" *ngIf="dashboardSummary; else resumoHojeLoading">
+          <div class="resumo-chart-only">
+            <div class="resumo-donut-wrap">
+              <div class="resumo-donut-ring" [style.background]="resumoHojePizzaStyle" aria-label="Distribuicao da fila de hoje"></div>
+              <div class="resumo-donut-center">
+                <span class="resumo-donut-value">{{ resumoHojeTotalCount }}</span>
+                <span class="resumo-donut-label">Revisoes hoje</span>
+              </div>
+            </div>
+            <div class="pizza-legenda">
+              <span class="leg-item">
+                <i class="leg-dot critico"></i>{{ resumoHojeCriticosCount }} Criticos
+              </span>
+              <span class="leg-item">
+                <i class="leg-dot risco"></i>{{ resumoHojeEmRiscoCount }} Em risco
+              </span>
+              <span class="leg-item">
+                <i class="leg-dot hoje"></i>{{ resumoHojeDemaisCount }} Demais na fila
+              </span>
+            </div>
+            <div class="resumo-hoje-extra">
+              Revisadas hoje: <strong>{{ revisadasHojeCount }}</strong>
+            </div>
+          </div>
+        </div>
+        <ng-template #resumoHojeLoading>
+          <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo de hoje...' : 'Sem dados.' }}</div>
         </ng-template>
       </section>
 
@@ -198,7 +278,7 @@
               <div class="analytics-meta">{{ velocidadeComparativoLabel }}</div>
             </div>
             <div class="analytics-card">
-              <div class="analytics-title">Evolucao (7 dias)</div>
+              <div class="analytics-title">{{ labelEvolucaoJanela }}</div>
               <div class="analytics-value">{{ evolucaoValor }}</div>
               <div class="analytics-sub">{{ evolucaoSub }}</div>
               <div class="analytics-meta">{{ evolucaoExtra }}</div>
@@ -215,7 +295,7 @@
     </div>
 
     <section class="card" id="topicos-em-risco">
-      <h3>Tendencias (ultimos {{ janelaSelecionada }} dias)</h3>
+      <h3>{{ labelTendenciasJanela }}</h3>
       <div class="analytics-chart-wrap" *ngIf="!carregandoAnalytics && tendenciasChartData; else analyticsLoading">
         <p-chart type="line" [data]="tendenciasChartData" [options]="tendenciasChartOptions"></p-chart>
       </div>
@@ -225,7 +305,23 @@
     </section>
 
     <section class="card">
-      <h3>Topicos em risco</h3>
+      <div class="fila-risco-head">
+        <h3>{{ tituloFilaAtiva }}</h3>
+        <div class="fila-risco-filtros">
+          <label for="filtroDataFilaRisco">Data</label>
+          <input
+            id="filtroDataFilaRisco"
+            type="date"
+            [(ngModel)]="filtroDataFilaRisco" />
+          <button
+            type="button"
+            class="btn-sec"
+            (click)="limparFiltroDataFilaRisco()"
+            [disabled]="!filtroDataFilaRisco">
+            Limpar
+          </button>
+        </div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -240,9 +336,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let t of topicosEmRisco">
+            <tr *ngFor="let t of topicosEmRiscoVisiveis">
               <td>{{ t.nomeTopico || ('Topico ' + t.topicoId) }}</td>
-              <td><span [class]="classeClassificacao(t.classificacao)">{{ t.classificacao }}</span></td>
+              <td><span [class]="classeClassificacaoTopico(t)">{{ classificacaoTopicoLabel(t) }}</span></td>
               <td>{{ formatarScore(t.score) }}</td>
               <td>{{ t.diasDesdeUltimoEvento ?? '-' }}</td>
               <td>{{ formatarDataIso(t.proximaRevisao) }}</td>
@@ -261,7 +357,7 @@
                 </button>
               </td>
             </tr>
-            <tr *ngIf="!carregandoRisco && topicosEmRisco.length === 0">
+            <tr *ngIf="!carregandoRisco && topicosEmRiscoVisiveis.length === 0">
               <td colspan="7" class="placeholder">Nenhum topico em risco encontrado.</td>
             </tr>
             <tr *ngIf="carregandoRisco">
@@ -375,6 +471,49 @@
       </table>
     </div>
   </section>
+
+  <p-dialog
+    *ngIf="renderResumoListaDialog"
+    [header]="resumoListaTitulo"
+    [(visible)]="resumoListaVisivel"
+    [modal]="true"
+    [dismissableMask]="true"
+    [appendTo]="'body'"
+    [styleClass]="'retencao-resumo-lista-dialog'"
+    [maskStyleClass]="'retencao-detalhes-mask'"
+    [blockScroll]="false"
+    (visibleChange)="onResumoListaVisibleChange($event)"
+    (onHide)="onResumoListaHide()"
+    [style]="{ width: '900px', maxWidth: '95vw' }">
+    <div class="detalhes" *ngIf="resumoListaVisivel">
+      <div class="table-wrap table-wrap--modal">
+        <table>
+          <thead>
+            <tr>
+              <th>Materia</th>
+              <th>Topico</th>
+              <th>Classificacao</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="carregandoResumoLista">
+              <td colspan="4" class="placeholder">Carregando topicos...</td>
+            </tr>
+            <tr *ngFor="let item of resumoListaItens">
+              <td>{{ item.nomeMateria }}</td>
+              <td>{{ item.nomeTopico }}</td>
+              <td>{{ item.classificacaoLabel }}</td>
+              <td>{{ formatarScore(item.score) }}</td>
+            </tr>
+            <tr *ngIf="!carregandoResumoLista && resumoListaItens.length === 0">
+              <td colspan="4" class="placeholder">Nenhum topico encontrado nesta faixa.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </p-dialog>
 
   <p-dialog
     *ngIf="renderDetalhesDialog"

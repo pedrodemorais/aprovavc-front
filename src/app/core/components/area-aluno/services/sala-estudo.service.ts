@@ -388,8 +388,42 @@ export class SalaEstudoService {
    * POST /api/sala-estudo/flashcards/revisao/responder
    */
   responderRevisaoFlashcard(req: FlashcardRevisaoRespostaRequest): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/flashcards/revisao/responder`, req).pipe(
-      tap(() => this.limparCacheRevisoesDashboard())
+    const traceId = `flashcard-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const startedAt = Date.now();
+    const url = `${this.apiUrl}/flashcards/revisao/responder`;
+    console.warn('[REVISAO][REQ]', {
+      traceId,
+      tipo: 'flashcard',
+      startedAtIso: new Date(startedAt).toISOString(),
+      url,
+      payload: {
+        flashcardId: Number(req?.flashcardId || 0),
+        avaliacao: String(req?.avaliacao || '')
+      }
+    });
+    return this.http.post<void>(url, req).pipe(
+      tap(() => {
+        this.limparCacheRevisoesDashboard();
+        console.warn('[REVISAO][OK]', {
+          traceId,
+          tipo: 'flashcard',
+          elapsedMs: Date.now() - startedAt,
+          flashcardId: Number(req?.flashcardId || 0),
+          avaliacao: String(req?.avaliacao || '')
+        });
+      }),
+      catchError((error) => {
+        console.error('[REVISAO][ERRO]', {
+          traceId,
+          tipo: 'flashcard',
+          elapsedMs: Date.now() - startedAt,
+          flashcardId: Number(req?.flashcardId || 0),
+          avaliacao: String(req?.avaliacao || ''),
+          status: error?.status ?? null,
+          mensagem: error?.message || String(error)
+        });
+        return throwError(() => error);
+      })
     );
   }
 
@@ -400,8 +434,42 @@ export class SalaEstudoService {
    * POST /api/sala-estudo/topicos/revisao/responder
    */
   responderRevisaoTopico(req: TopicoRevisaoRespostaRequest): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/topicos/revisao/responder`, req).pipe(
-      tap(() => this.limparCacheRevisoesDashboard())
+    const traceId = `topico-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const startedAt = Date.now();
+    const url = `${this.apiUrl}/topicos/revisao/responder`;
+    console.warn('[REVISAO][REQ]', {
+      traceId,
+      tipo: 'topico',
+      startedAtIso: new Date(startedAt).toISOString(),
+      url,
+      payload: {
+        topicoId: Number(req?.topicoId || 0),
+        avaliacao: String(req?.avaliacao || '')
+      }
+    });
+    return this.http.post<void>(url, req).pipe(
+      tap(() => {
+        this.limparCacheRevisoesDashboard();
+        console.warn('[REVISAO][OK]', {
+          traceId,
+          tipo: 'topico',
+          elapsedMs: Date.now() - startedAt,
+          topicoId: Number(req?.topicoId || 0),
+          avaliacao: String(req?.avaliacao || '')
+        });
+      }),
+      catchError((error) => {
+        console.error('[REVISAO][ERRO]', {
+          traceId,
+          tipo: 'topico',
+          elapsedMs: Date.now() - startedAt,
+          topicoId: Number(req?.topicoId || 0),
+          avaliacao: String(req?.avaliacao || ''),
+          status: error?.status ?? null,
+          mensagem: error?.message || String(error)
+        });
+        return throwError(() => error);
+      })
     );
   }
 
