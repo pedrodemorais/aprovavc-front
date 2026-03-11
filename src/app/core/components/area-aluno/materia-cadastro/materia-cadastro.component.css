@@ -1456,6 +1456,45 @@ body.theme-dark,
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+:host-context(body.theme-dark) .tree-node-line.is-materia{
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .tree-node-line.is-selected{
+  background: rgba(34, 197, 94, 0.16) !important;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .tree-node-line.is-selected .tree-node-text{
+  color: #f8fafc !important;
+}
+
+:host-context(body.theme-dark) .tree-node-text{
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .btn-tree-toggle{
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .tree-action-btn{
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .tree-action-btn.add{
+  color: #86efac !important;
+}
+
+:host-context(body.theme-dark) .tree-action-btn.danger{
+  color: #fca5a5 !important;
+}
+
+:host-context(body.theme-dark) ::ng-deep .materia-tree .p-tree-toggler,
+:host-context(body.theme-dark) ::ng-deep .materia-tree .p-tree-toggler-icon,
+:host-context(body.theme-dark) ::ng-deep .materia-tree .p-treenode-icon{
+  color: var(--text-2) !important;
+}
+
 :host-context(body.theme-dark) .topico-linha:hover{
   background: rgba(255, 255, 255, 0.05) !important;
 }

@@ -23,6 +23,23 @@
   overflow: hidden;
   background: #ffffff;
 }
+.sala-container.flashcard-focus-active {
+  position: relative;
+}
+.sala-container.flashcard-focus-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.44);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  z-index: 3000;
+  pointer-events: auto;
+}
+.sala-container.flashcard-focus-active .flashcard-review-container {
+  position: relative;
+  z-index: 3100;
+}
 .sala-titulo {
   padding: 6px 0 10px;
   border-bottom: 1px solid rgba(79, 83, 81, 0.18);
@@ -1338,6 +1355,27 @@
   color: #0f172a;
   border-color: rgba(100, 116, 139, 0.55);
 }
+.flashcard-maintenance-btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.flashcard-maintenance-btn .pi {
+  font-size: 0.75rem;
+}
+.flashcard-maintenance-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: rgba(100, 116, 139, 0.55);
+}
 .face-pill {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -1444,7 +1482,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1200;
+  z-index: 5000;
 }
 .flashcard-modal {
   position: absolute;

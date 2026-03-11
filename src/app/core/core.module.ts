@@ -37,6 +37,8 @@ import { CardModule } from 'primeng/card';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DividerModule } from 'primeng/divider';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { PanelModule } from 'primeng/panel';
 
 import { QuillModule } from 'ngx-quill';
 import { NgxMaskModule } from 'ngx-mask';
@@ -71,6 +73,14 @@ import { CadernoErrosComponent } from './components/area-aluno/caderno-erros/cad
 import { RetencaoDashboardComponent } from './components/area-aluno/retencao-dashboard/retencao-dashboard.component';
 import { HojeComponent } from './components/area-aluno/hoje/hoje.component';
 import { FocoComponent } from './components/area-aluno/foco/foco.component';
+import { ConfiguracoesComponent } from './components/area-aluno/configuracoes/configuracoes.component';
+import { FlashcardModalComponent } from './components/area-aluno/flashcard-modal/flashcard-modal.component';
+import { HomePageComponent } from './components/area-aluno/home-page/home-page.component';
+import { HomeOverdueCardComponent } from './components/area-aluno/home-page/home-overdue-card/home-overdue-card.component';
+import { HomeMissaoDiaComponent } from './components/area-aluno/home-page/home-missao-dia/home-missao-dia.component';
+import { HomeTreinarFraquezasComponent } from './components/area-aluno/home-page/home-treinar-fraquezas/home-treinar-fraquezas.component';
+import { HomeContinuarEstudoComponent } from './components/area-aluno/home-page/home-continuar-estudo/home-continuar-estudo.component';
+import { HomeProgressoDiaComponent } from './components/area-aluno/home-page/home-progresso-dia/home-progresso-dia.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -102,6 +112,14 @@ registerLocaleData(localePt);
     RetencaoDashboardComponent,
     HojeComponent,
     FocoComponent,
+    ConfiguracoesComponent,
+    FlashcardModalComponent,
+    HomePageComponent,
+    HomeOverdueCardComponent,
+    HomeMissaoDiaComponent,
+    HomeTreinarFraquezasComponent,
+    HomeContinuarEstudoComponent,
+    HomeProgressoDiaComponent,
 
   ],
   imports: [
@@ -142,6 +160,8 @@ registerLocaleData(localePt);
     ProgressBarModule,
     SkeletonModule,
     DividerModule,
+    SelectButtonModule,
+    PanelModule,
 
     QuillModule.forRoot(),
     NgxMaskModule.forChild(),

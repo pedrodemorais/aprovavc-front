@@ -1,0 +1,157 @@
+.flashcard-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.flashcard-modal {
+  width: min(740px, 96vw);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+}
+
+.flashcard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.flashcard-titulo {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.flashcard-fechar {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.flashcard-contexto {
+  display: grid;
+  gap: 6px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.flashcard-contexto-linha {
+  display: flex;
+  gap: 6px;
+}
+
+.contexto-label {
+  color: #6b7280;
+}
+
+.contexto-valor {
+  color: #111827;
+  font-weight: 600;
+}
+
+.flashcard-linha-dupla {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.flashcard-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.flashcard-select,
+.flashcard-input,
+.flashcard-textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+.flashcard-campos {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.flashcard-counter {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: right;
+}
+
+.flashcard-vf-selector {
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.flashcard-vf-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.flashcard-vf-option {
+  font-size: 0.85rem;
+}
+
+.flashcard-tags-wrapper {
+  margin-top: 10px;
+}
+
+.flashcard-mensagem-sucesso {
+  margin-top: 10px;
+  color: #166534;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.flashcard-footer {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.btn.primario {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .flashcard-linha-dupla {
+    grid-template-columns: 1fr;
+  }
+}

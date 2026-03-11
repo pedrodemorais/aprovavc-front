@@ -11,6 +11,7 @@ import {
   ClassificacaoRetencaoTopico,
   EditalResumoRetencaoDTO,
   ErroReincidenteDTO,
+  EvolucaoMateriaDTO,
   RetencaoAnalyticsResponseDTO,
   RetencaoAnalyticsSerieDTO,
   RetencaoPontoDTO,
@@ -114,6 +115,8 @@ export class RetencaoDashboardComponent implements OnInit {
   private topicoMateriaMap = new Map<number, TopicoMateriaRef>();
   private editalAtivoAtual: Edital | null = null;
   tendenciasChartData: any;
+  evolucaoMateriasChartData: any = null;
+  evolucaoMaterias: EvolucaoMateriaDTO[] = [];
   estadoSistemaVM: {
     score: number;
     label: string;
@@ -206,6 +209,42 @@ export class RetencaoDashboardComponent implements OnInit {
       }
     }
   };
+  readonly evolucaoMateriasChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    scales: {
+      y: {
+        type: 'linear',
+        min: 0,
+        max: 100,
+        ticks: {
+          callback: (value: number) => `${value}%`
+        },
+        title: {
+          display: true,
+          text: 'Score (%)'
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'top'
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const nome = String(context?.dataset?.label || 'Materia');
+            const valor = Number(context?.parsed?.y ?? context?.raw?.y ?? 0);
+            return `${nome}: ${Math.round(valor)}%`;
+          }
+        }
+      }
+    }
+  };
 
   constructor(
     private retencaoService: RetencaoAnalyticsService,
@@ -249,9 +288,10 @@ export class RetencaoDashboardComponent implements OnInit {
     forkJoin({
       summary: this.dashboardStore.loadSummary(this.janelaSelecionada, true),
       analytics: this.retencaoService.buscarAnalyticsRetencao(this.janelaSelecionada).pipe(catchError(() => of(null))),
-      topicosCognitivos: this.cognitiveMetricsService.getTopicosCognitivos(30, null, 1000).pipe(catchError(() => of([])))
+      topicosCognitivos: this.cognitiveMetricsService.getTopicosCognitivos(30, null, 1000).pipe(catchError(() => of([]))),
+      evolucaoMaterias: this.retencaoService.buscarEvolucaoMaterias().pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ summary, analytics, topicosCognitivos }) => {
+      next: ({ summary, analytics, topicosCognitivos, evolucaoMaterias }) => {
         this.dashboardSummary = summary || null;
         this.resumo = this.mapSummaryToResumo(summary);
         this.topicosEmRisco = this.aplicarMapaMateria(this.mapSummaryFilaToTopicos(summary?.filaAtiva?.itens || []));
@@ -264,8 +304,10 @@ export class RetencaoDashboardComponent implements OnInit {
           }))
         ) as TopicoCognitivoDTO[];
         this.analytics = analytics || null;
+        this.evolucaoMaterias = Array.isArray(evolucaoMaterias) ? evolucaoMaterias : [];
         this.carregarTopicosCriticos();
         this.montarGraficoTendencias(analytics?.serie || []);
+        this.montarGraficoEvolucaoMaterias(this.evolucaoMaterias);
         this.atualizarMetricasEstrategicas();
         this.logKpiSourceRetencao();
         this.devDebugSnapshotRetencao('load-ok', {
@@ -285,6 +327,8 @@ export class RetencaoDashboardComponent implements OnInit {
         this.carregandoAnalytics = false;
         this.analytics = null;
         this.tendenciasChartData = null;
+        this.evolucaoMateriasChartData = null;
+        this.evolucaoMaterias = [];
         this.atualizarMetricasEstrategicas();
         this.devDebugSnapshotRetencao('load-error', { erroStatus: err?.status, erro: err?.message });
         this.tratarErroHttp(err, 'Falha ao carregar dados de retenÃ§Ã£o');
@@ -936,6 +980,73 @@ export class RetencaoDashboardComponent implements OnInit {
           tension: 0.3
         }
       ]
+    };
+  }
+
+  private montarGraficoEvolucaoMaterias(lista: EvolucaoMateriaDTO[]): void {
+    const materias = (Array.isArray(lista) ? lista : [])
+      .filter((item) => Number.isFinite(Number(item?.materiaId || 0)) && !!String(item?.materiaNome || '').trim())
+      .slice(0, 10);
+
+    if (!materias.length) {
+      this.evolucaoMateriasChartData = null;
+      return;
+    }
+
+    const labelsSet = new Set<string>();
+    materias.forEach((materia) => {
+      (materia?.pontos || []).forEach((ponto: any) => {
+        const data = String(ponto?.data || '').trim();
+        if (data) labelsSet.add(data);
+      });
+    });
+
+    const labelsOrdenadas = Array.from(labelsSet).sort((a, b) => {
+      const ta = new Date(a).getTime();
+      const tb = new Date(b).getTime();
+      if (!Number.isFinite(ta) || !Number.isFinite(tb)) return a.localeCompare(b);
+      return ta - tb;
+    });
+
+    if (!labelsOrdenadas.length) {
+      this.evolucaoMateriasChartData = null;
+      return;
+    }
+
+    const labelsFormatadas = labelsOrdenadas.map((data) => this.formatarDataCurta(data));
+    const cores = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#0f766e', '#dc2626', '#ca8a04', '#4f46e5', '#0891b2', '#64748b'];
+
+    const datasets = materias.map((materia, idx) => {
+      const cor = cores[idx % cores.length];
+      const scorePorData = new Map<string, number>();
+      (materia?.pontos || []).forEach((ponto: any) => {
+        const data = String(ponto?.data || '').trim();
+        const score = Number(ponto?.score);
+        if (!data || !Number.isFinite(score)) return;
+        scorePorData.set(data, score);
+      });
+
+      const data = labelsOrdenadas.map((dataIso) => {
+        if (!scorePorData.has(dataIso)) return null;
+        const score = Number(scorePorData.get(dataIso));
+        return Number((score * 100).toFixed(2));
+      });
+
+      return {
+        label: String(materia.materiaNome || 'Materia'),
+        data,
+        borderColor: cor,
+        backgroundColor: `${cor}33`,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        spanGaps: true,
+        tension: 0.25
+      };
+    });
+
+    this.evolucaoMateriasChartData = {
+      labels: labelsFormatadas,
+      datasets
     };
   }
 

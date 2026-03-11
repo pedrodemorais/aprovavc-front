@@ -1,0 +1,93 @@
+<div class="flashcard-overlay" *ngIf="visible">
+  <div class="flashcard-modal">
+    <header class="flashcard-header">
+      <div class="flashcard-header-titulo">
+        <h2 class="flashcard-titulo">{{ isEdicao ? 'Editar Flashcard' : 'Criar Flashcard' }}</h2>
+      </div>
+      <button type="button" class="flashcard-fechar" (click)="fechar()" aria-label="Fechar modal de flashcard">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </header>
+
+    <div class="flashcard-contexto">
+      <div class="flashcard-contexto-linha">
+        <span class="contexto-label">Mat&eacute;ria:</span>
+        <span class="contexto-valor">{{ materiaNome || '-' }}</span>
+      </div>
+      <div class="flashcard-contexto-linha">
+        <span class="contexto-label">T&oacute;pico:</span>
+        <span class="contexto-valor">{{ topicoDescricao || '-' }}</span>
+      </div>
+    </div>
+
+    <div class="flashcard-linha-dupla">
+      <label class="flashcard-label">
+        Tipo
+        <select class="flashcard-select" [(ngModel)]="flashcardTipo" name="flashcardTipo" (ngModelChange)="onFlashcardTipoChange($event)">
+          <option value="PERGUNTA_RESPOSTA">Pergunta e resposta</option>
+          <option value="VERDADEIRO_FALSO">Verdadeiro ou falso</option>
+          <option value="CLOZE">Cloze (preencher lacuna)</option>
+        </select>
+      </label>
+
+      <label class="flashcard-label">
+        Dificuldade
+        <select class="flashcard-select" [(ngModel)]="flashcardDificuldade" name="flashcardDificuldade">
+          <option value="FACIL">F&aacute;cil</option>
+          <option value="MEDIA">M&eacute;dia</option>
+          <option value="DIFICIL">Dif&iacute;cil</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="flashcard-campos">
+      <label class="flashcard-label">
+        Frente (pergunta)
+        <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardFrente" name="flashcardFrente"
+          [attr.maxlength]="maxFlashcardFrente" placeholder="Digite a pergunta..."></textarea>
+        <span class="flashcard-counter">{{ (flashcardFrente.length || 0) }}/{{ maxFlashcardFrente }}</span>
+      </label>
+
+      <div class="flashcard-vf-selector" *ngIf="flashcardTipo === 'VERDADEIRO_FALSO'">
+        <span class="flashcard-vf-label">Resposta correta</span>
+        <label class="flashcard-vf-option">
+          <input type="radio" name="flashcardVf" [value]="'VERDADEIRO'" [(ngModel)]="flashcardVerdadeiroFalso"
+            (ngModelChange)="onFlashcardVerdadeiroFalsoChange($event)" />
+          Verdadeiro
+        </label>
+        <label class="flashcard-vf-option">
+          <input type="radio" name="flashcardVf" [value]="'FALSO'" [(ngModel)]="flashcardVerdadeiroFalso"
+            (ngModelChange)="onFlashcardVerdadeiroFalsoChange($event)" />
+          Falso
+        </label>
+      </div>
+
+      <label class="flashcard-label">
+        Verso (resposta)
+        <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardVerso" name="flashcardVerso"
+          [attr.maxlength]="maxFlashcardVerso" placeholder="Digite a resposta..."
+          [disabled]="flashcardTipo === 'VERDADEIRO_FALSO'"></textarea>
+        <span class="flashcard-counter">{{ (flashcardVerso.length || 0) }}/{{ maxFlashcardVerso }}</span>
+      </label>
+    </div>
+
+    <div class="flashcard-tags-wrapper">
+      <label class="flashcard-label">
+        Tags (opcional)
+        <input type="text" class="flashcard-input" [(ngModel)]="flashcardTags" name="flashcardTags"
+          placeholder="Ex.: português, morfologia, substantivo" />
+      </label>
+    </div>
+
+    <div *ngIf="mensagemSucesso" class="flashcard-mensagem-sucesso">
+      {{ mensagemSucesso }}
+    </div>
+
+    <footer class="flashcard-footer">
+      <button type="button" class="btn secundario" (click)="fechar()">Cancelar</button>
+      <button type="button" class="btn primario" (click)="salvar()" [disabled]="!podeSalvar">
+        {{ isEdicao ? 'Salvar Alterações' : 'Salvar Flashcard' }}
+      </button>
+    </footer>
+  </div>
+</div>

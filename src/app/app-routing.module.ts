@@ -40,6 +40,8 @@ import { CadernoErrosComponent } from './core/components/area-aluno/caderno-erro
 import { RetencaoDashboardComponent } from './core/components/area-aluno/retencao-dashboard/retencao-dashboard.component';
 import { HojeComponent } from './core/components/area-aluno/hoje/hoje.component';
 import { FocoComponent } from './core/components/area-aluno/foco/foco.component';
+import { ConfiguracoesComponent } from './core/components/area-aluno/configuracoes/configuracoes.component';
+import { HomePageComponent } from './core/components/area-aluno/home-page/home-page.component';
 
 
 const routes: Routes = [
@@ -69,7 +71,8 @@ const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'hoje', component: HojeComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'foco', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
-      { path: 'dashboard', component: DashboardRevisaoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'configuracoes', component: ConfiguracoesComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'dashboard', component: HomePageComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca/resumo', component: BibliotecaResumoComponent, canActivate: [PlanoAtivoGuard] },

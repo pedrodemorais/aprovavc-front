@@ -367,7 +367,9 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       section('SISTEMA'),
       {
         label: 'Configuracoes',
-        icon: 'pi pi-cog'
+        icon: 'pi pi-cog',
+        routerLink: ['/area-restrita/configuracoes'],
+        disabled: isLocked
       }
     ];
 

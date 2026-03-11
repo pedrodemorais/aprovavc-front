@@ -14,6 +14,18 @@ export interface FlashcardRevisaoRespostaRequest {
   avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL';
 }
 
+export interface TreinarFraquezaMateriaDTO {
+  materiaId?: number | null;
+  materiaNome?: string | null;
+  topicos?: Array<number | { topicoId?: number | null }>;
+}
+
+export interface PressaoCognitivaDTO {
+  pressao: number;
+  pressaoPercentual: number;
+  totalTopicos: number;
+}
+
 export interface TopicoRevisaoRespostaRequest {
   topicoId: number;
   avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL';
@@ -130,18 +142,6 @@ export interface BibliotecaResumoDTO {
   updatedAt?: string;
 }
 
-export interface BibliotecaFlashcardDTO {
-  materiaId: number;
-  materiaNome: string;
-  topicoId: number;
-  topicoDescricao: string;
-  flashcardId: number;
-  frente: string;
-  verso: string;
-  tags?: string;
-  dificuldade: 'MUITO_FACIL' | 'FACIL' | 'MEDIA' | 'DIFICIL' | 'MUITO_DIFICIL';
-  updatedAt?: string;
-}
 export interface VocabularioDTO {
   id: number;
   materiaId: number;
@@ -212,6 +212,14 @@ export interface NextTopicContext {
   indiceAtual?: number | null;
   indiceRetornado?: number | null;
   [key: string]: unknown;
+}
+
+export interface ResumeTopicResponseDTO {
+  materiaId?: number | null;
+  topicoId?: number | null;
+  topicoNome?: string | null;
+  motivo?: string | null;
+  ordemVersion?: string | null;
 }
 
 export interface RevisaoDashboardResumoDTO {
@@ -354,20 +362,6 @@ export class SalaEstudoService {
     return this.http.get<AnotacaoTopicoDTO>(`${this.apiUrl}/topicos/${topicoId}/anotacoes`);
   }
 
-  // ================= CRUD FLASHCARDS =================
-
-  criarFlashcard(dto: FlashcardDTO): Observable<FlashcardDTO> {
-    return this.http.post<FlashcardDTO>(`${this.apiUrl}/flashcards`, dto);
-  }
-
-  listarFlashcardsPorTopico(topicoId: number): Observable<FlashcardDTO[]> {
-    return this.http.get<FlashcardDTO[]>(`${this.apiUrl}/flashcards/topico/${topicoId}`);
-  }
-
-  excluirFlashcard(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/flashcards/${id}`);
-  }
-
   // ================= REVISAO ESPACADA =================
 
   /**
@@ -379,6 +373,17 @@ export class SalaEstudoService {
   listarFlashcardsParaRevisao(topicoId: number): Observable<FlashcardDTO[]> {
     const url = `${this.apiUrl}/flashcards/revisao?topicoId=${topicoId}`;
     return this.http.get<FlashcardDTO[]>(url);
+  }
+
+  listarTreinarFraquezas(janelaDias: number = 7): Observable<TreinarFraquezaMateriaDTO[]> {
+    const permitidos = new Set([1, 7, 15, 30]);
+    const normalizado = permitidos.has(Number(janelaDias)) ? Number(janelaDias) : 7;
+    const params = new HttpParams().set('janelaDias', String(normalizado));
+    return this.http.get<TreinarFraquezaMateriaDTO[]>(`${this.apiUrl}/treinar-fraquezas`, { params });
+  }
+
+  getPressaoCognitiva(): Observable<PressaoCognitivaDTO> {
+    return this.http.get<PressaoCognitivaDTO>(`${this.apiUrl}/pressao-cognitiva`);
   }
 
   /**
@@ -519,21 +524,6 @@ export class SalaEstudoService {
     return this.http.get<BibliotecaResumoDTO[]>(`${this.apiUrl}/biblioteca/resumos`, { params: httpParams });
   }
 
-  listarBibliotecaFlashcards(params?: { materiaId?: number | null; topicoId?: number | null; termo?: string | null })
-    : Observable<BibliotecaFlashcardDTO[]> {
-    let httpParams = new HttpParams();
-    if (params?.materiaId) {
-      httpParams = httpParams.set('materiaId', String(params.materiaId));
-    }
-    if (params?.topicoId) {
-      httpParams = httpParams.set('topicoId', String(params.topicoId));
-    }
-    if (params?.termo) {
-      httpParams = httpParams.set('termo', String(params.termo));
-    }
-    return this.http.get<BibliotecaFlashcardDTO[]>(`${this.apiUrl}/biblioteca/flashcards`, { params: httpParams });
-  }
-
   criarVocabulario(req: { materiaId: number; topicoId: number; termo: string; definicao: string; tags?: string })
     : Observable<VocabularioDTO> {
     return this.http.post<VocabularioDTO>(`${this.apiUrl}/vocabularios`, req);
@@ -585,6 +575,12 @@ export class SalaEstudoService {
     return this.http.get<NextTopicRecommendationResponse>(
       `${this.apiUrl}/materias/${materiaId}/next-topic`,
       { params }
+    );
+  }
+
+  obterResumeTopic(materiaId: number): Observable<ResumeTopicResponseDTO> {
+    return this.http.get<ResumeTopicResponseDTO>(
+      `${this.apiUrl}/materias/${materiaId}/resume-topic`
     );
   }
 

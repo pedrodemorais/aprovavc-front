@@ -1666,3 +1666,205 @@
     text-align: right;
   }
 }
+
+.planner-context-resumo {
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.equilibrio {
+  font-size: 12px;
+  color: #64748b;
+  opacity: 0.85;
+}
+
+.equilibrio.warn {
+  color: #b45309;
+  opacity: 1;
+  font-weight: 600;
+}
+
+.bloco-linha {
+  min-height: 56px;
+  height: auto;
+  align-items: flex-start;
+  padding: 6px 8px;
+}
+
+.peso-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.materia-meta {
+  font-size: 12px;
+  color: #64748b;
+  opacity: 0.85;
+}
+
+.peso-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.peso-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #38bdf8;
+}
+
+.bloco-item-horas,
+.bloco-item-actions {
+  align-self: center;
+}
+
+@media (max-width: 640px) {
+  .planner-context-resumo {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .bloco-linha {
+    min-height: 62px;
+  }
+}
+
+/* Dark mode */
+:host-context(body.theme-dark) .page {
+  color: var(--text);
+}
+
+:host-context(body.theme-dark) .header h2,
+:host-context(body.theme-dark) .bloco-col-dia,
+:host-context(body.theme-dark) .planner-day-head-title,
+:host-context(body.theme-dark) .day-nav-title,
+:host-context(body.theme-dark) .planner-kpi-value {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .header-subtext,
+:host-context(body.theme-dark) .muted,
+:host-context(body.theme-dark) .planner-backlog,
+:host-context(body.theme-dark) .planner-context-label,
+:host-context(body.theme-dark) .planner-context-empty,
+:host-context(body.theme-dark) .planner-context-total,
+:host-context(body.theme-dark) .equilibrio,
+:host-context(body.theme-dark) .planner-day-tab-meta,
+:host-context(body.theme-dark) .materia-meta,
+:host-context(body.theme-dark) .bloco-col-horas-label,
+:host-context(body.theme-dark) .bloco-item-horas-label {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .planner-context-chip {
+  background: rgba(34, 197, 94, 0.16) !important;
+  color: #bbf7d0 !important;
+}
+
+:host-context(body.theme-dark) .planner-day-tab,
+:host-context(body.theme-dark) .planner-day-pill,
+:host-context(body.theme-dark) .planner-kpi,
+:host-context(body.theme-dark) .planner-edital-card,
+:host-context(body.theme-dark) .planner-edital-body,
+:host-context(body.theme-dark) .bloco-col-wrap,
+:host-context(body.theme-dark) .bloco-col-wrap-weekly,
+:host-context(body.theme-dark) .bloco-col-header,
+:host-context(body.theme-dark) .bloco-col-body {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .planner-day-tab-name,
+:host-context(body.theme-dark) .planner-day-pill-name,
+:host-context(body.theme-dark) .planner-edital-name,
+:host-context(body.theme-dark) .bloco-item-text,
+:host-context(body.theme-dark) .bloco-col-title {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .planner-day-tab:hover,
+:host-context(body.theme-dark) .planner-day-pill:hover,
+:host-context(body.theme-dark) .day-nav-btn:hover,
+:host-context(body.theme-dark) .btn-secondary:hover,
+:host-context(body.theme-dark) .bloco-action:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+:host-context(body.theme-dark) .planner-day-tab.is-active,
+:host-context(body.theme-dark) .planner-day-pill.is-active {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .day-nav-btn,
+:host-context(body.theme-dark) .btn-secondary,
+:host-context(body.theme-dark) .bloco-action,
+:host-context(body.theme-dark) .bloco-col-horas-readonly,
+:host-context(body.theme-dark) .bloco-item-horas-field,
+:host-context(body.theme-dark) .bloco-col-horas-field {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .bloco-linha {
+  border-bottom-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .bloco-linha:not(.linha-vazia) {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .bloco-linha:hover,
+:host-context(body.theme-dark) .bloco-linha:focus-within {
+  background: rgba(30, 41, 59, 0.82) !important;
+}
+
+:host-context(body.theme-dark) .bloco-linha-add,
+:host-context(body.theme-dark) .bloco-linha-placeholder {
+  color: #94a3b8 !important;
+}
+
+:host-context(body.theme-dark) .peso-bar {
+  background: rgba(148, 163, 184, 0.2) !important;
+}
+
+:host-context(body.theme-dark) .validation-summary {
+  background: rgba(180, 83, 9, 0.14) !important;
+  border-color: rgba(251, 146, 60, 0.35) !important;
+  color: #fdba74 !important;
+}
+
+:host-context(body.theme-dark) .validation-link {
+  color: #fdba74 !important;
+}
+
+:host-context(body.theme-dark) :host ::ng-deep .p-autocomplete-panel {
+  background: #0f172a !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+}
+
+:host-context(body.theme-dark) :host ::ng-deep .p-autocomplete-panel .p-autocomplete-items {
+  background: #0f172a !important;
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) :host ::ng-deep .p-autocomplete-items .p-autocomplete-item {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) :host ::ng-deep .p-autocomplete-items .p-autocomplete-item:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+}

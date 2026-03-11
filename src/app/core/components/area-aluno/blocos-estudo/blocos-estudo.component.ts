@@ -31,6 +31,12 @@ type BlocoForm = FormGroup<{
   itens: FormArray<BlocoItemForm>;
 }>;
 
+type ResumoEquilibrioSemanal = {
+  tipo: 'EQUILIBRADA' | 'CONCENTRADA';
+  materiaTopId?: number;
+  percentualTop?: number;
+};
+
 @Component({
   selector: 'app-blocos-estudo',
   templateUrl: './blocos-estudo.component.html',
@@ -232,6 +238,10 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   get totalCicloTexto(): string {
     return this.minutosParaTexto(this.totalCicloMinutos);
+  }
+
+  get isDistribuicaoSemanalConcentrada(): boolean {
+    return this.getResumoEquilibrioSemanal().tipo === 'CONCENTRADA';
   }
 
   get diasPlanejados(): number {
@@ -975,6 +985,91 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     return this.materiasMap.get(id) || `Materia #${id}`;
   }
 
+  getTotalMinutosItens(blocoIndex: number): number {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return 0;
+    return this.obterItensOrdenados(bloco).reduce((total, item) => {
+      const peso = Number(item?.peso ?? 0);
+      if (peso <= 0) return total;
+      return total + peso;
+    }, 0);
+  }
+
+  getPercentualItemNoDia(blocoIndex: number, item: BlocoEstudoItemDTO | null | undefined): number {
+    if (!item) return 0;
+    const peso = Number(item?.peso ?? 0);
+    if (peso <= 0) return 0;
+    const total = this.getTotalMinutosItens(blocoIndex);
+    if (total <= 0) return 0;
+    return Math.round((peso / total) * 100);
+  }
+
+  getBarWidthPercent(blocoIndex: number, item: BlocoEstudoItemDTO | null | undefined): string {
+    return `${this.getPercentualItemNoDia(blocoIndex, item)}%`;
+  }
+
+  getTextoItem(blocoIndex: number, item: BlocoEstudoItemDTO | null | undefined): string {
+    if (!item) return '';
+    const nome = item.materiaNome || this.nomeMateria(item.materiaEstudoId);
+    const peso = Math.max(0, Number(item?.peso ?? 0) || 0);
+    const percentual = this.getPercentualItemNoDia(blocoIndex, item);
+    return `${nome} - ${this.formatMinutosParaHora(peso)} (${percentual}%)`;
+  }
+
+  getDistribuicaoSemanalPorMateria(): Map<number, number> {
+    const distribuicao = new Map<number, number>();
+    (this.blocos || []).forEach((bloco) => {
+      this.obterItensOrdenados(bloco).forEach((item) => {
+        const materiaId = Number(item?.materiaEstudoId);
+        const peso = Number(item?.peso ?? 0);
+        if (!Number.isFinite(materiaId) || materiaId <= 0 || peso <= 0) return;
+        distribuicao.set(materiaId, (distribuicao.get(materiaId) || 0) + peso);
+      });
+    });
+    return distribuicao;
+  }
+
+  getResumoEquilibrioSemanal(): ResumoEquilibrioSemanal {
+    const distribuicao = this.getDistribuicaoSemanalPorMateria();
+    if (!distribuicao.size) {
+      return { tipo: 'EQUILIBRADA' };
+    }
+
+    let totalMinutos = 0;
+    let materiaTopId: number | undefined;
+    let maiorCarga = 0;
+
+    distribuicao.forEach((minutos, materiaId) => {
+      totalMinutos += minutos;
+      if (minutos > maiorCarga) {
+        maiorCarga = minutos;
+        materiaTopId = materiaId;
+      }
+    });
+
+    if (totalMinutos <= 0 || !materiaTopId) {
+      return { tipo: 'EQUILIBRADA' };
+    }
+
+    const percentualTop = maiorCarga / totalMinutos;
+    if (percentualTop >= 0.55) {
+      return { tipo: 'CONCENTRADA', materiaTopId, percentualTop };
+    }
+
+    return { tipo: 'EQUILIBRADA', materiaTopId, percentualTop };
+  }
+
+  getTextoEquilibrioSemanal(): string {
+    const resumo = this.getResumoEquilibrioSemanal();
+    if (resumo.tipo === 'EQUILIBRADA') {
+      return 'Distribuicao equilibrada';
+    }
+
+    const percentual = Math.round((resumo.percentualTop ?? 0) * 100);
+    const nome = this.nomeMateria(resumo.materiaTopId ?? 0);
+    return `Distribuicao concentrada em ${nome} (${percentual}%)`;
+  }
+
   minutosParaTexto(minutos?: number | null): string {
     const m = Math.max(0, minutos ?? 0);
     const h = Math.floor(m / 60);
@@ -1058,9 +1153,12 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     if (!bloco) return '';
     const minutos = bloco.minutosDisponiveis ?? 0;
     const itens = this.obterItensOrdenados(bloco);
-    const materiaComHoraZerada = itens.some((item) => (Number(item?.peso) || 0) <= 0);
-    if (itens.length > 0 && materiaComHoraZerada) return 'Todas as materias devem ter horas maiores que zero.';
-    if (minutos <= 0 && itens.length > 0) return 'Informe as horas deste bloco.';
+    const itensSelecionados = itens.filter((item) => Number(item?.materiaEstudoId) > 0);
+    const materiaComHoraZerada = itensSelecionados.some((item) => (Number(item?.peso) || 0) <= 0);
+    if (itensSelecionados.length > 0 && materiaComHoraZerada) {
+      return 'Ha materias no bloco com 0h. Defina um tempo (ex.: 00:30) ou remova a materia do dia.';
+    }
+    if (minutos <= 0 && itensSelecionados.length > 0) return 'Informe as horas deste bloco.';
     return '';
   }
 

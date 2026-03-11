@@ -1,11 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Materia } from '../models/materia.model';
 import { Topico } from '../models/topico.model';
-import { SalaEstudoService, MateriaTopicosDTO, BibliotecaFlashcardDTO, BibliotecaResumoDTO } from '../services/sala-estudo.service';
+import { FlashcardDTO } from '../models/FlashcardDTO';
+import { SalaEstudoService, MateriaTopicosDTO, BibliotecaResumoDTO } from '../services/sala-estudo.service';
+import { BibliotecaFlashcardDTO, FlashcardCriticoDTO, FlashcardService } from '../services/flashcard.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TreeNode } from 'primeng/api';
+import { ExecutionQueueItem, ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
 
 type BibliotecaModo = 'resumos' | 'flashcards';
 
@@ -29,6 +32,9 @@ export class BibliotecaComponent implements OnInit {
 
   materiaSelecionadaId: number | null = null;
   topicoSelecionadoId: number | null = null;
+  dificuldadeSelecionada: FlashcardDTO['dificuldade'] | null = null;
+  somentePendentes = false;
+  somenteCriticos = false;
   modo: BibliotecaModo = 'resumos';
   termoBusca = '';
 
@@ -38,17 +44,60 @@ export class BibliotecaComponent implements OnInit {
   erro?: string;
 
   flashcards: BibliotecaFlashcardDTO[] = [];
+  flashcardsCriticos: FlashcardCriticoDTO[] = [];
+  carregandoFlashcardsCriticos = false;
   resumosDisponiveis: BibliotecaResumoDTO[] = [];
   resumosTreeNodes: TreeNode[] = [];
+  modalFlashcardAberto = false;
+  salvandoFlashcard = false;
+  mensagemFlashcardSucesso?: string;
+  flashcardEdicaoId: number | null = null;
+  flashcardModalInitialData: Partial<FlashcardDTO> | null = null;
+  flashcardModalMateriaNome = '-';
+  flashcardModalTopicoNome = '-';
+  private flashcardIdPreferido: number | null = null;
   private buscaTimer?: any;
 
   constructor(
     private salaEstudoService: SalaEstudoService,
+    private flashcardService: FlashcardService,
+    private executionQueueService: ExecutionQueueService,
+    private route: ActivatedRoute,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.aplicarEstadoInicialViaQuery();
     this.carregarMaterias();
+    this.carregarFlashcardsCriticos();
+  }
+
+  private aplicarEstadoInicialViaQuery(): void {
+    const query = this.route.snapshot.queryParamMap;
+    const modo = String(query.get('modo') || '').trim().toLowerCase();
+    if (modo === 'flashcards') {
+      this.modo = 'flashcards';
+    }
+
+    const materiaId = Number(query.get('materiaId') || 0);
+    if (Number.isFinite(materiaId) && materiaId > 0) {
+      this.materiaSelecionadaId = materiaId;
+    }
+
+    const topicoId = Number(query.get('topicoId') || 0);
+    if (Number.isFinite(topicoId) && topicoId > 0) {
+      this.topicoSelecionadoId = topicoId;
+    }
+
+    const flashcardId = Number(query.get('flashcardId') || 0);
+    this.flashcardIdPreferido = Number.isFinite(flashcardId) && flashcardId > 0 ? flashcardId : null;
+
+    const dificuldade = String(query.get('dificuldade') || '').trim().toUpperCase();
+    if (dificuldade) {
+      this.dificuldadeSelecionada = dificuldade as FlashcardDTO['dificuldade'];
+    }
+    this.somentePendentes = (query.get('pendentes') || '').toLowerCase() === 'true';
+    this.somenteCriticos = (query.get('criticos') || '').toLowerCase() === 'true';
   }
 
   private carregarMaterias(): void {
@@ -104,6 +153,18 @@ export class BibliotecaComponent implements OnInit {
     this.recarregarLista();
   }
 
+  onDificuldadeChange(): void {
+    this.recarregarLista();
+  }
+
+  onPendentesChange(): void {
+    this.recarregarLista();
+  }
+
+  onCriticosChange(): void {
+    this.recarregarLista();
+  }
+
   trocarModo(novoModo: BibliotecaModo): void {
     if (this.modo === novoModo) {
       return;
@@ -145,18 +206,43 @@ export class BibliotecaComponent implements OnInit {
     this.flashcards = [];
     this.carregandoFlashcards = true;
 
-    this.salaEstudoService.listarBibliotecaFlashcards({
+    this.flashcardService.listarBibliotecaFlashcards({
       materiaId: this.materiaSelecionadaId,
       topicoId: this.topicoSelecionadoId,
-      termo: this.termoBusca
+      termo: this.termoBusca,
+      dificuldade: this.dificuldadeSelecionada,
+      pendentes: this.somentePendentes ? true : undefined,
+      criticos: this.somenteCriticos ? true : undefined
     }).subscribe({
       next: (lista) => {
         this.flashcards = lista || [];
+        if (this.flashcardIdPreferido) {
+          const alvo = this.flashcards.find((item) => Number(item?.flashcardId || 0) === this.flashcardIdPreferido);
+          if (alvo) {
+            this.editarFlashcard(alvo);
+            this.flashcardIdPreferido = null;
+          }
+        }
         this.carregandoFlashcards = false;
       },
       error: (err) => {
         console.error('[BIBLIOTECA] Erro ao carregar flashcards:', err);
         this.carregandoFlashcards = false;
+      }
+    });
+  }
+
+  private carregarFlashcardsCriticos(): void {
+    this.carregandoFlashcardsCriticos = true;
+    this.flashcardService.listarFlashcardsCriticos().subscribe({
+      next: (lista) => {
+        this.flashcardsCriticos = lista || [];
+        this.carregandoFlashcardsCriticos = false;
+      },
+      error: (err) => {
+        console.error('[BIBLIOTECA] Erro ao carregar flashcards criticos:', err);
+        this.flashcardsCriticos = [];
+        this.carregandoFlashcardsCriticos = false;
       }
     });
   }
@@ -379,6 +465,175 @@ export class BibliotecaComponent implements OnInit {
       if (comparacaoTopico !== 0) return comparacaoTopico;
 
       return String(a?.topicoDescricao || '').localeCompare(String(b?.topicoDescricao || ''), 'pt-BR');
+    });
+  }
+
+  abrirNovoFlashcard(): void {
+    if (this.modo !== 'flashcards') {
+      this.modo = 'flashcards';
+      this.recarregarLista();
+    }
+    if (!this.materiaSelecionadaId || !this.topicoSelecionadoId) {
+      alert('Selecione matéria e tópico para criar um novo flashcard.');
+      return;
+    }
+
+    const materia = this.materias.find((m) => Number(m.id) === Number(this.materiaSelecionadaId));
+    const topico = this.folhasDisponiveis.find((t) => Number(t.id) === Number(this.topicoSelecionadoId));
+
+    this.flashcardEdicaoId = null;
+    this.flashcardModalInitialData = {
+      materiaId: Number(this.materiaSelecionadaId),
+      topicoId: Number(this.topicoSelecionadoId),
+      tipo: 'PERGUNTA_RESPOSTA',
+      dificuldade: 'MEDIA',
+      frente: '',
+      verso: '',
+      tags: ''
+    };
+    this.flashcardModalMateriaNome = String(materia?.nome || '-');
+    this.flashcardModalTopicoNome = String(topico?.descricao || '-');
+    this.mensagemFlashcardSucesso = undefined;
+    this.modalFlashcardAberto = true;
+  }
+
+  editarFlashcard(item: BibliotecaFlashcardDTO): void {
+    if (!item) return;
+    this.flashcardEdicaoId = Number(item.flashcardId || 0) || null;
+    this.flashcardModalInitialData = {
+      id: this.flashcardEdicaoId || undefined,
+      materiaId: Number(item.materiaId || 0),
+      topicoId: Number(item.topicoId || 0),
+      frente: String(item.frente || ''),
+      verso: String(item.verso || ''),
+      tipo: 'PERGUNTA_RESPOSTA',
+      dificuldade: (String(item.dificuldade || 'MEDIA') as FlashcardDTO['dificuldade']),
+      tags: String(item.tags || '')
+    };
+    this.flashcardModalMateriaNome = String(item.materiaNome || '-');
+    this.flashcardModalTopicoNome = String(item.topicoDescricao || '-');
+    this.mensagemFlashcardSucesso = undefined;
+    this.modalFlashcardAberto = true;
+  }
+
+  excluirFlashcard(item: BibliotecaFlashcardDTO): void {
+    const id = Number(item?.flashcardId || 0);
+    if (id <= 0) return;
+    const confirmou = window.confirm('Deseja realmente excluir este flashcard?');
+    if (!confirmou) return;
+
+    this.flashcardService.excluirFlashcard(id).subscribe({
+      next: () => {
+        this.recarregarLista();
+        this.carregarFlashcardsCriticos();
+      },
+      error: (err) => {
+        console.error('[BIBLIOTECA] Erro ao excluir flashcard:', err);
+        alert('Erro ao excluir flashcard.');
+      }
+    });
+  }
+
+  fecharModalFlashcard(): void {
+    this.modalFlashcardAberto = false;
+    this.flashcardEdicaoId = null;
+    this.flashcardModalInitialData = null;
+    this.mensagemFlashcardSucesso = undefined;
+  }
+
+  salvarFlashcardDoModal(payload: FlashcardDTO): void {
+    const idEdicao = Number(this.flashcardEdicaoId || payload?.id || 0);
+    this.salvandoFlashcard = true;
+
+    const req$ = idEdicao > 0
+      ? this.flashcardService.atualizarFlashcard(idEdicao, payload)
+      : this.flashcardService.criarFlashcard(payload);
+
+    req$.subscribe({
+      next: () => {
+        this.salvandoFlashcard = false;
+        this.mensagemFlashcardSucesso = idEdicao > 0
+          ? 'Flashcard atualizado com sucesso.'
+          : 'Flashcard salvo com sucesso.';
+        this.recarregarLista();
+        this.carregarFlashcardsCriticos();
+        if (idEdicao > 0) {
+          setTimeout(() => this.fecharModalFlashcard(), 350);
+        } else {
+          this.flashcardEdicaoId = null;
+          this.flashcardModalInitialData = {
+            ...payload,
+            id: undefined,
+            frente: '',
+            verso: ''
+          };
+        }
+      },
+      error: (err) => {
+        this.salvandoFlashcard = false;
+        console.error('[BIBLIOTECA] Erro ao salvar flashcard:', err);
+        alert('Erro ao salvar flashcard.');
+      }
+    });
+  }
+
+  getTotalRevisoes(item: BibliotecaFlashcardDTO): number {
+    const total = Number((item as any)?.totalRevisoes ?? (item as any)?.revisoes ?? 0);
+    return Number.isFinite(total) && total > 0 ? total : 0;
+  }
+
+  getTotalAcertos(item: BibliotecaFlashcardDTO): number {
+    const total = Number((item as any)?.totalAcertos ?? (item as any)?.acertos ?? 0);
+    return Number.isFinite(total) && total > 0 ? total : 0;
+  }
+
+  formatarTaxaAcerto(item: BibliotecaFlashcardDTO): string {
+    const taxa = Number((item as any)?.taxaAcerto ?? 0);
+    if (!Number.isFinite(taxa) || taxa <= 0) return '0%';
+    return `${Math.round(taxa * 100)}%`;
+  }
+
+  getTotalRevisoesCritico(item: FlashcardCriticoDTO): number {
+    const total = Number((item as any)?.totalRevisoes ?? (item as any)?.revisoes ?? 0);
+    return Number.isFinite(total) && total > 0 ? total : 0;
+  }
+
+  getTotalAcertosCritico(item: FlashcardCriticoDTO): number {
+    const total = Number((item as any)?.totalAcertos ?? (item as any)?.acertos ?? 0);
+    return Number.isFinite(total) && total > 0 ? total : 0;
+  }
+
+  formatarTaxaAcertoCritico(item: FlashcardCriticoDTO): string {
+    const taxa = Number((item as any)?.taxaAcerto ?? 0);
+    if (!Number.isFinite(taxa) || taxa <= 0) return '0%';
+    return `${Math.round(taxa * 100)}%`;
+  }
+
+  treinarFlashcardsCriticos(): void {
+    const filaMap = new Map<string, ExecutionQueueItem>();
+    (this.flashcardsCriticos || []).forEach((item) => {
+      const topicoId = Number(item?.topicoId || 0);
+      const materiaId = Number(item?.materiaId || 0);
+      if (topicoId <= 0 || materiaId <= 0) return;
+      const chave = `${materiaId}:${topicoId}`;
+      if (!filaMap.has(chave)) {
+        filaMap.set(chave, { materiaId, topicoId });
+      }
+    });
+
+    const fila = Array.from(filaMap.values());
+    if (!fila.length) return;
+
+    this.executionQueueService.setFila(fila);
+    const primeiro = fila[0];
+    this.router.navigate(['/area-restrita/sala-estudo/executar'], {
+      queryParams: {
+        modo: 'revisar',
+        topicoId: primeiro.topicoId,
+        filaExecucao: '1',
+        topicos: fila.map((item) => item.topicoId).join(',')
+      },
+      state: { executionQueue: fila }
     });
   }
 

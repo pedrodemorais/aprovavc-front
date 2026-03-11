@@ -1,0 +1,22 @@
+<article class="missao-card">
+  <header>
+    <h1>MISSÃO DE HOJE</h1>
+  </header>
+
+  <ng-container *ngIf="!iniciou; else progressoTpl">
+    <p class="missao-card__lead">Você tem {{ totalRevisoes }} revisões para fazer hoje.</p>
+    <p class="missao-card__meta">Tempo estimado: {{ tempoEstimadoMinutos }} minutos</p>
+  </ng-container>
+
+  <ng-template #progressoTpl>
+    <p class="missao-card__lead">{{ concluidas }} de {{ totalRevisoes }} revisões concluídas</p>
+    <div class="missao-card__progress">
+      <div class="missao-card__progress-bar" [style.width.%]="progressoPercentual"></div>
+    </div>
+    <p class="missao-card__meta">Tempo restante estimado: {{ tempoRestanteMinutos }} minutos</p>
+  </ng-template>
+
+  <button type="button" class="missao-card__cta" (click)="onIniciar()">
+    {{ iniciou ? 'CONTINUAR REVISÃO' : 'INICIAR REVISÃO' }}
+  </button>
+</article>

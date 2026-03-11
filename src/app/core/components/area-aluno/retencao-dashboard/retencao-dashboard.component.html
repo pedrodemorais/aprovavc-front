@@ -305,6 +305,16 @@
     </section>
 
     <section class="card">
+      <h3>Evolução do Score por Matéria</h3>
+      <div class="analytics-chart-wrap" *ngIf="!carregandoAnalytics && evolucaoMateriasChartData; else evolucaoMateriasLoading">
+        <p-chart type="line" [data]="evolucaoMateriasChartData" [options]="evolucaoMateriasChartOptions"></p-chart>
+      </div>
+      <ng-template #evolucaoMateriasLoading>
+        <div class="placeholder">{{ carregandoAnalytics ? 'Carregando evolução...' : 'A evolução aparecerá conforme você estuda.' }}</div>
+      </ng-template>
+    </section>
+
+    <section class="card">
       <div class="fila-risco-head">
         <h3>{{ tituloFilaAtiva }}</h3>
         <div class="fila-risco-filtros">

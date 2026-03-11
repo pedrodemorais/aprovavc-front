@@ -22,6 +22,9 @@
             <i class="pi pi-info-circle"></i>
           </button>
         </div>
+        <span class="header-subtext">
+          Este planejamento sera usado para distribuir automaticamente revisoes e novos conteudos no seu dia.
+        </span>
       </div>
 
       <div class="header-alert" *ngIf="mensagemTexto || blocosInvalidos.length > 0">
@@ -51,7 +54,10 @@
       <ng-template #semEditalContexto>
         <span class="planner-context-empty">Nenhum edital selecionado</span>
       </ng-template>
-      <span class="planner-context-total">Total semanal: {{ totalCicloTexto }}</span>
+      <div class="planner-context-resumo">
+        <span class="planner-context-total">Total semanal: {{ totalCicloTexto }}</span>
+        <span class="equilibrio" [class.warn]="isDistribuicaoSemanalConcentrada">{{ getTextoEquilibrioSemanal() }}</span>
+      </div>
     </div>
 
     <div class="planner-row" *ngIf="blocos.length > 0">
@@ -177,9 +183,17 @@
           (keydown.space)="!weekly && !linha.item && iniciarEdicaoLinha(i, li)">
 
           <ng-container *ngIf="linha.item && !estaSubstituindo(i, li); else linhaEditar">
-            <span class="bloco-item-text" [pTooltip]="linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId)" tooltipPosition="top">
-              {{ linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId) }}
-            </span>
+            <div class="peso-row">
+              <span class="bloco-item-text" [pTooltip]="getTextoItem(i, linha.item)" tooltipPosition="top">
+                {{ linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId) }}
+              </span>
+              <span class="materia-meta" *ngIf="!weekly">
+                {{ formatMinutosParaHora(linha.item.peso || 0) }} - {{ getPercentualItemNoDia(i, linha.item) }}%
+              </span>
+              <div class="peso-bar" *ngIf="!weekly">
+                <div class="peso-bar-fill" [style.width]="getBarWidthPercent(i, linha.item)"></div>
+              </div>
+            </div>
             <div class="bloco-item-horas" *ngIf="!weekly">
               <span class="bloco-item-horas-label">Hrs:</span>
               <input

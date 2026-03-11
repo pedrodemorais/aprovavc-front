@@ -1,0 +1,14 @@
+<article class="aux-card" [class.aux-card--muted]="!disponivel">
+  <h3>CONTINUAR ESTUDO</h3>
+
+  <ng-container *ngIf="disponivel; else vazioTpl">
+    <p><strong>Matéria:</strong> {{ materiaNome }}</p>
+    <p><strong>Próximo tópico:</strong><br />{{ proximoTopico }}</p>
+    <p class="aux-card__tempo">Tempo estimado: {{ tempoEstimadoMinutos }} minutos</p>
+    <button type="button" (click)="onEstudarAgora()">ESTUDAR AGORA</button>
+  </ng-container>
+
+  <ng-template #vazioTpl>
+    <p>Sem novo conteúdo para continuar agora.</p>
+  </ng-template>
+</article>

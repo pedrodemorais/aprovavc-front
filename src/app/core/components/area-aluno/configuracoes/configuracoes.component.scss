@@ -1,0 +1,106 @@
+.configuracoes-page {
+  padding: 16px;
+}
+
+.config-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #dde3ef;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.config-card h2 {
+  margin: 0 0 12px;
+  color: #1d2d47;
+}
+
+.config-card h3 {
+  margin: 4px 0 12px;
+  color: #1d2d47;
+  font-size: 16px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #1d2d47;
+}
+
+input[type='number'] {
+  width: 100%;
+  max-width: 220px;
+  border: 1px solid #c8d3ea;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.hint {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+}
+
+.actions {
+  margin-top: 14px;
+}
+
+button {
+  border: 1px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error {
+  display: block;
+  margin-top: 8px;
+  color: #b91c1c;
+}
+
+.success {
+  margin: 10px 0 0;
+  color: #15803d;
+  font-weight: 600;
+}
+
+.loading {
+  color: #475569;
+}
+
+:host-context(body.theme-dark) .config-card {
+  background: #111827;
+  border-color: #334155;
+}
+
+:host-context(body.theme-dark) .config-card h2,
+:host-context(body.theme-dark) .config-card h3,
+:host-context(body.theme-dark) label {
+  color: #e2e8f0;
+}
+
+:host-context(body.theme-dark) input[type='number'] {
+  background: #0f172a;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+:host-context(body.theme-dark) .hint,
+:host-context(body.theme-dark) .loading {
+  color: #94a3b8;
+}
+
+:host-context(body.theme-dark) .success {
+  color: #4ade80;
+}

@@ -1,0 +1,102 @@
+<section class="home" *ngIf="!loading; else loadingTpl">
+
+  <div class="home-error" *ngIf="error">
+    {{ error }}
+  </div>
+
+  <!-- REVISÕES ATRASADAS -->
+  <section
+    class="home-overdue"
+    *ngIf="revisoesAtrasadas > 0"
+  >
+    <div class="home-overdue-title">
+      ⚠ Revisões atrasadas
+    </div>
+
+    <div class="home-overdue-text">
+      Você tem <b>{{ revisoesAtrasadas }}</b> revisões atrasadas.
+      Ignorar revisões aumenta o risco de esquecimento.
+    </div>
+
+    <div class="home-overdue-time">
+      Tempo estimado: {{ tempoAtrasadasMin }} minutos
+    </div>
+
+    <button
+      class="btn-danger"
+      (click)="resolverAtrasadas()"
+    >
+      Resolver agora
+    </button>
+  </section>
+
+
+  <!-- MISSÃO DE HOJE -->
+  <section class="home-mission">
+
+    <div class="home-mission-title">
+      MISSÃO DE HOJE
+    </div>
+
+    <div class="home-mission-text">
+      {{ revisoesHojeConcluidas }} de {{ revisoesHoje }} revisões concluídas
+    </div>
+
+    <!-- BARRA DE PROGRESSO -->
+    <div class="home-mission-progress">
+      <div
+        class="home-mission-progress-bar"
+        [style.width.%]="revisoesHoje > 0 ? (revisoesHojeConcluidas / revisoesHoje) * 100 : 0"
+      ></div>
+    </div>
+
+    <div class="home-mission-time">
+      Tempo restante: {{ tempoRestanteMin }} minutos
+    </div>
+
+    <button
+      class="btn-primary"
+      (click)="iniciarRevisao()"
+    >
+      Iniciar revisão
+    </button>
+
+  </section>
+
+  <!-- PROGRESSO -->
+  <section class="home-progress">
+
+    <div class="home-progress-title">
+      Progresso hoje
+    </div>
+
+    <ul class="home-progress-list">
+
+      <li>
+        ✔ {{ topicosEstudadosHoje }} tópicos estudados
+      </li>
+
+      <li>
+        ✔ {{ topicosRevisadosHoje }} revisões concluídas
+      </li>
+
+      <li>
+        ✔ {{ flashcardsRevisadosHoje }} flashcards revisados
+      </li>
+
+      <li>
+        🔥 {{ streakDias }} dias seguidos estudando
+      </li>
+
+    </ul>
+
+  </section>
+
+</section>
+
+
+<ng-template #loadingTpl>
+  <section class="home-loading">
+    Carregando sua missão de hoje...
+  </section>
+</ng-template>

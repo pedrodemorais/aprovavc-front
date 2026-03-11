@@ -55,8 +55,10 @@ export interface PressaoFilaItemDTO {
   materiaId?: number | null;
   materiaNome?: string | null;
   topicoNome?: string | null;
+  categoria?: string | null;
   classificacao?: string | null;
   score?: number | null;
+  proxRevisao?: string | null;
   proximaRevisao?: string | null;
   acaoLabel?: string | null;
   acaoCodigo?: string | null;

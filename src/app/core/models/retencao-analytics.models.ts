@@ -133,3 +133,14 @@ export interface RetencaoSemDadosResponseDTO {
   itens: RetencaoSemDadosItemDTO[];
   meta: RetencaoSemDadosMetaDTO;
 }
+
+export interface EvolucaoMateriaPontoDTO {
+  data: string;
+  score: number;
+}
+
+export interface EvolucaoMateriaDTO {
+  materiaId: number;
+  materiaNome: string;
+  pontos: EvolucaoMateriaPontoDTO[];
+}

@@ -1,0 +1,54 @@
+.missao-card {
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  padding: 1.25rem 1.15rem 1.2rem;
+  box-shadow: 0 10px 26px rgba(2, 132, 199, 0.08);
+}
+
+.missao-card h1 {
+  margin: 0 0 0.65rem;
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  color: #0c4a6e;
+  letter-spacing: 0.02em;
+}
+
+.missao-card__lead {
+  margin: 0;
+  font-size: clamp(1rem, 1.7vw, 1.15rem);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.missao-card__meta {
+  margin: 0.55rem 0 0;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.missao-card__progress {
+  margin-top: 0.6rem;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #dbeafe;
+}
+
+.missao-card__progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%);
+}
+
+.missao-card__cta {
+  width: 100%;
+  margin-top: 0.95rem;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(90deg, #0f766e 0%, #0891b2 100%);
+  cursor: pointer;
+}

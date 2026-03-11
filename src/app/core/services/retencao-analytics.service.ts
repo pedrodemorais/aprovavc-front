@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {
   EditalResumoRetencaoDTO,
+  EvolucaoMateriaDTO,
   ErroReincidenteDTO,
   RetencaoAnalyticsResponseDTO,
   RetencaoSemDadosResponseDTO,
@@ -50,6 +51,10 @@ export class RetencaoAnalyticsService {
   buscarAnalyticsRetencao(janela: 1 | 7 | 14 | 30): Observable<RetencaoAnalyticsResponseDTO> {
     const params = new HttpParams().set('janela', String(janela));
     return this.http.get<RetencaoAnalyticsResponseDTO>(`${this.baseUrl}/retencao/analytics`, { params });
+  }
+
+  buscarEvolucaoMaterias(): Observable<EvolucaoMateriaDTO[]> {
+    return this.http.get<EvolucaoMateriaDTO[]>(`${environment.apiUrl}/dashboard/evolucao/materias`);
   }
 
   buscarTopicosSemDados(params?: {
