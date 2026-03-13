@@ -335,7 +335,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.carregarPreferenciaPausaAba();
     this.carregarMateriasDisponiveisTroca();
-    this.revisaoDirecionadaAtiva = !!this.getTopicoIdFromQuery(this.route.snapshot.queryParamMap);
+    this.revisaoDirecionadaAtiva = this.isOrigemRevisaoDirecionada(this.getOrigemFromQuery(this.route.snapshot.queryParamMap));
 
     this.salvarEstudoTrigger$
       .pipe(
@@ -377,6 +377,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.autoSelecionarUltimoNaoEstudado = autoTopico;
         this.topicoIdPreferido = topicoId;
         this.origemEntrada = origem;
+        this.revisaoDirecionadaAtiva = this.isOrigemRevisaoDirecionada(origem);
 
         if (topicoId && topicoId !== this.topicoSelecionado?.id && this.topicosCarregados) {
           const mudouTopicoPorNavegacao = topicoId !== topicoPreferidoAnterior;
@@ -854,6 +855,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const params = queryParams ?? this.route.snapshot.queryParamMap;
     const raw = String(params.get('origem') || '').trim().toLowerCase();
     return raw || null;
+  }
+
+  private isOrigemRevisaoDirecionada(origem: string | null): boolean {
+    return origem === 'execucao_plano' || origem === 'preventivo' || origem === 'foco';
   }
 
   private getAutoTopicoFromQuery(queryParams?: ParamMap): boolean {
@@ -4465,7 +4470,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.topicoIdPreferido = null;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { topicoId: null },
+      queryParams: { topicoId: null, origem: null },
       queryParamsHandling: 'merge',
       replaceUrl: true
     });

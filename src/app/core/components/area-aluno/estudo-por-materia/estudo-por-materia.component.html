@@ -7,7 +7,7 @@
        
           <h1 class="topo-titulo">Centro de Estudo</h1>
              <i class="pi pi-info-circle info-icon"
-             pTooltip="Continue do ponto certo em cada matéria. O semáforo indica a urgência de revisão."
+             pTooltip="Continue do ponto certo em cada matéria."
              tooltipPosition="top"
              [showDelay]="150"
              [hideDelay]="80"
@@ -116,8 +116,7 @@
 
 <!-- CARD POR MATÉRIA -->
     <section class="curso-card"
-             *ngFor="let m of materiasFiltradas"
-             [ngClass]="classeSemaforoMateria(m)">
+             *ngFor="let m of materiasFiltradas">
 
       <!-- CABEÇALHO MATÉRIA -->
       <button type="button"
@@ -141,36 +140,6 @@
 
         <ng-container *ngIf="getResumoMateriaLinha(m) as resumo">
           <div class="curso-resumo" *ngIf="resumo.total">
-            <ng-container *ngIf="resumo.atrasadas > 0; else resumoAtrasadasStatic">
-              <button
-                type="button"
-                class="curso-resumo-item curso-resumo-item--atrasadas curso-resumo-link"
-                (click)="irParaRevisaoMateria(m, 'ATRASADA'); $event.stopPropagation()">
-                Atrasadas <span class="curso-resumo-num curso-resumo-num--bad">{{ resumo.atrasadas }}</span>
-              </button>
-            </ng-container>
-            <ng-template #resumoAtrasadasStatic>
-              <span class="curso-resumo-item curso-resumo-item--atrasadas">
-                Atrasadas <span class="curso-resumo-num curso-resumo-num--bad">{{ resumo.atrasadas }}</span>
-              </span>
-            </ng-template>
-
-            <ng-container *ngIf="resumo.hoje > 0; else resumoHojeStatic">
-              <button
-                type="button"
-                class="curso-resumo-item curso-resumo-item--hoje curso-resumo-link"
-                (click)="irParaRevisaoMateria(m, 'HOJE'); $event.stopPropagation()">
-                Hoje <span class="curso-resumo-num curso-resumo-num--hoje">{{ resumo.hoje }}</span>
-              </button>
-            </ng-container>
-            <ng-template #resumoHojeStatic>
-              <span class="curso-resumo-item curso-resumo-item--hoje">
-                Hoje <span class="curso-resumo-num curso-resumo-num--hoje">{{ resumo.hoje }}</span>
-              </span>
-            </ng-template>
-            <span class="curso-resumo-item curso-resumo-item--em-dia">
-              Em dias <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.emDia }}</span>
-            </span>
             <span class="curso-resumo-item curso-resumo-item--concluidas">
               <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.concluidas }}/{{ resumo.total }}</span> Conclu&iacute;dos
             </span>
@@ -248,10 +217,6 @@
                           class="topico-text-btn"
                           (click)="selecionarTopico(t); $event.stopPropagation()">
 
-                    <span class="rev-dot"
-                          [ngClass]="classeDotRevisao(t)"
-                          [title]="getLabelStatusTopico(t)"></span>
-
                     <span class="topico-text">{{ t.descricao }}</span>
                   </button>
 
@@ -290,10 +255,6 @@
                         class="topico-text-btn"
                         (click)="selecionarTopico(s); $event.stopPropagation()">
 
-                  <span class="rev-dot"
-                        [ngClass]="classeDotRevisao(s)"
-                        [title]="getLabelStatusTopico(s)"></span>
-
                   <span class="topico-text">{{ s.descricao }}</span>
                 </button>
 
@@ -317,4 +278,3 @@
 
   </div>
 </div>
-

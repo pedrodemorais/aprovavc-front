@@ -23,6 +23,33 @@
   overflow: hidden;
   background: #ffffff;
 }
+.sala-container.revisao-bloqueada-focus {
+  position: relative;
+}
+.sala-container.revisao-bloqueada-focus::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #9ca3af;
+  z-index: 9;
+  pointer-events: auto;
+}
+.sala-container.revisao-bloqueada-focus .editor-overlay {
+  z-index: 30;
+  background: transparent;
+  margin-top: 0;
+  border-radius: 0;
+}
+.sala-container.revisao-bloqueada-focus .editor-overlay--revisao-bloqueio {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sala-container.revisao-bloqueada-focus .editor-wrapper {
+  position: static;
+}
 .sala-container.flashcard-focus-active {
   position: relative;
 }
@@ -30,11 +57,11 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.44);
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
+  background: rgba(15, 23, 42, 0.26);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   z-index: 3000;
-  pointer-events: auto;
+  pointer-events: none;
 }
 .sala-container.flashcard-focus-active .flashcard-review-container {
   position: relative;
@@ -44,6 +71,7 @@
   padding: 6px 0 10px;
   border-bottom: 1px solid rgba(79, 83, 81, 0.18);
   margin-bottom: 8px;
+  
 }
 .sala-titulo .titulo-materia {
   display: flex;
@@ -198,27 +226,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.aviso-revisao-direcionada {
-  margin: 0 0 10px;
-  padding: 8px 12px;
-  border: 1px solid #ffd27d;
-  border-radius: 10px;
-  background: #fff7e5;
-  color: #7a4b00;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.btn-limpar-filtro-direcionado {
-  border: 1px solid #f0bf64;
-  background: #fff;
-  color: #7a4b00;
-  border-radius: 8px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-size: 12px;
 }
 .sala-processando-msg {
   background: rgba(234, 88, 12, 0.18);
@@ -597,6 +604,10 @@
   margin-top: 0;
   padding-top: 4px;
 }
+.timer-botoes__titulo {
+  flex: 0 1 auto;
+  min-width: 0;
+}
 .tipo-estudo {
   display: flex;
   justify-content: flex-end;
@@ -818,6 +829,7 @@
   flex: 1;
   width: 100%;
   position: relative;
+  
   min-height: 0;
 }
 .char-counter {
@@ -1108,17 +1120,15 @@
 .flashcard-card-review {
   width: 100%;
   max-width: 320px;
-  aspect-ratio: 3 / 4.6;
-  height: auto;
+  height: 420px;
   min-height: 420px;
   border-radius: 26px;
   padding: 0;
   margin-bottom: 0.35rem;
-  display: flex;
-  flex-direction: column;
+  display: block;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   perspective: 1400px;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
   transition: transform 0.18s ease, box-shadow 0.22s ease;
@@ -1150,21 +1160,19 @@
   position: relative;
   width: 100%;
   height: 100%;
+  border-radius: inherit;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .flashcard-card-review.flipped .flashcard-card-inner {
   transform: rotateY(180deg);
 }
 .flashcard-card-review.flipped .flashcard-card-front {
-  opacity: 0;
   pointer-events: none;
-  z-index: 1;
 }
 .flashcard-card-review.flipped .flashcard-card-back {
-  opacity: 1;
   pointer-events: auto;
-  z-index: 3;
 }
 .flashcard-card-face {
   position: absolute;
@@ -1178,26 +1186,32 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  overflow: hidden;
   background: #ffffff;
   color: #0b1324;
   background-clip: padding-box;
-  will-change: transform, opacity;
+}
+.flashcard-card-face .flashcard-card-header-linha,
+.flashcard-card-face .flashcard-card-footer-linha {
+  position: relative;
+  z-index: 2;
+}
+.flashcard-card-face .flashcard-card-corpo {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .flashcard-card-front {
   transform: rotateY(0deg) translateZ(1px);
-  z-index: 2;
-  opacity: 1;
-  transition: opacity 0.2s ease;
 }
 .flashcard-card-back {
   transform: rotateY(180deg) translateZ(1px);
   background: #ffffff;
   color: #075c28;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  width: 100%;
-  height: 100%;
 }
 .flashcard-vf-actions {
   display: flex;

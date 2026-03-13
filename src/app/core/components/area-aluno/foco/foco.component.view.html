@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <div class="home-shell" *ngIf="!loadingPlano && !error && planoDiario">
+  <div class="home-shell" [class.home-shell--revisao]="isModoRevisao" *ngIf="!loadingPlano && !error && planoDiario">
     <div class="welcome-strip">
       <div>
         <h1 class="welcome-title">
@@ -214,63 +214,95 @@
       </div>
     </p-dialog>
 
-    <div *ngIf="isModoRevisao">
-      <div class="card" style="margin-top:14px;">
+    <div class="foco-review-section" *ngIf="isModoRevisao">
+      <div class="card foco-review-card" style="margin-top:14px;">
         <div class="header-row">
-          <h3 class="section-title">Fila de revisao</h3>
-
-          <div class="seg">
-            <p-selectButton
-              [options]="filtrosFilaOptions"
-              [(ngModel)]="filtrosSelecionados"
-              [multiple]="true"
-              optionLabel="label"
-              optionValue="value"
-              (ngModelChange)="onFiltrosFilaChange($event)">
-            </p-selectButton>
+          <div class="header-row-top">
+            <h3 class="section-title">{{ totalRevisoesHoje }} Revisões para Hoje</h3>
+            <div class="status-filter" aria-label="Filtros de classificação">
+              <button
+                type="button"
+                class="status-filter__dot status-filter__dot--red"
+                [class.status-filter__dot--inactive]="!isFiltroSelecionado('CRITICO')"
+                [attr.aria-pressed]="isFiltroSelecionado('CRITICO')"
+                aria-label="Filtrar Críticos"
+                title="Críticos"
+                (click)="toggleFiltroSelecionado('CRITICO')">
+              </button>
+              <button
+                type="button"
+                class="status-filter__dot status-filter__dot--orange"
+                [class.status-filter__dot--inactive]="!isFiltroSelecionado('EM_RISCO')"
+                [attr.aria-pressed]="isFiltroSelecionado('EM_RISCO')"
+                aria-label="Filtrar Em risco"
+                title="Em risco"
+                (click)="toggleFiltroSelecionado('EM_RISCO')">
+              </button>
+              <button
+                type="button"
+                class="status-filter__dot status-filter__dot--green"
+                [class.status-filter__dot--inactive]="!isFiltroSelecionado('MANUTENCAO')"
+                [attr.aria-pressed]="isFiltroSelecionado('MANUTENCAO')"
+                aria-label="Filtrar Manutenção"
+                title="Manutenção"
+                (click)="toggleFiltroSelecionado('MANUTENCAO')">
+              </button>
+            </div>
           </div>
+
+          <button
+            type="button"
+            class="btn-revisar-agora-header"
+            (click)="iniciarRevisao()">
+            Revisar agora
+          </button>
         </div>
-        <div class="queue-ordering">
-          Ordenação atual: <strong>{{ ordenacaoAtualLabel }}</strong>
-        </div>
+     
 
         <div class="table-wrap">
           <div class="row header">
             <div>Materia</div>
-            <div>Topico</div>
-            <div>Classificacao</div>
             <div>Score</div>
-            <div>Proxima</div>
             <div>Acao</div>
           </div>
 
-          <div class="row item" *ngFor="let item of itensFiltrados">
-            <div class="materia">{{ item.materiaNome || '-' }}</div>
-            <div class="topico">{{ item.topicoNome }}</div>
-
-            <div>
-              <span class="badge"
-                    [ngClass]="{
-                      'critico': item.categoria === 'CRITICO',
-                      'risco': item.categoria === 'EM_RISCO',
-                      'manut': (item.categoria || '').startsWith('MANUTENCAO')
-                    }">
-                {{ formatCategoria(item.categoria || item.classificacao) }}
-              </span>
+          <ng-container *ngFor="let item of itensFiltrados; let i = index">
+            <div class="row item row--materia-group" *ngIf="isPrimeiraLinhaMateria(i)">
+              <div class="conteudo conteudo--materia">{{ item.materiaNome || '-' }}</div>
+              <div></div>
+              <div></div>
             </div>
 
-            <div class="score-cell">
-              <div class="score-bar">
-                <div class="score-bar__fill" [style.width.%]="(scoreRatio(item.score) || 0) * 100"></div>
+            <div class="row item row--topic">
+              <div class="conteudo conteudo--topico">
+                <span
+                  class="classificacao-dot"
+                  [ngClass]="{
+                    'classificacao-dot--critico': item.categoria === 'CRITICO',
+                    'classificacao-dot--risco': item.categoria === 'EM_RISCO',
+                    'classificacao-dot--manut': (item.categoria || '').startsWith('MANUTENCAO')
+                  }"
+                  [attr.aria-label]="formatCategoria(item.categoria || item.classificacao)"
+                  [attr.title]="formatCategoria(item.categoria || item.classificacao)">
+                </span>
+                <span>{{ item.topicoNome }}</span>
               </div>
-              <span class="score-text">{{ scoreRatio(item.score) === null ? 'â€”' : formatScore(item.score) }}</span>
-            </div>
-            <div class="pill">{{ formatProxima(item.proxRevisao || item.proximaRevisao) }}</div>
 
-            <div>
-              <button class="btn-secondary" (click)="revisar(item)">Revisar</button>
+              <div class="score-cell">
+                <span class="score-text">{{ scoreRatio(getItemScore(item)) === null ? 'â€”' : formatScore(getItemScore(item)) }}</span>
+              </div>
+              <div>
+                <button
+                  class="btn-secondary action-icon-btn"
+                  type="button"
+                  (click)="revisar(item)"
+                  aria-label="Revisar tópico"
+                  title="Revisar tópico">
+                  <img class="action-icon-btn__img" src="assets/img/icon/cycle.png" alt="" aria-hidden="true" />
+                </button>
+              </div>
             </div>
-          </div>
+          </ng-container>
 
           <div style="padding:12px 10px; color:#64748b; font-weight:700;" *ngIf="itensFiltrados.length===0">
             Nenhum topico para mostrar.

@@ -84,7 +84,6 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.carregarParametroEscopo();
     this.carregarEditais();
     this.carregarRevisoesDashboard();
     this.carregarTopicosFinalizados();
@@ -174,14 +173,38 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
       next: (lista) => {
         this.editais = lista || [];
         this.rebuildEditaisIndex();
+        this.aplicarEscopoInicialPorEditaisAtivos();
         this.carregandoEditais = false;
+        this.carregarMateriasParaEstudo();
         this.atualizarImagemEditalSelecionado();
       },
       error: (err) => {
         console.error('[EDITAIS] Erro ao carregar editais:', err);
         this.carregandoEditais = false;
+        this.carregarMateriasParaEstudo();
       }
     });
+  }
+
+  private aplicarEscopoInicialPorEditaisAtivos(): void {
+    const ativos = (this.editais || []).filter((e) => this.isEditalAtivo(e) && Number.isFinite(Number(e?.id)));
+    const novoEscopo = ativos.length === 1 ? `edital-${Number(ativos[0].id)}` : 'todas';
+    if (this.escopoValor !== novoEscopo) {
+      this.escopoValor = novoEscopo;
+    }
+    this.persistirEscopo();
+  }
+
+  private isEditalAtivo(edital: Edital | null | undefined): boolean {
+    const valor: any = (edital as any)?.ativo;
+    if (valor === undefined || valor === null) return false;
+    if (typeof valor === 'boolean') return valor;
+    if (typeof valor === 'number') return valor === 1;
+    if (typeof valor === 'string') {
+      const normalizado = valor.trim().toLowerCase();
+      return normalizado === 'true' || normalizado === '1' || normalizado === 'ativo';
+    }
+    return false;
   }
 
   private rebuildEditaisIndex(): void {
@@ -285,13 +308,9 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         if (valor) {
           this.escopoValor = valor;
         }
-        this.carregarMateriasParaEstudo();
-        this.atualizarImagemEditalSelecionado();
       },
       error: (err) => {
         console.error('[PARAMETRO] Erro ao carregar filtro do centro de estudo:', err);
-        this.carregarMateriasParaEstudo();
-        this.atualizarImagemEditalSelecionado();
       }
     });
   }

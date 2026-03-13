@@ -1,16 +1,9 @@
-<div class="sala-container" *ngIf="!carregando; else loadingTpl"
+﻿<div class="sala-container" *ngIf="!carregando; else loadingTpl"
   [class.coluna-esquerda-oculta]="colunaEsquerdaOculta"
+  [class.revisao-bloqueada-focus]="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo"
   [class.flashcard-focus-active]="modo === 'revisar' && modoRevisao === 'flashcards' && !!flashcards.length && timerAtivo"
   [class.flashcard-foco-mobile]="modo === 'revisar' && modoRevisao === 'flashcards' && !!flashcards.length && timerAtivo">
   <p-toast></p-toast>
-
-  <div class="aviso-revisao-direcionada" *ngIf="revisaoDirecionadaAtiva">
-    <span>Revisão direcionada</span>
-    <button type="button" class="btn-limpar-filtro-direcionado" (click)="limparFiltroTopicoDirecionado()">
-      Limpar filtro
-    </button>
-  </div>
-
 
   <!-- CORPO DA SALA -->
   <div class="sala-titulo">
@@ -47,7 +40,7 @@
           </ng-template>
         </div>
       </span>
-      <span class="salvo-msg sala-processando-msg" *ngIf="carregandoAnotacoes">Carregando anota&ccedil;&otilde;es...</span>
+<span class="salvo-msg sala-processando-msg" *ngIf="carregandoAnotacoes">Carregando anota&ccedil;&otilde;es...</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemEstudoSalvo">{{ mensagemEstudoSalvo }}</span>
       <span class="salvo-msg sala-salvo-msg" *ngIf="mensagemRevisao">{{ mensagemRevisao }}</span>
       <span class="salvo-msg sala-topico-finalizado-msg" *ngIf="mensagemTopicoFinalizado">{{ mensagemTopicoFinalizado }}</span>
@@ -74,13 +67,13 @@
             <i class="pi" [ngClass]="colunaEsquerdaOculta ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
             <span>{{ colunaEsquerdaOculta ? 'Mostrar' : 'Esconder' }}</span>
           </button>
-          <div class="filtro-semaforo" role="group" aria-label="Filtrar tópicos por semáforo">
+          <div class="filtro-semaforo" role="group" aria-label="Filtrar tÃ³picos por semÃ¡foro">
             <button
               *ngFor="let opcao of opcoesFiltroSemaforo; trackBy: trackByStatusRevisao"
               type="button"
               class="btn-filtro-semaforo"
               [class.ativo]="isFiltroSemaforoAtivo(opcao.status)"
-              [attr.aria-label]="'Filtrar por semáforo ' + opcao.rotulo"
+              [attr.aria-label]="'Filtrar por semÃ¡foro ' + opcao.rotulo"
               [pTooltip]="'Filtrar:' + opcao.rotulo"
               tooltipPosition="top"
               [showDelay]="120"
@@ -173,7 +166,7 @@
 
           <!-- HEADER UNICO (igual visualmente sempre) -->
           <div class="timer-botoes">
-            <div>
+            <div class="timer-botoes__titulo">
               <ng-container [ngSwitch]="modo">
                 <!-- Header do ESTUDAR -->
                 <ng-container *ngSwitchCase="'estudar'">
@@ -211,7 +204,6 @@
                 </h2>
               </ng-template>
             </div>
-
             <!-- CONTROLES A DIREITA (ocupam o mesmo lugar sempre) -->
             <div class="tipo-estudo">
               <ng-container [ngSwitch]="modo">
@@ -334,7 +326,7 @@
                   <div class="editor-aviso-texto">
                     <div class="editor-aviso-titulo">
                       <i class="pi pi-lock editor-aviso-icon" aria-hidden="true"></i>
-                      <strong>Editor bloqueado</strong>
+                     
                     </div>
 
                       <span *ngIf="!topicoSelecionado">
@@ -342,7 +334,7 @@
                       </span>
 
                     <span *ngIf="topicoPermiteEstudo && !timerAtivo">
-                      Inicie o cron&ocirc;metro para liberar as anota&ccedil;&otilde;es.
+                      Inicie o cron&ocirc;metro para liberar!
                     </span>
 
                     <div class="editor-aviso-sala">
@@ -596,7 +588,7 @@
 
                       <!-- ACOES (so quando estiver no verso) -->
                       <div class="flashcard-acoes-review" *ngIf="mostrarVersoAtual && !isVerdadeiroFalso(flashcardAtual)">
-                        <div class="timer-modos separado" role="tablist" aria-label="Avalia��o do flashcard">
+                        <div class="timer-modos separado" role="tablist" aria-label="Avaliaï¿½ï¿½o do flashcard">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'ERREI'"
                             (click)="selecionarAvaliacaoFlashcard('ERREI')">
                             Errei
@@ -622,7 +614,7 @@
 
                       <!-- NAVEGACAO -->
                       <div class="flashcard-acoes-review">
-                        <div class="timer-modos separado" role="tablist" aria-label="Navega��o dos flashcards">
+                        <div class="timer-modos separado" role="tablist" aria-label="Navegaï¿½ï¿½o dos flashcards">
                           <button type="button" class="btn-modo-timer" (click)="anteriorFlashcard()"
                                   [disabled]="flashcardIndexAtual <= 0">
                             Anterior
@@ -649,19 +641,19 @@
                 </ng-container>
 
                 <!-- overlay do revisar -->
-                <div class="editor-overlay" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
+                <div class="editor-overlay editor-overlay--revisao-bloqueio" *ngIf="!topicoSelecionado || !topicoPermiteEstudo || !timerAtivo">
                   <div class="editor-aviso">
                     <div class="editor-aviso-texto">
                       <div class="editor-aviso-titulo">
                         <i class="pi pi-lock editor-aviso-icon" aria-hidden="true"></i>
-                        <strong>Revisao bloqueada</strong>
+                     
                       </div>
                       <span *ngIf="!topicoSelecionado">
                         Escolha um t&oacute;pico na coluna &agrave; esquerda para revisar.
                       </span>
 
                       <span *ngIf="topicoPermiteEstudo && !timerAtivo">
-                        Inicie o cron&ocirc;metro para liberar a revis&atilde;o.
+                        Inicie o cron&ocirc;metro para liberar!
                       </span>
 
                       <div class="editor-aviso-sala">
@@ -838,7 +830,7 @@
 
                 <button type="button" class="btn-modo-timer" (click)="abrirModalVocabulario('revisar')"
                   [disabled]="!podeAbrirRevisaoVocabulario">
-                  <span>Vocabulário</span>
+                  <span>VocabulÃ¡rio</span>
                 </button>
               </div>
               <div class="timer-modos separado" role="tablist" aria-label="Navegacao de topicos">
@@ -1005,8 +997,8 @@
     <div class="split-modal">
       <header class="split-header">
         <div class="split-title-wrap">
-          <h2 class="split-title">Editar tópico</h2>
-          <p class="split-subtitle">Organize os subtópicos e ajuste o título principal.</p>
+          <h2 class="split-title">Editar tÃ³pico</h2>
+          <p class="split-subtitle">Organize os subtÃ³picos e ajuste o tÃ­tulo principal.</p>
         </div>
         <button type="button" class="split-fechar" (click)="fecharModalSplit()">x</button>
       </header>
@@ -1023,7 +1015,7 @@
       <div class="split-list" cdkDropList (cdkDropListDropped)="onSplitDrop($event)">
         <div class="split-hint">
           <span class="pi pi-arrows-v"></span>
-          Arraste pela alça para reordenar
+          Arraste pela alÃ§a para reordenar
         </div>
         <div class="split-row" *ngFor="let item of splitNovos; let i = index; trackBy: trackByIndex" cdkDrag>
           <button
@@ -1072,7 +1064,7 @@
   <div class="vocabulario-overlay" *ngIf="mostrarModalVocabulario">
     <div class="vocabulario-modal" [class.vocabulario-modal--revisao]="vocabularioModo === 'revisar'">
       <header class="vocabulario-header">
-        <h2 class="vocabulario-titulo">Vocabulário</h2>
+        <h2 class="vocabulario-titulo">VocabulÃ¡rio</h2>
         <button type="button" class="vocabulario-fechar" (click)="fecharModalVocabulario()">x</button>
       </header>
 
@@ -1085,11 +1077,11 @@
 
       <div class="vocabulario-contexto">
         <div class="vocabulario-contexto-linha">
-          <span class="contexto-label">Matéria:</span>
+          <span class="contexto-label">MatÃ©ria:</span>
           <span class="contexto-valor">{{ materia?.nome || '-' }}</span>
         </div>
         <div class="vocabulario-contexto-linha">
-          <span class="contexto-label">Tópico:</span>
+          <span class="contexto-label">TÃ³pico:</span>
           <span class="contexto-valor">{{ topicoSelecionado?.descricao || '-' }}</span>
         </div>
       </div>
@@ -1102,7 +1094,7 @@
             placeholder="Ex.: Class" />
         </label>
         <label class="vocabulario-label">
-          Definição
+          DefiniÃ§Ã£o
           <input type="text" class="vocabulario-input" [(ngModel)]="vocabularioDefinicao" name="vocabularioDefinicao"
             [attr.maxlength]="maxVocabularioChars"
             placeholder="Ex.: Classe" />
@@ -1127,7 +1119,7 @@
           Salvar lista
           <textarea rows="6" class="vocabulario-textarea" [(ngModel)]="vocabularioListaTexto"
             name="vocabularioListaTexto"
-            placeholder="Ex.: Building blocks – Blocos de construcao"></textarea>
+            placeholder="Ex.: Building blocks â€“ Blocos de construcao"></textarea>
         </label>
         <button type="button" class="btn primario"
           (click)="salvarListaVocabulario()"
@@ -1135,7 +1127,7 @@
           Importar lista
         </button>
         <div class="vocabulario-import-dica">
-          Use ":" ou "-" como separador entre termo e definição.
+          Use ":" ou "-" como separador entre termo e definiÃ§Ã£o.
         </div>
       </div>
 
@@ -1149,7 +1141,7 @@
       <div class="vocabulario-lista" *ngIf="vocabularioModo === 'lista'">
         <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabularios...</div>
         <div class="vocabulario-vazio" *ngIf="!carregandoVocabularios && !vocabularios.length">
-          Nenhum vocabulário cadastrado neste tópico.
+          Nenhum vocabulÃ¡rio cadastrado neste tÃ³pico.
         </div>
         <ul *ngIf="!carregandoVocabularios && vocabularios.length">
           <li class="vocabulario-item" *ngFor="let v of vocabularios; trackBy: trackByVocabularioId">
@@ -1167,7 +1159,7 @@
       <div class="vocabulario-revisao" *ngIf="vocabularioModo === 'revisar'">
         <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabularios...</div>
         <div class="vocabulario-vazio" *ngIf="!carregandoVocabularios && !vocabularios.length">
-          Nenhum vocabulário cadastrado neste topico.
+          Nenhum vocabulÃ¡rio cadastrado neste topico.
         </div>
         <div class="vocabulario-card" *ngIf="!carregandoVocabularios && vocabularioAtual">
           <div class="vocabulario-card-meta">
@@ -1186,9 +1178,9 @@
             <button type="button" class="btn secundario" (click)="anteriorVocabulario()">Anterior</button>
              <button type="button" class="btn secundario vocabulario-reveal"
             (click)="toggleDefinicaoVocabulario()">
-            {{ vocabularioMostrarDefinicao ? 'Ocultar definição' : 'Mostrar definição' }}
+            {{ vocabularioMostrarDefinicao ? 'Ocultar definiÃ§Ã£o' : 'Mostrar definiÃ§Ã£o' }}
           </button>
-            <button type="button" class="btn primario" (click)="proximoVocabulario()">Próximo</button>
+            <button type="button" class="btn primario" (click)="proximoVocabulario()">PrÃ³ximo</button>
           </div>
     </div>
   </div>
@@ -1204,6 +1196,10 @@
 <div *ngIf="erro" class="mensagem-erro">
   {{ erro }}
 </div>
+
+
+
+
 
 
 

@@ -8,12 +8,10 @@ import { ExecutionQueueService } from 'src/app/core/services/execution-queue.ser
 import { FocoPlanoDiarioService, FocoPremiumMetrics } from 'src/app/core/services/foco-plano-diario.service';
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
 import { AuthService } from 'src/app/site/services/auth.service';
-import { Topico } from '../models/topico.model';
-import { MateriaService } from '../services/materia.service';
 import { PressaoCognitivaDTO, SalaEstudoService, TreinarFraquezaMateriaDTO } from '../services/sala-estudo.service';
 
 type FiltroFila = 'todos' | 'criticos' | 'emRisco';
-type FiltroPremium = 'CRITICO' | 'EM_RISCO' | 'MANUTENCAO' | 'FRAQUEZAS';
+type FiltroPremium = 'CRITICO' | 'EM_RISCO' | 'MANUTENCAO';
 
 interface FocoAcaoHoje {
   total: number;
@@ -58,10 +56,9 @@ export class FocoComponent implements OnInit {
   readonly filtrosFilaOptions: Array<{ label: string; value: FiltroPremium }> = [
     { label: 'Críticos', value: 'CRITICO' },
     { label: 'Em risco', value: 'EM_RISCO' },
-    { label: 'Manutenção', value: 'MANUTENCAO' },
-    { label: 'Fraquezas', value: 'FRAQUEZAS' }
+    { label: 'Manutenção', value: 'MANUTENCAO' }
   ];
-  filtrosSelecionados: FiltroPremium[] = ['CRITICO', 'EM_RISCO', 'MANUTENCAO', 'FRAQUEZAS'];
+  filtrosSelecionados: FiltroPremium[] = ['CRITICO', 'EM_RISCO', 'MANUTENCAO'];
   donutData: any = null;
   donutOptions: any = {
     cutout: '65%',
@@ -136,7 +133,6 @@ export class FocoComponent implements OnInit {
     private executionQueueService: ExecutionQueueService,
     private hojeFilaService: HojeFilaService,
     private authService: AuthService,
-    private materiaService: MateriaService,
     private salaEstudoService: SalaEstudoService
   ) {}
 
@@ -679,6 +675,18 @@ export class FocoComponent implements OnInit {
     this.filtrosSelecionados = Array.isArray(values) ? values : [];
   }
 
+  isFiltroSelecionado(filtro: FiltroPremium): boolean {
+    return this.filtrosSelecionados.includes(filtro);
+  }
+
+  toggleFiltroSelecionado(filtro: FiltroPremium): void {
+    if (this.isFiltroSelecionado(filtro)) {
+      this.filtrosSelecionados = this.filtrosSelecionados.filter((item) => item !== filtro);
+      return;
+    }
+    this.filtrosSelecionados = [...this.filtrosSelecionados, filtro];
+  }
+
   tentarNovamente(): void {
     this.carregarPlanoDiario();
   }
@@ -696,12 +704,7 @@ export class FocoComponent implements OnInit {
   }
 
   iniciarRevisaoDoDia(): void {
-    const filaCompleta = (this.filaHoje || [])
-      .map((item) => ({
-        topicoId: Number(item?.topicoId || 0),
-        materiaId: Number(item?.materiaId || 0) || null
-      }))
-      .filter((item) => item.topicoId > 0);
+    const filaCompleta = this.buildExecutionQueue(this.filaHoje || []);
 
     if (!filaCompleta.length) return;
 
@@ -710,112 +713,144 @@ export class FocoComponent implements OnInit {
     if (primeiraMateriaIdFila <= 0) {
       this.executionQueueService.setFila(filaCompleta);
       this.router.navigate(['/area-restrita/sala-estudo/executar'], {
-        queryParams: { topicos: topicosSerializados },
+        queryParams: { topicos: topicosSerializados, origem: 'foco' },
         state: { executionQueue: filaCompleta }
       });
       return;
     }
 
-    this.materiaService.listarTopicosComMeta(primeiraMateriaIdFila).subscribe({
-      next: (resp) => {
-        const alvoInicial = this.selecionarPrimeiroTopicoFilaPorOrdemArvore(
-          filaCompleta,
-          (resp?.topicos || []) as Topico[]
-        );
-        const primeiraMateriaId = Number(alvoInicial?.materiaId || 0);
-        const primeiroTopicoId = Number(alvoInicial?.topicoId || 0);
+    const primeiro = filaCompleta[0];
+    const primeiraMateriaId = Number(primeiro?.materiaId || 0);
+    const primeiroTopicoId = Number(primeiro?.topicoId || 0);
+    this.executionQueueService.setFila(filaCompleta);
 
-        if (primeiraMateriaId > 0 && primeiroTopicoId > 0) {
-          this.executionQueueService.setFila(filaCompleta);
-          this.router.navigate(['/area-restrita/sala-estudo', primeiraMateriaId], {
-            queryParams: {
-              modo: 'revisar',
-              topicoId: primeiroTopicoId,
-              filaExecucao: '1',
-              topicos: topicosSerializados
-            },
-            state: { executionQueue: filaCompleta }
-          });
-          return;
-        }
+    if (primeiraMateriaId > 0 && primeiroTopicoId > 0) {
+      this.router.navigate(['/area-restrita/sala-estudo', primeiraMateriaId], {
+        queryParams: {
+          modo: 'revisar',
+          topicoId: primeiroTopicoId,
+          filaExecucao: '1',
+          topicos: topicosSerializados,
+          origem: 'foco'
+        },
+        state: { executionQueue: filaCompleta }
+      });
+      return;
+    }
 
-        this.executionQueueService.setFila(filaCompleta);
-        this.router.navigate(['/area-restrita/sala-estudo/executar'], {
-          queryParams: { topicos: topicosSerializados },
-          state: { executionQueue: filaCompleta }
-        });
-      },
-      error: () => {
-        const primeiro = filaCompleta[0];
-        const primeiraMateriaId = Number(primeiro?.materiaId || 0);
-        const primeiroTopicoId = Number(primeiro?.topicoId || 0);
-        this.executionQueueService.setFila(filaCompleta);
-
-        if (primeiraMateriaId > 0 && primeiroTopicoId > 0) {
-          this.router.navigate(['/area-restrita/sala-estudo', primeiraMateriaId], {
-            queryParams: {
-              modo: 'revisar',
-              topicoId: primeiroTopicoId,
-              filaExecucao: '1',
-              topicos: topicosSerializados
-            },
-            state: { executionQueue: filaCompleta }
-          });
-          return;
-        }
-
-        this.router.navigate(['/area-restrita/sala-estudo/executar'], {
-          queryParams: { topicos: topicosSerializados },
-          state: { executionQueue: filaCompleta }
-        });
-      }
+    this.router.navigate(['/area-restrita/sala-estudo/executar'], {
+      queryParams: { topicos: topicosSerializados, origem: 'foco' },
+      state: { executionQueue: filaCompleta }
     });
   }
 
-  private selecionarPrimeiroTopicoFilaPorOrdemArvore(
-    fila: Array<{ topicoId: number; materiaId: number | null }>,
-    topicosMateria: Topico[] | null | undefined
-  ): { topicoId: number; materiaId: number | null } | null {
-    const filaValida = (fila || []).filter((item) => Number(item?.topicoId || 0) > 0);
-    if (!filaValida.length) return null;
-
-    const primeiraMateriaId = Number(filaValida[0]?.materiaId || 0);
-    if (primeiraMateriaId <= 0) return filaValida[0] || null;
-
-    const idsFilaMateria = new Set<number>(
-      filaValida
-        .filter((item) => Number(item?.materiaId || 0) === primeiraMateriaId)
-        .map((item) => Number(item?.topicoId || 0))
-        .filter((id) => Number.isFinite(id) && id > 0)
-    );
-    if (!idsFilaMateria.size) return filaValida[0] || null;
-
-    const ordemArvore = this.extrairIdsTopicosEmOrdemArvore(topicosMateria || []);
-    const primeiroIdEmOrdem = ordemArvore.find((id) => idsFilaMateria.has(id)) || null;
-    if (!primeiroIdEmOrdem) return filaValida[0] || null;
-
-    return {
-      materiaId: primeiraMateriaId,
-      topicoId: primeiroIdEmOrdem
+  private buildExecutionQueue(
+    filaRevisao: PressaoFilaItemDTO[]
+  ): Array<{ topicoId: number; materiaId: number | null }> {
+    type ExecutionItem = {
+      topicoId: number;
+      materiaId: number | null;
+      priorityValue: number | null;
+      apiIndex: number;
     };
+    type ExecutionGroup = {
+      materiaId: number | null;
+      items: ExecutionItem[];
+      maxPriority: number | null;
+      firstApiIndex: number;
+    };
+
+    const grupos = new Map<string, ExecutionGroup>();
+
+    (filaRevisao || []).forEach((item, apiIndex) => {
+      const topicoId = Number(item?.topicoId || 0);
+      if (topicoId <= 0) return;
+
+      const materiaIdRaw = Number(item?.materiaId || 0);
+      const materiaId = materiaIdRaw > 0 ? materiaIdRaw : null;
+      const groupKey = materiaId === null ? `sem-materia:${topicoId}` : String(materiaId);
+      const executionItem: ExecutionItem = {
+        topicoId,
+        materiaId,
+        priorityValue: this.getExecutionPriority(item),
+        apiIndex
+      };
+
+      if (!grupos.has(groupKey)) {
+        grupos.set(groupKey, {
+          materiaId,
+          items: [executionItem],
+          maxPriority: executionItem.priorityValue,
+          firstApiIndex: apiIndex
+        });
+        return;
+      }
+
+      const grupo = grupos.get(groupKey)!;
+      grupo.items.push(executionItem);
+      grupo.firstApiIndex = Math.min(grupo.firstApiIndex, apiIndex);
+      grupo.maxPriority = this.maxExecutionPriority(grupo.maxPriority, executionItem.priorityValue);
+    });
+
+    return Array.from(grupos.values())
+      .sort((a, b) => this.compareExecutionGroups(a, b))
+      .flatMap((grupo) =>
+        grupo.items
+          .sort((a, b) => this.compareExecutionItems(a, b))
+          .map((item) => ({
+            topicoId: item.topicoId,
+            materiaId: item.materiaId
+          }))
+      );
   }
 
-  private extrairIdsTopicosEmOrdemArvore(topicos: Topico[]): number[] {
-    const ordem: number[] = [];
-    const visitar = (lista: Topico[]) => {
-      (lista || []).forEach((item) => {
-        const id = Number(item?.id || 0);
-        if (Number.isFinite(id) && id > 0) {
-          ordem.push(id);
-        }
-        const filhos = (item?.filhos || []) as Topico[];
-        if (filhos.length) {
-          visitar(filhos);
-        }
-      });
-    };
-    visitar(topicos || []);
-    return ordem;
+  private getExecutionPriority(item: PressaoFilaItemDTO | null | undefined): number | null {
+    const raw = item as any;
+    const candidatos = [
+      raw?.risk,
+      raw?.risco,
+      raw?.riskScore,
+      raw?.scoreRisco
+    ];
+    for (const candidato of candidatos) {
+      const valor = this.parseNumeric(candidato);
+      if (valor !== null) return valor;
+    }
+
+    const score = this.parseNumeric(raw?.score);
+    if (score === null) return null;
+    return score <= 1 ? 1 - score : -score;
+  }
+
+  private maxExecutionPriority(current: number | null, candidate: number | null): number | null {
+    if (current === null) return candidate;
+    if (candidate === null) return current;
+    return Math.max(current, candidate);
+  }
+
+  private compareExecutionGroups(
+    a: { maxPriority: number | null; firstApiIndex: number },
+    b: { maxPriority: number | null; firstApiIndex: number }
+  ): number {
+    const prioridade = this.comparePriorityValues(a.maxPriority, b.maxPriority);
+    if (prioridade !== 0) return prioridade;
+    return a.firstApiIndex - b.firstApiIndex;
+  }
+
+  private compareExecutionItems(
+    a: { priorityValue: number | null; apiIndex: number },
+    b: { priorityValue: number | null; apiIndex: number }
+  ): number {
+    const prioridade = this.comparePriorityValues(a.priorityValue, b.priorityValue);
+    if (prioridade !== 0) return prioridade;
+    return a.apiIndex - b.apiIndex;
+  }
+
+  private comparePriorityValues(a: number | null, b: number | null): number {
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return b - a;
   }
 
   iniciarTreinoFraquezas(materiaId: number): void {
@@ -836,7 +871,8 @@ export class FocoComponent implements OnInit {
     const queryParams: Record<string, string> = {
       topicos: topicosSerializados,
       filaExecucao: '1',
-      modo: 'revisar'
+      modo: 'revisar',
+      origem: 'foco'
     };
     if (primeiroTopicoId > 0) {
       queryParams['topicoId'] = String(primeiroTopicoId);
@@ -1001,7 +1037,7 @@ export class FocoComponent implements OnInit {
 
     if (materiaId > 0 && topicoId > 0) {
       this.router.navigate(['/area-restrita/sala-estudo', materiaId], {
-        queryParams: { topicoId, modo: 'revisar' }
+        queryParams: { topicoId, modo: 'revisar', origem: 'foco' }
       });
       return;
     }
@@ -1027,6 +1063,22 @@ export class FocoComponent implements OnInit {
 
   scoreRatio(score: number | null | undefined): number | null {
     return this.toNullableRatio(score);
+  }
+
+  getItemScore(item: PressaoFilaItemDTO | null | undefined): number | null {
+    const raw = item as any;
+    const candidatos = [
+      raw?.score,
+      raw?.pontuacao,
+      raw?.scorePrioridade,
+      raw?.prioridadeScore,
+      raw?.risco
+    ];
+    for (const candidato of candidatos) {
+      const valor = this.parseNumeric(candidato);
+      if (valor !== null) return valor;
+    }
+    return null;
   }
 
   formatLocalDate(dateStr: string | null | undefined): string {
@@ -1060,6 +1112,13 @@ export class FocoComponent implements OnInit {
     const topicoId = Number(item?.topicoId || 0);
     if (topicoId > 0) return String(topicoId);
     return `fila-${index}`;
+  }
+
+  isPrimeiraLinhaMateria(index: number): boolean {
+    if (index <= 0) return true;
+    const atual = this.normalizarMateriaNome(this.itensFiltrados[index]?.materiaNome);
+    const anterior = this.normalizarMateriaNome(this.itensFiltrados[index - 1]?.materiaNome);
+    return atual !== anterior;
   }
 
   trackByDistribuicao(index: number, item: FocoDistribuicaoMateriaDTO): string {
@@ -1185,7 +1244,7 @@ export class FocoComponent implements OnInit {
       : null;
     this.premiumMetrics = this.focoPlanoDiarioService.mapearMetricasPremium(dto);
     this.filtroFila = 'todos';
-    this.filtrosSelecionados = ['CRITICO', 'EM_RISCO', 'MANUTENCAO', 'FRAQUEZAS'];
+    this.filtrosSelecionados = ['CRITICO', 'EM_RISCO', 'MANUTENCAO'];
     this.prepararDonut(dto);
     this.prepararPressaoLinha(dto);
     // TODO(remover): logs de validação do filtro
@@ -1266,7 +1325,6 @@ export class FocoComponent implements OnInit {
       if (filtro === 'CRITICO' && this.isCritico(item)) return true;
       if (filtro === 'EM_RISCO' && this.isEmRisco(item)) return true;
       if (filtro === 'MANUTENCAO' && this.isManutencao(item)) return true;
-      if (filtro === 'FRAQUEZAS' && this.isFraqueza(item)) return true;
     }
     return false;
   }
@@ -1425,6 +1483,16 @@ export class FocoComponent implements OnInit {
     return null;
   }
 
+  private parseNumeric(value: unknown): number | null {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    const text = String(value).trim();
+    if (!text) return null;
+    const normalized = text.replace(',', '.');
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : null;
+  }
+
   private toPercent(value: unknown): number {
     const n = Number(value);
     if (!Number.isFinite(n)) return 0;
@@ -1448,5 +1516,9 @@ export class FocoComponent implements OnInit {
       criterio: String(raw?.criterio || '').trim() || null,
       materiaConcluida: raw?.materiaConcluida === true
     };
+  }
+
+  private normalizarMateriaNome(value: unknown): string {
+    return String(value || '').trim().toUpperCase();
   }
 }
