@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Location } from '@angular/common';
@@ -15,6 +15,7 @@ interface MateriaOption extends Materia {
 interface TopicoOption {
   id: number;
   descricao: string;
+  nivel: number;
 }
 
 @Component({
@@ -23,7 +24,7 @@ interface TopicoOption {
   styleUrls: ['./quick-study-entry.component.css']
 })
 export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
-  @ViewChild('topicoSelect', { static: false }) topicoSelectRef?: ElementRef<HTMLSelectElement>;
+  topicoOpen = false;
 
   readonly quickTimes = [15, 30, 60];
   readonly form = this.fb.group({
@@ -42,6 +43,7 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
   materias: Materia[] = [];
   materiaOptions: MateriaOption[] = [];
   topicoOptions: TopicoOption[] = [];
+  selectedTopicoLabel = '';
 
   private readonly storageRecentMaterias = 'quick-study:recent-materias';
 
@@ -65,9 +67,7 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    setTimeout(() => this.topicoSelectRef?.nativeElement?.focus(), 0);
-  }
+  ngAfterViewInit(): void {}
 
   get materiaIdInvalid(): boolean {
     const control = this.form.controls.materiaId;
@@ -175,7 +175,7 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
           if (this.topicoOptions.length) {
             this.form.controls.topicoId.setValue(this.topicoOptions[0].id);
           }
-          setTimeout(() => this.topicoSelectRef?.nativeElement?.focus(), 0);
+          this.selectedTopicoLabel = this.topicoOptions[0]?.descricao || '';
         },
         error: () => {
           this.topicoOptions = [];
@@ -193,8 +193,7 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
       }
       if (id > 0 && descricaoBase) {
         visited.add(id);
-        const prefix = depth > 0 ? `${'↳ '.repeat(depth)}` : '';
-        result.push({ id, descricao: `${prefix}${descricaoBase}` });
+        result.push({ id, descricao: descricaoBase, nivel: depth });
       }
       const filhos = this.obterFilhos(topico);
       if (filhos.length) {
@@ -284,7 +283,26 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
     });
     this.form.markAsPristine();
     this.form.markAsUntouched();
-    setTimeout(() => this.topicoSelectRef?.nativeElement?.focus(), 0);
+    this.selectedTopicoLabel = this.topicoOptions.find((t) => t.id === this.form.value.topicoId)?.descricao || '';
+  }
+
+  toggleTopico(event: MouseEvent): void {
+    if (!this.form.value.materiaId || this.loadingTopicos) return;
+    event.stopPropagation();
+    this.topicoOpen = !this.topicoOpen;
+  }
+
+  selectTopico(topico: TopicoOption, event: MouseEvent): void {
+    event.stopPropagation();
+    this.form.controls.topicoId.setValue(topico.id);
+    this.form.controls.topicoId.markAsDirty();
+    this.selectedTopicoLabel = topico.descricao;
+    this.topicoOpen = false;
+  }
+
+  @HostListener('document:click')
+  closeTopico(): void {
+    this.topicoOpen = false;
   }
 
   private loadRecentMateriaIds(): number[] {

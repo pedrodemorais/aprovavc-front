@@ -18,6 +18,29 @@
   --rev-scrollbar: 8px;
 }
 
+.rev-table-header {
+  display: grid;
+  grid-template-columns: 76% 24%;
+  align-items: center;
+  padding: 8px 22px;
+  border-bottom: 1px solid var(--border);
+  background: #ffffff;
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+}
+
+.rev-table-header-col {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.rev-table-header-col-data {
+  text-align: right;
+}
+
 /* Layout da pagina de revisoes */
 .revisoes-page {
   max-width: 1080px;
@@ -295,6 +318,10 @@
   width: 100%;
 }
 
+.rev-tree-table .p-treetable-scrollable-header {
+  display: none;
+}
+
 .rev-tree-table .p-treetable-scrollable-wrapper {
   height: 100%;
   display: flex;
@@ -306,6 +333,8 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .rev-tree-table .p-treetable-scrollable-header-box,
@@ -319,20 +348,8 @@
   table-layout: fixed;
 }
 
-.rev-tree-table .p-treetable-thead > tr {
-  display: table-row;
-}
-
-.rev-tree-table .p-treetable-thead > tr > th {
-  display: table-cell;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #6b7280;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  background: transparent;
-  padding: 8px 22px;
+.rev-tree-table .p-treetable-thead {
+  display: none;
 }
 
 .rev-tree-table .col-data {
@@ -340,11 +357,11 @@
 }
 
 .rev-tree-table .col-materia {
-  width: 70%;
+  width: 76%;
 }
 
 .rev-tree-table .col-data {
-  width: 30%;
+  width: 24%;
 }
 
 .rev-tree-table th,
@@ -354,10 +371,11 @@
 }
 
 .rev-tree-table .p-treetable-tbody > tr > td {
-  padding: 6px 22px;
+  padding: 8px 22px;
   border: 0;
   border-top: 1px solid var(--border);
   background: transparent;
+  overflow: visible;
 }
 
 .rev-tree-table .p-treetable-tbody > tr:hover {
@@ -410,15 +428,23 @@
 }
 
 .tree-label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
   color: #6b7280;
   font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .tree-text {
   color: inherit;
+  display: block;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .rev-tree-table .p-treetable-toggler {
@@ -441,6 +467,7 @@
   font-weight: 600;
   color: #2b2b2c9c;
   font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 /* Linhas (desktop) */
@@ -646,6 +673,8 @@
   font-weight: 500;
   font-size: 0.85rem;
   color: #2b2b2c9c;
+  line-height: 1.35;
+  white-space: nowrap;
 }
 
 .data-secundaria {
@@ -656,7 +685,9 @@
 .data-wrap {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+  max-width: 100%;
   justify-content: flex-end;
 }
 
@@ -737,6 +768,10 @@
 
 /* Responsivo */
 @media (max-width: 900px) {
+  .rev-table-header {
+    display: none;
+  }
+
   .rev-list-header {
     display: none;
   }
@@ -764,6 +799,15 @@
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .rev-table-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+:host-context(body.theme-dark) .rev-table-header-col {
+  color: var(--muted) !important;
 }
 
 :host-context(body.theme-dark) .rev-list-header {

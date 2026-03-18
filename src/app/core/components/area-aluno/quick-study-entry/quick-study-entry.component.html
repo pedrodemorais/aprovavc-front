@@ -17,21 +17,37 @@
         <small class="error" *ngIf="materiaIdInvalid">Selecione uma materia.</small>
       </label>
 
-      <label class="field">
+      <div class="field">
         <span>Topico</span>
-        <select #topicoSelect formControlName="topicoId" [class.invalid]="topicoInvalid" [disabled]="!form.value.materiaId || loadingTopicos">
-          <option [ngValue]="null">
-            {{ loadingTopicos ? 'Carregando topicos...' : 'Selecione um topico' }}
-          </option>
-          <option *ngFor="let topico of topicoOptions" [ngValue]="topico.id">
-            {{ topico.descricao }}
-          </option>
-        </select>
+        <div
+          class="custom-select"
+          [class.is-open]="topicoOpen"
+          [class.disabled]="!form.value.materiaId || loadingTopicos"
+          (click)="toggleTopico($event)">
+          <div class="custom-select-value" [class.invalid]="topicoInvalid">
+            <span class="text">
+              {{ selectedTopicoLabel || (loadingTopicos ? 'Carregando topicos...' : 'Selecione um topico') }}
+            </span>
+            <span class="arrow">▾</span>
+          </div>
+          <div class="custom-options" *ngIf="topicoOpen">
+            <button
+              type="button"
+              class="option"
+              [class.is-child]="topico.nivel > 0"
+              [style.padding-left.px]="12 + (topico.nivel * 20)"
+              *ngFor="let topico of topicoOptions"
+              (click)="selectTopico(topico, $event)">
+              {{ topico.descricao }}
+            </button>
+            <div class="empty" *ngIf="!topicoOptions.length && !loadingTopicos">Nenhum topico encontrado.</div>
+          </div>
+        </div>
         <small class="error" *ngIf="!loadingTopicos && form.value.materiaId && !topicoOptions.length">
           Nenhum topico encontrado para essa materia.
         </small>
         <small class="error" *ngIf="topicoInvalid">Selecione um topico.</small>
-      </label>
+      </div>
 
       <label class="field">
         <span>Tempo (minutos)</span>
