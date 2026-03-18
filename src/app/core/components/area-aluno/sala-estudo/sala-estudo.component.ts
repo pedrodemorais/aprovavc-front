@@ -1274,6 +1274,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     if (this.modo === 'revisar' && this.topicoPermiteEstudo) {
+      // Em revisão, cada novo tópico deve começar por flashcards quando houver.
+      this.preferirFlashcardsAoEntrarRevisao = true;
       this.carregarFlashcardsParaRevisao();
       this.carregarVocabulariosParaRevisao();
     }
@@ -3174,7 +3176,10 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         this.flashcards = lista || [];
         if (this.modo === 'revisar' && this.preferirFlashcardsAoEntrarRevisao) {
-          this.modoRevisao = this.flashcards.length > 0 ? 'flashcards' : 'anotacoes';
+          const proximoModo: 'flashcards' | 'anotacoes' = this.flashcards.length > 0 ? 'flashcards' : 'anotacoes';
+          this.modoRevisao = proximoModo;
+          // Regra: ao abrir em anotacoes, inicia bloqueado no card de autoexplicacao.
+          this.revisaoAutoExplicacaoAtiva = !!this.timerAtivo && proximoModo === 'anotacoes';
           this.preferirFlashcardsAoEntrarRevisao = false;
         }
         this.flashcardIndexAtual = 0;
@@ -3343,7 +3348,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   // ================================================================
 
   get podeVoltarRevisao(): boolean {
-    const lista = this.getTopicosFolha();
+    const lista = this.getTopicosParaRevisao();
     return lista.length > 1;
   }
 
@@ -3355,7 +3360,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private obterTopicoAnteriorRevisao(): TopicoViewModel | null {
-    const lista = this.getTopicosFolha();
+    const lista = this.getTopicosParaRevisao();
     if (!lista.length) return null;
 
     const atualId = this.topicoSelecionado?.id ?? null;
@@ -3432,7 +3437,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const base = (this.filtroSemaforoSelecionado || this.getEscopoTopicosAtivo().size > 0)
       ? this.topicosExibidos
       : (this.topicos || []);
-    return (base || []).filter(t => !t.hasFilhos && t.ativo !== false);
+    // Regra atual: revisão deve seguir a ordem completa da árvore (pai + filhos), não só folhas.
+    return (base || []).filter(t => t.ativo !== false);
   }
 
   get podeIrParaProximoEstudo(): boolean {
@@ -3928,7 +3934,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     const topicosBase = (this.filtroSemaforoSelecionado || this.getEscopoTopicosAtivo().size > 0)
       ? this.topicosExibidos
       : this.topicos;
-    return topicosBase.filter((t) => !t.hasFilhos && t.ativo !== false);
+    // Mantém compatibilidade de chamada, mas agora devolve todos os tópicos ativos na ordem visual.
+    return topicosBase.filter((t) => t.ativo !== false);
   }
 
   private isResumeSemConteudo(resume: ResumeTopicResponseDTO | null | undefined): boolean {
