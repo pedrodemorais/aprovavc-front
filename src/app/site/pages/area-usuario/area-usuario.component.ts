@@ -226,12 +226,6 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    if (item.routerLink) {
-      this.menuExpandido = false;
-      this.collapseMenuItems(this.items);
-      this.agendarMenuOffset();
-    }
-
     if (item.command) {
       item.command({ originalEvent: event, item });
     }
