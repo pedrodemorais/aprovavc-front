@@ -1,0 +1,78 @@
+<main class="quick-study-page">
+  <section class="quick-study-card">
+    <header class="quick-study-header">
+      <h1>Registro rapido de estudo</h1>
+      <p>Registre em segundos, sem abrir a sala de estudo.</p>
+    </header>
+
+    <form class="quick-study-form" [formGroup]="form" (ngSubmit)="submit()">
+      <label class="field">
+        <span>Materia</span>
+        <select formControlName="materiaId" [class.invalid]="materiaIdInvalid">
+          <option [ngValue]="null">Selecione uma materia</option>
+          <option *ngFor="let materia of materiaOptions" [ngValue]="materia.id">
+            {{ materia.nome }}{{ materia.isRecent ? ' (recente)' : '' }}
+          </option>
+        </select>
+        <small class="error" *ngIf="materiaIdInvalid">Selecione uma materia.</small>
+      </label>
+
+      <label class="field">
+        <span>Topico</span>
+        <select #topicoSelect formControlName="topicoId" [class.invalid]="topicoInvalid" [disabled]="!form.value.materiaId || loadingTopicos">
+          <option [ngValue]="null">
+            {{ loadingTopicos ? 'Carregando topicos...' : 'Selecione um topico' }}
+          </option>
+          <option *ngFor="let topico of topicoOptions" [ngValue]="topico.id">
+            {{ topico.descricao }}
+          </option>
+        </select>
+        <small class="error" *ngIf="!loadingTopicos && form.value.materiaId && !topicoOptions.length">
+          Nenhum topico encontrado para essa materia.
+        </small>
+        <small class="error" *ngIf="topicoInvalid">Selecione um topico.</small>
+      </label>
+
+      <label class="field">
+        <span>Tempo (minutos)</span>
+        <input
+          type="number"
+          min="1"
+          max="600"
+          step="1"
+          formControlName="tempoMinutos"
+          [class.invalid]="tempoInvalid" />
+        <div class="quick-time">
+          <button
+            type="button"
+            class="time-chip"
+            *ngFor="let quickTime of quickTimes"
+            (click)="applyQuickTime(quickTime)">
+            {{ quickTime }} min
+          </button>
+        </div>
+        <small class="error" *ngIf="tempoInvalid">Informe um tempo entre 1 e 600 minutos.</small>
+      </label>
+
+      <label class="field">
+        <span>Resumo (opcional)</span>
+        <textarea
+          formControlName="observacao"
+          rows="3"
+          maxlength="1200"
+          placeholder="Ex: teoria geral, artigos importantes, pontos difíceis"></textarea>
+        <small class="hint">{{ (form.value.observacao || '').length }}/1200</small>
+      </label>
+
+      <div class="feedback success" *ngIf="feedbackSuccess">{{ feedbackSuccess }}</div>
+      <div class="feedback error" *ngIf="feedbackError">{{ feedbackError }}</div>
+
+      <div class="actions">
+        <button class="btn-secondary" type="button" (click)="goBack()">Voltar</button>
+        <button class="btn-primary" type="submit" [disabled]="submitting || loading">
+          {{ submitting ? 'Registrando...' : 'Registrar' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</main>

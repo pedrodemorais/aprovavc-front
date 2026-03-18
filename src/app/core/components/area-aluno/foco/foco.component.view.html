@@ -31,7 +31,7 @@
     </div>
 
     <section class="hero-cog card">
-      <div class="estudo-plano-panel-wrap" *ngIf="isModoExecucaoPlano">
+      <div class="estudo-plano-panel-wrap" *ngIf="isModoExecucaoPlano || !hasReview">
         <div class="card estudo-plano-card-list">
           <div class="header-row">
             <button
@@ -310,19 +310,6 @@
         </div>
       </div>
     </div>
-
-    <section class="card consolidacao-card" *ngIf="isModoConsolidacao">
-      <div class="header-row">
-        <h3 class="section-title">Em consolidação</h3>
-      </div>
-      <div class="consolidacao-card__body">
-        <p>Seu foco de hoje está em consolidação. Você pode continuar pelo plano ou seguir para a sala de estudo.</p>
-        <div class="consolidacao-card__actions">
-          <button class="btn-secondary" (click)="irParaBlocosEstudo()">Ver blocos de estudo</button>
-          <button class="primary-btn" (click)="irParaSalaEstudo()">Ir para sala de estudo</button>
-        </div>
-      </div>
-    </section>
 
   </div>
 </div>

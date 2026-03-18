@@ -42,6 +42,7 @@ import { HojeComponent } from './core/components/area-aluno/hoje/hoje.component'
 import { FocoComponent } from './core/components/area-aluno/foco/foco.component';
 import { ConfiguracoesComponent } from './core/components/area-aluno/configuracoes/configuracoes.component';
 import { HomePageComponent } from './core/components/area-aluno/home-page/home-page.component';
+import { QuickStudyEntryComponent } from './core/components/area-aluno/quick-study-entry/quick-study-entry.component';
 
 
 const routes: Routes = [
@@ -62,6 +63,7 @@ const routes: Routes = [
   { path: 'home', redirectTo: '', pathMatch: 'full' },
 
   { path: 'login', component: LoginSiteComponent },
+  { path: 'registrar-estudo', redirectTo: 'area-restrita/registrar-estudo', pathMatch: 'full' },
 
   {
     path: 'area-restrita',
@@ -73,6 +75,7 @@ const routes: Routes = [
       { path: 'foco', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'configuracoes', component: ConfiguracoesComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'dashboard', component: HomePageComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'registrar-estudo', component: QuickStudyEntryComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca/resumo', component: BibliotecaResumoComponent, canActivate: [PlanoAtivoGuard] },
