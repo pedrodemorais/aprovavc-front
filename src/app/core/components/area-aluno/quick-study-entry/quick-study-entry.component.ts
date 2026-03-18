@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Location } from '@angular/common';
 import { finalize } from 'rxjs/operators';
+import { EditalService } from '../services/edital.service';
 import { Materia } from '../models/materia.model';
 import { MateriaService } from '../services/materia.service';
 import { QuickStudyService } from '../services/quick-study.service';
@@ -47,6 +48,7 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
   constructor(
     private fb: FormBuilder,
     private materiaService: MateriaService,
+    private editalService: EditalService,
     private quickStudyService: QuickStudyService,
     private location: Location
   ) {}
@@ -132,11 +134,20 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
 
   private loadMaterias(): void {
     this.loading = true;
-    this.materiaService.listarMaterias()
+    this.editalService.listarComInclude(['materias'])
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: (materias) => {
-          this.materias = Array.isArray(materias) ? materias : [];
+        next: (editais) => {
+          const listaEditais = Array.isArray(editais) ? editais : [];
+          const editalAtivo: any = listaEditais.find((e: any) => e?.ativo) || null;
+          const materiasEdital = (editalAtivo?.materias || []) as Array<{ materiaId?: number; materiaNome?: string; ativo?: boolean }>;
+          this.materias = materiasEdital
+            .filter((m) => Number(m?.materiaId || 0) > 0 && m?.ativo !== false)
+            .map((m) => ({
+              id: Number(m.materiaId),
+              nome: String(m.materiaNome || '').trim()
+            }))
+            .filter((m) => !!m.nome);
           this.materiaOptions = this.buildMateriaOptions(this.materias);
           const selectedId = Number(this.form.value.materiaId || 0);
           if (selectedId <= 0 && this.materiaOptions.length) {
