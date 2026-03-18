@@ -107,13 +107,13 @@ export class LoginSiteComponent implements OnInit {
 
         this.planoSemanalBootstrapService.preencherSeNecessarioNoLogin().subscribe({
           next: () => {
-            this.router.navigate(['/area-restrita/dashboard']).then(() => {
-              console.log('➡️ Redirecionado para o dashboard');
+            this.router.navigate(['/area-restrita/hoje']).then(() => {
+              console.log('➡️ Redirecionado para hoje');
             });
           },
           error: () => {
-            this.router.navigate(['/area-restrita/dashboard']).then(() => {
-              console.log('➡️ Redirecionado para o dashboard');
+            this.router.navigate(['/area-restrita/hoje']).then(() => {
+              console.log('➡️ Redirecionado para hoje');
             });
           }
         });

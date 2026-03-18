@@ -293,12 +293,6 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: isLocked
       },
       {
-        label: 'Foco',
-        icon: 'pi pi-bolt',
-        routerLink: ['/area-restrita/foco'],
-        disabled: isLocked
-      },
-      {
         label: 'Registro Rapido',
         icon: 'pi pi-play',
         routerLink: ['/registrar-estudo'],

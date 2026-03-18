@@ -70,8 +70,8 @@ const routes: Routes = [
     component: AreaUsuarioComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'hoje', component: HojeComponent, canActivate: [PlanoAtivoGuard] },
+      { path: '', redirectTo: 'hoje', pathMatch: 'full' },
+      { path: 'hoje', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'foco', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'configuracoes', component: ConfiguracoesComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'dashboard', component: HomePageComponent, canActivate: [PlanoAtivoGuard] },
