@@ -30,6 +30,10 @@ interface HojeExecucaoState {
   lastIndex: number;
   day: string;
   queueKey: string;
+  lastTopicoId?: number;
+  lastPrioridade?: PrioridadeFilaHoje | null;
+  lastTipo?: TipoFilaHoje | null;
+  lastTempoEstimadoMinutos?: number | null;
 }
 
 interface HojeUiViewModel {
@@ -149,10 +153,11 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   get totalItens(): number {
-    if (Array.isArray(this.fila?.itens)) {
-      return this.fila.itens.length;
-    }
     return Number(this.fila?.totalItens || 0);
+  }
+
+  get itensRestantes(): number {
+    return Array.isArray(this.fila?.itens) ? this.fila.itens.length : 0;
   }
 
   get tempoEstimadoMinutos(): number {
@@ -164,11 +169,15 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   get revisaoConcluida(): boolean {
-    return this.totalItens > 0 && this.indiceAtual >= this.totalItens;
+    return this.totalItens > 0 && this.itensRestantes === 0;
   }
 
   get consolidadoHoje(): number {
-    return this.revisaoConcluida ? this.totalItens : this.indiceAtual;
+    return Math.max(0, this.totalItens - this.itensRestantes);
+  }
+
+  get revisoesRestantesHoje(): number {
+    return Math.max(0, this.totalItens - this.consolidadoHoje);
   }
 
   get tempoTotalInvestidoMinutos(): number {
@@ -347,11 +356,11 @@ export class HojeComponent implements OnInit, OnDestroy {
         badgeClass: this.streakBadgeClass
       },
       progresso: {
-        titulo: 'Progresso interpretado',
+        titulo: 'Ritmo e evolucao',
         hojeTexto: this.progressoTexto === 'Fila finalizada'
-          ? 'Hoje: fila finalizada (100%)'
+          ? 'Hoje: fila concluida (100%)'
           : this.totalItens > 0
-            ? `Hoje: Item ${this.indiceAtual + 1} de ${this.totalItens} (${this.progressoPercentualLabel})`
+            ? `Hoje: ${this.consolidadoHoje} / ${this.totalItens} concluidos (${this.progressoPercentualLabel})`
             : 'Hoje: sem itens pendentes',
         hojeBarraPct: this.progressoPercentual,
         editalTexto: `Edital: ${this.percentualEditalConsolidadoLabel} consolidado`,
@@ -389,7 +398,7 @@ export class HojeComponent implements OnInit, OnDestroy {
     if (!this.totalItens || this.revisaoConcluida) {
       return 'Fila finalizada';
     }
-    return `Item ${this.indiceAtual + 1} de ${this.totalItens} (${this.progressoPercentualLabel})`;
+    return `${this.consolidadoHoje} / ${this.totalItens} concluidos (${this.progressoPercentualLabel})`;
   }
 
   get fraseImpacto(): string {
@@ -525,8 +534,7 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   get progressoPercentual(): number {
     if (this.revisaoConcluida || !this.totalItens) return 100;
-    const atual = this.indiceAtual + 1;
-    return Math.max(0, Math.min(100, Math.round((atual / this.totalItens) * 100)));
+    return Math.max(0, Math.min(100, Math.round((this.consolidadoHoje / this.totalItens) * 100)));
   }
 
   get progressoPercentualLabel(): string {
@@ -875,9 +883,13 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.modoExecucao = true;
     this.salvarEstadoExecucao({
       pendingAdvance: true,
-      lastIndex: this.indiceAtual,
+      lastIndex: 0,
       day: this.obterDiaAtualIso(),
-      queueKey: this.gerarAssinaturaFilaAtual()
+      queueKey: this.gerarAssinaturaFilaAtual(),
+      lastTopicoId: Number(this.itemAtual.topicoId || 0) || undefined,
+      lastPrioridade: this.itemAtual.prioridade ?? null,
+      lastTipo: this.itemAtual.tipo ?? null,
+      lastTempoEstimadoMinutos: Number(this.itemAtual.tempoEstimadoMinutos || 0) || null
     });
 
     this.router.navigateByUrl(this.itemAtual.deepLink).finally(() => {
@@ -1076,7 +1088,7 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.hojeFilaService.getFilaHoje().subscribe({
       next: (resp) => {
         const filaNormalizada: HojeFilaResponseDTO = {
-          totalItens: Array.isArray(resp?.itens) ? resp.itens.length : Number(resp?.totalItens || 0),
+          totalItens: Math.max(0, Number(resp?.totalItens || 0)) || (Array.isArray(resp?.itens) ? resp.itens.length : 0),
           tempoEstimadoMinutos: Number(resp?.tempoEstimadoMinutos || 0),
           itens: Array.isArray(resp?.itens) ? resp.itens : [],
           insights: resp?.insights ?? null
@@ -1361,11 +1373,11 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   private atualizarItemAtual(): void {
-    if (!this.fila.itens.length || this.indiceAtual >= this.fila.itens.length) {
+    if (!this.fila.itens.length) {
       this.itemAtual = null;
       return;
     }
-    this.itemAtual = this.fila.itens[this.indiceAtual];
+    this.itemAtual = this.fila.itens[0];
     this.dispararAnimacaoEntradaCard();
   }
 
@@ -1374,7 +1386,7 @@ export class HojeComponent implements OnInit, OnDestroy {
     const day = this.obterDiaAtualIso();
     const queueKey = this.gerarAssinaturaFilaAtual();
 
-    if (!state || state.day !== day || state.queueKey !== queueKey) {
+    if (!state || state.day !== day) {
       this.indiceAtual = 0;
       this.modoExecucao = false;
       if (this.totalItens > 0) {
@@ -1389,21 +1401,36 @@ export class HojeComponent implements OnInit, OnDestroy {
     }
 
     if (state.pendingAdvance) {
-      const itemConcluido = this.fila?.itens?.[state.lastIndex] || null;
-      this.indiceAtual = Math.min(state.lastIndex + 1, this.totalItens);
-      this.registrarConclusaoItemSeNecessario(state.lastIndex);
-      if (itemConcluido?.topicoId) {
+      this.indiceAtual = 0;
+      this.registrarConclusaoItemSeNecessario(state);
+      if (Number(state.lastTopicoId || 0) > 0) {
         this.feedbackConclusaoPendente = {
-          topicoId: itemConcluido.topicoId,
-          prioridade: itemConcluido?.prioridade
+          topicoId: Number(state.lastTopicoId),
+          prioridade: state.lastPrioridade ?? null
         };
       }
       this.carregarResumoCognitivo(true);
-      this.carregarTopicosCognitivos(true, itemConcluido?.prioridade);
+      this.carregarTopicosCognitivos(true, state.lastPrioridade ?? undefined);
       this.carregarStreakResumo();
       this.salvarEstadoExecucao({
         pendingAdvance: false,
-        lastIndex: this.indiceAtual,
+        lastIndex: 0,
+        day,
+        queueKey,
+        lastTopicoId: Number(state.lastTopicoId || 0) || undefined,
+        lastPrioridade: state.lastPrioridade ?? null,
+        lastTipo: state.lastTipo ?? null,
+        lastTempoEstimadoMinutos: state.lastTempoEstimadoMinutos ?? null
+      });
+      this.modoExecucao = false;
+      return;
+    }
+
+    if (state.queueKey !== queueKey) {
+      this.indiceAtual = 0;
+      this.salvarEstadoExecucao({
+        pendingAdvance: false,
+        lastIndex: 0,
         day,
         queueKey
       });
@@ -1411,10 +1438,10 @@ export class HojeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.indiceAtual = Math.min(Math.max(0, state.lastIndex), this.totalItens);
+    this.indiceAtual = 0;
     this.salvarEstadoExecucao({
       pendingAdvance: false,
-      lastIndex: this.indiceAtual,
+      lastIndex: 0,
       day,
       queueKey
     });
@@ -1695,13 +1722,14 @@ export class HojeComponent implements OnInit, OnDestroy {
     });
   }
 
-  private registrarConclusaoItemSeNecessario(lastIndex: number): void {
-    const itemConcluido = this.fila?.itens?.[lastIndex];
-    if (!itemConcluido) return;
+  private registrarConclusaoItemSeNecessario(state: HojeExecucaoState): void {
+    const tipo = String(state.lastTipo || TipoFilaHoje.TOPICO);
+    const prioridade = String(state.lastPrioridade || PrioridadeFilaHoje.MEDIA);
+    const tempoEstimado = Number(state.lastTempoEstimadoMinutos || 0);
     this.hojeTrackingService.registrarItemConcluido(
-      itemConcluido.tipo,
-      itemConcluido.prioridade,
-      Number(itemConcluido.tempoEstimadoMinutos || 0)
+      tipo,
+      prioridade,
+      tempoEstimado
     );
   }
 

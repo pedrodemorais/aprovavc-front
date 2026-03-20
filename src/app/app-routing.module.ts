@@ -43,6 +43,8 @@ import { FocoComponent } from './core/components/area-aluno/foco/foco.component'
 import { ConfiguracoesComponent } from './core/components/area-aluno/configuracoes/configuracoes.component';
 import { HomePageComponent } from './core/components/area-aluno/home-page/home-page.component';
 import { QuickStudyEntryComponent } from './core/components/area-aluno/quick-study-entry/quick-study-entry.component';
+import { AiTesteComponent } from './core/components/area-aluno/ai-teste/ai-teste.component';
+import { HojeDoisComponent } from './core/components/area-aluno/hoje-dois/hoje-dois.component';
 
 
 const routes: Routes = [
@@ -64,6 +66,7 @@ const routes: Routes = [
 
   { path: 'login', component: LoginSiteComponent },
   { path: 'registrar-estudo', redirectTo: 'area-restrita/registrar-estudo', pathMatch: 'full' },
+  { path: 'ia-teste', redirectTo: 'area-restrita/ia-teste', pathMatch: 'full' },
 
   {
     path: 'area-restrita',
@@ -72,10 +75,12 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'hoje', pathMatch: 'full' },
       { path: 'hoje', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'hoje_dois', component: HojeDoisComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'foco', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'configuracoes', component: ConfiguracoesComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'dashboard', component: HomePageComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'registrar-estudo', component: QuickStudyEntryComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'ia-teste', component: AiTesteComponent },
       { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca/resumo', component: BibliotecaResumoComponent, canActivate: [PlanoAtivoGuard] },

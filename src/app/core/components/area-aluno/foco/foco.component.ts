@@ -1,9 +1,12 @@
 ﻿import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { PressaoFilaItemDTO } from 'src/app/core/api/dto/pressao-do-dia.dto';
 import { FocoDistribuicaoMateriaDTO, FocoExecucaoPlanoDTO, FocoPlanoDiarioDTO, FocoProgressoHojeDTO } from 'src/app/core/dto/foco-plano-diario.dto';
+import { Edital } from '../models/Edital';
+import { EditalService } from '../services/edital.service';
+import { EditalTemplateService } from '../services/edital-template.service';
 import { ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
 import { FocoPlanoDiarioService, FocoPremiumMetrics } from 'src/app/core/services/foco-plano-diario.service';
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
@@ -32,7 +35,7 @@ interface FocoSaudeConhecimento {
   templateUrl: './foco.component.view.html',
   styleUrls: ['./foco.component.scss']
 })
-export class FocoComponent implements OnInit {
+export class FocoComponent implements OnInit, OnDestroy {
   loadingPlano = false;
   error: string | null = null;
   planoDiario: FocoPlanoDiarioDTO | null = null;
@@ -113,6 +116,10 @@ export class FocoComponent implements OnInit {
   treinoFraquezasMaterias: Array<{ materiaId: number; materiaNome: string; topicos: number[] }> = [];
   private materiasPlanoExpandidas = new Set<number>();
   pressaoCognitiva?: PressaoCognitivaDTO;
+  private editaisCache: Edital[] = [];
+  private editalAtivoImagemUrlResolved: string | null = null;
+  private editalAtivoImagemObjectUrl: string | null = null;
+  private editalAtivoImagemTemplateId: number | null = null;
   private readonly enableKpiDebugLogs = true;
   acaoHoje: FocoAcaoHoje = {
     total: 0,
@@ -133,7 +140,9 @@ export class FocoComponent implements OnInit {
     private executionQueueService: ExecutionQueueService,
     private hojeFilaService: HojeFilaService,
     private authService: AuthService,
-    private salaEstudoService: SalaEstudoService
+    private salaEstudoService: SalaEstudoService,
+    private editalService: EditalService,
+    private editalTemplateService: EditalTemplateService
   ) {}
 
   ngOnInit(): void {
@@ -145,8 +154,54 @@ export class FocoComponent implements OnInit {
     this.carregarPressaoCognitiva();
   }
 
+  ngOnDestroy(): void {
+    this.removerImagemEditalAtivo();
+  }
+
   get isModoRevisao(): boolean {
     return String(this.planoDiario?.modo || '').toUpperCase() === 'REVISAO';
+  }
+
+  get editalAtivoNome(): string {
+    const nome = String(this.planoDiario?.editalNome || '').trim();
+    return nome || 'Edital não informado';
+  }
+
+  get editalAtivoImagemUrl(): string | null {
+    if (this.editalAtivoImagemUrlResolved) return this.editalAtivoImagemUrlResolved;
+    const planoAny = this.planoDiario as any;
+    const candidatos = [
+      planoAny?.editalImagemUrl,
+      planoAny?.editalLogoUrl,
+      planoAny?.imagemEditalUrl,
+      planoAny?.logoEditalUrl,
+      planoAny?.editalImagemBase64,
+      planoAny?.imagemEditalBase64,
+      planoAny?.edital?.imagemUrl,
+      planoAny?.edital?.logoUrl,
+      planoAny?.edital?.imagem,
+      planoAny?.edital?.logo
+    ];
+
+    for (const candidato of candidatos) {
+      const url = String(candidato || '').trim();
+      if (url) return url;
+    }
+
+    return null;
+  }
+
+  get editalAtivoSigla(): string {
+    const nome = this.editalAtivoNome;
+    const partes = nome
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/[^A-Za-z0-9]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() || '');
+    const sigla = partes.join('');
+    return sigla || 'ED';
   }
 
   private carregarNomeAluno(): void {
@@ -232,21 +287,24 @@ export class FocoComponent implements OnInit {
 
   get obrigatoriedadeRevisao(): boolean {
     const flagBack = (this.planoDiario as any)?.temRevisaoObrigatoria;
-    if (typeof flagBack === 'boolean') return flagBack;
-    return this.hasReview;
+    if (typeof flagBack === 'boolean') return flagBack && this.exibidosHoje > 0;
+    return this.exibidosHoje > 0;
   }
 
   get contadorCriticos(): number {
+    if (this.deveZerarContadoresHoje) return 0;
     const daFila = this.itensHoje.filter((item) => this.getCategoriaNorm(item) === 'CRITICO').length;
     return daFila > 0 ? daFila : this.acaoHoje.criticos;
   }
 
   get contadorEmRisco(): number {
+    if (this.deveZerarContadoresHoje) return 0;
     const daFila = this.itensHoje.filter((item) => this.getCategoriaNorm(item) === 'EM_RISCO').length;
     return daFila > 0 ? daFila : this.acaoHoje.emRisco;
   }
 
   get contadorManutencao(): number {
+    if (this.deveZerarContadoresHoje) return 0;
     const daFila = this.itensHoje.filter((item) => this.getCategoriaNorm(item).includes('MANUT')).length;
     return daFila > 0 ? daFila : this.acaoHoje.manutencaoHoje;
   }
@@ -387,6 +445,54 @@ export class FocoComponent implements OnInit {
 
   get existeCorte(): boolean {
     return this.totalAcionavel > this.exibidosHoje;
+  }
+
+  get restanteHoje(): number | null {
+    const planoAny = this.planoDiario as any;
+    const candidatos = [
+      planoAny?.restanteHoje,
+      planoAny?.remainingToday,
+      planoAny?.resumoAcionavel?.restanteHoje,
+      planoAny?.resumoAcionavel?.remainingToday
+    ];
+
+    for (const candidato of candidatos) {
+      const n = Number(candidato);
+      if (Number.isFinite(n)) {
+        return Math.max(0, Math.round(n));
+      }
+    }
+
+    const totalDisponivelHoje = Number(planoAny?.totalDisponivelHoje);
+    const exibindoHoje = Number(planoAny?.exibindoHoje ?? this.exibidosHoje);
+    if (Number.isFinite(totalDisponivelHoje) && Number.isFinite(exibindoHoje)) {
+      return Math.max(0, Math.round(totalDisponivelHoje - exibindoHoje));
+    }
+
+    return null;
+  }
+
+  get limiteAtingido(): boolean {
+    const planoAny = this.planoDiario as any;
+    const candidatos = [
+      planoAny?.limiteAtingido,
+      planoAny?.dailyLimitReached,
+      planoAny?.resumoAcionavel?.limiteAtingido,
+      planoAny?.resumoAcionavel?.dailyLimitReached
+    ];
+    if (candidatos.some((valor) => valor === true)) return true;
+
+    if (this.restanteHoje !== null) {
+      return this.restanteHoje <= 0;
+    }
+
+    return this.filaHoje.length === 0 && this.existeCorte && this.totalAcionavel > 0;
+  }
+
+  get deveZerarContadoresHoje(): boolean {
+    if (this.limiteAtingido) return true;
+    if (this.restanteHoje !== null && this.restanteHoje <= 0) return true;
+    return this.filaHoje.length === 0 && this.existeCorte;
   }
 
   get criticosHoje(): number {
@@ -998,6 +1104,7 @@ export class FocoComponent implements OnInit {
 
   confirmarIrParaRevisao(): void {
     this.showRevisaoObrigatoriaDialog = false;
+    if (!this.exibidosHoje) return;
     this.iniciarRevisao();
   }
 
@@ -1168,6 +1275,7 @@ export class FocoComponent implements OnInit {
         error: (err: HttpErrorResponse) => {
           console.warn('[FOCO] load error', err);
           this.planoDiario = null;
+          this.removerImagemEditalAtivo();
           this.filaHoje = [];
           this.filaPreventiva = [];
           this.preventivosSugeridos = 0;
@@ -1267,6 +1375,8 @@ export class FocoComponent implements OnInit {
       });
     }
 
+    this.atualizarImagemEditalAtivo(dto);
+
     if (this.isModoRevisao) {
       this.headlineHoje = this.heroFrasePrincipal;
       return;
@@ -1278,6 +1388,241 @@ export class FocoComponent implements OnInit {
     }
 
     this.headlineHoje = 'Tudo em dia e sem conteudo novo no plano.';
+  }
+
+  private atualizarImagemEditalAtivo(dto: FocoPlanoDiarioDTO | null): void {
+    this.removerImagemEditalAtivo();
+    if (!dto) return;
+    if (this.definirImagemEditalPorPlano(dto as any)) return;
+
+    const templateIdDoPlano = this.obterTemplateIdDoEdital(dto as any);
+    if (templateIdDoPlano) {
+      this.carregarImagemEditalAtivoPorTemplate(templateIdDoPlano);
+      return;
+    }
+
+    const editalId = Number((dto as any)?.editalId || 0);
+    const editalNome = String((dto as any)?.editalNome || '').trim();
+    if (!(editalId > 0) && !editalNome) return;
+
+    this.obterEditalPorIdOuNome(editalId, editalNome).then((edital) => {
+      if (!edital) return;
+      if (this.definirImagemEditalPorUrl(edital as any)) return;
+      if (this.definirImagemEditalPorBytes(edital as any)) return;
+      const templateId = this.obterTemplateIdDoEdital(edital as any);
+      if (!templateId) return;
+      this.carregarImagemEditalAtivoPorTemplate(templateId);
+    }).catch(() => {
+      // sem imagem; mantém fallback da sigla
+    });
+  }
+
+  private definirImagemEditalPorPlano(planoAny: any): boolean {
+    if (!planoAny || typeof planoAny !== 'object') return false;
+    if (this.definirImagemEditalPorUrl(planoAny)) return true;
+    if (this.definirImagemEditalPorBytes(planoAny)) return true;
+    const editalObj = planoAny?.edital;
+    if (editalObj && typeof editalObj === 'object') {
+      if (this.definirImagemEditalPorUrl(editalObj)) return true;
+      if (this.definirImagemEditalPorBytes(editalObj)) return true;
+    }
+    return false;
+  }
+
+  private definirImagemEditalPorUrl(anyObj: any): boolean {
+    const urlBruta =
+      anyObj?.editalImagemUrl ??
+      anyObj?.editalLogoUrl ??
+      anyObj?.imagemEditalUrl ??
+      anyObj?.logoEditalUrl ??
+      anyObj?.imagemUrl ??
+      anyObj?.urlImagem ??
+      anyObj?.urlLogo ??
+      anyObj?.logoUrl ??
+      anyObj?.imagem ??
+      anyObj?.logo ??
+      anyObj?.capa ??
+      anyObj?.brasao ??
+      null;
+
+    if (typeof urlBruta !== 'string') return false;
+    const valor = urlBruta.trim();
+    if (!valor) return false;
+
+    if (valor.startsWith('data:image')) {
+      this.editalAtivoImagemUrlResolved = valor;
+      return true;
+    }
+
+    if (/^https?:\/\//i.test(valor) || valor.startsWith('/')) {
+      this.editalAtivoImagemUrlResolved = valor;
+      return true;
+    }
+
+    this.editalAtivoImagemUrlResolved = `/${valor.replace(/^\/+/, '')}`;
+    return true;
+  }
+
+  private definirImagemEditalPorBytes(anyObj: any): boolean {
+    const bytes =
+      anyObj?.editalImagemBytes ??
+      anyObj?.imagemBytes ??
+      anyObj?.imagem_bytes ??
+      anyObj?.editalImagemBase64 ??
+      anyObj?.imagemBase64 ??
+      null;
+    if (!bytes) return false;
+
+    let base64: string | null = null;
+    if (typeof bytes === 'string') {
+      base64 = bytes.trim();
+    } else if (Array.isArray(bytes)) {
+      base64 = this.uint8ArrayToBase64(new Uint8Array(bytes));
+    } else if (Array.isArray(bytes?.data)) {
+      base64 = this.uint8ArrayToBase64(new Uint8Array(bytes.data));
+    }
+    if (!base64) return false;
+
+    if (base64.startsWith('data:image')) {
+      this.editalAtivoImagemUrlResolved = base64;
+      return true;
+    }
+
+    const contentType = this.inferirContentTypeImagem(
+      anyObj?.imagem ??
+      anyObj?.logo ??
+      anyObj?.editalImagemUrl ??
+      anyObj?.imagemUrl
+    );
+    this.editalAtivoImagemUrlResolved = `data:${contentType};base64,${base64}`;
+    return true;
+  }
+
+  private inferirContentTypeImagem(caminho?: string | null): string {
+    const nome = String(caminho || '').toLowerCase();
+    if (nome.endsWith('.png')) return 'image/png';
+    if (nome.endsWith('.jpg') || nome.endsWith('.jpeg')) return 'image/jpeg';
+    if (nome.endsWith('.webp')) return 'image/webp';
+    if (nome.endsWith('.svg')) return 'image/svg+xml';
+    return 'image/png';
+  }
+
+  private uint8ArrayToBase64(bytes: Uint8Array): string {
+    const chunkSize = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
+  }
+
+  private obterTemplateIdDoEdital(anyEdital: any): number | null {
+    const templateId =
+      anyEdital?.templateId ??
+      anyEdital?.editalTemplateId ??
+      anyEdital?.template?.id ??
+      null;
+    const idNum = Number(templateId);
+    return Number.isFinite(idNum) && idNum > 0 ? idNum : null;
+  }
+
+  private carregarImagemEditalAtivoPorTemplate(templateId: number): void {
+    this.editalTemplateService.buscarImagemArquivo(templateId).subscribe({
+      next: (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        const blob = res.body;
+        if (!blob) return;
+
+        if (contentType.startsWith('image/')) {
+          const objectUrl = URL.createObjectURL(blob);
+          this.editalAtivoImagemObjectUrl = objectUrl;
+          this.editalAtivoImagemUrlResolved = objectUrl;
+          this.editalAtivoImagemTemplateId = templateId;
+          return;
+        }
+
+        this.lerBlobComoTexto(blob)
+          .then((texto) => {
+            const payload = this.parseImagemResponse(texto);
+            if (!payload?.dados) return;
+            const tipo = this.normalizarContentType(payload.contentType);
+            this.editalAtivoImagemUrlResolved = `data:${tipo};base64,${payload.dados}`;
+            this.editalAtivoImagemTemplateId = templateId;
+          })
+          .catch(() => {
+            // mantém fallback da sigla
+          });
+      },
+      error: () => {
+        // mantém fallback da sigla
+      }
+    });
+  }
+
+  private async obterEditalPorIdOuNome(editalId: number, editalNome: string): Promise<Edital | null> {
+    if (!this.editaisCache.length) {
+      this.editaisCache = await new Promise<Edital[]>((resolve) => {
+        this.editalService.listar().subscribe({
+          next: (lista) => resolve(Array.isArray(lista) ? lista : []),
+          error: () => resolve([])
+        });
+      });
+    }
+
+    if (editalId > 0) {
+      const porId = this.editaisCache.find((e) => Number((e as any)?.id || 0) === editalId) || null;
+      if (porId) return porId;
+    }
+
+    const nomeNormalizado = this.normalizarTexto(editalNome);
+    if (!nomeNormalizado) return null;
+
+    return this.editaisCache.find((e) => this.normalizarTexto((e as any)?.nome) === nomeNormalizado) || null;
+  }
+
+  private normalizarTexto(valor: unknown): string {
+    return String(valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  private lerBlobComoTexto(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blob);
+    });
+  }
+
+  private parseImagemResponse(texto: string): { dados?: string; contentType?: any } | null {
+    const raw = String(texto || '').trim();
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizarContentType(contentType: any): string {
+    if (!contentType) return 'image/png';
+    if (typeof contentType === 'string') return contentType;
+    const type = contentType.type || contentType.mainType || 'image';
+    const subtype = contentType.subtype || contentType.subType || 'png';
+    return `${type}/${subtype}`;
+  }
+
+  private removerImagemEditalAtivo(): void {
+    if (this.editalAtivoImagemObjectUrl) {
+      URL.revokeObjectURL(this.editalAtivoImagemObjectUrl);
+      this.editalAtivoImagemObjectUrl = null;
+    }
+    this.editalAtivoImagemUrlResolved = null;
+    this.editalAtivoImagemTemplateId = null;
   }
 
   private labelModo(modo: string | null | undefined): string {

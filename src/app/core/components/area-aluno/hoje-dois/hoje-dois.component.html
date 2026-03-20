@@ -1,0 +1,71 @@
+<div class="hoje-page">
+  <div class="container" *ngIf="!loading && !error && plano">
+
+    <!-- HEADER -->
+    <header class="header">
+      <h1>Hoje</h1>
+      <p class="sub">
+        {{ temRevisaoPendente 
+          ? 'Você já começou a esquecer alguns conteúdos' 
+          : 'Nenhuma revisão pendente hoje' }}
+      </p>
+    </header>
+
+    <!-- BLOCO PRINCIPAL -->
+    <section class="focus-block" (click)="executarAcaoPrincipal()">
+
+      <div class="focus-main">
+        <span class="focus-title">
+          {{ temRevisaoPendente 
+            ? ('Revisar ' + totalRevisoesPendentes + ' tópicos') 
+            : 'Estudar novo conteúdo' }}
+        </span>
+
+        <span class="focus-meta" *ngIf="temRevisaoPendente">
+          ~{{ estimativaMinutos }} min
+        </span>
+      </div>
+
+      <div class="focus-footer">
+        <span *ngIf="temRevisaoPendente">
+          Concluir isso mantém sua retenção ativa
+        </span>
+        <span *ngIf="!temRevisaoPendente">
+          Hora de avançar no conteúdo
+        </span>
+      </div>
+
+    </section>
+
+    <!-- PROGRESSO -->
+    <section class="progress" *ngIf="temRevisaoPendente">
+      <span>Hoje</span>
+      <strong>{{ concluidosHoje }} / {{ totalRevisoesPendentes }}</strong>
+    </section>
+
+    <!-- DETALHES -->
+    <section class="details">
+      <button (click)="alternarDetalhes()" class="toggle">
+        Estado cognitivo {{ mostrarDetalhes ? '−' : '+' }}
+      </button>
+
+      <div *ngIf="mostrarDetalhes" class="grid">
+        <div class="metric critical">
+          <span>{{ criticos }}</span>
+          <small>Crítico</small>
+        </div>
+
+        <div class="metric risk">
+          <span>{{ emRisco }}</span>
+          <small>Risco</small>
+        </div>
+
+        <div class="metric ok">
+          <span>{{ manutencao }}</span>
+          <small>Estável</small>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>

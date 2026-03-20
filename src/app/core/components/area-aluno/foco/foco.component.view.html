@@ -30,6 +30,17 @@
       </div>
     </div>
 
+    <section class="edital-ativo-card" aria-label="Edital ativo">
+      <div class="edital-ativo-card__legend">Edital Ativo - {{ editalAtivoNome }}</div>
+      <div class="edital-ativo-card__media" [class.edital-ativo-card__media--fallback]="!editalAtivoImagemUrl">
+        <img *ngIf="editalAtivoImagemUrl; else editalFallback" [src]="editalAtivoImagemUrl" alt="Imagem do edital ativo" />
+        <ng-template #editalFallback>
+          <span>{{ editalAtivoSigla }}</span>
+        </ng-template>
+      </div>
+     
+    </section>
+
     <section class="hero-cog card">
       <div class="estudo-plano-panel-wrap" *ngIf="isModoExecucaoPlano || !hasReview">
         <div class="card estudo-plano-card-list">
@@ -140,6 +151,7 @@
             </div>
 
             <div class="kpi-tile kpi-tile--fraquezas">
+              <span class="kpi-ribbon" *ngIf="totalTopicosFraquezas === 0">EM DIA</span>
               <div class="kpi-label">Treinar fraquezas</div>
               <div class="kpi-value">
                 <ng-container *ngIf="totalTopicosFraquezas === 0; else fraquezasNumero">
@@ -164,11 +176,7 @@
 
       </div>
 
-      <div class="hero-cog__cta-row">
-        <div class="hero-footnote" *ngIf="existeCorte">
-          Mostrando {{ exibidosHoje }} de {{ totalAcionavel }} (limite diário aplicado)
-        </div>
-      </div>
+     
 
     </section>
 
@@ -209,8 +217,8 @@
       header="Revisões pendentes">
       <p class="dual-dialog-text">Você tem revisões para fazer antes de estudar conteúdo novo.</p>
       <div class="dual-dialog-actions">
-        <button class="primary-btn" (click)="confirmarIrParaRevisao()" autofocus>Ir para revisão</button>
-        <button class="btn-secondary" (click)="fecharDialogRevisaoObrigatoria()">Cancelar</button>
+        <button type="button" class="primary-btn" (click)="confirmarIrParaRevisao()" autofocus>Ir para revisão</button>
+        <button type="button" class="btn-secondary" (click)="fecharDialogRevisaoObrigatoria()">Cancelar</button>
       </div>
     </p-dialog>
 
@@ -218,7 +226,7 @@
       <div class="card foco-review-card" style="margin-top:14px;">
         <div class="header-row">
           <div class="header-row-top">
-            <h3 class="section-title">{{ totalRevisoesHoje }} Revisões para Hoje</h3>
+            
             <div class="status-filter" aria-label="Filtros de classificação">
               <button
                 type="button"

@@ -527,6 +527,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     this.removerImagemEditalSelecionado();
     const edital = this.editalSelecionado;
     if (!edital) return;
+    if (this.definirImagemEditalPorUrl(edital)) return;
     if (this.definirImagemEditalPorBytes(edital)) return;
 
     const templateId = this.obterTemplateIdDoEdital(edital);
@@ -713,6 +714,42 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
     if (resumo.hoje > 0) return 'HOJE';
     if (resumo.emDia > 0) return 'FUTURA';
     return 'SEM';
+  }
+
+  private definirImagemEditalPorUrl(edital: Edital): boolean {
+    const anyEdital = edital as any;
+    const urlBruta =
+      anyEdital?.imagemUrl ??
+      anyEdital?.urlImagem ??
+      anyEdital?.urlLogo ??
+      anyEdital?.logoUrl ??
+      anyEdital?.imagem ??
+      anyEdital?.logo ??
+      anyEdital?.capa ??
+      anyEdital?.brasao ??
+      null;
+
+    if (typeof urlBruta !== 'string') {
+      return false;
+    }
+
+    const valor = urlBruta.trim();
+    if (!valor) {
+      return false;
+    }
+
+    if (valor.startsWith('data:image')) {
+      this.activeEditalImagemUrl = valor;
+      return true;
+    }
+
+    if (/^https?:\/\//i.test(valor) || valor.startsWith('/')) {
+      this.activeEditalImagemUrl = valor;
+      return true;
+    }
+
+    this.activeEditalImagemUrl = `/${valor.replace(/^\/+/, '')}`;
+    return true;
   }
 
   classeSemaforoMateria(m: Materia) {

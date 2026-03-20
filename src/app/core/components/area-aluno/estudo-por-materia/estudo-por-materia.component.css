@@ -91,32 +91,34 @@
 }
 
 .edital-selecionado{
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
   background: #ffffff;
   overflow: hidden;
-  margin-bottom: 10px;
+  margin: 10px 0 12px;
 }
 
 .edital-card-header{
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  min-height: 86px;
 }
 
 .edital-dashboard-left{
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  width: 100%;
   min-width: 0;
 }
 
 .edital-dashboard-logo{
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
   background: #f1f5f9;
   border: 1px solid rgba(15, 23, 42, 0.12);
   display: inline-flex;
@@ -142,15 +144,17 @@
 .edital-dashboard-info{
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 2px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .edital-nome{
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #2b2b2c9c;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #374151;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -167,7 +171,7 @@
 }
 
 .edital-dashboard-date{
-  font-size: 0.78rem;
+  font-size: 1rem;
   color: #16a34a;
   font-weight: 600;
   white-space: nowrap;
@@ -866,15 +870,17 @@
 
 @media (max-width: 640px){
   .edital-card-header{
-    flex-direction: column;
-    align-items: flex-start;
+    min-height: auto;
+    padding: 10px 12px;
   }
   .edital-dashboard-left{
     width: 100%;
   }
-  .edital-dashboard-kpis{
-    width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .edital-nome{
+    font-size: 1rem;
+  }
+  .edital-dashboard-date{
+    font-size: 0.82rem;
   }
 }
 

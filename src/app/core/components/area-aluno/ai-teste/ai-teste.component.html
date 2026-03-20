@@ -1,0 +1,17 @@
+<main class="ai-teste-page">
+  <section class="ai-teste-card">
+    <h1>Teste de IA</h1>
+
+    <textarea
+      [(ngModel)]="prompt"
+      rows="6"
+      placeholder="Digite seu prompt aqui"></textarea>
+
+    <button type="button" (click)="enviar()" [disabled]="loading || !prompt.trim()">
+      {{ loading ? 'Enviando...' : 'Enviar' }}
+    </button>
+
+    <div class="ai-teste-erro" *ngIf="erro">{{ erro }}</div>
+    <div class="ai-teste-resposta" *ngIf="resposta">{{ resposta }}</div>
+  </section>
+</main>

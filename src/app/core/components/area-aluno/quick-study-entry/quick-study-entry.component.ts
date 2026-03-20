@@ -118,7 +118,9 @@ export class QuickStudyEntryComponent implements OnInit, AfterViewInit {
       .pipe(finalize(() => (this.submitting = false)))
       .subscribe({
         next: () => {
-          this.feedbackSuccess = 'Estudo registrado com sucesso';
+          this.feedbackSuccess = observacao
+            ? 'Estudo registrado e anotacao salva no topico'
+            : 'Estudo registrado e sua revisao foi atualizada';
           this.persistRecentMateria(materiaId);
           this.resetFormAfterSuccess(materiaId);
         },

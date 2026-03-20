@@ -7,6 +7,31 @@
       <p>Volte amanha para continuar consolidando.</p>
     </section>
 
+    <section class="hoje-resumo-dia" *ngIf="totalItens > 0">
+      <div class="hoje-resumo-dia__head">
+        <div>
+          <span class="hoje-resumo-dia__eyebrow">Fila fixa do dia</span>
+          <h2>Revisoes de hoje: {{ totalItens }}</h2>
+        </div>
+        <div class="hoje-resumo-dia__pct">{{ progressoPercentualLabel }}</div>
+      </div>
+
+      <div class="hoje-resumo-dia__metrics" *ngIf="!revisaoConcluida; else hojeConcluidoTpl">
+        <div class="hoje-resumo-dia__metric">
+          <span class="hoje-resumo-dia__label">Concluidos</span>
+          <strong>{{ consolidadoHoje }} / {{ totalItens }}</strong>
+        </div>
+        <div class="hoje-resumo-dia__metric">
+          <span class="hoje-resumo-dia__label">Restante</span>
+          <strong>Faltam {{ revisoesRestantesHoje }} revisoes</strong>
+        </div>
+      </div>
+
+      <div class="hoje-resumo-dia__bar" aria-hidden="true">
+        <span class="hoje-resumo-dia__bar-fill" [style.width.%]="progressoPercentual"></span>
+      </div>
+    </section>
+
     <section class="estado-card">
       <h1>Estado do seu estudo</h1>
       <p class="estado-card-sub">{{ ui.estado.descricao }}</p>
@@ -78,21 +103,6 @@
       <h2>{{ ui.progresso.titulo }}</h2>
 
       <div class="progresso-cards-grid">
-        <div class="progresso-mini-card progresso-mini-card--hoje">
-          <div class="progresso-mini-label">Hoje</div>
-          <div class="progresso-gauge-wrap" [ngClass]="progressoHojeGaugeClasse">
-            <svg class="progresso-gauge" viewBox="0 0 120 70" role="img" aria-label="Medidor de progresso de hoje">
-              <path class="progresso-gauge-track" d="M10 60 A50 50 0 0 1 110 60"></path>
-              <path class="progresso-gauge-fill" d="M10 60 A50 50 0 0 1 110 60" [attr.stroke-dasharray]="progressoHojeArcDasharray"></path>
-              <line class="progresso-gauge-needle" x1="60" y1="60" x2="60" y2="20" [attr.transform]="'rotate(' + progressoHojeNeedleAngle + ' 60 60)'"></line>
-              <circle class="progresso-gauge-pivot" cx="60" cy="60" r="3.5"></circle>
-            </svg>
-            <div class="progresso-gauge-value">{{ progressoPercentual }}%</div>
-            <div class="progresso-gauge-label">{{ progressoHojeStatusLabel }}</div>
-            <div class="progresso-gauge-sub">{{ ui.progresso.hojeTexto }}</div>
-          </div>
-        </div>
-
         <div class="progresso-mini-card">
           <div class="progresso-mini-label">Evolucao (7d)</div>
           <div class="progresso-mini-value">{{ ui.progresso.evolucaoTexto }}</div>
@@ -137,7 +147,7 @@
       <p *ngIf="mensagemContextualEstabilidade">{{ mensagemContextualEstabilidade }}</p>
     </section>
 
-    <section class="hero-card" *ngIf="totalItens > 0 && !revisaoConcluida && itemAtual" [class.hoje-card-entrando]="cardEntrando">
+    <section class="hero-card" *ngIf="itensRestantes > 0 && !revisaoConcluida && itemAtual" [class.hoje-card-entrando]="cardEntrando">
       <div class="hero-materia">{{ ui.heroItem.materia }}</div>
       <h2 class="hero-titulo">{{ ui.heroItem.titulo }}</h2>
 
@@ -162,8 +172,8 @@
     </section>
 
     <section class="hoje-fim" *ngIf="revisaoConcluida">
-      <h2>Revisao concluida</h2>
-      <p>Voce consolidou {{ consolidadoHoje }} topicos hoje.</p>
+      <h2>Voce concluiu sua revisao de hoje</h2>
+      <p>Voce consumiu todo o snapshot do dia: {{ consolidadoHoje }} / {{ totalItens }} concluidos.</p>
 
       <div class="fim-metricas">
         <div class="fim-metrica">
@@ -198,4 +208,11 @@
 
 <ng-template #loadingTpl>
   <div class="hoje-loading">Carregando fila de hoje...</div>
+</ng-template>
+
+<ng-template #hojeConcluidoTpl>
+  <div class="hoje-resumo-dia__done">
+    <strong>Voce concluiu sua revisao de hoje</strong>
+    <span>{{ consolidadoHoje }} / {{ totalItens }} concluidos</span>
+  </div>
 </ng-template>

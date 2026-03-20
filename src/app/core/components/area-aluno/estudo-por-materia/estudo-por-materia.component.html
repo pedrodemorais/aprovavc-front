@@ -70,7 +70,7 @@
       <span>Nenhuma matéria encontrada.</span>
     </div>
 
-    <div class="edital-selecionado" *ngIf="editalSelecionado as edital">
+<div class="edital-selecionado" *ngIf="editalSelecionado as edital">
   <div class="edital-card-header">
     <div class="edital-dashboard-left">
           <div class="edital-dashboard-logo" [class.edital-dashboard-logo--placeholder]="!activeEditalImagemUrl">
@@ -90,25 +90,6 @@
               Data da prova: {{ formatData(edital.dataProva) || 'Nao definida' }}
             </div>
           </div>
-    </div>
-
-    <div class="edital-dashboard-kpis">
-      <div class="edital-kpi">
-        <div class="edital-kpi-value">{{ formatPercent(edital.percentualEstudadoGeral) }}</div>
-        <div class="edital-kpi-label">Progresso</div>
-      </div>
-      <div class="edital-kpi">
-        <div class="edital-kpi-value">{{ formatPercent(getDominioEdital(edital)) }}</div>
-        <div class="edital-kpi-label">Dominio</div>
-      </div>
-      <div class="edital-kpi edital-kpi--vencidas">
-        <div class="edital-kpi-value">{{ getRevisoesVencidasEdital(edital) }}</div>
-        <div class="edital-kpi-label">Revisoes vencidas</div>
-      </div>
-      <div class="edital-kpi edital-kpi--hoje">
-        <div class="edital-kpi-value">{{ getRevisoesHojeEdital(edital) }}</div>
-        <div class="edital-kpi-label">Revisoes hoje</div>
-      </div>
     </div>
   </div>
 </div>
