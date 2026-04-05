@@ -201,7 +201,7 @@
                     <span class="topico-text">{{ t.descricao }}</span>
                   </button>
 
-                  <div class="topico-ir">
+                  <div class="topico-ir" *ngIf="topicoAtivoId === $any(t).id">
                     <button type="button"
                             class="topico-acao"
                             (click)="abrirSalaAulaTopico(m, t); $event.stopPropagation()"
@@ -239,7 +239,7 @@
                   <span class="topico-text">{{ s.descricao }}</span>
                 </button>
 
-                <div class="topico-ir">
+                <div class="topico-ir" *ngIf="topicoAtivoId === $any(s).id">
                   <button type="button"
                           class="topico-acao"
                           (click)="abrirSalaAulaTopico(m, s); $event.stopPropagation()"

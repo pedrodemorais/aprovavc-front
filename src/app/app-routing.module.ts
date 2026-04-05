@@ -45,6 +45,8 @@ import { HomePageComponent } from './core/components/area-aluno/home-page/home-p
 import { QuickStudyEntryComponent } from './core/components/area-aluno/quick-study-entry/quick-study-entry.component';
 import { AiTesteComponent } from './core/components/area-aluno/ai-teste/ai-teste.component';
 import { HojeDoisComponent } from './core/components/area-aluno/hoje-dois/hoje-dois.component';
+import { RegistrarLivreComponent } from './core/components/area-aluno/registrar-livre/registrar-livre.component';
+import { BibliotecaCognitivaComponent } from './core/components/area-aluno/biblioteca-cognitiva/biblioteca-cognitiva.component';
 
 
 const routes: Routes = [
@@ -80,12 +82,14 @@ const routes: Routes = [
       { path: 'configuracoes', component: ConfiguracoesComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'dashboard', component: HomePageComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'registrar-estudo', component: QuickStudyEntryComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'registrar-livre', component: RegistrarLivreComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'ia-teste', component: AiTesteComponent },
       { path: 'cad-materias', component: MateriaCadastroComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'estudar-materias', component: MateriaEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca/resumo', component: BibliotecaResumoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca/resumo/:topicoId', component: BibliotecaResumoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'biblioteca', component: BibliotecaComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'biblioteca-cognitiva', component: BibliotecaCognitivaComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'caderno-erros', component: CadernoErrosComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'blocos-estudo', component: BlocosEstudoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'progresso', component: ProgressoComponent, canActivate: [PlanoAtivoGuard] },

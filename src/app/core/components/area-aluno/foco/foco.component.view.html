@@ -31,17 +31,56 @@
     </div>
 
     <section class="edital-ativo-card" aria-label="Edital ativo">
-      <div class="edital-ativo-card__legend">Edital Ativo - {{ editalAtivoNome }}</div>
+      <div class="edital-ativo-card__legend">{{ editalAtivoLegenda }}</div>
       <div class="edital-ativo-card__media" [class.edital-ativo-card__media--fallback]="!editalAtivoImagemUrl">
         <img *ngIf="editalAtivoImagemUrl; else editalFallback" [src]="editalAtivoImagemUrl" alt="Imagem do edital ativo" />
         <ng-template #editalFallback>
           <span>{{ editalAtivoSigla }}</span>
         </ng-template>
       </div>
-     
+
+      <div class="edital-ativo-card__content">
+       
+        <div class="progresso-dia progresso-dia--inside progresso-dia--inside-edital">
+          <div class="progresso-bloco">
+            <div class="progresso-metrica">
+              <span class="kpi-label">Tópicos revisados</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/check.png" alt="Concluído" />
+                {{ revisoesFeitasHoje }}
+              </strong>
+            </div>
+            <div class="progresso-metrica">
+              <span class="kpi-label">Flashcards revisados</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/flash-card.png" alt="Flashcards" />
+                {{ flashcardsFeitosHoje }}
+              </strong>
+            </div>
+            <div class="progresso-metrica">
+              <span class="kpi-label">Estudos novos</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/new-file.png" alt="Estudos novos" />
+                {{ estudosFeitosHoje }}
+              </strong>
+            </div>
+            <div class="progresso-metrica">
+              <span class="kpi-label">Reforços resolvidos</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/gym.png" alt="Reforços resolvidos" />
+                {{ reforcosFeitosHoje }}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="hero-cog card">
+      <ng-container *ngIf="isModoEstudarPlanejamentoDiario">
+        <ng-container [ngTemplateOutlet]="heroCogKpisTemplate"></ng-container>
+      </ng-container>
+
       <div class="estudo-plano-panel-wrap" *ngIf="isModoExecucaoPlano || !hasReview">
         <div class="card estudo-plano-card-list">
           <div class="header-row">
@@ -75,44 +114,13 @@
         </div>
       </div>
 
-      <div class="progresso-resumo-head">
-        <span>Resumo de Hoje</span>
-      </div>
-      <div class="progresso-dia progresso-dia--inside">
-        <div class="progresso-bloco">
-          <div class="progresso-metrica">
-            <span class="kpi-label">Tópicos revisados</span>
-            <strong class="progresso-num">
-              <img class="progresso-num__icon" src="assets/img/icon/check.png" alt="Concluído" />
-              {{ revisoesFeitasHoje }}
-            </strong>
-          </div>
-          <div class="progresso-metrica">
-            <span class="kpi-label">Flashcards revisados</span>
-            <strong class="progresso-num">
-              <img class="progresso-num__icon" src="assets/img/icon/flash-card.png" alt="Flashcards" />
-              {{ flashcardsFeitosHoje }}
-            </strong>
-          </div>
-          <div class="progresso-metrica">
-            <span class="kpi-label">Estudos novos</span>
-            <strong class="progresso-num">
-              <img class="progresso-num__icon" src="assets/img/icon/new-file.png" alt="Estudos novos" />
-              {{ estudosFeitosHoje }}
-            </strong>
-          </div>
-          <div class="progresso-metrica">
-            <span class="kpi-label">Reforços resolvidos</span>
-            <strong class="progresso-num">
-              <img class="progresso-num__icon" src="assets/img/icon/gym.png" alt="Reforços resolvidos" />
-              {{ reforcosFeitosHoje }}
-            </strong>
-          </div>
+      <div class="hero-cog-main" *ngIf="!isModoEstudarPlanejamentoDiario">
+        <div class="hero-cog__left">
+          <ng-container [ngTemplateOutlet]="heroCogKpisTemplate"></ng-container>
         </div>
       </div>
 
-      <div class="hero-cog-main">
-        <div class="hero-cog__left">
+      <ng-template #heroCogKpisTemplate>
           <div class="hero-cog__kpis">
             <div class="kpi-tile kpi-tile--criticos">
               <span class="kpi-ribbon" *ngIf="contadorCriticos === 0">EM DIA</span>
@@ -172,9 +180,7 @@
               </button>
             </div>
           </div>
-        </div>
-
-      </div>
+      </ng-template>
 
      
 

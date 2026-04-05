@@ -294,6 +294,12 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
       },
       {
+        label: 'Registrar Livre',
+        icon: 'pi pi-plus-circle',
+        routerLink: ['/area-restrita/registrar-livre'],
+        disabled: isLocked,
+      },
+      {
         label: 'Estudar',
         icon: 'pi pi-book',
         routerLink: ['/area-restrita/estudar-materias'],
@@ -350,6 +356,12 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         routerLink: ['/area-restrita/biblioteca'],
         disabled: isLocked || !this.hasMaterias,
         title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      },
+      {
+        label: 'Biblioteca Cognitiva',
+        icon: 'pi pi-sitemap',
+        routerLink: ['/area-restrita/biblioteca-cognitiva'],
+        disabled: isLocked,
       },
       {
         label: 'Caderno de Erros',

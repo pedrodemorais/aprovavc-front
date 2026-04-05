@@ -230,7 +230,7 @@
   border-radius: 14px;
   background: linear-gradient(135deg, #eefbf1 0%, #ffffff 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   position: relative;
 }
@@ -277,8 +277,9 @@
 
 .edital-ativo-card__content{
   min-width: 0;
+  width: 100%;
   display: grid;
-  gap: 2px;
+  gap: 6px;
 }
 
 .edital-ativo-card__title{
@@ -410,14 +411,13 @@
 .btn-revisar-agora-header{
   flex: 0 0 auto;
   width: 100%;
-  height: 50%;
   border: 1px solid #16a34a;
   background: #16a34a;
   color: #ffffff;
-  border-radius: 10px;
-  min-height: 36px;
-  padding: 11px 16px;
-  font-size: 13px;
+  border-radius: 12px;
+  min-height: 56px;
+  padding: 16px 20px;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -1586,6 +1586,12 @@
   padding: 10px 0 12px;
   border-top: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.progresso-dia--inside-edital{
+  padding: 0;
+  border-top: 0;
+  border-bottom: 0;
 }
 
 .progresso-resumo-head{

@@ -31,14 +31,30 @@
   letter-spacing: 0.2px;
   line-height: 1.2;
   color: var(--qs-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.quick-study-header p {
-  margin: 6px 0 0;
-  color: var(--qs-muted);
-  font-size: 12.5px;
-  line-height: 1.35;
-  max-width: none;
+.quick-study-info-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 114, 133, 0.35);
+  color: #0b7285;
+  background: rgba(11, 114, 133, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: help;
+}
+
+.quick-study-info-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--qs-accent-soft);
 }
 
 .quick-study-form {
@@ -323,9 +339,6 @@
     font-size: 0.95rem;
   }
 
-  .quick-study-header p {
-    font-size: 12.5px;
-  }
 }
 
 @media (min-width: 768px) {

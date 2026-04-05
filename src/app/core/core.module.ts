@@ -84,6 +84,8 @@ import { HomeProgressoDiaComponent } from './components/area-aluno/home-page/hom
 import { QuickStudyEntryComponent } from './components/area-aluno/quick-study-entry/quick-study-entry.component';
 import { AiTesteComponent } from './components/area-aluno/ai-teste/ai-teste.component';
 import { HojeDoisComponent } from './components/area-aluno/hoje-dois/hoje-dois.component';
+import { RegistrarLivreComponent } from './components/area-aluno/registrar-livre/registrar-livre.component';
+import { BibliotecaCognitivaComponent } from './components/area-aluno/biblioteca-cognitiva/biblioteca-cognitiva.component';
 
 
 // ✅ O COMPONENTE DOS BLOCOS
@@ -126,6 +128,8 @@ registerLocaleData(localePt);
     QuickStudyEntryComponent,
     AiTesteComponent,
     HojeDoisComponent,
+    RegistrarLivreComponent,
+    BibliotecaCognitivaComponent,
 
   ],
   imports: [

@@ -120,6 +120,8 @@ export class FocoComponent implements OnInit, OnDestroy {
   private editalAtivoImagemUrlResolved: string | null = null;
   private editalAtivoImagemObjectUrl: string | null = null;
   private editalAtivoImagemTemplateId: number | null = null;
+  private editalAtivoCargoResolved: string | null = null;
+  private editalAtivoCargoResolveToken = 0;
   private readonly enableKpiDebugLogs = true;
   acaoHoje: FocoAcaoHoje = {
     total: 0,
@@ -165,6 +167,18 @@ export class FocoComponent implements OnInit, OnDestroy {
   get editalAtivoNome(): string {
     const nome = String(this.planoDiario?.editalNome || '').trim();
     return nome || 'Edital não informado';
+  }
+
+  get editalAtivoCargo(): string {
+    if (this.editalAtivoCargoResolved) return this.editalAtivoCargoResolved;
+    return this.extrairCargoDeFonte(this.planoDiario as any);
+  }
+
+  get editalAtivoLegenda(): string {
+    const nome = String(this.planoDiario?.editalNome || '').trim();
+    const cargo = this.editalAtivoCargo;
+    if (nome && cargo) return `${nome} - ${cargo}`;
+    return nome || cargo || 'Edital ativo';
   }
 
   get editalAtivoImagemUrl(): string | null {
@@ -275,6 +289,10 @@ export class FocoComponent implements OnInit, OnDestroy {
 
   get hasReview(): boolean {
     return this.acaoHoje.total > 0;
+  }
+
+  get isModoEstudarPlanejamentoDiario(): boolean {
+    return !(this.hasReview && this.exibidosHoje > 0);
   }
 
   get hasPreventivo(): boolean {
@@ -1275,6 +1293,7 @@ export class FocoComponent implements OnInit, OnDestroy {
         error: (err: HttpErrorResponse) => {
           console.warn('[FOCO] load error', err);
           this.planoDiario = null;
+          this.editalAtivoCargoResolved = null;
           this.removerImagemEditalAtivo();
           this.filaHoje = [];
           this.filaPreventiva = [];
@@ -1313,6 +1332,7 @@ export class FocoComponent implements OnInit, OnDestroy {
 
   private aplicarPlanoDiario(dto: FocoPlanoDiarioDTO): void {
     this.planoDiario = dto || null;
+    this.editalAtivoCargoResolved = this.extrairCargoDeFonte(dto as any) || null;
     this.error = null;
 
     this.modoHojeLabel = this.labelModo(dto?.modoAtivo || dto?.modo);
@@ -1376,6 +1396,7 @@ export class FocoComponent implements OnInit, OnDestroy {
     }
 
     this.atualizarImagemEditalAtivo(dto);
+    this.resolverCargoEditalAtivo(dto);
 
     if (this.isModoRevisao) {
       this.headlineHoje = this.heroFrasePrincipal;
@@ -1388,6 +1409,47 @@ export class FocoComponent implements OnInit, OnDestroy {
     }
 
     this.headlineHoje = 'Tudo em dia e sem conteudo novo no plano.';
+  }
+
+  private extrairCargoDeFonte(anyObj: any): string {
+    const candidatos = [
+      anyObj?.cargo,
+      anyObj?.cargoNome,
+      anyObj?.nomeCargo,
+      anyObj?.editalCargo,
+      anyObj?.edital?.cargo,
+      anyObj?.edital?.cargoNome,
+      anyObj?.edital?.nomeCargo
+    ];
+    for (const candidato of candidatos) {
+      const valor = String(candidato || '').trim();
+      if (valor) return valor;
+    }
+    return '';
+  }
+
+  private resolverCargoEditalAtivo(dto: FocoPlanoDiarioDTO | null): void {
+    const token = ++this.editalAtivoCargoResolveToken;
+    const cargoDireto = this.extrairCargoDeFonte(dto as any);
+    if (cargoDireto) {
+      this.editalAtivoCargoResolved = cargoDireto;
+      return;
+    }
+
+    const editalId = Number((dto as any)?.editalId || 0);
+    const editalNome = String((dto as any)?.editalNome || '').trim();
+    if (!(editalId > 0) && !editalNome) return;
+
+    this.obterEditalPorIdOuNome(editalId, editalNome)
+      .then((edital) => {
+        if (token !== this.editalAtivoCargoResolveToken) return;
+        if (!edital) return;
+        const cargo = this.extrairCargoDeFonte(edital as any);
+        this.editalAtivoCargoResolved = cargo || null;
+      })
+      .catch(() => {
+        // mantém fallback atual
+      });
   }
 
   private atualizarImagemEditalAtivo(dto: FocoPlanoDiarioDTO | null): void {

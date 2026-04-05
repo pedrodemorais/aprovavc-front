@@ -1,12 +1,21 @@
 <main class="quick-study-page">
   <section class="quick-study-card">
     <header class="quick-study-header">
-      <h1>Registro rapido de estudo</h1>
-      <p>Registre em segundos, sem abrir a sala de estudo.</p>
+      <h1>
+        Registro rapido de estudo
+        <span
+          class="quick-study-info-icon"
+          role="img"
+          tabindex="0"
+          aria-label="Registre em segundos, sem abrir a sala de estudo."
+          title="Registre em segundos, sem abrir a sala de estudo.">
+          i
+        </span>
+      </h1>
     </header>
 
     <form class="quick-study-form" [formGroup]="form" (ngSubmit)="submit()">
-      <p class="quick-study-date">Registro de hoje</p>
+      
 
       <label class="field">
         <span>Materia</span>

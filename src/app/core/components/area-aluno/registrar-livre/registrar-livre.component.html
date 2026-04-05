@@ -1,0 +1,271 @@
+<main class="quick-study-page">
+  <section class="quick-study-card">
+    <header class="quick-study-header">
+      <h1>
+        Registro rapido de estudo
+        <span
+          class="quick-study-info-icon"
+          role="img"
+          tabindex="0"
+          aria-label="Registre em segundos, sem abrir a sala de estudo."
+          title="Registre em segundos, sem abrir a sala de estudo.">
+          i
+        </span>
+      </h1>
+      <div class="study-timer-panel">
+        <div class="timer-mode-switch" role="tablist" aria-label="Modo de timer">
+          <button
+            type="button"
+            class="timer-mode-btn"
+            [class.active]="timerModo === 'livre'"
+            (click)="selecionarModoTimer('livre')">
+            Livre
+          </button>
+          <button
+            type="button"
+            class="timer-mode-btn"
+            [class.active]="timerModo === 'pomodoro'"
+            (click)="selecionarModoTimer('pomodoro')">
+            Pomodoro
+          </button>
+        </div>
+
+        <div class="timer-actions">
+          <button type="button" class="timer-action-btn timer-action-btn--primary" (click)="alternarTimer()">
+            {{ timerRodando ? 'Pausar' : 'Iniciar' }}
+          </button>
+          <button type="button" class="timer-action-btn" (click)="zerarTimer()" [disabled]="!podeZerarTimer">
+            Zerar
+          </button>
+          <button
+            type="button"
+            class="timer-action-btn"
+            (click)="aplicarTempoTimerNoCampo()"
+            [disabled]="!podeAplicarTempoTimer">
+            Usar no campo
+          </button>
+        </div>
+
+        <div class="timer-display">{{ timerDisplayLabel }} | {{ tempoEstudoFormatado }}</div>
+      </div>
+    </header>
+
+    <form class="quick-study-form" [formGroup]="form" (ngSubmit)="registrarEstudo()">
+      <label class="field">
+        <span>Estou estudando para (edital opcional)</span>
+        <div class="autocomplete-wrap autocomplete-wrap--trigger">
+          <input
+            type="text"
+            formControlName="agrupador"
+            placeholder="Ex: TRT, OAB, Receita Federal"
+            autocomplete="off"
+            autocapitalize="words"
+            spellcheck="false"
+            (focus)="onCampoFocus('agrupador')"
+            (input)="onCampoInput('agrupador')"
+            (blur)="onCampoBlur()" />
+          <button
+            type="button"
+            class="autocomplete-trigger"
+            aria-label="Ver editais cadastrados"
+            title="Ver editais cadastrados"
+            (mousedown)="toggleTodosAgrupadores($event)">
+            ▾
+          </button>
+          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('agrupador')">
+            <button
+              type="button"
+              class="autocomplete-item"
+              *ngFor="let sugestao of sugestoesVisiveis.agrupador"
+              (mousedown)="selecionarSugestao('agrupador', sugestao)">
+              {{ sugestao }}
+            </button>
+          </div>
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Materia</span>
+        <div class="autocomplete-wrap autocomplete-wrap--trigger">
+          <input
+            #materiaInput
+            type="text"
+            formControlName="materiaNome"
+            placeholder="Ex: Direito Constitucional"
+            autocomplete="off"
+            autocapitalize="words"
+            spellcheck="false"
+            [class.invalid]="materiaInvalida"
+            (focus)="onCampoFocus('materiaNome')"
+            (input)="onCampoInput('materiaNome')"
+            (blur)="onCampoBlur()" />
+          <button
+            type="button"
+            class="autocomplete-trigger"
+            aria-label="Ver materias cadastradas"
+            title="Ver materias cadastradas"
+            (mousedown)="toggleTodosCampo('materiaNome', $event)">
+            ▾
+          </button>
+          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('materiaNome')">
+            <button
+              type="button"
+              class="autocomplete-item"
+              *ngFor="let sugestao of sugestoesVisiveis.materiaNome"
+              (mousedown)="selecionarSugestao('materiaNome', sugestao)">
+              {{ sugestao }}
+            </button>
+          </div>
+        </div>
+        <small class="error" *ngIf="materiaInvalida">Materia obrigatoria.</small>
+      </label>
+
+      <label class="field">
+        <span>Topico</span>
+        <div class="autocomplete-wrap autocomplete-wrap--trigger">
+          <input
+            type="text"
+            formControlName="topicoNome"
+            placeholder="Ex: Controle de constitucionalidade"
+            autocomplete="off"
+            autocapitalize="sentences"
+            spellcheck="false"
+            [class.invalid]="topicoInvalido"
+            (focus)="onCampoFocus('topicoNome')"
+            (input)="onCampoInput('topicoNome')"
+            (blur)="onCampoBlur()" />
+          <button
+            type="button"
+            class="autocomplete-trigger"
+            aria-label="Ver assuntos cadastrados"
+            title="Ver assuntos cadastrados"
+            (mousedown)="toggleTodosCampo('topicoNome', $event)">
+            ▾
+          </button>
+          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('topicoNome')">
+            <button
+              type="button"
+              class="autocomplete-item"
+              *ngFor="let sugestao of sugestoesVisiveis.topicoNome"
+              (mousedown)="selecionarSugestao('topicoNome', sugestao)">
+              {{ sugestao }}
+            </button>
+          </div>
+        </div>
+        <small class="error" *ngIf="topicoInvalido">Assunto obrigatorio.</small>
+      </label>
+
+      <label class="field">
+        <span>Subtopico (opcional)</span>
+        <div class="autocomplete-wrap autocomplete-wrap--trigger">
+          <input
+            type="text"
+            formControlName="subtopicoNome"
+            placeholder="Ex: ADI e ADC"
+            autocomplete="off"
+            autocapitalize="sentences"
+            spellcheck="false"
+            (focus)="onCampoFocus('subtopicoNome')"
+            (input)="onCampoInput('subtopicoNome')"
+            (blur)="onCampoBlur()" />
+          <button
+            type="button"
+            class="autocomplete-trigger"
+            aria-label="Ver subassuntos cadastrados"
+            title="Ver subassuntos cadastrados"
+            (mousedown)="toggleTodosCampo('subtopicoNome', $event)">
+            ▾
+          </button>
+          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('subtopicoNome')">
+            <button
+              type="button"
+              class="autocomplete-item"
+              *ngFor="let sugestao of sugestoesVisiveis.subtopicoNome"
+              (mousedown)="selecionarSugestao('subtopicoNome', sugestao)">
+              {{ sugestao }}
+            </button>
+          </div>
+        </div>
+      </label>
+
+      <label class="field field--tempo">
+        <span>Tempo (minutos)</span>
+        <input
+          class="tempo-input"
+          type="number"
+          min="1"
+          max="1440"
+          step="1"
+          formControlName="tempoMinutos"
+          inputmode="numeric"
+          [class.invalid]="tempoInvalido" />
+      </label>
+
+      <label class="field">
+        <span>Resumo / anotacao do estudo (opcional)</span>
+        <div class="editor-wrapper">
+          <p-editor
+            id="observacao"
+            [(ngModel)]="observacaoHtml"
+            [ngModelOptions]="{ standalone: true }"
+            (onInit)="onObservacaoEditorInit($event)"
+            (onTextChange)="onObservacaoChange()">
+            <ng-template pTemplate="header">
+              <span class="ql-formats">
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-strike"></button>
+              </span>
+              <span class="ql-formats">
+                <select class="ql-size"></select>
+              </span>
+              <span class="ql-formats">
+                <select class="ql-color"></select>
+                <select class="ql-background"></select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+                <button class="ql-indent" value="-1"></button>
+                <button class="ql-indent" value="+1"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-link"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-clean"></button>
+              </span>
+            </ng-template>
+          </p-editor>
+        </div>
+        <small class="helper-text">
+          Se preenchido, esse conteudo sera salvo no topico para revisao futura
+        </small>
+        <small class="hint">{{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}</small>
+      </label>
+
+      <div class="feedback success" *ngIf="feedbackSucesso">{{ feedbackSucesso }}</div>
+      <div class="feedback error" *ngIf="feedbackErro">{{ feedbackErro }}</div>
+
+      <div class="actions">
+        <button type="submit" class="btn-primary" [disabled]="enviando">
+          {{ enviando ? 'Registrando...' : 'Registrar' }}
+        </button>
+      </div>
+
+      <p class="submit-microcopy">
+        Esse registro ajuda o sistema a definir quando voce deve revisar esse topico
+      </p>
+
+      <section class="estrutura-feedback fade-in" *ngIf="estruturaCriada">
+        <h2>Estudo registrado</h2>
+        <div class="linha">📘 {{ estruturaCriada.materiaNome }}</div>
+        <div class="linha linha-filho">└── 📂 {{ estruturaCriada.topicoNome }}</div>
+        <div class="linha linha-neto" *ngIf="estruturaCriada.subtopicoNome">
+          └── 📄 {{ estruturaCriada.subtopicoNome }}
+        </div>
+      </section>
+    </form>
+  </section>
+</main>
