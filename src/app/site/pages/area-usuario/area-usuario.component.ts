@@ -287,13 +287,6 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: isLocked
       },
       {
-        label: 'Registro Rapido',
-        icon: 'pi pi-play',
-        routerLink: ['/registrar-estudo'],
-        disabled: isLocked || !this.hasMaterias,
-        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-      },
-      {
         label: 'Registrar Livre',
         icon: 'pi pi-plus-circle',
         routerLink: ['/area-restrita/registrar-livre'],

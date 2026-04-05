@@ -37,20 +37,32 @@
           <button type="button" class="timer-action-btn" (click)="zerarTimer()" [disabled]="!podeZerarTimer">
             Zerar
           </button>
-          <button
-            type="button"
-            class="timer-action-btn"
-            (click)="aplicarTempoTimerNoCampo()"
-            [disabled]="!podeAplicarTempoTimer">
-            Usar no campo
-          </button>
         </div>
 
-        <div class="timer-display">{{ timerDisplayLabel }} | {{ tempoEstudoFormatado }}</div>
+        <div class="timer-display timer-display--editavel">
+          <span class="timer-display__label">{{ timerDisplayLabel }} |</span>
+          <input
+            type="text"
+            class="timer-display__input"
+            inputmode="numeric"
+            placeholder="00:00:00"
+            [ngModel]="tempoManual || tempoEstudoFormatado"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onTempoManualInput($event)"
+            (blur)="onTempoManualBlur()"
+            title="Digite manualmente em MM, MM:SS ou HH:MM:SS (vazio usa cronometro)" />
+        </div>
+        <button
+          type="submit"
+          form="registrar-livre-form"
+          class="timer-action-btn timer-action-btn--primary timer-action-btn--submit"
+          [disabled]="enviando">
+          {{ enviando ? 'Registrando...' : 'Registrar' }}
+        </button>
       </div>
     </header>
 
-    <form class="quick-study-form" [formGroup]="form" (ngSubmit)="registrarEstudo()">
+    <form id="registrar-livre-form" class="quick-study-form" [formGroup]="form" (ngSubmit)="registrarEstudo()">
       <label class="field">
         <span>Estou estudando para (edital opcional)</span>
         <div class="autocomplete-wrap autocomplete-wrap--trigger">
@@ -188,20 +200,7 @@
         </div>
       </label>
 
-      <label class="field field--tempo">
-        <span>Tempo (minutos)</span>
-        <input
-          class="tempo-input"
-          type="number"
-          min="1"
-          max="1440"
-          step="1"
-          formControlName="tempoMinutos"
-          inputmode="numeric"
-          [class.invalid]="tempoInvalido" />
-      </label>
-
-      <label class="field">
+      <div class="field">
         <span>Resumo / anotacao do estudo (opcional)</span>
         <div class="editor-wrapper">
           <p-editor
@@ -239,24 +238,16 @@
             </ng-template>
           </p-editor>
         </div>
-        <small class="helper-text">
-          Se preenchido, esse conteudo sera salvo no topico para revisao futura
-        </small>
-        <small class="hint">{{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}</small>
-      </label>
+        <div class="helper-row">
+          <small class="helper-text">
+            Se preenchido, esse conteudo sera salvo no topico para revisao futura
+          </small>
+          <small class="hint">{{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}</small>
+        </div>
+      </div>
 
       <div class="feedback success" *ngIf="feedbackSucesso">{{ feedbackSucesso }}</div>
       <div class="feedback error" *ngIf="feedbackErro">{{ feedbackErro }}</div>
-
-      <div class="actions">
-        <button type="submit" class="btn-primary" [disabled]="enviando">
-          {{ enviando ? 'Registrando...' : 'Registrar' }}
-        </button>
-      </div>
-
-      <p class="submit-microcopy">
-        Esse registro ajuda o sistema a definir quando voce deve revisar esse topico
-      </p>
 
       <section class="estrutura-feedback fade-in" *ngIf="estruturaCriada">
         <h2>Estudo registrado</h2>

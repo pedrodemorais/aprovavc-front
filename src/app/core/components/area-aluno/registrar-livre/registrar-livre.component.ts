@@ -96,6 +96,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   pomodoroFase: 'foco' | 'pausa-curta' | 'pausa-longa' = 'foco';
   pomodoroSegundosRestantes = this.pomodoroDuracaoFoco;
   pomodoroCiclosConcluidos = 0;
+  tempoManual = '';
   campoAutocompleteAberto: CampoAutocomplete | null = null;
   mostrarTodosNoCampo: CampoAutocomplete | null = null;
 
@@ -177,6 +178,19 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
   get podeAplicarTempoTimer(): boolean {
     return this.getSegundosEstudoTimer() > 0;
+  }
+
+  onTempoManualInput(valor: string): void {
+    this.tempoManual = String(valor || '').replace(/[^\d:]/g, '').slice(0, 8);
+  }
+
+  onTempoManualBlur(): void {
+    const segundos = this.parseTempoManualParaSegundos(this.tempoManual);
+    if (segundos === null) {
+      this.tempoManual = '';
+      return;
+    }
+    this.tempoManual = this.formatarSegundos(segundos);
   }
 
   selecionarModoTimer(modo: 'livre' | 'pomodoro'): void {
@@ -388,7 +402,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     const agrupador = String(this.form.value.agrupador || '').trim();
     const observacaoHtml = this.normalizarHtmlAnotacoes(this.observacaoHtml || '');
     const observacao = this.extrairTextoDoHtml(observacaoHtml).trim();
-    const tempoMinutos = Number(this.form.value.tempoMinutos || 0);
+    const tempoMinutos = this.resolverTempoMinutosParaRegistro();
+    this.form.controls.tempoMinutos.setValue(tempoMinutos);
 
     if (!materiaNome || !topicoNome || tempoMinutos <= 0) {
       this.form.markAllAsTouched();
@@ -506,6 +521,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       observacao: ''
     });
     this.observacaoHtml = '';
+    this.tempoManual = '';
     this.atualizarContadorCaracteres(0);
     this.form.markAsPristine();
     this.form.markAsUntouched();
@@ -535,13 +551,16 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   private carregarEditaisAgrupador(): void {
     this.editalService.listarComInclude(['materias', 'topicos']).subscribe({
       next: (editais) => {
-        this.hidratarCatalogoEditais(editais || []);
+        const lista = editais || [];
+        this.hidratarCatalogoEditais(lista);
+        this.aplicarEditalPadraoMaisRecente(lista);
         this.atualizarSugestoes('agrupador');
       },
       error: () => {
         this.editalService.listar().subscribe({
           next: (editais) => {
-            const nomes = (editais || [])
+            const lista = editais || [];
+            const nomes = lista
               .map((edital: any) => this.normalizarTexto(String(edital?.nome || '')))
               .filter((nome) => !!nome);
             this.agrupadoresCatalogo = this.unicosOrdenados(nomes);
@@ -551,6 +570,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
             this.topicosPorEditalMateria.clear();
             this.subtopicosPorEditalMateria.clear();
             this.subtopicosPorEditalMateriaTopico.clear();
+            this.aplicarEditalPadraoMaisRecente(lista);
             this.atualizarSugestoes('agrupador');
           },
           error: () => {
@@ -605,6 +625,59 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
     this.agrupadoresCatalogo = this.unicosOrdenados(nomes);
     this.editaisCatalogo = catalogo;
+  }
+
+  private aplicarEditalPadraoMaisRecente(editais: any[]): void {
+    const ultimo = this.obterUltimoEditalCadastrado(editais);
+    if (!ultimo) {
+      this.form.controls.agrupador.setValue('');
+      return;
+    }
+
+    const nome = this.normalizarTexto(String(ultimo?.nome || ''));
+    if (!nome) {
+      this.form.controls.agrupador.setValue('');
+      return;
+    }
+
+    this.form.controls.agrupador.setValue(nome);
+    this.atualizarSugestoes('materiaNome');
+    this.atualizarSugestoes('topicoNome');
+    this.atualizarSugestoes('subtopicoNome');
+  }
+
+  private obterUltimoEditalCadastrado(editais: any[]): any | null {
+    const lista = Array.isArray(editais) ? editais.filter((e) => !!this.normalizarTexto(String(e?.nome || ''))) : [];
+    if (!lista.length) {
+      return null;
+    }
+
+    const scoreData = (edital: any): number => {
+      const raw =
+        edital?.dataCriacao ??
+        edital?.createdAt ??
+        edital?.criadoEm ??
+        edital?.created_at ??
+        null;
+      if (!raw) return Number.NEGATIVE_INFINITY;
+      const ts = Date.parse(String(raw));
+      return Number.isFinite(ts) ? ts : Number.NEGATIVE_INFINITY;
+    };
+
+    const scoreId = (edital: any): number => {
+      const id = Number(edital?.id || 0);
+      return Number.isFinite(id) ? id : 0;
+    };
+
+    return lista.reduce((maisRecente, atual) => {
+      if (!maisRecente) return atual;
+      const dataAtual = scoreData(atual);
+      const dataMaisRecente = scoreData(maisRecente);
+
+      if (dataAtual > dataMaisRecente) return atual;
+      if (dataAtual < dataMaisRecente) return maisRecente;
+      return scoreId(atual) > scoreId(maisRecente) ? atual : maisRecente;
+    }, null as any | null);
   }
 
   private aplicarCatalogoDaApi(materias: MateriaTopicosDTO[]): void {
@@ -912,6 +985,58 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
   private normalizarTexto(valor: string): string {
     return valor.replace(/\s+/g, ' ').trim();
+  }
+
+  private resolverTempoMinutosParaRegistro(): number {
+    const segundosManuais = this.parseTempoManualParaSegundos(this.tempoManual);
+    if (segundosManuais && segundosManuais > 0) {
+      return Math.max(1, Math.ceil(segundosManuais / 60));
+    }
+
+    const segundosTimer = this.getSegundosEstudoTimer();
+    if (segundosTimer > 0) {
+      return Math.max(1, Math.ceil(segundosTimer / 60));
+    }
+
+    const valorAtual = Number(this.form.value.tempoMinutos || 0);
+    return Number.isFinite(valorAtual) && valorAtual > 0 ? valorAtual : 30;
+  }
+
+  private parseTempoManualParaSegundos(valor: string): number | null {
+    const texto = String(valor || '').trim();
+    if (!texto) return null;
+
+    const partes = texto.split(':').map((p) => p.trim());
+    if (!partes.length || partes.length > 3 || partes.some((p) => p === '')) {
+      return null;
+    }
+
+    const nums = partes.map((p) => Number(p));
+    if (nums.some((n) => !Number.isFinite(n) || n < 0)) {
+      return null;
+    }
+
+    if (nums.length === 3) {
+      const [h, m, s] = nums;
+      if (m > 59 || s > 59) return null;
+      return (h * 3600) + (m * 60) + s;
+    }
+
+    if (nums.length === 2) {
+      const [m, s] = nums;
+      if (s > 59) return null;
+      return (m * 60) + s;
+    }
+
+    return nums[0] * 60;
+  }
+
+  private formatarSegundos(totalSegundos: number): string {
+    const safe = Math.max(0, Math.floor(totalSegundos));
+    const horas = Math.floor(safe / 3600);
+    const minutos = Math.floor((safe % 3600) / 60);
+    const segundos = safe % 60;
+    return `${this.pad2(horas)}:${this.pad2(minutos)}:${this.pad2(segundos)}`;
   }
 
   onObservacaoEditorInit(event: unknown): void {

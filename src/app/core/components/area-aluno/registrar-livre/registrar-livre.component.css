@@ -132,7 +132,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: nowrap;
-  border: 1px solid var(--qs-line);
+  
   border-radius: 999px;
   padding: 4px 6px;
   background: linear-gradient(180deg, #f8fafc 0%, #f3f4f6 100%);
@@ -192,6 +192,10 @@
   background: #ffffff;
 }
 
+.timer-action-btn--submit {
+  min-width: 92px;
+}
+
 .timer-action-btn:hover:not(:disabled) {
   background: #e5e7eb;
   border-color: rgba(15, 23, 42, 0.25);
@@ -212,6 +216,37 @@
   font-size: 12px;
   color: #374151;
   white-space: nowrap;
+}
+
+.timer-display--editavel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-display__label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #374151;
+}
+
+.timer-display__input {
+  width: 84px;
+  border: 0;
+  outline: none;
+  background: #2f2f30;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-display__input:focus {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
 }
 
 .autocomplete-wrap {
@@ -282,6 +317,13 @@
   line-height: 1.35;
 }
 
+.helper-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .editor-wrapper {
   border: 1px solid var(--qs-line);
   border-radius: 12px;
@@ -312,6 +354,7 @@
   color: var(--qs-muted);
   font-size: 12px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .feedback {
