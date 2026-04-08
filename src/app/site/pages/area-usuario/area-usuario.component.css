@@ -628,19 +628,19 @@ body.dashboard-scroll {
   gap: 8px;
   width: 100%;
   padding: 8px 10px;
-  border-radius: 10px;
+  
   color: var(--ua-text);
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
-  background: transparent;
+  background: #ffffff;
   border: 0;
   text-align: left;
   cursor: pointer;
 }
 
 .user-menu-item:hover {
-  background: var(--ua-bg-hover);
+  background: #54ba672f;
 }
 
 /* =======================================

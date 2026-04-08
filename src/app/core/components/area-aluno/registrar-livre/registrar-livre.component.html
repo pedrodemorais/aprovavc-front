@@ -216,7 +216,7 @@
               <i class="pi pi-list"></i>
               <span>Vocabulário</span>
             </button>
-            <button type="button" class="resumo-acao-btn" [disabled]="!podeUsarAcoesResumo">
+            <button type="button" class="resumo-acao-btn" (click)="abrirModalCadernoErros()" [disabled]="!podeUsarAcoesResumo">
               <i class="pi pi-file-edit"></i>
               <span>Caderno</span>
             </button>
@@ -389,7 +389,7 @@
     <div class="vocabulario-overlay" *ngIf="mostrarModalVocabulario">
       <div class="vocabulario-modal" [class.vocabulario-modal--revisao]="vocabularioModo === 'revisar'">
         <header class="vocabulario-header">
-          <h2 class="vocabulario-titulo">VocabulÃ¡rio</h2>
+          <h2 class="vocabulario-titulo">Vocabulário</h2>
           <button type="button" class="vocabulario-fechar" (click)="fecharModalVocabulario()">x</button>
         </header>
 
@@ -402,11 +402,11 @@
 
         <div class="vocabulario-contexto">
           <div class="vocabulario-contexto-linha">
-            <span class="contexto-label">MatÃ©ria:</span>
+            <span class="contexto-label">Matéria:</span>
             <span class="contexto-valor">{{ vocabularioMateriaContexto }}</span>
           </div>
           <div class="vocabulario-contexto-linha">
-            <span class="contexto-label">TÃ³pico:</span>
+            <span class="contexto-label">Tópico:</span>
             <span class="contexto-valor">{{ vocabularioTopicoContexto }}</span>
           </div>
         </div>
@@ -423,7 +423,7 @@
               placeholder="Ex.: Class" />
           </label>
           <label class="vocabulario-label">
-            DefiniÃ§Ã£o
+            Definição
             <input
               type="text"
               class="vocabulario-input"
@@ -466,7 +466,7 @@
             {{ salvandoListaVocabulario ? 'Importando...' : 'Importar lista' }}
           </button>
           <div class="vocabulario-import-dica">
-            Use ":" ou "-" como separador entre termo e definiÃ§Ã£o.
+            Use ":" ou "-" como separador entre termo e definição.
           </div>
         </div>
 
@@ -478,9 +478,9 @@
         </div>
 
         <div class="vocabulario-lista" *ngIf="vocabularioModo === 'lista'">
-          <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabularios...</div>
+          <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabulários...</div>
           <div class="vocabulario-vazio" *ngIf="!carregandoVocabularios && !vocabularios.length">
-            Nenhum vocabulÃ¡rio cadastrado neste tÃ³pico.
+            Nenhum vocabulário cadastrado neste tópico.
           </div>
           <ul *ngIf="!carregandoVocabularios && vocabularios.length">
             <li class="vocabulario-item" *ngFor="let v of vocabularios; trackBy: trackByVocabularioId">
@@ -496,9 +496,9 @@
         </div>
 
         <div class="vocabulario-revisao" *ngIf="vocabularioModo === 'revisar'">
-          <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabularios...</div>
+          <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabulários...</div>
           <div class="vocabulario-vazio" *ngIf="!carregandoVocabularios && !vocabularios.length">
-            Nenhum vocabulÃ¡rio cadastrado neste topico.
+            Nenhum vocabulário cadastrado neste tópico.
           </div>
           <div class="vocabulario-card" *ngIf="!carregandoVocabularios && vocabularioAtual">
             <div class="vocabulario-card-meta">
@@ -515,9 +515,118 @@
         <div class="vocabulario-revisao-actions">
           <button type="button" class="btn secundario" (click)="anteriorVocabulario()">Anterior</button>
           <button type="button" class="btn secundario vocabulario-reveal" (click)="toggleDefinicaoVocabulario()">
-            {{ vocabularioMostrarDefinicao ? 'Ocultar definiÃ§Ã£o' : 'Mostrar definiÃ§Ã£o' }}
+            {{ vocabularioMostrarDefinicao ? 'Ocultar definição' : 'Mostrar definição' }}
           </button>
-          <button type="button" class="btn primario" (click)="proximoVocabulario()">PrÃ³ximo</button>
+          <button type="button" class="btn primario" (click)="proximoVocabulario()">Próximo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="caderno-overlay" *ngIf="mostrarModalCaderno">
+      <div class="caderno-modal">
+        <div class="caderno-form card">
+          <div class="caderno-form-topo">
+            <strong>Novo erro</strong>
+            <button type="button" class="btn btn-sec" (click)="novoCadernoErro()">Limpar formulário</button>
+          </div>
+
+          <div class="field">
+            <label>Matéria</label>
+            <select [(ngModel)]="cadernoForm.materiaId" [ngModelOptions]="{ standalone: true }" (change)="onCadernoMateriaChange()">
+              <option [ngValue]="null">Selecione</option>
+              <option *ngFor="let m of cadernoMaterias" [ngValue]="m.materiaId">{{ m.materiaNome }}</option>
+            </select>
+          </div>
+
+          <div class="caderno-dupla">
+            <div class="field">
+              <label>Tópico</label>
+              <select [(ngModel)]="cadernoForm.topicoId" [ngModelOptions]="{ standalone: true }" (change)="onCadernoTopicoChange()">
+                <option [ngValue]="null">Selecione</option>
+                <option *ngFor="let t of cadernoTopicosPrincipais" [ngValue]="t.id">{{ t.descricao }}</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Subtópico (opcional)</label>
+              <select [(ngModel)]="cadernoForm.subtopicoId" [ngModelOptions]="{ standalone: true }">
+                <option [ngValue]="null">Sem subtópico</option>
+                <option *ngFor="let s of cadernoSubtopicosOpcoes" [ngValue]="s.id">{{ s.descricao }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Título</label>
+            <input
+              type="text"
+              [(ngModel)]="cadernoForm.titulo"
+              [ngModelOptions]="{ standalone: true }"
+              maxlength="160"
+              placeholder="Ex: Erro de interpretação da exceção" />
+          </div>
+
+          <div class="field">
+            <label>Descrição do erro</label>
+            <textarea [(ngModel)]="cadernoForm.descricaoErro" [ngModelOptions]="{ standalone: true }" rows="4" maxlength="4000"></textarea>
+          </div>
+
+          <div class="caderno-dupla">
+            <div class="field">
+              <label>Causa raiz</label>
+              <textarea [(ngModel)]="cadernoForm.causaRaiz" [ngModelOptions]="{ standalone: true }" rows="3" maxlength="2000"></textarea>
+            </div>
+            <div class="field">
+              <label>Correção</label>
+              <textarea [(ngModel)]="cadernoForm.correcao" [ngModelOptions]="{ standalone: true }" rows="3" maxlength="4000"></textarea>
+            </div>
+          </div>
+
+          <div class="caderno-dupla">
+            <div class="field">
+              <label>Fonte</label>
+              <select [(ngModel)]="cadernoForm.fonte" [ngModelOptions]="{ standalone: true }">
+                <option value="QUESTAO">Questão</option>
+                <option value="SIMULADO">Simulado</option>
+                <option value="MANUAL">Manual</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Data do erro</label>
+              <input type="date" [(ngModel)]="cadernoForm.dataErro" [ngModelOptions]="{ standalone: true }" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Tags (separadas por vírgula)</label>
+            <input type="text" [(ngModel)]="cadernoForm.tagsTexto" [ngModelOptions]="{ standalone: true }" placeholder="lei seca, jurisprudência, revisão 24h" />
+          </div>
+
+          <div class="caderno-trinca">
+            <div class="field">
+              <label>Questão ID</label>
+              <input type="number" [(ngModel)]="cadernoForm.questaoId" [ngModelOptions]="{ standalone: true }" />
+            </div>
+            <div class="field">
+              <label>Simulado ID</label>
+              <input type="number" [(ngModel)]="cadernoForm.simuladoId" [ngModelOptions]="{ standalone: true }" />
+            </div>
+            <div class="field">
+              <label>Tentativa ID</label>
+              <input type="number" [(ngModel)]="cadernoForm.tentativaId" [ngModelOptions]="{ standalone: true }" />
+            </div>
+          </div>
+
+          <div class="caderno-feedback sucesso" *ngIf="mensagemCadernoSucesso">{{ mensagemCadernoSucesso }}</div>
+          <div class="caderno-feedback erro" *ngIf="mensagemCadernoErro">{{ mensagemCadernoErro }}</div>
+
+          <div class="caderno-form-actions">
+            <button type="button" class="btn btn-sec" (click)="fecharModalCadernoErros()">Fechar</button>
+            <button type="button" class="btn" (click)="novoCadernoErro()">Novo</button>
+            <button type="button" class="btn btn-save" (click)="salvarCadernoErro()" [disabled]="salvandoCaderno">
+              {{ salvandoCaderno ? 'Salvando...' : 'Salvar registro' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { MateriaTopicosDTO, SalaEstudoService, TopicoNodeDTO, VocabularioDTO } f
 import { EditalService } from '../services/edital.service';
 import { FlashcardService } from '../services/flashcard.service';
 import { FlashcardDTO } from '../models/FlashcardDTO';
+import { CadernoErroFonte, CadernoErroPayload, CadernoErrosService } from '../services/caderno-erros.service';
 
 interface EstruturaCriada {
   materiaNome: string;
@@ -28,6 +29,15 @@ interface EditalCatalogoItem {
   nome: string;
   key: string;
 }
+
+type TopicoFlatNode = {
+  id: number;
+  descricao: string;
+  parentId: number | null;
+  nivel: number;
+  hasFilhos: boolean;
+  ativo: boolean;
+};
 
 type QuillEditorLike = {
   clipboard?: { addMatcher: (tag: string, matcher: () => { ops: unknown[] }) => void };
@@ -127,6 +137,30 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   vocabularioModo: 'lista' | 'revisar' = 'lista';
   vocabularioIndexAtual = 0;
   vocabularioMostrarDefinicao = false;
+  mostrarModalCaderno = false;
+  salvandoCaderno = false;
+  mensagemCadernoSucesso = '';
+  mensagemCadernoErro = '';
+  cadernoMaterias: MateriaTopicosDTO[] = [];
+  cadernoTopicosFlat: TopicoFlatNode[] = [];
+  cadernoTopicosPrincipais: TopicoFlatNode[] = [];
+  cadernoSubtopicosOpcoes: TopicoFlatNode[] = [];
+  cadernoForm: {
+    id: number | null;
+    materiaId: number | null;
+    topicoId: number | null;
+    subtopicoId: number | null;
+    titulo: string;
+    descricaoErro: string;
+    causaRaiz: string;
+    correcao: string;
+    fonte: CadernoErroFonte;
+    dataErro: string;
+    tagsTexto: string;
+    questaoId: number | null;
+    simuladoId: number | null;
+    tentativaId: number | null;
+  } = this.novoFormCaderno();
   campoAutocompleteAberto: CampoAutocomplete | null = null;
   mostrarTodosNoCampo: CampoAutocomplete | null = null;
 
@@ -142,7 +176,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     private estudoLivreService: EstudoLivreService,
     private salaEstudoService: SalaEstudoService,
     private editalService: EditalService,
-    private flashcardService: FlashcardService
+    private flashcardService: FlashcardService,
+    private cadernoErrosService: CadernoErrosService
   ) {}
 
   ngAfterViewInit(): void {
@@ -279,6 +314,105 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.mostrarModalVocabulario = false;
     this.erroVocabularios = '';
     this.mensagemVocabularioSucesso = '';
+  }
+
+  abrirModalCadernoErros(): void {
+    if (!this.podeUsarAcoesResumo) return;
+    this.mensagemCadernoErro = '';
+    this.mensagemCadernoSucesso = '';
+    this.mostrarModalCaderno = true;
+    this.cadernoForm = this.novoFormCaderno();
+    this.carregarMateriasCadernoComPreselecao();
+  }
+
+  fecharModalCadernoErros(): void {
+    this.mostrarModalCaderno = false;
+    this.mensagemCadernoErro = '';
+    this.mensagemCadernoSucesso = '';
+  }
+
+  novoCadernoErro(): void {
+    const materiaAtual = this.cadernoForm.materiaId;
+    this.cadernoForm = this.novoFormCaderno(materiaAtual || undefined);
+    this.cadernoTopicosFlat = [];
+    this.cadernoTopicosPrincipais = [];
+    this.cadernoSubtopicosOpcoes = [];
+    if (this.cadernoForm.materiaId) {
+      this.onCadernoMateriaChange();
+    }
+  }
+
+  onCadernoMateriaChange(topicoIdPreferido?: number, subtopicoIdPreferido?: number): void {
+    const materiaId = Number(this.cadernoForm.materiaId || 0);
+    this.cadernoForm.topicoId = null;
+    this.cadernoForm.subtopicoId = null;
+    this.cadernoTopicosFlat = [];
+    this.cadernoTopicosPrincipais = [];
+    this.cadernoSubtopicosOpcoes = [];
+
+    if (!materiaId) return;
+
+    const materia = this.cadernoMaterias.find((m) => Number(m.materiaId || 0) === materiaId);
+    if (!materia) return;
+
+    const flat = this.normalizarArvoreCaderno(materia.topicos || [], null, 0, []);
+    this.cadernoTopicosFlat = flat;
+    this.cadernoTopicosPrincipais = flat.filter((n) => !n.parentId && n.ativo !== false);
+
+    if (topicoIdPreferido || subtopicoIdPreferido) {
+      this.preselecionarTopicosCaderno(topicoIdPreferido, subtopicoIdPreferido);
+    }
+  }
+
+  onCadernoTopicoChange(): void {
+    const topicoId = Number(this.cadernoForm.topicoId || 0);
+    this.cadernoForm.subtopicoId = null;
+    this.cadernoSubtopicosOpcoes = this.cadernoTopicosFlat.filter((n) => n.parentId === topicoId && n.ativo !== false);
+  }
+
+  salvarCadernoErro(): void {
+    this.mensagemCadernoErro = '';
+    this.mensagemCadernoSucesso = '';
+
+    if (
+      !this.cadernoForm.materiaId ||
+      !this.cadernoForm.topicoId ||
+      !(this.cadernoForm.titulo || '').trim() ||
+      !(this.cadernoForm.descricaoErro || '').trim()
+    ) {
+      this.mensagemCadernoErro = 'Preencha matéria, tópico, título e descrição do erro.';
+      return;
+    }
+
+    const payload: CadernoErroPayload = {
+      materiaId: Number(this.cadernoForm.materiaId),
+      topicoId: Number(this.cadernoForm.topicoId),
+      subtopicoId: this.cadernoForm.subtopicoId ? Number(this.cadernoForm.subtopicoId) : null,
+      titulo: String(this.cadernoForm.titulo || '').trim(),
+      descricaoErro: String(this.cadernoForm.descricaoErro || '').trim(),
+      causaRaiz: String(this.cadernoForm.causaRaiz || '').trim() || null,
+      correcao: String(this.cadernoForm.correcao || '').trim() || null,
+      fonte: this.cadernoForm.fonte,
+      dataErro: this.cadernoForm.dataErro || this.hojeISO(),
+      tags: this.parseTagsCaderno(this.cadernoForm.tagsTexto),
+      questaoId: this.cadernoForm.questaoId || null,
+      simuladoId: this.cadernoForm.simuladoId || null,
+      tentativaId: this.cadernoForm.tentativaId || null
+    };
+
+    this.salvandoCaderno = true;
+    this.cadernoErrosService.criar(payload).pipe(
+      finalize(() => (this.salvandoCaderno = false))
+    ).subscribe({
+      next: () => {
+        this.mensagemCadernoSucesso = 'Registro salvo com sucesso.';
+        this.novoCadernoErro();
+        setTimeout(() => (this.mensagemCadernoSucesso = ''), 3000);
+      },
+      error: (err) => {
+        this.mensagemCadernoErro = err?.error?.message || 'Não foi possível salvar o registro.';
+      }
+    });
   }
 
   private resetVocabularioForm(): void {
@@ -568,6 +702,136 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     });
 
     return itens;
+  }
+
+  private carregarMateriasCadernoComPreselecao(): void {
+    this.salaEstudoService.listarMateriasParaEstudo('todas').subscribe({
+      next: (materias) => {
+        this.cadernoMaterias = materias || [];
+        const materiaNome = this.normalizarTexto(String(this.form.value.materiaNome || ''));
+        const topicoNome = this.normalizarTexto(String(this.form.value.topicoNome || ''));
+        const subtopicoNome = this.normalizarTexto(String(this.form.value.subtopicoNome || ''));
+
+        const materia = (this.cadernoMaterias || []).find(
+          (m) => this.toKey(String(m?.materiaNome || '')) === this.toKey(materiaNome)
+        );
+
+        if (!materia) return;
+        this.cadernoForm.materiaId = Number(materia.materiaId || 0) || null;
+
+        const topicosRaiz = Array.isArray(materia.topicos) ? materia.topicos : [];
+        const topico = this.encontrarTopicoPorNome(topicosRaiz, topicoNome);
+        const subtopico = subtopicoNome ? this.encontrarTopicoPorNome(this.extrairFilhosBusca(topico || {} as TopicoNodeDTO), subtopicoNome) : null;
+
+        const topicoIdPreferido = this.getTopicoId(topico);
+        const subtopicoIdPreferido = this.getTopicoId(subtopico);
+        this.onCadernoMateriaChange(topicoIdPreferido || undefined, subtopicoIdPreferido || undefined);
+      },
+      error: () => {
+        this.mensagemCadernoErro = 'Não foi possível carregar matérias para o caderno de erros.';
+      }
+    });
+  }
+
+  private normalizarArvoreCaderno(
+    lista: TopicoNodeDTO[],
+    parentId: number | null,
+    nivel: number,
+    acc: TopicoFlatNode[]
+  ): TopicoFlatNode[] {
+    for (const item of lista || []) {
+      const filhos = this.extrairFilhosBusca(item);
+      const id = this.getTopicoId(item);
+      if (!id) continue;
+
+      acc.push({
+        id,
+        descricao: String(item?.descricao || ''),
+        parentId,
+        nivel,
+        hasFilhos: filhos.length > 0,
+        ativo: item?.ativo !== false
+      });
+
+      if (filhos.length) {
+        this.normalizarArvoreCaderno(filhos, id, nivel + 1, acc);
+      }
+    }
+    return acc;
+  }
+
+  private preselecionarTopicosCaderno(topicoIdPreferido?: number, subtopicoIdPreferido?: number): void {
+    if (subtopicoIdPreferido) {
+      const sub = this.cadernoTopicosFlat.find((n) => n.id === subtopicoIdPreferido);
+      if (sub && sub.parentId) {
+        this.cadernoForm.topicoId = sub.parentId;
+        this.onCadernoTopicoChange();
+        this.cadernoForm.subtopicoId = sub.id;
+        return;
+      }
+    }
+
+    if (topicoIdPreferido) {
+      const achado = this.cadernoTopicosFlat.find((n) => n.id === topicoIdPreferido);
+      if (!achado) return;
+      if (achado.parentId) {
+        this.cadernoForm.topicoId = achado.parentId;
+        this.onCadernoTopicoChange();
+        this.cadernoForm.subtopicoId = achado.id;
+        return;
+      }
+      this.cadernoForm.topicoId = achado.id;
+      this.onCadernoTopicoChange();
+    }
+  }
+
+  private novoFormCaderno(materiaId?: number): {
+    id: number | null;
+    materiaId: number | null;
+    topicoId: number | null;
+    subtopicoId: number | null;
+    titulo: string;
+    descricaoErro: string;
+    causaRaiz: string;
+    correcao: string;
+    fonte: CadernoErroFonte;
+    dataErro: string;
+    tagsTexto: string;
+    questaoId: number | null;
+    simuladoId: number | null;
+    tentativaId: number | null;
+  } {
+    return {
+      id: null,
+      materiaId: materiaId || null,
+      topicoId: null,
+      subtopicoId: null,
+      titulo: '',
+      descricaoErro: '',
+      causaRaiz: '',
+      correcao: '',
+      fonte: 'MANUAL',
+      dataErro: this.hojeISO(),
+      tagsTexto: '',
+      questaoId: null,
+      simuladoId: null,
+      tentativaId: null
+    };
+  }
+
+  private parseTagsCaderno(texto: string): string[] {
+    return (texto || '')
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => !!t)
+      .slice(0, 15);
+  }
+
+  private hojeISO(): string {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
   }
 
   salvarFlashcard(): void {

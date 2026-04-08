@@ -744,6 +744,80 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  width: fit-content;
+  padding: 3px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  background: #eef2f7;
+}
+
+.vocabulario-modo .btn-modo-timer {
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vocabulario-modo .btn-modo-timer.ativo {
+  background: #ffffff;
+  color: #0b7285;
+  border-color: rgba(11, 114, 133, 0.35);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
+}
+
+.vocabulario-modo .btn-modo-timer:hover {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+.vocabulario-modal .btn {
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vocabulario-modal .btn.secundario {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1f2937;
+}
+
+.vocabulario-modal .btn.secundario:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.vocabulario-modal .btn.primario {
+  background: #e8f8ef;
+  border-color: #9dd8b5;
+  color: #2f7a4f;
+}
+
+.vocabulario-modal .btn.primario:hover:not(:disabled) {
+  background: #dff3e8;
+  border-color: #74c295;
+}
+
+.vocabulario-modal .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .vocabulario-modal--revisao {
@@ -927,6 +1001,155 @@
   display: flex;
   justify-content: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.caderno-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.caderno-modal {
+  width: min(920px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+}
+
+.caderno-form.card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.caderno-form-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.caderno-form-topo strong {
+  font-size: 1.75rem;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.caderno-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.caderno-form .field label {
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.caderno-form input,
+.caderno-form select,
+.caderno-form textarea {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.97rem;
+  color: #0f172a;
+  box-sizing: border-box;
+}
+
+.caderno-form textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.caderno-form input:focus,
+.caderno-form select:focus,
+.caderno-form textarea:focus {
+  outline: none;
+  border-color: rgba(22, 163, 74, 0.55);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
+}
+
+.caderno-dupla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.caderno-trinca {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.caderno-form-actions {
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.caderno-form .btn {
+  border: 1px solid rgba(16, 185, 129, 0.36);
+  background: #16a34a;
+  color: #fff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.caderno-form .btn:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.caderno-form .btn:disabled {
+  opacity: 0.68;
+  cursor: not-allowed;
+}
+
+.caderno-form .btn.btn-sec {
+  background: #fff;
+  color: #0f172a;
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.caderno-form .btn.btn-save {
+  background: #16a34a;
+  color: #fff;
+}
+
+.caderno-feedback {
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+}
+
+.caderno-feedback.sucesso {
+  color: #166534;
+  border: 1px solid rgba(22, 163, 74, 0.28);
+  background: rgba(220, 252, 231, 0.7);
+}
+
+.caderno-feedback.erro {
+  color: #b91c1c;
+  border: 1px solid rgba(185, 28, 28, 0.28);
+  background: rgba(254, 226, 226, 0.7);
 }
 
 .feedback {
