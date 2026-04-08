@@ -6,6 +6,7 @@ import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { EstudoLivreService } from '../services/estudo-livre.service';
 import { MateriaTopicosDTO, SalaEstudoService, TopicoNodeDTO, VocabularioDTO } from '../services/sala-estudo.service';
 import { EditalService } from '../services/edital.service';
+import { MateriaService } from '../services/materia.service';
 import { FlashcardService } from '../services/flashcard.service';
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { CadernoErroFonte, CadernoErroPayload, CadernoErrosService } from '../services/caderno-erros.service';
@@ -176,6 +177,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     private estudoLivreService: EstudoLivreService,
     private salaEstudoService: SalaEstudoService,
     private editalService: EditalService,
+    private materiaService: MateriaService,
     private flashcardService: FlashcardService,
     private cadernoErrosService: CadernoErrosService
   ) {}
@@ -1140,6 +1142,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     )
       .subscribe({
         next: () => {
+          this.materiaService.notificarMateriasAlteradas();
           this.salvarHistorico({
             agrupador,
             materiaNome,

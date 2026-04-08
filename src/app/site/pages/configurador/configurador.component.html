@@ -58,21 +58,6 @@
             </p>
           </div>
 
-          <div class="form-group">
-            <label for="editalTemplateId">Edital</label>
-            <select id="editalTemplateId" formControlName="editalTemplateId" [disabled]="carregandoEditaisTemplates" required>
-              <option value="">Selecione um edital</option>
-              <option *ngFor="let edital of editaisTemplates" [value]="edital.id">
-                {{ edital.nome }}
-              </option>
-            </select>
-            <p *ngIf="carregandoEditaisTemplates" class="info">Carregando editais...</p>
-            <p *ngIf="erroEditaisTemplates" class="error">{{ erroEditaisTemplates }}</p>
-            <p *ngIf="configuradorForm.get('editalTemplateId')?.invalid && configuradorForm.get('editalTemplateId')?.touched"
-              class="error">
-              Edital obrigatório.
-            </p>
-          </div>
         </div>
 
         <!-- Etapa 2: Endereço (com Município dentro) -->

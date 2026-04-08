@@ -657,7 +657,7 @@ export class FocoComponent implements OnInit, OnDestroy {
   }
 
   get revisoesFeitasHoje(): number {
-    return Number(this.progressoHoje?.revisoesTopicoConcluidas ?? 0);
+    return this.revisoesTopicoLiquidasHoje;
   }
 
   get estudosFeitosHoje(): number {
@@ -706,7 +706,7 @@ export class FocoComponent implements OnInit, OnDestroy {
   }
 
   get revisoesConcluidasHoje(): number {
-    return Number(this.progressoHoje?.revisoesTopicoConcluidas ?? 0);
+    return this.revisoesTopicoLiquidasHoje;
   }
 
   get revisoesSubtexto(): string {
@@ -1697,6 +1697,17 @@ export class FocoComponent implements OnInit, OnDestroy {
   private toInt(value: unknown): number {
     const n = Number(value);
     return Number.isFinite(n) ? Math.max(0, Math.round(n)) : 0;
+  }
+
+  /**
+   * Ajuste defensivo:
+   * Em alguns cenários o backend retorna revisoesTopicoConcluidas incluindo estudos novos.
+   * Para o KPI de "Tópicos revisados", removemos o volume de estudos concluídos.
+   */
+  private get revisoesTopicoLiquidasHoje(): number {
+    const revisoesRaw = this.toInt(this.progressoHoje?.revisoesTopicoConcluidas);
+    const estudosRaw = this.toInt(this.progressoHoje?.estudosConcluidos);
+    return Math.max(0, revisoesRaw - estudosRaw);
   }
 
   private resolverMensagemErro(err: HttpErrorResponse): string {

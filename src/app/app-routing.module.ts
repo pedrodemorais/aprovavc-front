@@ -26,6 +26,7 @@ import { AssinaturaCanceladaComponent } from './core/components/area-aluno/assin
 import { AssinaturaPlanosComponent } from './core/components/area-aluno/assinatura-planos/assinatura-planos.component';
 import { PerfilAlunoComponent } from './core/components/area-aluno/perfil-aluno/perfil-aluno.component';
 import { PlanoAtivoGuard } from './site/pages/guards/plano-ativo.guard';
+import { HojeSemEditalGuard } from './site/pages/guards/hoje-sem-edital.guard';
 import { MateriaEstudoComponent } from './core/components/area-aluno/estudo-por-materia/estudo-por-materia.component';
 import { PainelAdminComponent } from './core/area-admin/pages/painel-admin/painel-admin.component';
 import { CadastroBaseComponent } from './core/area-admin/pages/painel-admin/cadastro-base/cadastro-base.component';
@@ -74,7 +75,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'hoje', pathMatch: 'full' },
-      { path: 'hoje', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
+      { path: 'hoje', component: FocoComponent, canActivate: [PlanoAtivoGuard, HojeSemEditalGuard] },
       { path: 'hoje_dois', component: HojeDoisComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'foco', component: FocoComponent, canActivate: [PlanoAtivoGuard] },
       { path: 'configuracoes', component: ConfiguracoesComponent, canActivate: [PlanoAtivoGuard] },
