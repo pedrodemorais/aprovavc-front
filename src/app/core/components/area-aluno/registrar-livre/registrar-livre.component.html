@@ -13,52 +13,56 @@
         </span>
       </h1>
       <div class="study-timer-panel">
-        <div class="timer-mode-switch" role="tablist" aria-label="Modo de timer">
+        <div class="timer-group timer-group--mode" role="tablist" aria-label="Modo de timer">
+          <div class="timer-segmented">
           <button
             type="button"
-            class="timer-mode-btn"
+            class="timer-mode-btn btn-toggle"
             [class.active]="timerModo === 'livre'"
             (click)="selecionarModoTimer('livre')">
             Livre
           </button>
           <button
             type="button"
-            class="timer-mode-btn"
+            class="timer-mode-btn btn-toggle"
             [class.active]="timerModo === 'pomodoro'"
             (click)="selecionarModoTimer('pomodoro')">
             Pomodoro
           </button>
+          </div>
         </div>
 
-        <div class="timer-actions">
-          <button type="button" class="timer-action-btn timer-action-btn--primary" (click)="alternarTimer()">
+        <div class="timer-group timer-group--action timer-actions">
+          <button type="button" class="timer-action-btn timer-action-btn--primary timer-action-btn--start btn-primary" (click)="alternarTimer()">
             {{ timerRodando ? 'Pausar' : 'Iniciar' }}
           </button>
-          <button type="button" class="timer-action-btn" (click)="zerarTimer()" [disabled]="!podeZerarTimer">
+          <button type="button" class="timer-action-btn timer-action-btn--reset btn-secondary" (click)="zerarTimer()" [disabled]="!podeZerarTimer">
             Zerar
           </button>
         </div>
 
-        <div class="timer-display timer-display--editavel">
-          <span class="timer-display__label">{{ timerDisplayLabel }} |</span>
-          <input
-            type="text"
-            class="timer-display__input"
-            inputmode="numeric"
-            placeholder="00:00:00"
-            [ngModel]="tempoManual || tempoEstudoFormatado"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="onTempoManualInput($event)"
-            (blur)="onTempoManualBlur()"
-            title="Digite manualmente em MM, MM:SS ou HH:MM:SS (vazio usa cronometro)" />
+        <div class="timer-group timer-group--status">
+          <div class="timer-display timer-display--editavel">
+            <span class="timer-display__label">{{ timerDisplayLabel }} |</span>
+            <input
+              type="text"
+              class="timer-display__input"
+              inputmode="numeric"
+              placeholder="00:00:00"
+              [ngModel]="tempoManual || tempoEstudoFormatado"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onTempoManualInput($event)"
+              (blur)="onTempoManualBlur()"
+              title="Digite manualmente em MM, MM:SS ou HH:MM:SS (vazio usa cronometro)" />
+          </div>
+          <button
+            type="submit"
+            form="registrar-livre-form"
+            class="timer-action-btn timer-action-btn--primary timer-action-btn--submit btn-primary"
+            [disabled]="enviando">
+            {{ enviando ? 'Registrando...' : 'Registrar' }}
+          </button>
         </div>
-        <button
-          type="submit"
-          form="registrar-livre-form"
-          class="timer-action-btn timer-action-btn--primary timer-action-btn--submit"
-          [disabled]="enviando">
-          {{ enviando ? 'Registrando...' : 'Registrar' }}
-        </button>
       </div>
     </header>
 
@@ -201,7 +205,23 @@
       </label>
 
       <div class="field">
-        <span>Resumo / anotacao do estudo (opcional)</span>
+        <div class="resumo-header">
+          <span>Resumo / anotacao do estudo (opcional)</span>
+          <div class="resumo-acoes">
+            <button type="button" class="resumo-acao-btn" (click)="abrirModalFlashcard()" [disabled]="!podeUsarAcoesResumo">
+              <i class="pi pi-copy"></i>
+              <span>Flashcard</span>
+            </button>
+            <button type="button" class="resumo-acao-btn" (click)="abrirModalVocabulario('lista')" [disabled]="!podeUsarAcoesResumo">
+              <i class="pi pi-list"></i>
+              <span>Vocabulário</span>
+            </button>
+            <button type="button" class="resumo-acao-btn" [disabled]="!podeUsarAcoesResumo">
+              <i class="pi pi-file-edit"></i>
+              <span>Caderno</span>
+            </button>
+          </div>
+        </div>
         <div class="editor-wrapper">
           <p-editor
             id="observacao"
@@ -258,5 +278,248 @@
         </div>
       </section>
     </form>
+
+    <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard">
+      <div class="flashcard-modal">
+        <header class="flashcard-header">
+          <div class="flashcard-header-titulo">
+            <h2 class="flashcard-titulo">Criar Flashcard</h2>
+            <i
+              class="pi pi-info-circle info-icon"
+              pTooltip="Transforme o que voce acabou de estudar em perguntas rapidas para revisar depois."
+              tooltipPosition="right"
+              [showDelay]="120"
+              [hideDelay]="80"
+              appendTo="body"
+              aria-label="Dica">
+            </i>
+          </div>
+          <button type="button" class="flashcard-fechar" (click)="fecharModalFlashcard()" aria-label="Fechar modal de flashcard">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+
+        <div class="flashcard-contexto">
+          <div class="flashcard-contexto-linha">
+            <span class="contexto-label">Materia:</span>
+            <span class="contexto-valor">{{ flashcardMateriaContexto }}</span>
+          </div>
+          <div class="flashcard-contexto-linha">
+            <span class="contexto-label">Topico:</span>
+            <span class="contexto-valor">{{ flashcardTopicoContexto }}</span>
+          </div>
+        </div>
+
+        <div class="flashcard-linha-dupla">
+          <label class="flashcard-label">
+            Tipo
+            <select class="flashcard-select" [(ngModel)]="flashcardTipo" [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onFlashcardTipoChange($event)">
+              <option value="PERGUNTA_RESPOSTA">Pergunta e resposta</option>
+              <option value="VERDADEIRO_FALSO">Verdadeiro ou falso</option>
+              <option value="CLOZE">Cloze (preencher lacuna)</option>
+            </select>
+          </label>
+
+          <label class="flashcard-label">
+            Dificuldade
+            <select class="flashcard-select" [(ngModel)]="flashcardDificuldade" [ngModelOptions]="{ standalone: true }">
+              <option value="FACIL">Facil</option>
+              <option value="MEDIA">Media</option>
+              <option value="DIFICIL">Dificil</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="flashcard-campos">
+          <label class="flashcard-label">
+            Frente (pergunta)
+            <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardFrente" [ngModelOptions]="{ standalone: true }"
+              [attr.maxlength]="maxFlashcardFrente" placeholder="Digite a pergunta..."></textarea>
+            <span class="flashcard-counter">{{ (flashcardFrente.length || 0) }}/{{ maxFlashcardFrente }}</span>
+          </label>
+
+          <div class="flashcard-vf-selector" *ngIf="flashcardTipo === 'VERDADEIRO_FALSO'">
+            <span class="flashcard-vf-label">Resposta correta</span>
+            <label class="flashcard-vf-option">
+              <input type="radio" name="flashcardVfRegistroLivre" [value]="'VERDADEIRO'" [(ngModel)]="flashcardVerdadeiroFalso"
+                [ngModelOptions]="{ standalone: true }" (ngModelChange)="onFlashcardVerdadeiroFalsoChange($event)" />
+              Verdadeiro
+            </label>
+            <label class="flashcard-vf-option">
+              <input type="radio" name="flashcardVfRegistroLivre" [value]="'FALSO'" [(ngModel)]="flashcardVerdadeiroFalso"
+                [ngModelOptions]="{ standalone: true }" (ngModelChange)="onFlashcardVerdadeiroFalsoChange($event)" />
+              Falso
+            </label>
+          </div>
+
+          <label class="flashcard-label">
+            Verso (resposta)
+            <textarea rows="3" class="flashcard-textarea" [(ngModel)]="flashcardVerso" [ngModelOptions]="{ standalone: true }"
+              [attr.maxlength]="maxFlashcardVerso" placeholder="Digite a resposta..."
+              [disabled]="flashcardTipo === 'VERDADEIRO_FALSO'"></textarea>
+            <span class="flashcard-counter">{{ (flashcardVerso.length || 0) }}/{{ maxFlashcardVerso }}</span>
+          </label>
+        </div>
+
+        <div class="flashcard-tags-wrapper">
+          <label class="flashcard-label">
+            Tags (opcional)
+            <input type="text" class="flashcard-input" [(ngModel)]="flashcardTags" [ngModelOptions]="{ standalone: true }"
+              placeholder="Ex.: criminologia, conceito" />
+          </label>
+          <small class="flashcard-dica">Dica: use tags para encontrar depois todos os flashcards relacionados a um tema.</small>
+        </div>
+
+        <div *ngIf="mensagemFlashcardSucesso" class="flashcard-mensagem-sucesso">{{ mensagemFlashcardSucesso }}</div>
+        <div *ngIf="mensagemFlashcardErro" class="flashcard-mensagem-erro">{{ mensagemFlashcardErro }}</div>
+
+        <footer class="flashcard-footer">
+          <button type="button" class="btn secundario" (click)="fecharModalFlashcard()">
+            Cancelar
+          </button>
+          <button type="button" class="btn primario" (click)="salvarFlashcard()"
+            [disabled]="salvandoFlashcard || !flashcardFrente.trim() || !flashcardVerso.trim()">
+            {{ salvandoFlashcard ? 'Salvando...' : 'Salvar Flashcard' }}
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="vocabulario-overlay" *ngIf="mostrarModalVocabulario">
+      <div class="vocabulario-modal" [class.vocabulario-modal--revisao]="vocabularioModo === 'revisar'">
+        <header class="vocabulario-header">
+          <h2 class="vocabulario-titulo">VocabulÃ¡rio</h2>
+          <button type="button" class="vocabulario-fechar" (click)="fecharModalVocabulario()">x</button>
+        </header>
+
+        <div class="vocabulario-modo">
+          <button type="button" class="btn-modo-timer" [class.ativo]="vocabularioModo === 'lista'"
+            (click)="voltarListaVocabulario()">Lista</button>
+          <button type="button" class="btn-modo-timer" [class.ativo]="vocabularioModo === 'revisar'"
+            (click)="iniciarRevisaoVocabulario()">Revisar</button>
+        </div>
+
+        <div class="vocabulario-contexto">
+          <div class="vocabulario-contexto-linha">
+            <span class="contexto-label">MatÃ©ria:</span>
+            <span class="contexto-valor">{{ vocabularioMateriaContexto }}</span>
+          </div>
+          <div class="vocabulario-contexto-linha">
+            <span class="contexto-label">TÃ³pico:</span>
+            <span class="contexto-valor">{{ vocabularioTopicoContexto }}</span>
+          </div>
+        </div>
+
+        <div class="vocabulario-form" *ngIf="vocabularioModo === 'lista'">
+          <label class="vocabulario-label">
+            Termo
+            <input
+              type="text"
+              class="vocabulario-input"
+              [(ngModel)]="vocabularioTermo"
+              [ngModelOptions]="{ standalone: true }"
+              [attr.maxlength]="maxVocabularioChars"
+              placeholder="Ex.: Class" />
+          </label>
+          <label class="vocabulario-label">
+            DefiniÃ§Ã£o
+            <input
+              type="text"
+              class="vocabulario-input"
+              [(ngModel)]="vocabularioDefinicao"
+              [ngModelOptions]="{ standalone: true }"
+              [attr.maxlength]="maxVocabularioChars"
+              placeholder="Ex.: Classe" />
+          </label>
+          <label class="vocabulario-label">
+            Tags (opcional)
+            <input
+              type="text"
+              class="vocabulario-input"
+              [(ngModel)]="vocabularioTags"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Ex.: java, oop" />
+          </label>
+        </div>
+
+        <div class="vocabulario-actions" *ngIf="vocabularioModo === 'lista'">
+          <button type="button" class="btn secundario" (click)="fecharModalVocabulario()">Cancelar</button>
+          <button type="button" class="btn primario" (click)="salvarVocabulario()"
+            [disabled]="!vocabularioTermo.trim() || !vocabularioDefinicao.trim() || salvandoVocabulario">
+            {{ salvandoVocabulario ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+
+        <div class="vocabulario-import" *ngIf="vocabularioModo === 'lista'">
+          <label class="vocabulario-label">
+            Salvar lista
+            <textarea
+              rows="6"
+              class="vocabulario-textarea"
+              [(ngModel)]="vocabularioListaTexto"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Ex.: Building blocks - Blocos de construcao"></textarea>
+          </label>
+          <button type="button" class="btn primario" (click)="salvarListaVocabulario()"
+            [disabled]="!vocabularioListaTexto.trim() || salvandoListaVocabulario">
+            {{ salvandoListaVocabulario ? 'Importando...' : 'Importar lista' }}
+          </button>
+          <div class="vocabulario-import-dica">
+            Use ":" ou "-" como separador entre termo e definiÃ§Ã£o.
+          </div>
+        </div>
+
+        <div class="vocabulario-feedback" *ngIf="mensagemVocabularioSucesso">
+          {{ mensagemVocabularioSucesso }}
+        </div>
+        <div class="vocabulario-feedback vocabulario-feedback--erro" *ngIf="erroVocabularios">
+          {{ erroVocabularios }}
+        </div>
+
+        <div class="vocabulario-lista" *ngIf="vocabularioModo === 'lista'">
+          <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabularios...</div>
+          <div class="vocabulario-vazio" *ngIf="!carregandoVocabularios && !vocabularios.length">
+            Nenhum vocabulÃ¡rio cadastrado neste tÃ³pico.
+          </div>
+          <ul *ngIf="!carregandoVocabularios && vocabularios.length">
+            <li class="vocabulario-item" *ngFor="let v of vocabularios; trackBy: trackByVocabularioId">
+              <div class="vocabulario-item-texto">
+                <strong>{{ v.termo }}</strong>
+                <span class="vocabulario-item-sep">-</span>
+                <span>{{ v.definicao }}</span>
+                <span class="vocabulario-item-tags" *ngIf="v.tags">({{ v.tags }})</span>
+              </div>
+              <button type="button" class="vocabulario-item-del" (click)="excluirVocabulario(v)">Excluir</button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="vocabulario-revisao" *ngIf="vocabularioModo === 'revisar'">
+          <div class="vocabulario-loading" *ngIf="carregandoVocabularios">Carregando vocabularios...</div>
+          <div class="vocabulario-vazio" *ngIf="!carregandoVocabularios && !vocabularios.length">
+            Nenhum vocabulÃ¡rio cadastrado neste topico.
+          </div>
+          <div class="vocabulario-card" *ngIf="!carregandoVocabularios && vocabularioAtual">
+            <div class="vocabulario-card-meta">
+              {{ vocabularioIndexAtual + 1 }} / {{ vocabularios.length }}
+            </div>
+            <div class="vocabulario-card-termo">{{ vocabularioAtual.termo }}</div>
+            <div class="vocabulario-card-def" *ngIf="vocabularioMostrarDefinicao">
+              {{ vocabularioAtual.definicao }}
+              <span class="vocabulario-item-tags" *ngIf="vocabularioAtual.tags">({{ vocabularioAtual.tags }})</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="vocabulario-revisao-actions">
+          <button type="button" class="btn secundario" (click)="anteriorVocabulario()">Anterior</button>
+          <button type="button" class="btn secundario vocabulario-reveal" (click)="toggleDefinicaoVocabulario()">
+            {{ vocabularioMostrarDefinicao ? 'Ocultar definiÃ§Ã£o' : 'Mostrar definiÃ§Ã£o' }}
+          </button>
+          <button type="button" class="btn primario" (click)="proximoVocabulario()">PrÃ³ximo</button>
+        </div>
+      </div>
+    </div>
   </section>
 </main>
