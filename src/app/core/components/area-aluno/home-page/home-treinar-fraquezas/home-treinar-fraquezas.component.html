@@ -1,0 +1,14 @@
+<article class="aux-card" [class.aux-card--muted]="!disponivel">
+  <h3>TREINAR FRAQUEZAS</h3>
+
+  <ng-container *ngIf="disponivel; else vazioTpl">
+    <p><strong>Matéria:</strong> {{ materiaNome }}</p>
+    <p>{{ topicosBaixaRetencao }} tópicos com baixa retenção<br />Baseado em erros recentes.</p>
+    <p class="aux-card__tempo">Tempo estimado: {{ tempoEstimadoMinutos }} minutos</p>
+    <button type="button" (click)="onTreinar()">TREINAR AGORA</button>
+  </ng-container>
+
+  <ng-template #vazioTpl>
+    <p>Sem fraquezas prioritárias no momento.</p>
+  </ng-template>
+</article>

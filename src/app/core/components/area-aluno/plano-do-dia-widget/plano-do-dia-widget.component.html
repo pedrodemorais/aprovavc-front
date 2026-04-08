@@ -1,0 +1,111 @@
+<div class="plano-widget">
+
+  <div class="top">
+    <div class="title">
+      <div class="kicker">Plano do dia</div>
+      <div class="headline">Seu foco agora</div>
+    </div>
+
+    <div class="top-actions">
+      <button
+        pButton
+        type="button"
+        class="p-button-text"
+        icon="pi pi-refresh"
+        label="Atualizar"
+        [disabled]="carregando"
+        (click)="carregarPlano()">
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="state" *ngIf="carregando">
+    <div class="skeleton-line w60"></div>
+    <div class="skeleton-line w40"></div>
+    <div class="skeleton-line w90"></div>
+    <div class="skeleton-line w75"></div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="state error" *ngIf="!carregando && erroMsg">
+    <div class="error-title">Não foi possível carregar</div>
+    <div class="error-msg">{{ erroMsg }}</div>
+
+    <button
+      pButton
+      type="button"
+      icon="pi pi-refresh"
+      label="Tentar novamente"
+      (click)="carregarPlano()">
+    </button>
+  </div>
+
+  <!-- CONTENT -->
+  <ng-container *ngIf="!carregando && !erroMsg && plano as p">
+
+    <div class="summary">
+      <div class="pill">
+        <span class="pill-label">Bloco</span>
+        <span class="pill-value">{{ p.blocoNumero }}</span>
+      </div>
+
+      <div class="pill">
+        <span class="pill-label">Tempo</span>
+        <span class="pill-value">{{ minutosParaTexto(p.minutosDisponiveis) }}</span>
+      </div>
+
+      <div class="pill">
+        <span class="pill-label">Revisões hoje</span>
+        <span class="pill-value">{{ p.revisoesHojeQtd }}</span>
+      </div>
+
+      <div class="pill danger">
+        <span class="pill-label">Atrasadas</span>
+        <span class="pill-value">{{ p.revisoesAtrasadasQtd }}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Matérias do bloco</div>
+        <div class="card-subtitle" *ngIf="!temMaterias">
+          Nenhuma matéria configurada neste bloco.
+        </div>
+      </div>
+
+      <div class="list" *ngIf="temMaterias">
+        <div class="item" *ngFor="let m of p.materiasDoBloco">
+          <div class="order">{{ m.ordem }}</div>
+          <div class="name">{{ m.nome }}</div>
+        </div>
+      </div>
+
+      <div class="hint" *ngIf="!temMaterias">
+        Vá em <b>Configurar blocos</b> e adicione matérias no Bloco {{ p.blocoNumero }}.
+      </div>
+    </div>
+
+    <div class="actions">
+      <button
+        pButton
+        type="button"
+        class="p-button-outlined"
+        icon="pi pi-cog"
+        label="Configurar blocos"
+        (click)="irParaBlocos()">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-arrow-right"
+        label="Avançar bloco"
+        [disabled]="carregando"
+        (click)="avancarBloco()">
+      </button>
+    </div>
+
+  </ng-container>
+
+</div>

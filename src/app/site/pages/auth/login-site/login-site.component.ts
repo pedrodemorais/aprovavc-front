@@ -1,118 +1,152 @@
-import { Component,OnInit,ViewEncapsulation  } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from 'src/app/site/services/auth.service';
-import { ActivatedRoute } from '@angular/router';
 import { NotificationService } from 'src/app/site/services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PlanoSemanalBootstrapService } from 'src/app/core/components/area-aluno/services/plano-semanal-bootstrap.service';
 
 @Component({
   selector: 'app-login-site',
   templateUrl: './login-site.component.html',
   styleUrls: ['./login-site.component.css'],
-  encapsulation: ViewEncapsulation.Emulated // Garante que os estilos fiquem isolados
+  encapsulation: ViewEncapsulation.Emulated
 })
-export class LoginSiteComponent implements OnInit  {
+export class LoginSiteComponent implements OnInit {
   message: string | null = null;
   email = '';
   password = '';
+  showPassword = false;
   errorMessage = '';
-  successMessage = ''; // Para exibir mensagens de sucesso
+  successMessage = '';
   mensagem: string = '';
+  private mensagemAtivacaoDetectada = false;
 
-  constructor(private authService: AuthService, private router: Router,private route: ActivatedRoute,private notificationService: NotificationService) {
-    
-  }
+  constructor(
+    private authService: AuthService,
+    private planoSemanalBootstrapService: PlanoSemanalBootstrapService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit() {
-    // Verifica se a URL contém o parâmetro "ativado=true"
+
+    // ✅ Trata parâmetros vindos do backend após ativação
     this.route.queryParams.subscribe(params => {
+
+      // Compatibilidade com seu formato antigo: ?ativado=true
       if (params['ativado'] === 'true') {
         this.mensagem = '✅ Conta ativada com sucesso! Faça login.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
+        this.limparQueryParamsAtivacao();
+        return;
+      }
+
+      // Novo formato: ?ativacao=ok|ja|invalido
+      const ativacao = params['ativacao'];
+
+      if (ativacao === 'ok') {
+        this.mensagem = '✅ Conta ativada com sucesso! Faça login.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
+        this.limparQueryParamsAtivacao();
+      } else if (ativacao === 'ja') {
+        this.mensagem = 'ℹ️ Sua conta já estava ativada. Faça login.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
+        this.limparQueryParamsAtivacao();
+      } else if (ativacao === 'invalido') {
+        this.mensagem = '⚠️ Link de ativação inválido ou expirado. Tente fazer login ou solicite um novo cadastro.';
+        this.mensagemAtivacaoDetectada = true;
+        this.notificationService.clearMessage();
+        this.limparQueryParamsAtivacao();
       }
     });
 
+    // ✅ Mensagem salva no localStorage
     const savedMessage = localStorage.getItem('notificationMessage');
-    if (savedMessage) {
-      
+    if (!this.mensagemAtivacaoDetectada && savedMessage) {
       this.mensagem = savedMessage;
-  
-      // 🔥 Remove a mensagem do localStorage para não exibir repetidamente
+
       setTimeout(() => {
         localStorage.removeItem('notificationMessage');
-        
       }, 15000);
     }
-    
   }
-  login() {
-    console.log("🔍 Botão de login foi clicado!");
-  
-    this.authService.login({ email: this.email, senha: this.password }).subscribe({
-      next: () => {
-        console.log("✅ Login bem-sucedido!");
-  
-        // 🔥 Agora verificamos se o usuário está autenticado
-        this.authService.isAuthenticated().subscribe(authenticated => {
-          if (authenticated) {
-           
-            this.router.navigate(['/area-restrita/menu']).then(() => {
-             
-            });
-          } else {
-           
-            this.errorMessage = 'Erro ao autenticar. Verifique suas credenciais.';
-          }
-        });
-      },
-      error: (error: HttpErrorResponse) => {
-            
-        if (error.error === 401) {
-            console.warn("⚠️ Erro de autenticação - 401 UNAUTHORIZED");
-        }
-    
-        if (error) {
-            if (typeof error.error === 'object' && error.error.message) {
-                console.log("✅ Mensagem encontrada dentro de error.error:", error.error.message);
-                this.errorMessage = error.error.message;
-            } 
-            else if (typeof error.error === 'string') {
-                try {
-                    const parsedError = JSON.parse(error.error);
-                    if (parsedError.message) {
-                        console.log("✅ Mensagem encontrada no JSON convertido:", parsedError.message);
-                        this.errorMessage = parsedError.message;
-                    } else {
-                        this.errorMessage = error.error;
-                    }
-                } catch (e) {
-                    console.warn("⚠️ Erro ao fazer parse do JSON de erro!");
-                    this.errorMessage = error.error;
-                }
-            } 
-            else {
-                console.warn("⚠️ Mensagem não encontrada, aplicando mensagem padrão!");
-                this.errorMessage = "Erro inesperado. Tente novamente.";
-            }
-        } else {
-            console.warn("⚠️ Nenhuma mensagem de erro encontrada no backend!");
-            this.errorMessage = "Erro inesperado. Tente novamente.";
-        }
-    
-        console.warn("⚠️ Mensagem final tratada:", this.errorMessage);
-    }
-    
-    
-      
-      
+
+  // ✅ Remove query params da URL pra não repetir mensagem ao dar F5
+  private limparQueryParamsAtivacao(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ativacao: null, ativado: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
     });
   }
 
-  
-  
+  login() {
+    console.log('🔍 Botão de login foi clicado!');
 
-  
+    this.errorMessage = '';
+
+    this.authService.login({ email: this.email, senha: this.password }).subscribe({
+      next: (resp) => {
+        console.log('✅ Login bem-sucedido!', resp);
+
+        if (!resp.assinaturaValida) {
+          this.mensagem =
+            'Sua assinatura está expirada. Atualize seu plano para continuar usando o Revizo.';
+
+          this.router.navigate(['/area-restrita/meu-cadastro'], {
+            queryParams: { expirado: true },
+          });
+
+          return;
+        }
+
+        this.planoSemanalBootstrapService.preencherSeNecessarioNoLogin().subscribe({
+          next: () => {
+            this.router.navigate(['/area-restrita/hoje']).then(() => {
+              console.log('➡️ Redirecionado para hoje');
+            });
+          },
+          error: () => {
+            this.router.navigate(['/area-restrita/hoje']).then(() => {
+              console.log('➡️ Redirecionado para hoje');
+            });
+          }
+        });
+      },
+
+      error: (error: HttpErrorResponse) => {
+        if (error) {
+          if (typeof error.error === 'object' && error.error.message) {
+            this.errorMessage = error.error.message;
+          } else if (typeof error.error === 'string') {
+            try {
+              const parsedError = JSON.parse(error.error);
+              if (parsedError.message) {
+                this.errorMessage = parsedError.message;
+              } else {
+                this.errorMessage = error.error;
+              }
+            } catch {
+              this.errorMessage = error.error;
+            }
+          } else {
+            this.errorMessage = 'Erro inesperado. Tente novamente.';
+          }
+        } else {
+          this.errorMessage = 'Erro inesperado. Tente novamente.';
+        }
+
+        console.warn('⚠️ Mensagem final tratada:', this.errorMessage);
+      },
+    });
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
 }
-
-
-
-

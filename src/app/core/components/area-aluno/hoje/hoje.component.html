@@ -1,0 +1,218 @@
+<div class="hoje-page">
+  <p-toast></p-toast>
+
+  <div class="hoje-shell" *ngIf="!loading; else loadingTpl">
+    <section class="hoje-vazio" *ngIf="totalItens === 0 && !temPendenciasGeraisRevisao">
+      <h2>Hoje voce esta em dia.</h2>
+      <p>Volte amanha para continuar consolidando.</p>
+    </section>
+
+    <section class="hoje-resumo-dia" *ngIf="totalItens > 0">
+      <div class="hoje-resumo-dia__head">
+        <div>
+          <span class="hoje-resumo-dia__eyebrow">Fila fixa do dia</span>
+          <h2>Revisoes de hoje: {{ totalItens }}</h2>
+        </div>
+        <div class="hoje-resumo-dia__pct">{{ progressoPercentualLabel }}</div>
+      </div>
+
+      <div class="hoje-resumo-dia__metrics" *ngIf="!revisaoConcluida; else hojeConcluidoTpl">
+        <div class="hoje-resumo-dia__metric">
+          <span class="hoje-resumo-dia__label">Concluidos</span>
+          <strong>{{ consolidadoHoje }} / {{ totalItens }}</strong>
+        </div>
+        <div class="hoje-resumo-dia__metric">
+          <span class="hoje-resumo-dia__label">Restante</span>
+          <strong>Faltam {{ revisoesRestantesHoje }} revisoes</strong>
+        </div>
+      </div>
+
+      <div class="hoje-resumo-dia__bar" aria-hidden="true">
+        <span class="hoje-resumo-dia__bar-fill" [style.width.%]="progressoPercentual"></span>
+      </div>
+    </section>
+
+    <section class="estado-card">
+      <h1>Estado do seu estudo</h1>
+      <p class="estado-card-sub">{{ ui.estado.descricao }}</p>
+
+      <div class="estado-card-head">
+        <div class="estado-metricas">
+          <div class="estado-risk-card estado-risk-card--atrasadas">
+            <div class="estado-risk-title-row">
+              <span class="estado-risk-title">Atrasadas</span>
+            </div>
+            <div class="estado-risk-main">
+              <img
+                src="assets/img/icon/warning.png"
+                alt="Atrasadas"
+                class="estado-risk-icon" />
+              <span class="estado-risk-value">{{ qtdRevisoesAtrasadas }}</span>
+            </div>
+          </div>
+
+          <div class="estado-risk-card estado-risk-card--vence-hoje">
+            <div class="estado-risk-title-row">
+              <span class="estado-risk-title">Vence hoje</span>
+            </div>
+            <div class="estado-risk-main">
+              <img
+                src="assets/img/icon/hoje.png"
+                alt="Vence hoje"
+                class="estado-risk-icon" />
+              <span class="estado-risk-value">{{ qtdRevisoesVenceHoje }}</span>
+            </div>
+          </div>
+
+          <div class="estado-risk-card estado-risk-card--em-dia">
+            <div class="estado-risk-title-row">
+              <span class="estado-risk-title">Em dia</span>
+            </div>
+            <div class="estado-risk-main">
+              <span class="estado-risk-value">{{ qtdRevisoesEmDia }}</span>
+            </div>
+          </div>
+
+          <div class="estado-risk-card estado-risk-card--streak">
+            <div class="estado-risk-title-row">
+              <span class="estado-risk-title">Dias sem faltar</span>
+            </div>
+            <div class="estado-risk-main">
+              <img
+                src="assets/img/icon/fire.png"
+                alt="Dias sem faltar"
+                class="estado-risk-icon" />
+              <span class="estado-risk-value">{{ streakDiasAtual }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="estado-acoes">
+        <button
+          type="button"
+          class="btn-comecar-revisao-prioritaria"
+          (click)="comecarRevisaoPrioritaria()"
+          [disabled]="!podeComecarRevisaoPrioritaria || iniciandoRevisaoPrioritaria">
+          {{ iniciandoRevisaoPrioritaria ? 'Abrindo...' : 'Começar revisão' }}
+        </button>
+      </div>
+      <div class="estado-label" *ngIf="ui.estado.label !== 'Priorizar revisao agora'">{{ ui.estado.label }}</div>
+    </section>
+
+    <section class="progresso-card">
+      <h2>{{ ui.progresso.titulo }}</h2>
+
+      <div class="progresso-cards-grid">
+        <div class="progresso-mini-card">
+          <div class="progresso-mini-label">Evolucao (7d)</div>
+          <div class="progresso-mini-value">{{ ui.progresso.evolucaoTexto }}</div>
+        </div>
+
+        <div class="progresso-mini-card">
+          <div class="progresso-mini-label">Ritmo atual</div>
+          <div class="progresso-mini-value">{{ ui.progresso.estimativaTexto || 'Sem estimativa' }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="progresso-card" *ngIf="mostrarBlocoCognitivo">
+      <h2>Memoria de hoje</h2>
+
+      <div class="progresso-cards-grid">
+        <div class="progresso-mini-card">
+          <div
+            class="progresso-mini-label"
+            title="Media da estabilidade dos topicos revisados hoje. Pode variar ao incluir novos topicos revisados.">
+            Media de resistencia dos topicos revisados hoje
+          </div>
+          <div class="progresso-mini-value"><strong>{{ resistenciaRevisadosHojeLabel }}</strong></div>
+          <div class="progresso-mini-value" *ngIf="teveRevisoesHojeCognitivo">
+            {{ qtdTopicosRevisadosHojeCognitivo }} topicos com revisao hoje.
+          </div>
+        </div>
+
+        <div class="progresso-mini-card">
+          <div
+            class="progresso-mini-label"
+            title="Media de estabilidade de todos os topicos ativos. Pode oscilar conforme tempo e novos topicos.">
+            Resistencia media da memoria (Global)
+          </div>
+          <div class="progresso-mini-value">
+            {{ resistenciaGlobalMemoriaLabel }}
+            <span title="Variacao em relacao a ontem."> {{ variacaoResistenciaGlobalLabel }}</span>
+          </div>
+        </div>
+      </div>
+
+      <p *ngIf="mensagemContextualEstabilidade">{{ mensagemContextualEstabilidade }}</p>
+    </section>
+
+    <section class="hero-card" *ngIf="itensRestantes > 0 && !revisaoConcluida && itemAtual" [class.hoje-card-entrando]="cardEntrando">
+      <div class="hero-materia">{{ ui.heroItem.materia }}</div>
+      <h2 class="hero-titulo">{{ ui.heroItem.titulo }}</h2>
+
+      <div class="hero-chips">
+        <span [class]="prioridadeClasse(itemAtual.prioridade)">{{ ui.heroItem.statusTexto }}</span>
+        <span class="hero-chip-tempo">{{ ui.heroItem.tempoTexto }}</span>
+      </div>
+
+      <button type="button" class="btn-comecar" [disabled]="modoExecucao" (click)="comecarRevisao()">
+        <span class="btn-loading-dot" *ngIf="modoExecucao" aria-hidden="true"></span>
+        {{ modoExecucao ? 'Abrindo...' : 'Comecar revisao' }}
+      </button>
+
+      <a
+        class="btn-link-critico"
+        [routerLink]="['/area-restrita/retencao']"
+        [queryParams]="{ view: 'criticos' }">
+        Topicos em risco
+      </a>
+
+      <div class="hero-feedback" *ngIf="feedbackConclusaoItem">{{ feedbackConclusaoItem }}</div>
+    </section>
+
+    <section class="hoje-fim" *ngIf="revisaoConcluida">
+      <h2>Voce concluiu sua revisao de hoje</h2>
+      <p>Voce consumiu todo o snapshot do dia: {{ consolidadoHoje }} / {{ totalItens }} concluidos.</p>
+
+      <div class="fim-metricas">
+        <div class="fim-metrica">
+          <span class="fim-label">Total revisado</span>
+          <strong>{{ consolidadoHoje }}</strong>
+        </div>
+        <div class="fim-metrica">
+          <span class="fim-label">Tempo investido</span>
+          <strong>{{ tempoTotalInvestidoLabel }}</strong>
+        </div>
+        <div class="fim-metrica" *ngIf="resumoEdital">
+          <span class="fim-label">Edital consolidado</span>
+          <strong>{{ percentualEditalConsolidadoLabel }}</strong>
+        </div>
+      </div>
+
+      <div class="fim-acoes">
+        <button type="button" class="btn-secundario" (click)="continuarEstudando()">
+          Continuar estudando
+        </button>
+        <a
+          class="btn-link-critico btn-link-critico--fim"
+          [routerLink]="['/area-restrita/retencao']"
+          [queryParams]="{ view: 'criticos' }">
+          Topicos em risco
+        </a>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="hoje-loading">Carregando fila de hoje...</div>
+</ng-template>
+
+<ng-template #hojeConcluidoTpl>
+  <div class="hoje-resumo-dia__done">
+    <strong>Voce concluiu sua revisao de hoje</strong>
+    <span>{{ consolidadoHoje }} / {{ totalItens }} concluidos</span>
+  </div>
+</ng-template>

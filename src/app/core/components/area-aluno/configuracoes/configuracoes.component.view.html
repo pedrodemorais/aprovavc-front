@@ -1,0 +1,33 @@
+<div class="configuracoes-page">
+  <section class="config-card">
+    <h2>Configuracoes</h2>
+
+    <div class="loading" *ngIf="loading">Carregando configuracoes...</div>
+    <div class="error" *ngIf="!loading && erroCarregamento">{{ erroCarregamento }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="salvar()" *ngIf="!loading">
+      <h3>Revisao</h3>
+
+      <label for="limiteDiarioRevisoes">Limite diario de revisoes</label>
+      <input
+        id="limiteDiarioRevisoes"
+        type="number"
+        min="5"
+        max="200"
+        step="1"
+        formControlName="limiteDiarioRevisoes"
+      />
+      <small class="hint">Define quantos topicos no maximo entram na sua fila diaria (FOCO).</small>
+      <small class="error" *ngIf="limiteInvalido">{{ getErroLimite() }}</small>
+
+      <div class="actions">
+        <button type="submit" [disabled]="salvando || loading">
+          {{ salvando ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </div>
+
+      <p class="success" *ngIf="mensagemSucesso">{{ mensagemSucesso }}</p>
+    </form>
+  </section>
+</div>
+

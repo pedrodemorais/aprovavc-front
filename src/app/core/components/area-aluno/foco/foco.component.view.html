@@ -1,0 +1,332 @@
+﻿<div class="foco-page">
+  <p-toast></p-toast>
+
+  <div class="home-shell" *ngIf="loadingPlano">
+    <div class="home-card">
+      <p>Carregando plano diario...</p>
+    </div>
+  </div>
+
+  <div class="home-shell" *ngIf="!loadingPlano && error">
+    <div class="home-card home-card--error">
+      <h2>Erro ao carregar Foco</h2>
+      <p>{{ error }}</p>
+      <button type="button" (click)="tentarNovamente()">Tentar novamente</button>
+    </div>
+  </div>
+
+  <div class="home-shell" [class.home-shell--revisao]="isModoRevisao" *ngIf="!loadingPlano && !error && planoDiario">
+    <div class="welcome-strip">
+      <div>
+        <h1 class="welcome-title">
+          Olá, {{ nomeAluno }}!
+          <span class="welcome-title-note" *ngIf="streakDias && streakDias > 0">
+            Você está há {{ streakDias }} dias mantendo consistência nos estudos.
+          </span>
+          <span class="welcome-title-note" *ngIf="!streakDias || streakDias <= 0">
+            Vamos iniciar sua sequência de consistência hoje.
+          </span>
+        </h1>
+      </div>
+    </div>
+
+    <section class="edital-ativo-card" aria-label="Edital ativo">
+      <div class="edital-ativo-card__legend">{{ editalAtivoLegenda }}</div>
+      <div class="edital-ativo-card__media" [class.edital-ativo-card__media--fallback]="!editalAtivoImagemUrl">
+        <img *ngIf="editalAtivoImagemUrl; else editalFallback" [src]="editalAtivoImagemUrl" alt="Imagem do edital ativo" />
+        <ng-template #editalFallback>
+          <span>{{ editalAtivoSigla }}</span>
+        </ng-template>
+      </div>
+
+      <div class="edital-ativo-card__content">
+       
+        <div class="progresso-dia progresso-dia--inside progresso-dia--inside-edital">
+          <div class="progresso-bloco">
+            <div class="progresso-metrica">
+              <span class="kpi-label">Tópicos revisados</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/check.png" alt="Concluído" />
+                {{ revisoesFeitasHoje }}
+              </strong>
+            </div>
+            <div class="progresso-metrica">
+              <span class="kpi-label">Flashcards revisados</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/flash-card.png" alt="Flashcards" />
+                {{ flashcardsFeitosHoje }}
+              </strong>
+            </div>
+            <div class="progresso-metrica">
+              <span class="kpi-label">Estudos novos</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/new-file.png" alt="Estudos novos" />
+                {{ estudosFeitosHoje }}
+              </strong>
+            </div>
+            <div class="progresso-metrica">
+              <span class="kpi-label">Reforços resolvidos</span>
+              <strong class="progresso-num">
+                <img class="progresso-num__icon" src="assets/img/icon/gym.png" alt="Reforços resolvidos" />
+                {{ reforcosFeitosHoje }}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hero-cog card">
+      <ng-container *ngIf="isModoEstudarPlanejamentoDiario">
+        <ng-container [ngTemplateOutlet]="heroCogKpisTemplate"></ng-container>
+      </ng-container>
+
+      <div class="estudo-plano-panel-wrap" *ngIf="isModoExecucaoPlano || !hasReview">
+        <div class="card estudo-plano-card-list">
+          <div class="header-row">
+            <button
+              class="btn-primary hero-cog__cta hero-cog__cta--inline"
+              (click)="hasReview && exibidosHoje>0 ? iniciarRevisao() : onEstudarAgora()">
+              {{ hasReview && exibidosHoje>0 ? 'Revisar agora' : 'Estudar Planejamento Diário' }}
+            </button>
+          </div>
+
+          <div class="plano-materias" *ngIf="distribuicaoPlano.length; else semMateriasPlano">
+            <article class="plano-materia-card" *ngFor="let item of distribuicaoPlano; trackBy: trackByPlanoMateria">
+              <button type="button" class="plano-materia-head" (click)="alternarMateriaPlano(item)">
+                <span class="plano-materia-titulo">{{ item.materiaNome }}</span>
+                <span class="plano-materia-toggle">{{ isMateriaPlanoExpandida(item) ? '-' : '+' }}</span>
+              </button>
+
+              <div class="plano-materia-body" *ngIf="isMateriaPlanoExpandida(item)">
+                <div><strong>Matéria:</strong> {{ item.materiaNome }}</div>
+                <div><strong>Próximo tópico:</strong> {{ item.proximoConteudo?.topicoNome || 'Não informado' }}</div>
+                <div><strong>Total Planejado:</strong> {{ formatMinutos(item.minutosPlanejados) }}</div>
+              </div>
+            </article>
+          </div>
+
+          <ng-template #semMateriasPlano>
+            <div class="estudo-plano-compact__body">
+              <div>Sem matérias planejadas para hoje.</div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="hero-cog-main" *ngIf="!isModoEstudarPlanejamentoDiario">
+        <div class="hero-cog__left">
+          <ng-container [ngTemplateOutlet]="heroCogKpisTemplate"></ng-container>
+        </div>
+      </div>
+
+      <ng-template #heroCogKpisTemplate>
+          <div class="hero-cog__kpis">
+            <div class="kpi-tile kpi-tile--criticos">
+              <span class="kpi-ribbon" *ngIf="contadorCriticos === 0">EM DIA</span>
+              <div class="kpi-label">Críticos</div>
+              <div class="kpi-value">
+                <ng-container *ngIf="contadorCriticos === 0; else criticosNumero">
+                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
+                </ng-container>
+                <ng-template #criticosNumero>{{ contadorCriticos }}</ng-template>
+              </div>
+              <div class="kpi-sub">Revisões com prioridade máxima</div>
+            </div>
+
+            <div class="kpi-tile kpi-tile--em-risco">
+              <span class="kpi-ribbon" *ngIf="contadorEmRisco === 0">EM DIA</span>
+              <div class="kpi-label">Em risco</div>
+              <div class="kpi-value">
+                <ng-container *ngIf="contadorEmRisco === 0; else emRiscoNumero">
+                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
+                </ng-container>
+                <ng-template #emRiscoNumero>{{ contadorEmRisco }}</ng-template>
+              </div>
+              <div class="kpi-sub">Revisões que precisam atenção hoje</div>
+            </div>
+
+            <div class="kpi-tile kpi-tile--manutencao">
+              <span class="kpi-ribbon" *ngIf="contadorManutencao === 0">EM DIA</span>
+              <div class="kpi-label">Manutenção</div>
+              <div class="kpi-value">
+                <ng-container *ngIf="contadorManutencao === 0; else manutencaoNumero">
+                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
+                </ng-container>
+                <ng-template #manutencaoNumero>{{ contadorManutencao }}</ng-template>
+              </div>
+              <div class="kpi-sub">Revisões para manter conteúdo ativo</div>
+            </div>
+
+            <div class="kpi-tile kpi-tile--fraquezas">
+              <span class="kpi-ribbon" *ngIf="totalTopicosFraquezas === 0">EM DIA</span>
+              <div class="kpi-label">Treinar fraquezas</div>
+              <div class="kpi-value">
+                <ng-container *ngIf="totalTopicosFraquezas === 0; else fraquezasNumero">
+                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Sem fraquezas" />
+                </ng-container>
+                <ng-template #fraquezasNumero>{{ totalTopicosFraquezas }}</ng-template>
+              </div>
+              <div class="kpi-sub">
+                {{ treinoFraquezasMaterias.length ? 'Tópicos críticos para reforçar' : 'Nenhuma matéria crítica no momento' }}
+              </div>
+              <button
+                *ngIf="primeiraMateriaFraquezaId"
+                type="button"
+                class="btn-secondary kpi-tile__action"
+                [disabled]="treinoFraquezasLoading"
+                (click)="iniciarTreinoFraquezas(primeiraMateriaFraquezaId)">
+                {{ treinoFraquezasLoading ? 'Iniciando...' : 'Treinar agora' }}
+              </button>
+            </div>
+          </div>
+      </ng-template>
+
+     
+
+    </section>
+
+    <ng-container *ngIf="totalRevisoesHoje === 0 && hasPreventivo">
+      <section class="card preventivo">
+        <div class="preventivo-head">
+          <div>
+            <div class="kpi-label">Reforço preventivo</div>
+            <div class="kpi-sub">
+              Recomendamos revisar {{ preventivosSugeridos }} tópico(s) para reduzir risco.
+            </div>
+          </div>
+          <button class="btn-primary" (click)="abrirListaPreventivo()">
+            Reforçar agora ({{ preventivosSugeridos }})
+          </button>
+        </div>
+
+        <div *ngIf="isPreventivoAberto" class="preventivo-list">
+          <div class="lista-vazia" *ngIf="filaPreventiva.length===0">Nenhum tópico preventivo.</div>
+          <div class="fila-item preventivo-item" *ngFor="let item of filaPreventiva" (click)="abrirPreventivo(item)">
+            <div class="titulo">{{ item.topicoNome || '-' }}</div>
+            <div class="sub">{{ item.materiaNome || '-' }}</div>
+            <span class="badge preventivo-badge">preventivo</span>
+          </div>
+        </div>
+      </section>
+    </ng-container>
+
+    <p-dialog
+      [(visible)]="showRevisaoObrigatoriaDialog"
+      [modal]="true"
+      [dismissableMask]="false"
+      [closable]="false"
+      [closeOnEscape]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [style]="{ width: '420px', maxWidth: '92vw' }"
+      header="Revisões pendentes">
+      <p class="dual-dialog-text">Você tem revisões para fazer antes de estudar conteúdo novo.</p>
+      <div class="dual-dialog-actions">
+        <button type="button" class="primary-btn" (click)="confirmarIrParaRevisao()" autofocus>Ir para revisão</button>
+        <button type="button" class="btn-secondary" (click)="fecharDialogRevisaoObrigatoria()">Cancelar</button>
+      </div>
+    </p-dialog>
+
+    <div class="foco-review-section" *ngIf="isModoRevisao">
+      <div class="card foco-review-card" style="margin-top:14px;">
+        <div class="header-row">
+          <div class="header-row-top">
+            
+            <div class="status-filter" aria-label="Filtros de classificação">
+              <button
+                type="button"
+                class="status-filter__dot status-filter__dot--red"
+                [class.status-filter__dot--inactive]="!isFiltroSelecionado('CRITICO')"
+                [attr.aria-pressed]="isFiltroSelecionado('CRITICO')"
+                aria-label="Filtrar Críticos"
+                title="Críticos"
+                (click)="toggleFiltroSelecionado('CRITICO')">
+              </button>
+              <button
+                type="button"
+                class="status-filter__dot status-filter__dot--orange"
+                [class.status-filter__dot--inactive]="!isFiltroSelecionado('EM_RISCO')"
+                [attr.aria-pressed]="isFiltroSelecionado('EM_RISCO')"
+                aria-label="Filtrar Em risco"
+                title="Em risco"
+                (click)="toggleFiltroSelecionado('EM_RISCO')">
+              </button>
+              <button
+                type="button"
+                class="status-filter__dot status-filter__dot--green"
+                [class.status-filter__dot--inactive]="!isFiltroSelecionado('MANUTENCAO')"
+                [attr.aria-pressed]="isFiltroSelecionado('MANUTENCAO')"
+                aria-label="Filtrar Manutenção"
+                title="Manutenção"
+                (click)="toggleFiltroSelecionado('MANUTENCAO')">
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn-revisar-agora-header"
+            (click)="iniciarRevisao()">
+            Revisar agora
+          </button>
+        </div>
+     
+
+        <div class="table-wrap">
+          <div class="row header">
+            <div>Materia</div>
+            <div>Score</div>
+            <div>Acao</div>
+          </div>
+
+          <ng-container *ngFor="let item of itensFiltrados; let i = index">
+            <div class="row item row--materia-group" *ngIf="isPrimeiraLinhaMateria(i)">
+              <div class="conteudo conteudo--materia">{{ item.materiaNome || '-' }}</div>
+              <div></div>
+              <div></div>
+            </div>
+
+            <div class="row item row--topic">
+              <div class="conteudo conteudo--topico">
+                <span
+                  class="classificacao-dot"
+                  [ngClass]="{
+                    'classificacao-dot--critico': item.categoria === 'CRITICO',
+                    'classificacao-dot--risco': item.categoria === 'EM_RISCO',
+                    'classificacao-dot--manut': (item.categoria || '').startsWith('MANUTENCAO')
+                  }"
+                  [attr.aria-label]="formatCategoria(item.categoria || item.classificacao)"
+                  [attr.title]="formatCategoria(item.categoria || item.classificacao)">
+                </span>
+                <span>{{ item.topicoNome }}</span>
+              </div>
+
+              <div class="score-cell">
+                <span class="score-text">{{ scoreRatio(getItemScore(item)) === null ? 'â€”' : formatScore(getItemScore(item)) }}</span>
+              </div>
+              <div>
+                <button
+                  class="btn-secondary action-icon-btn"
+                  type="button"
+                  (click)="revisar(item)"
+                  aria-label="Revisar tópico"
+                  title="Revisar tópico">
+                  <img class="action-icon-btn__img" src="assets/img/icon/cycle.png" alt="" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          </ng-container>
+
+          <div style="padding:12px 10px; color:#64748b; font-weight:700;" *ngIf="itensFiltrados.length===0">
+            Nenhum topico para mostrar.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+

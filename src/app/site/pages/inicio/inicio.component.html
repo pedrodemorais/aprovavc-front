@@ -1,349 +1,457 @@
-<header>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;500;700&display=swap" rel="stylesheet">
-  <a href="https://wa.me/5562992546406" target="_blank" class="whatsapp-btn">
-    <img src="assets/img/whatsapp-icon.png" alt="WhatsApp">
+<div class="home-page">
+
+  <!-- Acessibilidade: pular direto para o conteúdo -->
+  <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo</a>
+
+  <a href="https://wa.me/5562992546406"
+     target="_blank"
+     rel="noopener noreferrer"
+     class="whatsapp-btn"
+     aria-label="Falar no WhatsApp">
+    <img src="assets/img/whatsapp-icon.png" alt="WhatsApp" loading="lazy" />
   </a>
-  <div class="site-container">
 
-
+  <!-- TOPO -->
+  <header class="topo" role="banner">
     <div class="menu-topo">
-
-      <div class="logo-container">
-        <img src="assets/img/logo/aprovavc.png" alt="DynamoSoft Logo" class="logo-img">
-        <div class="logo-text">
-          <h1>
-            <span class="dynamo">Aprova</span>
-            <span class="soft">VOCÊ</span>
-          </h1>
-          <p class="tagline">A plataforma que te leva até a aprovação</p>
-        </div>
+      <div>
+        <a routerLink="/" aria-label="Ir para a página inicial">
+          <img
+            src="assets/img/logo/revizo.png"
+            alt="Logo Revizo"
+            class="logo-img"
+          />
+        </a>
       </div>
 
-      <div class="menu">
-        <p-menubar [model]="menuItems" class="custom-menubar">
-          <ng-template pTemplate="start"></ng-template>
-        </p-menubar>
-      </div>
-    </div>
-  </div>
-</header>
-
-
-<div>
-  <app-full-width-slider></app-full-width-slider>
-</div>
-
-
-
-
-<div class="hero">
-  <div class="site-container">
-
-    <div class="hero-content">
-      <nav class="hero-nav">
-        <a href="#services" class="hero-item">
-          <div class="circle">1</div>
-          <span>Nossas Soluções</span>
-        </a>
-        <a href="#blog" class="hero-item">
-          <div class="circle">2</div>
-          <span>Nosso Blog</span>
-        </a>
-        <a href="#casos" class="hero-item">
-          <div class="circle">3</div>
-          <span>Casos de Sucesso</span>
-        </a>
+      <nav class="menu" aria-label="Menu principal">
+        <ng-container *ngIf="isBrowser; else menuFallback">
+          <p-menubar [model]="menuItems" class="custom-menubar">
+            <ng-template pTemplate="start"></ng-template>
+          </p-menubar>
+        </ng-container>
+        <ng-template #menuFallback>
+          <ul class="menu-fallback">
+            <li><a href="/">Home</a></li>
+            <li><a href="#sobre-nos">Sobre</a></li>
+            <li><a href="#services">Soluções</a></li>
+            <li><a href="#plans">Planos</a></li>
+            <li><a href="#blog">Blog</a></li>
+            <li><a href="/login">Entrar</a></li>
+          </ul>
+        </ng-template>
       </nav>
     </div>
+  </header>
 
-  </div>
+  <!-- CONTEÚDO -->
+  <main id="conteudo-principal" role="main">
 
-
-
-
-
-  <section id="sobre-nos" class="sobre-nos">
-    <div class="container">
-      <div class="conteudo-sobre">
-        <div class="imagem">
-          <img src="assets/img/img3.jpg" alt="Sobre a Dynamo">
-        </div>
-        <div class="texto">
-          <h2 class="parceiros-title">Sobre Nós</h2>
-         <p>
-      No <strong>AprovaVC</strong>, acreditamos que qualquer pessoa pode alcançar a aprovação quando tem
-      clareza, organização e constância. Por isso, criamos uma plataforma simples, inteligente e acessível,
-      feita para transformar a rotina de estudos em um processo leve, eficiente e realmente possível.
+    <!-- H1 SEO (não altera layout) -->
+    <h1 class="visually-hidden">Revizo — Plataforma de estudos para concursos públicos</h1>
+    <p class="visually-hidden">
+      Organize matérias e tópicos, acompanhe revisões espaçadas e estude com clareza para evoluir rumo à aprovação.
     </p>
 
-    <p>
-      Aqui, entendemos a jornada de quem estuda para concursos. Sabemos do cansaço, das dúvidas, da pressão
-      e da dificuldade em manter o ritmo. Por isso, desenvolvemos um sistema que cuida do que mais importa:
-      organizar seus estudos, acompanhar seu progresso e garantir que você revise no momento certo, sem
-      complicações.
-    </p>
+    <div>
+      <app-full-width-slider></app-full-width-slider>
+    </div>
 
-    <p>
-      Somos mais do que um sistema de revisão espaçada. Somos parceiros na sua caminhada até o crachá dos seus sonhos.
-    </p>
+    <div class="hero">
+      <div class="site-container">
+        <div class="hero-content">
+          <nav class="hero-nav" aria-label="Atalhos da página">
+            <a href="#services" class="hero-item">
+              <div class="circle">1</div>
+              <span>Nossas Soluções</span>
+            </a>
 
-    <p>
-      Combinamos tecnologia moderna, design minimalista e uma estrutura pensada para quem precisa conciliar
-      estudo com trabalho, família e rotina. Cada função do AprovaVC foi criada com um único objetivo:
-      ajudar você a estudar melhor, economizar tempo e aprender mais com menos esforço.
-    </p>
+            <!-- ✅ aponta para a âncora correta (mais abaixo) -->
+            <a href="#plans" class="hero-item">
+              <div class="circle">2</div>
+              <span>Planos e Acesso</span>
+            </a>
 
-    <p>No AprovaVC, você encontra:</p>
-
-    <ul>
-      <li>Uma plataforma clara e intuitiva;</li>
-      <li>Sistema de revisões inteligentes;</li>
-      <li>Acompanhamento de progresso;</li>
-      <li>Motivação visual a cada passo;</li>
-      <li>Ferramentas que tornam o estudo direto e objetivo.</li>
-    </ul>
-
-    <p>
-      Porque acreditamos que a aprovação não é sobre “ter sorte”, mas sim sobre constância — e constância
-      nasce da organização certa.
-    </p>
-
-    <p><strong>AprovaVC – Organização simples, estudo eficiente, aprovação possível!</strong></p>
+            <a href="#blog" class="hero-item">
+              <div class="circle">3</div>
+              <span>Conteúdos para Estudar Melhor</span>
+            </a>
+          </nav>
         </div>
       </div>
+
+      <section id="sobre-nos" class="sobre-nos" aria-label="Sobre o Revizo">
+        <div class="container">
+          <div class="conteudo-sobre">
+            <div class="texto">
+              <p>
+                O <strong>Revizo</strong> é uma plataforma para quem estuda com seriedade e
+                precisa de estrutura no dia a dia.
+              </p>
+
+              <p>
+                Aqui, você não apenas marca tarefas: você constrói seu material
+                (<strong>resumos e flashcards</strong>) e mantém o conteúdo vivo com
+                <strong>revisões guiadas</strong>.
+              </p>
+
+              <p>
+                Feito para concursos, vestibulares e certificações — especialmente para quem
+                concilia trabalho, rotina e pouco tempo contínuo.
+              </p>
+
+              <p>
+                <strong>Estude com direção. Revise no tempo certo. Enxergue evolução.</strong>
+              </p>
+
+              <p>No Revizo, você encontra:</p>
+
+              <ul>
+                <li>Biblioteca organizada de matérias, tópicos e subtópicos;</li>
+                <li>Resumos escritos por você, salvos e vinculados ao seu estudo;</li>
+                <li>Flashcards gerados a partir do seu próprio conteúdo;</li>
+                <li>Sistema de revisões espaçadas com visão clara do que revisar;</li>
+                <li>Dashboard com tempo líquido e evolução por matéria e prova.</li>
+              </ul>
+
+              <p>
+                Acreditamos que aprovação é resultado de constância com direção. O Revizo existe
+                para sustentar essa constância com clareza, sobriedade e respeito ao seu esforço.
+              </p>
+
+              <p>
+                <strong>Revizo – estrutura para quem transforma estudo em projeto de vida.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="services" id="diferenciais" aria-label="Diferenciais do Revizo">
+        <div class="container">
+          <h2 class="services-title">Por que o Revizo é diferente?</h2>
+
+          <div class="service-list">
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/cerebro.png" alt="Ícone cérebro" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Estudo ativo, não só agenda</h3>
+              <p>
+                Você não apenas registra o que fez: cada sessão gera material (resumo e prática de memória)
+                que volta para você em forma de revisão.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/book.png" alt="Ícone livro" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Material próprio, do seu jeito</h3>
+              <p>
+                Seus resumos ficam organizados por matéria, tópico e subtópico, criando um histórico
+                consistente e fácil de retomar quando bater a dúvida.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/card.png" alt="Ícone cartões" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Revisão guiada por aquilo que você escreveu</h3>
+              <p>
+                Em vez de depender de materiais genéricos, você revisa o que entendeu e registrou.
+                O Revizo te mostra quando revisar e o que priorizar.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/cloud.png" alt="Ícone nuvem" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Leve na rotina, forte no longo prazo</h3>
+              <p>
+                Acesse resumos e flashcards no computador, tablet ou celular. Revise em intervalos curtos,
+                mantenha a constância e evolua sem depender de controles manuais.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="services" id="services" aria-label="Soluções do Revizo">
+        <div class="container">
+          <h2 class="services-title">Soluções do Revizo</h2>
+
+          <div class="service-list">
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/books.png" alt="Ícone livros" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Biblioteca de Matérias</h3>
+              <p>
+                Estruture matérias, tópicos e subtópicos em um único ambiente, com a visão do seu conteúdo
+                organizada para estudo e revisão.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/work-space.png" alt="Ícone espaço de estudo" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Sala de Estudo</h3>
+              <p>
+                Estude no modo livre ou Pomodoro e registre seu resumo no pr&oacute;prio sistema.
+                Seu material fica ligado ao seu tempo l&iacute;quido de estudo.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/cycle.png" alt="Ícone ciclos" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Revisões Espaçadas</h3>
+              <p>
+                Revise resumos e flashcards em ciclos inteligentes, com sinalização clara do que está em dia,
+                do que vence hoje e do que já ficou para trás.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/flash-cards.png" alt="Ícone flashcards" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Flashcards</h3>
+              <p>
+                Transforme seus resumos em flashcards e revise conceitos-chave com rapidez,
+                objetividade e total alinhamento ao seu conteúdo.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/paper.png" alt="Ícone provas" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Provas</h3>
+              <p>
+                Organize o estudo por prova, agrupe matérias e acompanhe indicadores por objetivo,
+                com visão estratégica da preparação.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/progress.png" alt="Ícone progresso" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Dashboard de Progresso</h3>
+              <p>
+                Veja tempo líquido, revisões realizadas e evolução por matéria em um painel que ajuda
+                a tomar decisões diárias com clareza.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="badge">Em breve (em evolução contínua)</div>
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/improvement.png" alt="Ícone melhorias" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Plano de Estudos Inteligente</h3>
+              <p>
+                Distribuição automática das matérias nas horas disponíveis, com ajustes conforme o seu ritmo real
+                e a prioridade do seu objetivo.
+              </p>
+            </div>
+
+            <div class="service-item">
+              <div class="badge">Em breve (em evolução contínua)</div>
+              <div class="logo-revizo-diferente">
+                <img src="assets/img/icon/test.png" alt="Ícone testes" class="logo-img" loading="lazy" />
+              </div>
+              <h3>Banco de Questões</h3>
+              <p>
+                Questões por matéria e tópico, com acompanhamento de desempenho para identificar pontos fortes
+                e pontos de atenção.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="blog" id="blog" aria-label="Conteúdos do blog">
+        <div class="container">
+          <h2>Conteúdo para quem estuda com seriedade</h2>
+          <p class="blog-intro">
+            Reflexões, técnicas e boas práticas sobre organização, disciplina e estudo estratégico para longo prazo.
+          </p>
+
+          <span id="post1" class="anchor-offset" aria-hidden="true"></span>
+          <span id="post2" class="anchor-offset" aria-hidden="true"></span>
+          <span id="post3" class="anchor-offset" aria-hidden="true"></span>
+
+          <div class="blog-posts">
+            <div class="blog-post">
+              <img src="assets/img/blog/financas.jpg" alt="Gestão de rotina" loading="lazy" />
+              <h3>Como proteger o seu tempo de estudo no dia a dia</h3>
+              <p>
+                Ideias práticas para preservar blocos de foco e manter a constância, mesmo com uma rotina cheia.
+              </p>
+              <a href="#post1" class="read-more">Leia mais</a>
+            </div>
+
+            <div class="blog-post">
+              <img src="assets/img/blog/organizacao.jpg" alt="Organização" loading="lazy" />
+              <h3>Transformando a lista de conteúdo em um plano concreto</h3>
+              <p>
+                Um passo a passo para sair da lista de matérias e chegar a um plano de estudo realmente executável.
+              </p>
+              <a href="#post2" class="read-more">Leia mais</a>
+            </div>
+
+            <div class="blog-post">
+              <img src="assets/img/blog/tecnologia.jpg" alt="Tecnologia nos estudos" loading="lazy" />
+              <h3>Como a tecnologia pode apoiar, e não distrair</h3>
+              <p>
+                Critérios para escolher ferramentas que somam na preparação, em vez de disputar atenção com o estudo.
+              </p>
+              <a href="#post3" class="read-more">Leia mais</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="blog" id="faq" aria-label="Perguntas frequentes">
+        <div class="container">
+          <h2>Perguntas frequentes</h2>
+          <p class="blog-intro">
+            Respostas diretas para dúvidas comuns antes de começar.
+          </p>
+
+          <div class="blog-posts">
+            <div class="blog-post">
+              <h3>Isso substitui caderno/Notion/Anki?</h3>
+              <p>
+                Ele substitui o “vai e volta” entre ferramentas: você organiza, estuda, escreve resumos e revisa no mesmo lugar.
+                Se você já usa caderno/Notion/Anki, o Revizo funciona como um fluxo único e mais prático para o dia a dia.
+              </p>
+              <a href="#plans" class="read-more">Ver planos</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Funciona no celular?</h3>
+              <p>
+                Sim. Você consegue acessar seus resumos e flashcards no celular e revisar em qualquer intervalo do dia,
+                mantendo a constância sem depender de longas sessões.
+              </p>
+              <a href="#plans" class="read-more">Começar agora</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Como as revisões são definidas?</h3>
+              <p>
+                As revisões seguem ciclos espaçados e são exibidas com prioridade clara (em dia, vence hoje ou atrasada).
+                Você revisa com base no que produziu, e o sistema mantém o ritmo visível para você.
+              </p>
+              <a href="#services" class="read-more">Ver como funciona</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Preciso seguir Pomodoro?</h3>
+              <p>
+                Não. O Pomodoro é opcional. Você pode estudar no modo livre ou com ciclos de foco, conforme sua rotina.
+                O importante é registrar o material e manter o ritmo de revisão.
+              </p>
+              <a href="#services" class="read-more">Ver soluções</a>
+            </div>
+
+            <div class="blog-post">
+              <h3>Tem banco de questões?</h3>
+              <p>
+                Ainda não. O banco de questões está <strong>em breve (em evolução contínua)</strong>.
+                Enquanto isso, o Revizo já entrega organização, material próprio e revisões guiadas.
+              </p>
+              <a href="#plans" class="read-more">Testar o Revizo</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ✅ ÂNCORA DE PLANOS NO LUGAR CERTO -->
+      <span id="plans" class="anchor-offset" aria-hidden="true"></span>
+
+      <section class="plans" id="comece-agora" aria-label="Planos e acesso">
+        <div class="container">
+          <app-assine></app-assine>
+
+          <div style="margin-top: 18px;">
+            <h2 style="margin: 0;">Comece agora</h2>
+            <p style="margin: 8px 0 0;">
+              Teste por <strong>30 dias</strong> e veja o Revizo caber na sua rotina com clareza e consistência.
+            </p>
+            <p style="margin: 6px 0 0;">
+              Sem compromisso: você pode cancelar quando quiser durante o período de teste.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer aria-label="Rodapé">
+        <div class="rodape">
+          <div class="esquerda">
+            <div class="logo-nome">
+              <img src="assets/img/logo/revizo.png" alt="Logo Revizo" class="logo-img" loading="lazy" />
+            </div>
+
+            <div class="social-icons" style="display: flex; justify-content: center; gap: 15px; margin-top: 5px;">
+              <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <i class="pi pi-instagram"></i>
+              </a>
+              <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <i class="pi pi-facebook"></i>
+              </a>
+              <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                <i class="pi pi-youtube"></i>
+              </a>
+              <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                <i class="pi pi-linkedin"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="meio"></div>
+        </div>
+
+        <div class="separador-rodape"></div>
+
+        <div class="politicas">
+          <div class="direitos">
+            <p>&copy; 2025 Revizo. Todos os direitos reservados.</p>
+          </div>
+
+          <div class="link-politicas">
+            <nav aria-label="Links legais">
+              <ul>
+                <li><a routerLink="/politica-privacidade">Política de Privacidade |</a></li>
+                <li><a routerLink="/termos-de-uso">Termos de Uso | </a></li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+
+        <div class="desenvolvido-por">
+          <p>Desenvolvido por <strong>DynamoSoft</strong>.</p>
+          <p>
+            Icons made by
+            <a href="https://www.flaticon.com/authors/freepik" target="_blank" rel="noopener noreferrer" title="Freepik">
+              Freepik
+            </a>
+            from
+            <a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer" title="Flaticon">
+              www.flaticon.com
+            </a>
+          </p>
+        </div>
+      </footer>
+
     </div>
-  </section>
-
-
-
-  <section id="parceiros" class="parceiros">
-    <div class="container">
-      <h2 class="parceiros-title">Parceiros que Confiam na nossa solução </h2>
-      <p class="parceiros-subtitle">Faça parte você também</p>
-      <div class="parceiros-list">
-        <!-- Parceiro 1 -->
-        <div class="parceiro-card">
-          <img src="assets/img/parceiros/logo.png" alt="Cliente 1" class="parceiro-logo">
-          <h3 class="parceiro-nome">Bem-me-Quer Personalizados </h3>
-          <p class="parceiro-depoimento">
-            "A Dynamo transformou a forma como gerenciamos nosso negócio. A eficiência do sistema é incrível!"
-          </p>
-        </div>
-        <!-- Parceiro 2 -->
-        <div class="parceiro-card">
-          <img src="assets/img/parceiros/carol.jpg" alt="Cliente 2" class="parceiro-logo">
-          <h3 class="parceiro-nome">Doçuras da Carol</h3>
-          <p class="parceiro-depoimento">
-            "Desde que começamos a usar o sistema da Dynamo, nossas operações ficaram muito mais organizadas e
-            produtivas."
-          </p>
-        </div>
-        <!-- Parceiro 3 -->
-        <div class="parceiro-card">
-          <img src="assets/img/parceiros/hiperclima.png" alt="Cliente 3" class="parceiro-logo">
-          <h3 class="parceiro-nome">HiperClima</h3>
-          <p class="parceiro-depoimento">
-            "Uma solução dinâmica e fácil de usar. Recomendo a todos que precisam de um sistema de gestão eficiente!"
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-
-  <section class="services" id="services">
-    <div class="container">
-      <h2 class="services-title">Soluções</h2>
-      <div class="service-list">
-        <div class="service-item">
-<div class="service-icon-container">
-          <img src="assets/img/icon/clientes.png" alt="Gestão de Clientes" class="service-icon" />
+  </main>
 </div>
-          <h3>Gestão de Clientes</h3>
-          <p>Organize e gerencie informações de seus clientes com eficiência.</p>
-        </div>
-        <div class="service-item">
-          <div class="badge">Em breve</div>
-          <div class="service-icon-container">
-          <img src="assets/img/icon/compras.png" alt="Gestão de Compras" class="service-icon" />
-         </div>
-          <h3>Gestão de Compras</h3>
-          <p>Controle seus pedidos e otimize o fluxo de compras.</p>
-        </div>
-        <div class="service-item">
-          <div class="badge">Em breve</div>
-          <div class="service-icon-container">
-          <img src="assets/img/icon/inventory.png" alt="Gestão de Estoque" class="service-icon" />
-          </div>
-          <h3>Gestão de Estoque</h3>
-          <p>Monitore seus estoques em tempo real para evitar perdas.</p>
-        </div>
-        <div class="service-item">
-          <div class="badge">Em breve</div>
-          <div class="service-icon-container">
-          <img src="assets/img/icon/orders.png" alt="Gestão de Pedidos" class="service-icon" />
-          </div>
-          <h3>Gestão de Pedidos</h3>
-          <p>Gerencie os pedidos de seus clientes de forma centralizada.</p>
-        </div>
-        <div class="service-item">
-          <div class="badge">Em breve</div>
-          <div class="service-icon-container">
-          <img src="assets/img/icon/finance.png" alt="Controle Financeiro" class="service-icon" />
-          </div>
-          <h3>Controle Financeiro</h3>
-          <p>Tenha total controle sobre receitas, despesas e fluxo de caixa.</p>
-        </div>
-        <div class="service-item">
-          <div class="service-icon-container">
-          <img src="assets/img/icon/task.png" alt="Planejamento de Tarefas" class="service-icon" />
-          </div>
-          <h3>Planejamento de Tarefas</h3>
-          <p>Organize e priorize tarefas para aumentar sua produtividade.</p>
-        </div>
-        <div class="service-item">
-<div class="service-icon-container">
-          <img src="assets/img/icon/service.png" alt="Ordem de Serviço" class="service-icon" />
-          </div>
-          <h3>Ordem de Serviço</h3>
-          <p>Gerencie suas ordens de serviço de forma prática e rápida.</p>
-        </div>
-        <div class="service-item">
-          <div class="badge">Em breve</div>
-          <div class="service-icon-container">
-          <img src="assets/img/icon/bi.png" alt="BI" class="service-icon" />
-          </div>
-          <h3>BI</h3>
-          <p>Utilize ferramentas de inteligência de negócios para decisões mais assertivas.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-
-  <section class="plans" id="plans">
-    <div class="container">
-
-      <app-assine></app-assine>
-
-    </div>
-  </section>
-
-  <section class="blog" id="blog">
-    <div class="container">
-      <h2>Blog do Micro Empreendedor</h2>
-      <p class="blog-intro">Dicas, insights e artigos sobre gestão empresarial, finanças e organização para impulsionar
-        o
-        seu negócio.</p>
-      <div class="blog-posts">
-        <!-- Post 1 -->
-        <div class="blog-post">
-          <img src="assets/img/blog/financas.jpg" alt="Dicas de Finanças" />
-          <h3>Dicas de Finanças para Microempreendedores</h3>
-          <p>Aprenda a organizar suas finanças e manter o controle do seu fluxo de caixa com estas práticas essenciais.
-          </p>
-          <a href="#post1" class="read-more">Leia mais</a>
-        </div>
-        <!-- Post 2 -->
-        <div class="blog-post">
-          <img src="assets/img/blog/organizacao.jpg" alt="Organização" />
-          <h3>Organize seu Negócio em 5 Passos</h3>
-          <p>Descubra como otimizar processos e melhorar a produtividade do seu negócio com estas dicas simples.</p>
-          <a href="#post2" class="read-more">Leia mais</a>
-        </div>
-        <!-- Post 3 -->
-        <div class="blog-post">
-          <img src="assets/img/blog/tecnologia.jpg" alt="Tecnologia na Gestão" />
-          <h3>Como a Tecnologia Pode Transformar sua Gestão</h3>
-          <p>Saiba como ferramentas tecnológicas podem revolucionar a forma como você administra seu negócio.</p>
-          <a href="#post3" class="read-more">Leia mais</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <footer>
-    <div class="rodape">
-
-      <div class="esquerda">
-        <div class="logo-nome">
-          <img src="assets/img/logo/aprovavc.png" alt="Logo" class="logo-img">
-          <h1>
-            <span style="color: #ffffff; font-weight: 300; letter-spacing: 1px; margin-right: 0px;">Aprova</span>
-            <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">VOCÊ</span>
-          </h1>
-        </div>
-        <div class="social-icons" style="display: flex; justify-content: center; gap: 15px; margin-top: 5px;">
-          <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
-            <i class="pi pi-instagram"></i>
-          </a>
-          <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
-            <i class="pi pi-facebook"></i>
-          </a>
-          <a href="https://www.youtube.com" target="_blank" aria-label="YouTube">
-            <i class="pi pi-youtube"></i>
-          </a>
-          <a href="https://www.linkedin.com" target="_blank" aria-label="LinkedIn">
-            <i class="pi pi-linkedin"></i>
-          </a>
-        </div>
-      </div>
-
-      <div class="meio">
-
-      </div>
-
-
-    </div>
-
-    <div class="separador-rodape"> </div>
-    <div class="politicas">
-      <div class="direitos">
-        <p>&copy; 2025 Aprova Você. Todos os direitos reservados.</p>
-      </div>
-
-      <div class="link-politicas">
-        <nav>
-          <ul>
-            <li><a routerLink="/politica-privacidade">Política de Privacidade |</a></li>
-            <li><a routerLink="/termos-de-uso">Termos de Uso | </a></li>
-            <li><a href="#">Contato</a></li>
-          </ul>
-        </nav>
-      </div>
-
-    </div>
-    <div class="desenvolvido-por">
-      <p> Desenvolvido por <strong>DynamoSoft</strong>.</p>
-      <p>Icons made by <a href="https://www.flaticon.com/authors/freepik" target="_blank" rel="noopener noreferrer"
-          title="Freepik">Freepik</a>
-        from <a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer"
-          title="Flaticon">www.flaticon.com</a>
-      </p>
-    </div>
-
-  </footer>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      let slides = document.querySelectorAll(".slide");
-      let currentIndex = 0;
-
-      // Garantir que todas as imagens comecem ocultas
-      slides.forEach(slide => slide.classList.remove("active"));
-
-      // Exibir a primeira imagem
-      slides[currentIndex].classList.add("active");
-
-      function showNextSlide() {
-        slides[currentIndex].classList.remove("active"); // Remove da atual
-        currentIndex = (currentIndex + 1) % slides.length; // Alterna índice
-        slides[currentIndex].classList.add("active"); // Ativa a próxima
-      }
-
-      setInterval(showNextSlide, 5000); // Troca a imagem a cada 5 segundos
-    });
-
-  </script>

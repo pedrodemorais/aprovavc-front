@@ -1,42 +1,88 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-  
+  <meta charset="utf-8" />
 
-  <meta charset="utf-8">
-  <meta name="description" content="DynamoSoft - Soluções dinâmicas para gestão e organização de negócios. Gerencie sua empresa com eficiência e tecnologia de ponta."/>
- <meta name="keywords" content="DynamoSoft, Gestão empresarial, Organização de negócios, Tecnologia, Soluções empresariais"/>
- <meta name="author" content="DynamoSoft"/>
- <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Revizo — Plataforma de estudos para concursos</title>
 
- 
+  <meta name="description"
+        content="Revizo - Plataforma de estudos para concursos públicos. Organize matérias e tópicos, acompanhe revisões e estude com clareza para evoluir de verdade rumo à aprovação." />
 
+  <meta name="keywords"
+        content="Revizo, concursos públicos, plataforma de estudos, organização de estudos, planejamento de estudos, revisão espaçada, matérias e tópicos, cronograma flexível, produtividade nos estudos, aprovação em concurso" />
 
-  <title>AprovaVC</title>
-  <link rel="icon" type="image/png" href="assets/img/logo/aprovavc.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="/">
-  
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta name="author" content="Revizo" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
 
+  <link rel="canonical" href="https://revizo.com.br/" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Revizo" />
+  <meta property="og:title" content="Revizo — Estudo inteligente para concursos" />
+  <meta property="og:description" content="Organize matérias e tópicos, acompanhe revisões e estude com clareza rumo à aprovação." />
+  <meta property="og:url" content="https://revizo.com.br/" />
+  <meta property="og:image" content="https://revizo.com.br/assets/img/og-reviso.png" />
 
-  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Revizo — Estudo inteligente para concursos" />
+  <meta name="twitter:description" content="Organize matérias e tópicos, acompanhe revisões e estude com clareza rumo à aprovação." />
+  <meta name="twitter:image" content="https://revizo.com.br/assets/img/og-reviso.png" />
+
+  <!-- Ícones -->
+  <link rel="icon" type="image/png" href="assets/img/logo/revizo_logo.png">
+
+  <base href="/" />
+
+  <!-- Fonts: Poppins (usada na HOME) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;500;700&display=swap" rel="stylesheet">
+
+  <!-- Roboto / Material Icons (se você usa em outras telas) -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&amp;display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Font Awesome (deixe só UMA versão) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- MercadoPago -->
   <script src="https://sdk.mercadopago.com/js/v2"></script>
 
-
+  <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1976d2">
+
+  <!-- PrimeNG theme -->
+  <link id="primeng-theme" rel="stylesheet" href="assets/primeng-themes/saga-blue/theme.css">
+
+  <script>
+    (function () {
+      try {
+        if (location.pathname.startsWith('/area-restrita')) {
+          document.body.classList.add('app-booting');
+        }
+      } catch {}
+    })();
+  </script>
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Revizo",
+    "url": "https://revizo.com.br/"
+  }
+  </script>
 </head>
+
 <body>
+  <app-root>
+  </app-root>
 
-  <app-root></app-root>
-
-
-  <noscript>Please enable JavaScript to continue using this application.</noscript>
+  <noscript>Ative o JavaScript para continuar usando o Revizo.</noscript>
 </body>
-
 </html>
+

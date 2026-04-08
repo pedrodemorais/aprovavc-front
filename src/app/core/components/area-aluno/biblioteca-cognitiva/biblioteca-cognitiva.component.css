@@ -1,0 +1,167 @@
+.biblioteca-cognitiva-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.biblioteca-cognitiva-card {
+  max-width: 780px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+  padding: 14px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.header p {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 0.86rem;
+}
+
+.estado {
+  margin-top: 12px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.estado.erro {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.topico-hint {
+  margin-top: 12px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.82rem;
+}
+
+.tree-wrap {
+  margin-top: 12px;
+  max-height: 72vh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.tree-root,
+.tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-children {
+  padding-left: 14px;
+  border-left: 1px dashed #cbd5e1;
+  margin-left: 8px;
+}
+
+.node {
+  margin: 3px 0;
+}
+
+.node-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 6px 8px;
+}
+
+.node-row.clickable {
+  cursor: pointer;
+}
+
+.node-row.clickable:hover {
+  background: #f8fafc;
+}
+
+.node-materia > .node-row .label {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.toggle,
+.toggle-spacer {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.toggle {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  color: #334155;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.toggle:hover {
+  background: #e2e8f0;
+}
+
+.icon {
+  width: 20px;
+  text-align: center;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  color: #1e293b;
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 10px;
+}
+
+.status-dot.verde {
+  background: #16a34a;
+}
+
+.status-dot.amarelo {
+  background: #eab308;
+}
+
+.status-dot.vermelho {
+  background: #dc2626;
+}
+
+.status-text {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+@media (min-width: 768px) {
+  .biblioteca-cognitiva-page {
+    padding: 24px 16px;
+  }
+
+  .biblioteca-cognitiva-card {
+    padding: 18px;
+  }
+}

@@ -1,0 +1,648 @@
+<div class="retencao-page">
+  <p-toast></p-toast>
+
+  <div class="retencao-header">
+    <div class="retencao-title-line">
+      <h2>Retencao</h2>
+      <div class="retencao-abas retencao-abas-inline">
+        <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'geral'" (click)="selecionarAba('geral')">Visao geral</button>
+        <button type="button" class="aba-btn" [class.ativo]="abaSelecionada === 'criticos'" (click)="selecionarAba('criticos')">Topicos criticos</button>
+      </div>
+    </div>
+    <div class="retencao-filtros">
+      <label for="janelaSelect">Janela</label>
+      <select id="janelaSelect" [(ngModel)]="janelaSelecionada" (ngModelChange)="onJanelaChange()">
+        <option *ngFor="let op of janelaOptions" [ngValue]="op.value">{{ op.label }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="premium-banner" *ngIf="premiumBloqueado">
+    <span>Recurso disponivel no plano premium.</span>
+    <button type="button" class="btn-planos" (click)="irParaPlanos()">Ver planos</button>
+  </div>
+
+  <section class="hero-operacional card" [ngClass]="heroEstado.classeCss" *ngIf="abaSelecionada === 'geral'">
+    <div class="hero-operacional-head">
+      <h3 class="hero-operacional-title">{{ heroRetencaoTitulo }}</h3>
+      <button
+        type="button"
+        class="hero-operacional-cta"
+        [disabled]="heroEstado.ctaAction === 'none'"
+        (click)="executarHeroAcao()">
+        {{ heroEstado.ctaLabel }}
+      </button>
+    </div>
+    <span class="scope-badge scope-badge--janela">
+      {{ janelaEscopoLabel }}
+      <i
+        class="pi pi-info-circle scope-info"
+        pTooltip="{{ tooltipEscopoJanela }}"
+        tooltipPosition="top"
+        aria-label="Escopo da janela selecionada"></i>
+    </span>
+    <p class="hero-operacional-desc">{{ heroDescricao }}</p>
+    <p class="hero-operacional-desc">{{ modoAtivoPainelLabel }}</p>
+    <p class="hero-operacional-desc" *ngIf="inconsistenciaAcionavelDev">
+      <span class="badge badge-critico">INCONSISTENCIA DEV</span>
+    </p>
+    <p class="hero-operacional-counts">
+      {{ heroCounts.criticos }} criticos |
+      {{ heroCounts.moderados }} moderados
+      <ng-container *ngIf="mostrarLevesNoHero; else levesIndisponivel">
+        | {{ heroCounts.leves }} leves
+      </ng-container>
+      <ng-template #levesIndisponivel>
+        | <span pTooltip="Consolidados nao entram nesta lista de risco." tooltipPosition="top" class="hero-operacional-leves-info">leves: —</span>
+      </ng-template>
+    </p>
+
+    <div class="hero-topico-destaque" *ngIf="existeTopicoRiscoDestaque && topicoRiscoDestaque as topico">
+      <div class="hero-topico-destaque__head">
+        <span class="hero-topico-destaque__label">Topico em risco agora</span>
+        <span [class]="classeClassificacaoTopico(topico)">{{ classificacaoTopicoLabel(topico) }}</span>
+      </div>
+      <strong class="hero-topico-destaque__nome">{{ topicoRiscoDestaqueNome }}</strong>
+      <div class="hero-topico-destaque__meta">
+        <span>Score: {{ formatarScore(topico.score) }}</span>
+        <span>Prox. revisao: {{ formatarDataIso(topico.proximaRevisao) }}</span>
+      </div>
+      <div class="hero-topico-destaque__actions">
+        <button type="button" class="btn-sec" (click)="abrirDetalhes(topico)">Detalhes</button>
+        <button
+          type="button"
+          class="btn-pri"
+          [disabled]="topico.materiaId == null"
+          [pTooltip]="topico.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+          [tooltipDisabled]="topico.materiaId != null"
+          tooltipPosition="top"
+          (click)="revisarAgora(topico.materiaId, topico.topicoId)">
+          Revisar agora
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <ng-container *ngIf="abaSelecionada === 'geral'">
+    <section class="retencao-resumo-cards">
+      <div class="estado-risk-card">
+        <div class="estado-risk-title-row">
+          <span class="estado-risk-title">Topicos criticos</span>
+          <i
+            class="pi pi-info-circle estado-risk-info"
+            pTooltip="Percentual de topicos em nivel critico no edital ativo."
+            tooltipPosition="top"
+            [showDelay]="120"
+            [hideDelay]="80"
+            tabindex="0"
+            aria-label="Ajuda sobre topicos criticos"></i>
+        </div>
+        <span class="scope-badge scope-badge--mini">{{ janelaEscopoLabel }}</span>
+        <div class="estado-risk-main">
+          <img
+            src="assets/img/icon/puzzle.png"
+            alt="Topicos criticos"
+            class="estado-risk-icon" />
+          <span class="estado-risk-value">{{ percentualTopicosCriticosCard }}%</span>
+        </div>
+        <div class="estado-risk-prioridade" *ngIf="quantidadeTopicosCriticosCard > 0">
+          Priorizar revisao
+        </div>
+        <div class="estado-risk-sub">
+          {{ quantidadeTopicosCriticosCard }} {{ quantidadeTopicosCriticosCard === 1 ? 'topico critico' : 'topicos criticos' }} para revisar na janela
+        </div>
+      </div>
+
+      <div class="estado-risk-card">
+        <div class="estado-risk-title-row">
+          <span class="estado-risk-title">Risco geral na janela</span>
+          <i
+            class="pi pi-info-circle estado-risk-info"
+            pTooltip="{{ tooltipRiscoGeralJanela }}"
+            tooltipPosition="top"
+            [showDelay]="120"
+            [hideDelay]="80"
+            tabindex="0"
+            aria-label="Ajuda sobre risco geral"></i>
+        </div>
+        <span class="scope-badge scope-badge--mini">{{ janelaEscopoLabel }}</span>
+        <div class="risk-gauge-wrap" [ngClass]="riscoGeralFaixaClasseCard">
+          <svg class="risk-gauge" viewBox="0 0 120 70" role="img" aria-label="Medidor de risco geral">
+            <path class="risk-gauge-track" d="M10 60 A50 50 0 0 1 110 60"></path>
+            <path class="risk-gauge-fill" d="M10 60 A50 50 0 0 1 110 60" [attr.stroke-dasharray]="riscoGeralArcDasharrayCard"></path>
+            <line class="risk-gauge-needle" x1="60" y1="60" x2="60" y2="20" [attr.transform]="'rotate(' + riscoGeralNeedleAngleCard + ' 60 60)'"></line>
+            <circle class="risk-gauge-pivot" cx="60" cy="60" r="3.5"></circle>
+          </svg>
+          <div class="risk-gauge-value">{{ percentualRiscoGeralCard }}%</div>
+          <div class="risk-gauge-label">{{ riscoGeralFaixaLabelCard }}</div>
+        </div>
+        <div class="estado-risk-sub">
+          {{ quantidadeTopicosRiscoGeralCard }} {{ quantidadeTopicosRiscoGeralCard === 1 ? 'topico em risco' : 'topicos em risco' }} na janela
+        </div>
+      </div>
+
+      <div class="estado-risk-card estado-risk-card--consolidado">
+        <div class="estado-risk-title-row">
+          <span class="estado-risk-title">Edital consolidado</span>
+        </div>
+        <span class="scope-badge scope-badge--mini">{{ janelaEscopoLabel }}</span>
+        <div class="estado-risk-scope">{{ editalEscopoLabelCard }}</div>
+        <div class="estado-risk-main">
+          <img
+            src="assets/img/icon/consolidar.png"
+            alt="Edital consolidado"
+            class="estado-risk-icon" />
+          <span class="estado-risk-value">{{ percentualConsolidadoCardLabel }}</span>
+        </div>
+        <div class="estado-risk-sub">
+          Faltam {{ faltamTopicosConsolidarCard }} {{ faltamTopicosConsolidarCard === 1 ? 'topico' : 'topicos' }} no edital ativo
+        </div>
+        <div class="estado-risk-sub" *ngIf="exibirBaseMonitoradaCard">
+          Base monitorada: {{ percentualConsolidadoBaseMonitoradaCardLabel }} · faltam {{ faltamTopicosMonitoradosCard }} {{ faltamTopicosMonitoradosCard === 1 ? 'topico' : 'topicos' }}
+        </div>
+      </div>
+    </section>
+
+    <div class="retencao-top-grid">
+      <section class="card card-resumo">
+        <h3 class="resumo-titulo">
+          Resumo do edital
+          <i
+            class="pi pi-info-circle resumo-info"
+            pTooltip="Distribuicao atual do seu dominio"
+            tooltipPosition="top"
+            aria-label="Informacoes sobre o resumo do edital">
+          </i>
+        </h3>
+        <div class="resumo-layout" *ngIf="resumo as r; else resumoLoading">
+          <div class="resumo-chart-only">
+            <div class="resumo-donut-wrap">
+              <div class="resumo-donut-ring" [style.background]="resumoPizzaStyle" aria-label="Distribuicao de retencao"></div>
+              <div class="resumo-donut-center">
+                <span class="resumo-donut-value">{{ totalTopicosResumo }}</span>
+                <span class="resumo-donut-label">Total topicos</span>
+              </div>
+            </div>
+            <div class="pizza-legenda">
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('CONSOLIDADO')">
+                <i class="leg-dot consolidado"></i>{{ resumoConsolidadosCount }} Consolidados
+              </button>
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('CRITICO')">
+                <i class="leg-dot critico"></i>{{ resumoCriticosCount }} Criticos
+              </button>
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('EM_RISCO')">
+                <i class="leg-dot risco"></i>{{ resumoEmRiscoCount }} Em risco
+              </button>
+              <button type="button" class="leg-item leg-item--clickable" (click)="abrirListaResumo('SEM_DADOS')">
+                <i class="leg-dot semdados"></i>{{ resumoSemDadosCount }} Sem dados
+              </button>
+            </div>
+          </div>
+        </div>
+        <ng-template #resumoLoading>
+          <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo...' : 'Sem dados.' }}</div>
+        </ng-template>
+      </section>
+
+      <section class="card card-resumo">
+        <h3 class="resumo-titulo">
+          Resumo de hoje
+          <i
+            class="pi pi-info-circle resumo-info"
+            pTooltip="Distribuicao operacional da fila de hoje (mesma base do Foco)"
+            tooltipPosition="top"
+            aria-label="Informacoes sobre o resumo de hoje">
+          </i>
+        </h3>
+        <div class="resumo-layout" *ngIf="dashboardSummary; else resumoHojeLoading">
+          <div class="resumo-chart-only">
+            <div class="resumo-donut-wrap">
+              <div class="resumo-donut-ring" [style.background]="resumoHojePizzaStyle" aria-label="Distribuicao da fila de hoje"></div>
+              <div class="resumo-donut-center">
+                <span class="resumo-donut-value">{{ resumoHojeTotalCount }}</span>
+                <span class="resumo-donut-label">Revisoes hoje</span>
+              </div>
+            </div>
+            <div class="pizza-legenda">
+              <span class="leg-item">
+                <i class="leg-dot critico"></i>{{ resumoHojeCriticosCount }} Criticos
+              </span>
+              <span class="leg-item">
+                <i class="leg-dot risco"></i>{{ resumoHojeEmRiscoCount }} Em risco
+              </span>
+              <span class="leg-item">
+                <i class="leg-dot hoje"></i>{{ resumoHojeDemaisCount }} Demais na fila
+              </span>
+            </div>
+            <div class="resumo-hoje-extra">
+              Revisadas hoje: <strong>{{ revisadasHojeCount }}</strong>
+            </div>
+          </div>
+        </div>
+        <ng-template #resumoHojeLoading>
+          <div class="placeholder">{{ carregandoResumo ? 'Carregando resumo de hoje...' : 'Sem dados.' }}</div>
+        </ng-template>
+      </section>
+
+      <section class="card card-tendencias-cards">
+        <h3>Indicadores estrategicos</h3>
+        <div class="analytics-cards analytics-cards-estrategicos">
+          <div class="analytics-card estado-sistema-card" [ngClass]="estadoSistemaClasse">
+            <div class="analytics-title">Estado do sistema</div>
+            <div class="analytics-value">{{ estadoSistemaVM.score }}/100</div>
+            <div class="analytics-sub">{{ estadoSistemaVM.label }} • {{ estadoSistemaVM.faixaTexto }}</div>
+            <div class="estado-sistema-explain">{{ estadoSistemaVM.explicacaoCurta }}</div>
+            <div class="estado-sistema-gauge" [attr.aria-label]="'Score atual: ' + estadoSistemaVM.score + ' de 100'">
+              <div class="estado-sistema-gauge-fill" [style.width.%]="estadoSistemaVM.score"></div>
+              <span class="estado-sistema-gauge-dot" [style.left.%]="estadoSistemaVM.score"></span>
+            </div>
+            <div class="estado-sistema-urgencia" [ngClass]="'urgencia-' + estadoSistemaVM.urgencia.nivel">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ estadoSistemaVM.urgencia.texto }}</span>
+            </div>
+            <div class="analytics-meta">{{ estadoSistemaVM.delta7dLabel }}</div>
+            <div class="estado-sistema-acao">{{ estadoSistemaVM.proximaAcao.texto }}</div>
+            <button
+              *ngIf="estadoSistemaVM.proximaAcao.ctaAction !== 'none' && estadoSistemaVM.proximaAcao.ctaLabel"
+              type="button"
+              class="estado-sistema-cta"
+              (click)="executarAcaoEstadoSistema()">
+              {{ estadoSistemaVM.proximaAcao.ctaLabel }}
+            </button>
+          </div>
+          <div class="analytics-stack">
+            <div class="analytics-card">
+              <div class="analytics-title">Velocidade de consolidacao</div>
+              <div class="analytics-value">{{ velocidadeDiasValor }}</div>
+              <div class="analytics-sub">tempo medio para consolidar um topico</div>
+              <div class="analytics-meta">{{ velocidadeComparativoLabel }}</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-title">{{ labelEvolucaoJanela }}</div>
+              <div class="analytics-value">{{ evolucaoValor }}</div>
+              <div class="analytics-sub">{{ evolucaoSub }}</div>
+              <div class="analytics-meta">{{ evolucaoExtra }}</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-title">Projecao de conclusao</div>
+              <div class="analytics-value">{{ projecaoDiasValor }}</div>
+              <div class="analytics-sub">{{ projecaoDiasSub }}</div>
+              <div class="analytics-meta" *ngIf="projecaoDiasExtra">{{ projecaoDiasExtra }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" id="topicos-em-risco">
+      <h3>{{ labelTendenciasJanela }}</h3>
+      <div class="analytics-chart-wrap" *ngIf="!carregandoAnalytics && tendenciasChartData; else analyticsLoading">
+        <p-chart type="line" [data]="tendenciasChartData" [options]="tendenciasChartOptions"></p-chart>
+      </div>
+      <ng-template #analyticsLoading>
+        <div class="placeholder">{{ carregandoAnalytics ? 'Carregando tendencias...' : 'Sem serie para a janela selecionada.' }}</div>
+      </ng-template>
+    </section>
+
+    <section class="card">
+      <h3>Evolução do Score por Matéria</h3>
+      <div class="analytics-chart-wrap" *ngIf="!carregandoAnalytics && evolucaoMateriasChartData; else evolucaoMateriasLoading">
+        <p-chart type="line" [data]="evolucaoMateriasChartData" [options]="evolucaoMateriasChartOptions"></p-chart>
+      </div>
+      <ng-template #evolucaoMateriasLoading>
+        <div class="placeholder">{{ carregandoAnalytics ? 'Carregando evolução...' : 'A evolução aparecerá conforme você estuda.' }}</div>
+      </ng-template>
+    </section>
+
+    <section class="card">
+      <div class="fila-risco-head">
+        <h3>{{ tituloFilaAtiva }}</h3>
+        <div class="fila-risco-filtros">
+          <label for="filtroDataFilaRisco">Data</label>
+          <input
+            id="filtroDataFilaRisco"
+            type="date"
+            [(ngModel)]="filtroDataFilaRisco" />
+          <button
+            type="button"
+            class="btn-sec"
+            (click)="limparFiltroDataFilaRisco()"
+            [disabled]="!filtroDataFilaRisco">
+            Limpar
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Topico</th>
+              <th>Classificacao</th>
+              <th>Score</th>
+              <th>Dias s/ evento</th>
+              <th>Prox. revisao</th>
+              <th>Erros</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of topicosEmRiscoVisiveis">
+              <td>{{ t.nomeTopico || ('Topico ' + t.topicoId) }}</td>
+              <td><span [class]="classeClassificacaoTopico(t)">{{ classificacaoTopicoLabel(t) }}</span></td>
+              <td>{{ formatarScore(t.score) }}</td>
+              <td>{{ t.diasDesdeUltimoEvento ?? '-' }}</td>
+              <td>{{ formatarDataIso(t.proximaRevisao) }}</td>
+              <td>{{ t.totalErrosNaJanela ?? '-' }}</td>
+              <td class="acoes">
+                <button type="button" class="btn-sec" (click)="abrirDetalhes(t)">Detalhes</button>
+                <button
+                  type="button"
+                  class="btn-pri"
+                  [disabled]="t.materiaId == null"
+                  [pTooltip]="t.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+                  [tooltipDisabled]="t.materiaId != null"
+                  tooltipPosition="top"
+                  (click)="revisarAgora(t.materiaId, t.topicoId)">
+                  Revisar agora
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!carregandoRisco && topicosEmRiscoVisiveis.length === 0">
+              <td colspan="7" class="placeholder">Nenhum topico em risco encontrado.</td>
+            </tr>
+            <tr *ngIf="carregandoRisco">
+              <td colspan="7" class="placeholder">Carregando topicos em risco...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Erros reincidentes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Topico</th>
+              <th>Erros</th>
+              <th>Tentativas</th>
+              <th>Taxa erro</th>
+              <th>Ultima ocorrencia</th>
+              <th>Caixinha</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of errosReincidentes">
+              <td>{{ e.nomeTopico || ('Topico ' + e.topicoId) }}</td>
+              <td>{{ e.totalErros }}</td>
+              <td>{{ e.totalTentativas }}</td>
+              <td>{{ formatarTaxaErro(e.taxaErro) }}</td>
+              <td>{{ formatarDataIso(e.ultimaOcorrencia) }}</td>
+              <td>{{ e.caixinhaAtual ?? '-' }}</td>
+              <td class="acoes">
+                <button type="button" class="btn-sec" (click)="abrirDetalhes({ topicoId: e.topicoId, nomeTopico: e.nomeTopico })">
+                  Detalhes
+                </button>
+                <button
+                  type="button"
+                  class="btn-pri"
+                  [disabled]="e.materiaId == null"
+                  [pTooltip]="e.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+                  [tooltipDisabled]="e.materiaId != null"
+                  tooltipPosition="top"
+                  (click)="revisarAgora(e.materiaId, e.topicoId)">
+                  Revisar agora
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!carregandoErros && errosReincidentes.length === 0">
+              <td colspan="7" class="placeholder">Nenhum erro reincidente encontrado.</td>
+            </tr>
+            <tr *ngIf="carregandoErros">
+              <td colspan="7" class="placeholder">Carregando erros reincidentes...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+
+  <section class="card" *ngIf="abaSelecionada === 'criticos'">
+    <h3>Topicos criticos</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Materia</th>
+            <th>Topico</th>
+            <th>Score</th>
+            <th>
+              Risco de esquecimento
+              <i
+                class="pi pi-info-circle resumo-info"
+                pTooltip="Probabilidade estimada de esquecer o topico no curto prazo."
+                tooltipPosition="top"
+                aria-label="Informacao sobre risco de esquecimento">
+              </i>
+            </th>
+            <th>Dias s/ evento</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of topicosCriticos">
+            <td>{{ c.nomeMateria || '-' }}</td>
+            <td>{{ c.nomeTopico || ('Topico ' + c.topicoId) }}</td>
+            <td>{{ formatarScore(c.score) }}</td>
+            <td>{{ formatarRisk(c.risk) }}</td>
+            <td>{{ c.diasDesdeUltimoEvento ?? '-' }}</td>
+            <td class="acoes">
+              <button
+                type="button"
+                class="btn-pri"
+                [disabled]="c.materiaId == null"
+                [pTooltip]="c.materiaId == null ? 'Materia nao resolvida para este topico' : 'Revisar agora'"
+                [tooltipDisabled]="c.materiaId != null"
+                tooltipPosition="top"
+                (click)="revisarAgora(c.materiaId, c.topicoId)">
+                Revisar agora
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!carregandoCriticos && topicosCriticos.length === 0">
+            <td colspan="6" class="placeholder">Nenhum topico critico encontrado.</td>
+          </tr>
+          <tr *ngIf="carregandoCriticos">
+            <td colspan="6" class="placeholder">Carregando topicos criticos...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p-dialog
+    *ngIf="renderResumoListaDialog"
+    [header]="resumoListaTitulo"
+    [(visible)]="resumoListaVisivel"
+    [modal]="true"
+    [dismissableMask]="true"
+    [appendTo]="'body'"
+    [styleClass]="'retencao-resumo-lista-dialog'"
+    [maskStyleClass]="'retencao-detalhes-mask'"
+    [blockScroll]="false"
+    (visibleChange)="onResumoListaVisibleChange($event)"
+    (onHide)="onResumoListaHide()"
+    [style]="{ width: '900px', maxWidth: '95vw' }">
+    <div class="detalhes" *ngIf="resumoListaVisivel">
+      <div class="table-wrap table-wrap--modal">
+        <table>
+          <thead>
+            <tr>
+              <th>Materia</th>
+              <th>Topico</th>
+              <th>Classificacao</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="carregandoResumoLista">
+              <td colspan="4" class="placeholder">Carregando topicos...</td>
+            </tr>
+            <tr *ngFor="let item of resumoListaItens">
+              <td>{{ item.nomeMateria }}</td>
+              <td>{{ item.nomeTopico }}</td>
+              <td>{{ item.classificacaoLabel }}</td>
+              <td>{{ formatarScore(item.score) }}</td>
+            </tr>
+            <tr *ngIf="!carregandoResumoLista && resumoListaItens.length === 0">
+              <td colspan="4" class="placeholder">Nenhum topico encontrado nesta faixa.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </p-dialog>
+
+  <p-dialog
+    *ngIf="renderDetalhesDialog"
+    header="Detalhes do topico"
+    [(visible)]="detalhesVisivel"
+    [modal]="true"
+    [dismissableMask]="true"
+    [appendTo]="'body'"
+    [styleClass]="'retencao-detalhes-dialog'"
+    [maskStyleClass]="'retencao-detalhes-mask'"
+    [blockScroll]="false"
+    (visibleChange)="onDetalhesVisibleChange($event)"
+    (onHide)="onDetalhesHide()"
+    [style]="{ width: '900px', maxWidth: '95vw' }">
+    <div class="detalhes" *ngIf="detalhesVisivel">
+      <h4>{{ topicoDetalheNome }}</h4>
+      <p class="detalhes-subtitulo" *ngIf="topicoDetalheMateriaNome">{{ topicoDetalheMateriaNome }}</p>
+      <div *ngIf="carregandoDetalhes" class="placeholder">Carregando detalhes...</div>
+
+      <div *ngIf="!carregandoDetalhes">
+        <div class="detalhe-decisao-grid">
+          <div class="detalhe-card">
+            <h5>Saude do Aprendizado</h5>
+            <span [class]="statusClass">{{ statusLabel }}</span>
+            <p class="detalhe-card-text">{{ statusDescription }}</p>
+            <p class="detalhe-card-text"><strong>Ultima revisao:</strong> {{ ultimaRevisaoLabel }}</p>
+            <p class="detalhe-card-text"><strong>Acao sugerida:</strong> {{ acaoAgoraLabel }}</p>
+          </div>
+
+          <div class="detalhe-card">
+            <h5>Por que esta assim?</h5>
+            <ul class="detalhe-motivos">
+              <li *ngFor="let motivo of motivosDetalhe">{{ motivo }}</li>
+            </ul>
+          </div>
+
+          <div class="detalhe-card">
+            <h5>Projecao</h5>
+            <p class="detalhe-card-text"><strong>Se nao revisar:</strong> {{ projecaoDetalhe.naoRevisarLabel }}</p>
+            <p class="detalhe-card-text"><strong>Se revisar hoje:</strong> {{ projecaoDetalhe.revisarHojeLabel }}</p>
+            <p class="detalhe-card-text" *ngIf="projecaoDetalhe.obs">{{ projecaoDetalhe.obs }}</p>
+          </div>
+        </div>
+
+        <details class="metricas-tecnicas-accordion">
+          <summary>Ver metricas tecnicas</summary>
+          <div class="detalhe-tecnico-grid">
+            <div class="detalhe-tecnico-box">
+              <span>Score atual</span>
+              <strong>{{ formatarScore(scoreDetalheAtual) }}</strong>
+            </div>
+            <div class="detalhe-tecnico-box">
+              <span>Eventos na janela</span>
+              <strong>{{ totalEventosDetalheJanela }}</strong>
+            </div>
+            <div class="detalhe-tecnico-box">
+              <span>Erros na janela</span>
+              <strong>{{ totalErrosDetalheJanela }}</strong>
+            </div>
+            <div class="detalhe-tecnico-box">
+              <span>Estabilidade</span>
+              <strong>{{ topicoDetalheStabilityDias != null ? (topicoDetalheStabilityDias + ' dias') : '-' }}</strong>
+            </div>
+          </div>
+
+          <h5>Serie (30 dias)</h5>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Score</th>
+                  <th>Eventos</th>
+                  <th>Erros</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of serieDetalhe">
+                  <td>{{ formatarDataIso(p.data) }}</td>
+                  <td>{{ formatarScore(p.scoreDia) }}</td>
+                  <td>{{ p.eventosNoDia }}</td>
+                  <td>{{ p.errosNoDia }}</td>
+                </tr>
+                <tr *ngIf="serieDetalhe.length === 0">
+                  <td colspan="4" class="placeholder">Sem serie para este topico.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h5>Historico (30 dias)</h5>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Respondido em</th>
+                  <th>Avaliacao</th>
+                  <th>Tipo</th>
+                  <th>Caixinha (antes/depois)</th>
+                  <th>Prox. revisao (antes/depois)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let h of historicoDetalhe">
+                  <td>{{ formatarDataIso(h.respondidoEm) }}</td>
+                  <td>{{ formatarAvaliacao(h.avaliacao) }}</td>
+                  <td>{{ h.tipoItem }}</td>
+                  <td>{{ h.caixinhaAntes ?? '-' }} / {{ h.caixinhaDepois ?? '-' }}</td>
+                  <td>{{ formatarDataIso(h.proximaRevisaoAntes) }} / {{ formatarDataIso(h.proximaRevisaoDepois) }}</td>
+                </tr>
+                <tr *ngIf="historicoDetalhe.length === 0">
+                  <td colspan="5" class="placeholder">Sem historico para este topico.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+    </div>
+  </p-dialog>
+</div>
+

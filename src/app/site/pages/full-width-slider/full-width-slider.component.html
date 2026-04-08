@@ -1,6 +1,31 @@
 <div class="full-width-image">
-  <img *ngFor="let slide of slides; let i = index" [src]="slide.image" [class.active]="i === currentIndex" class="slide"
-    alt="Imagem dinâmica">
+  <!-- Slides empilhados (crossfade real) -->
+  <img
+    *ngFor="let s of slides; let i = index"
+    [src]="s.image"
+    class="slide"
+    [class.active]="i === currentIndex"
+    [attr.aria-hidden]="i !== currentIndex"
+    alt="Slide"
+  />
 
- 
+  <!-- Conteúdo -->
+  <div class="hero-content" [class.content-fade]="isTextAnimating">
+    <div class="hero-text-card">
+    <h1 class="hero-title" [innerHTML]="slides[currentIndex].titleHtml"></h1>
+
+    <p class="hero-subtitle">
+      {{ slides[currentIndex].description }}
+    </p>
+
+    </div>
+
+    <button
+      type="button"
+      class="hero-btn"
+      [routerLink]="slides[currentIndex].link"
+    >
+      {{ slides[currentIndex].buttonText || 'Começar agora' }}
+    </button>
+  </div>
 </div>

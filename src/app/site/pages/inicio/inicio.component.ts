@@ -1,4 +1,6 @@
-import { Component , OnInit} from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-inicio',
@@ -7,9 +9,12 @@ import { Component , OnInit} from '@angular/core';
 })
 export class InicioComponent implements OnInit {
     menuItems: any[] = [];
+ scrolled = false;
+  isBrowser = false;
 
-  constructor() {
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {
     console.log('PaginainicialComponent inicializado');
+    this.isBrowser = isPlatformBrowser(this.platformId);
   }
   ngOnInit(): void {
     this.menuItems = [
@@ -19,9 +24,10 @@ export class InicioComponent implements OnInit {
       { label: 'Soluções',  url: '#services' },
       { label: 'Planos',  url: '#plans' },
       { label: 'Blog',  url: '#blog' },
-      { label: 'Contato', url: '#contact' },
       { label: 'Entrar', routerLink: '/login' },
     ];
   }
+
+  
 
 }

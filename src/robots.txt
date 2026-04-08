@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /area-restrita/
+Disallow: /api/
+Sitemap: https://revizo.com.br/sitemap.xml

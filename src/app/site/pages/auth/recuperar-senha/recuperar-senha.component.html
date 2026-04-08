@@ -1,40 +1,51 @@
-<div class="main">
+<div class="page-recuperar">
 
-    <div class="topo-login-site"> 
-    
-      <img class="logo" src="assets/img/logo/mei5.png" alt="Logo">
-      <a routerLink="/home">
-      <h1 >
-        <span style="color: #ffffff; font-weight: 300; letter-spacing: 1px; margin-right: 5px;">Dynamo</span>
-        <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">SOFT</span>
-      </h1>
-    </a>
-    </div>
-  <div class="painel">
-  <div class="recuperar-senha-container">
-    <a routerLink="/home"><img class="logo" src="assets/img/logo/mei3.png" alt="Logo"></a>
-    <h2>🔑 Esqueceu sua senha?</h2>
-    <p>Insira seu e-mail para receber as instruções de recuperação.</p>
-  
-    <form (ngSubmit)="onSubmit()">
-      <div class="input-group">
-        <label for="email">E-mail</label>
-        <input type="email" id="email" [(ngModel)]="email" name="email" required placeholder="Digite seu e-mail">
+  <!-- TOPO -->
+
+
+  <!-- CONTEÚDO CENTRAL -->
+  <main class="recuperar-main">
+    <section class="recuperar-card">
+      <div class="card-header">
+        <div class="card-logo">
+          <img src="assets/img/logo/revizo.png" alt="Revizo">
+        </div>
+        <h2 class="card-title">🔑 Esqueceu sua senha?</h2>
+        <p class="card-subtitle">
+          Informe seu e-mail para receber o link de recuperação de senha.
+        </p>
       </div>
-  
-      <button type="submit" class="btn-enviar">Enviar</button>
-  
-      <!-- 🔹 Exibir Mensagem de Sucesso -->
-    <div *ngIf="mensagemSucesso" class="mensagem-sucesso">
-        {{ mensagemSucesso }}
-    </div>
 
-    <!-- 🔹 Exibir Mensagem de Erro -->
-    <div *ngIf="mensagemErro" class="mensagem-erro">
-        {{ mensagemErro }}
-    </div>
-    </form>
-  
-    <a routerLink="/login" class="voltar-link">Voltar ao login</a>
-  </div>
-  
+      <form (ngSubmit)="onSubmit()" class="recuperar-form">
+        <div class="input-group">
+          <label for="email">E-mail</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            placeholder="seuemail@exemplo.com"
+          />
+        </div>
+
+        <button type="submit" class="btn-enviar">
+          Enviar link de recuperação
+        </button>
+
+        <!-- Mensagens -->
+        <div *ngIf="mensagemSucesso" class="mensagem mensagem-sucesso">
+          {{ mensagemSucesso }}
+        </div>
+
+        <div *ngIf="mensagemErro" class="mensagem mensagem-erro">
+          {{ mensagemErro }}
+        </div>
+      </form>
+
+      <a routerLink="/login" class="voltar-link">
+        Voltar ao login
+      </a>
+    </section>
+  </main>
+</div>

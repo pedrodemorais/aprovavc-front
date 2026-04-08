@@ -1,0 +1,93 @@
+.resumo-page {
+  padding: 24px 20px 40px;
+}
+
+.resumo-shell {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.resumo-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.resumo-titulo h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+}
+
+.resumo-titulo span {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.btn-voltar {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.resumo-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-nav {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.btn-nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.resumo-body {
+  margin-top: 24px;
+}
+
+.estado {
+  padding: 14px;
+  background: #f9fafb;
+  border-radius: 12px;
+  color: #6b7280;
+}
+
+.estado-erro {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.resumo-conteudo {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 24px 26px;
+  color: #111827;
+  line-height: 1.7;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 720px) {
+  .resumo-header {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+  .resumo-nav {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

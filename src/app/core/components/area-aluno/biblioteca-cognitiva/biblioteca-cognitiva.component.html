@@ -1,0 +1,69 @@
+<main class="biblioteca-cognitiva-page">
+  <section class="biblioteca-cognitiva-card">
+    <header class="header">
+      <h1>Biblioteca Cognitiva</h1>
+      <p>Visao permanente da sua estrutura: materia, topico e subtopico.</p>
+    </header>
+
+    <div class="estado" *ngIf="carregando">Carregando biblioteca...</div>
+    <div class="estado erro" *ngIf="!carregando && erro">{{ erro }}</div>
+
+    <div class="topico-hint" *ngIf="topicoSelecionadoNome">
+      Opcoes de <strong>{{ topicoSelecionadoNome }}</strong> serao adicionadas aqui em breve.
+    </div>
+
+    <section class="tree-wrap" *ngIf="!carregando && !erro">
+      <ul class="tree-root" *ngIf="arvore.length; else semDados">
+        <ng-container *ngFor="let materia of arvore">
+          <li class="node node-materia">
+            <div class="node-row">
+              <button
+                type="button"
+                class="toggle"
+                *ngIf="materia.children.length"
+                (click)="toggleNode(materia)">
+                {{ materia.expanded ? '▾' : '▸' }}
+              </button>
+              <span class="toggle-spacer" *ngIf="!materia.children.length"></span>
+              <span class="icon">📘</span>
+              <span class="label">{{ materia.nome }}</span>
+            </div>
+
+            <ul class="tree-children" *ngIf="materia.expanded && materia.children.length">
+              <ng-container *ngTemplateOutlet="nodeTpl; context: { nodes: materia.children }"></ng-container>
+            </ul>
+          </li>
+        </ng-container>
+      </ul>
+
+      <ng-template #nodeTpl let-nodes="nodes">
+        <ng-container *ngFor="let node of nodes">
+          <li class="node">
+            <div class="node-row" [class.clickable]="node.kind !== 'materia'" (click)="onTopicoClick(node)">
+              <button
+                type="button"
+                class="toggle"
+                *ngIf="node.children.length"
+                (click)="toggleNode(node); $event.stopPropagation()">
+                {{ node.expanded ? '▾' : '▸' }}
+              </button>
+              <span class="toggle-spacer" *ngIf="!node.children.length"></span>
+              <span class="icon">{{ node.kind === 'topico' ? '📂' : '📄' }}</span>
+              <span class="label">{{ node.nome }}</span>
+              <span class="status-dot" [class]="node.status" [title]="node.statusLabel"></span>
+              <span class="status-text">{{ node.statusLabel }}</span>
+            </div>
+
+            <ul class="tree-children" *ngIf="node.expanded && node.children.length">
+              <ng-container *ngTemplateOutlet="nodeTpl; context: { nodes: node.children }"></ng-container>
+            </ul>
+          </li>
+        </ng-container>
+      </ng-template>
+    </section>
+
+    <ng-template #semDados>
+      <div class="estado">Nenhuma estrutura encontrada.</div>
+    </ng-template>
+  </section>
+</main>

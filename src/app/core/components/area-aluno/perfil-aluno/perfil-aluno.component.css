@@ -1,0 +1,737 @@
+/* =======================================
+   FONTE / BASE
+======================================= */
+/* =======================================
+   CONTAINER GERAL DA PÁGINA
+======================================= */
+.page-perfil {
+  width: 100%;
+  min-height: calc(100dvh - 80px);
+  padding: 12px 12px 16px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+ 
+}
+
+.conteudo {
+  width: 100%;
+  max-width: 980px;
+}
+
+/* Linha separadora dentro do card */
+.separador {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0;
+}
+
+/* =======================================
+   CABEÇALHO
+======================================= */
+.perfil-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.perfil-title-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-icon{
+  font-size: 14px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: help;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.info-icon:hover,
+.info-icon:focus{
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.perfil-titulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #2b2b2c9c;
+  letter-spacing: 0.2px;
+}
+
+.perfil-sub {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: #6b7280;
+  display: none;
+}
+
+/* =======================================
+   MENSAGENS (ERRO / SUCESSO)
+======================================= */
+.mensagens {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.msg {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+}
+
+.msg-erro {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.msg-sucesso {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.msg-inline{
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.acoes-form .segmented-group{
+  margin-left: auto;
+}
+
+/* =======================================
+   LAYOUT PRINCIPAL
+======================================= */
+.perfil-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr);
+  gap: 10px;
+}
+
+/* =======================================
+   CARD PRINCIPAL
+======================================= */
+.card {
+  background: transparent;
+  border-radius: 12px;
+  
+  box-shadow: none;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.card-perfil {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =======================================
+   BLOCO ASSINATURA
+======================================= */
+.assinatura {
+  width: 100%;
+}
+
+.assinatura aside{
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: transparent;
+}
+
+.nome-botoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.nome-botoes h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b2b2c9c;
+}
+
+.botoes-assinatura {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.linha-assinatura {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.assinatura .linha-assinatura:last-of-type{
+  border-bottom: none;
+}
+
+.linha-assinatura .label {
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.linha-assinatura .valor,
+.linha-assinatura p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #2b2b2c9c;
+}
+
+.texto-ajuda {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Status da assinatura */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-ativa {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.badge-trial {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-expirada {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* =======================================
+   FORMULÁRIO DE PERFIL
+======================================= */
+.perfil-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: transparent;
+}
+
+/* Linha de campos */
+.linha-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Campo genérico */
+.campo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campo label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.campo input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  outline: none;
+  background: transparent;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.campo input:focus {
+  border-color: rgba(11, 114, 133, 0.35);
+  box-shadow: 0 0 0 3px rgba(11, 114, 133, 0.1);
+  background: transparent;
+}
+
+.campo input[disabled] {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Campo com mais largura */
+.flex-2 {
+  flex: 2;
+}
+
+/* Subtítulo de seção */
+.subtitulo-secao {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2b2b2c9c;
+}
+
+/* =======================================
+   AÇÕES DO FORMULÁRIO
+======================================= */
+.acoes-form {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Botões genéricos */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background 0.16s, color 0.16s, box-shadow 0.12s,
+    transform 0.08s;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primario {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.35);
+}
+
+.btn.primario:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
+.btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn.secundario:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Botao segmentado (padrao Biblioteca de materias) */
+.segmented-group{
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.055);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+.segmented-btn{
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
+
+.segmented-btn:disabled{
+  opacity: 0.6;
+  cursor: default;
+}
+
+.segmented-group .segmented-btn:hover:not(:disabled){
+  transform: none;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.segmented-group .segmented-btn + .segmented-btn{
+  position: relative;
+  padding-left: 14px;
+}
+
+.segmented-group .segmented-btn + .segmented-btn::before{
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  height: 14px;
+  transform: translateY(-50%);
+  width: 1px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.segmented-btn--danger{
+  color: #b91c1c;
+}
+
+/* =======================================
+   LOADING
+======================================= */
+.loading {
+  padding: 40px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+/* PERFIL - DARK MODE (mais forte e visível) */
+:host-context(body.theme-dark) .page-perfil{
+  color: #e5e7eb !important;
+  background: var(--bg) !important;
+}
+
+:host-context(body.theme-dark) .conteudo{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .card{
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .perfil-titulo,
+:host-context(body.theme-dark) .nome-botoes h2,
+:host-context(body.theme-dark) .subtitulo-secao{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .perfil-sub,
+:host-context(body.theme-dark) .linha-assinatura .label,
+:host-context(body.theme-dark) .texto-ajuda,
+:host-context(body.theme-dark) .campo label{
+  color: #a1a1aa !important;
+}
+
+:host-context(body.theme-dark) .linha-assinatura .valor,
+:host-context(body.theme-dark) .linha-assinatura p{
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .separador{
+  background: rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .assinatura aside,
+:host-context(body.theme-dark) .perfil-form{
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .linha-assinatura{
+  border-bottom-color: rgba(255,255,255,0.12) !important;
+}
+
+:host-context(body.theme-dark) .campo input{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e5e7eb !important;
+}
+
+:host-context(body.theme-dark) .campo input:focus{
+  border-color: rgba(11,114,133,0.45) !important;
+  box-shadow: 0 0 0 3px rgba(11,114,133,0.16) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario{
+  background: rgba(255,255,255,0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+}
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled){
+  background: rgba(255,255,255,0.10) !important;
+}
+
+:host-context(body.theme-dark) .segmented-group{
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .segmented-btn{
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+:host-context(body.theme-dark) .segmented-group .segmented-btn:hover:not(:disabled){
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+:host-context(body.theme-dark) .segmented-group .segmented-btn + .segmented-btn::before{
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+:host-context(body.theme-dark) .segmented-btn--danger{
+  color: #fecaca !important;
+}
+
+/* =======================================
+   RESPONSIVO
+======================================= */
+@media (max-width: 900px) {
+  .perfil-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .perfil-titulo {
+    font-size: 16px;
+  }
+
+  .perfil-sub {
+    font-size: 12px;
+  }
+
+  .card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .linha-form {
+    flex-direction: column;
+  }
+
+  .acoes-form {
+    justify-content: flex-start;
+  }
+}
+/* =======================================
+   BOTÕES – PADRÃO GLOBAL (LIGHT + DARK)
+======================================= */
+
+/* BOTÃO PRIMÁRIO */
+.btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.45) !important;
+  border: none !important;
+}
+
+.btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+.btn.primario:active {
+  transform: translateY(1px);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.45) !important;
+}
+
+.btn.primario:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+/* =======================================
+   BOTÃO PRIMÁRIO — DARK MODE
+======================================= */
+
+:host-context(body.theme-dark) .btn.primario {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.55) !important;
+}
+
+:host-context(body.theme-dark) .btn.primario:hover:not(:disabled) {
+  background: #15803d !important;
+  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.7) !important;
+}
+
+/* =======================================
+   BOTÃO SECUNDÁRIO (NEUTRO)
+======================================= */
+
+.btn.secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn.secundario:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Dark */
+:host-context(body.theme-dark) .btn.secundario {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+:host-context(body.theme-dark) .btn.secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* =======================================
+   ASSINATURA EMBUTIDA (MEUS DADOS)
+======================================= */
+.assinatura-titulo{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-cancelar{
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+
+.btn-cancelar:hover{
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+:host-context(body.theme-dark) .btn-cancelar{
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fecaca !important;
+  border-color: rgba(239, 68, 68, 0.28) !important;
+}
+
+:host-context(body.theme-dark) .btn-cancelar:hover{
+  background: rgba(239, 68, 68, 0.18) !important;
+  border-color: rgba(239, 68, 68, 0.36) !important;
+}
+
+.assinatura-acoes{
+  display: inline-flex;
+  align-items: center;
+}
+
+/* =======================================
+   RESPONSIVO EXTRA - MEU CADASTRO
+======================================= */
+@media (max-width: 1100px){
+  .conteudo{ max-width: 960px; }
+}
+
+@media (max-width: 900px){
+  .perfil-header{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .nome-botoes{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .assinatura-acoes{
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .linha-assinatura{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px){
+  .page-perfil{
+    padding: 12px 12px 16px;
+  }
+
+  .card{
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .perfil-form{
+    padding: 10px;
+  }
+
+  .assinatura aside{
+    padding: 10px;
+  }
+}
+
+@media (max-width: 600px){
+  .linha-form{
+    flex-direction: column;
+  }
+
+  .campo{
+    width: 100%;
+  }
+
+  .segmented-group{
+    width: 100%;
+    justify-content: center;
+  }
+
+  .segmented-btn{
+    flex: 1;
+    justify-content: center;
+  }
+
+  .assinatura-acoes{
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px){
+  .perfil-titulo{ font-size: 16px; }
+  .perfil-sub{ font-size: 12px; }
+  .subtitulo-secao{ font-size: 12.5px; }
+}

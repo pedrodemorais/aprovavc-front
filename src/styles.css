@@ -1,320 +1,411 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-@import "primeng/resources/themes/lara-light-blue/theme.css";
-@import "primeng/resources/primeng.min.css";
+/* =======================================
+   FONTE BASE
+======================================= */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
+/* =======================================
+   TOKENS DE TEMA (LIGHT)
+======================================= */
+:root {
+  --bg: radial-gradient(circle at top, #dcfce7 0, #f0fdf4 45%, #e8f5e9 100%);
+  --bg-solid: #ffffff;
 
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
 
+  --border: #e5e7eb;
 
+  --text: #0f172a;
+  --text-2: #374151;
+  --muted: #6b7280;
 
-/* Evita barra de rolagem horizontal */
-html, body {
-  width: 100%;
-  max-width: 100%;
- overflow-x: hidden;  /* Nunca mostra barra horizontal */
-overflow-y: auto;    /* Mostra vertical apenas se necessário */
+  --primary: #54ba67;
 
- 
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
- height: 100%;
- max-height: 100%;
-  -webkit-text-size-adjust: 100%; /* Para mobile */
-  background-color: #ffffff;
+  --input-bg: rgba(36, 88, 108, 0.12);
+  --input-text: #374151;
 
-  color: #2a2929d9;
+  --shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
 }
-html, body {
+
+/* =======================================
+   TOKENS DE TEMA (DARK)
+======================================= */
+body.theme-dark {
+  --bg: radial-gradient(circle at top, #0b1220 0, #0a0f1a 45%, #070b12 100%);
+  --bg-solid: #0b1220;
+
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.04);
+
+  --border: rgba(255, 255, 255, 0.12);
+
+  --text: #fbfffc80;
+  --text-2: #ffffff9a;
+  --muted: #94a3b886;
+
+  --primary: #22c55e;
+
+  --input-bg: rgba(255, 255, 255, 0.06);
+  --input-text: #e5e7eb;
+
+  --shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
+/* =======================================
+   RESET / BASE
+======================================= */
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
-  background-color: #ffffff;
+  background: var(--bg);
+  background-attachment: fixed;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+ 
+  color: var(--text);
 }
 
-.site-container {
-  max-width: 1360px; /* largura máxima */
-  margin: 0 auto;    /* centraliza horizontalmente */
-  
-  
-}
-
-.site-container-menu {
-  max-width: 1360px; /* largura máxima */
-  margin: 0 auto;    /* centraliza horizontalmente */
-
+/* =======================================
+   DASHBOARD (MOLDURA)
+======================================= */
+.dashboard {
+  min-height: 100dvh;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
-/* Garantir que imagens e vídeos nunca ultrapassem o container */
-img, picture, video, canvas, svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-/* Remove estilos padrão de listas */
-ul, ol {
-  list-style: none;
- 
-  margin: 10px 0;  /* Espaço externo (em cima e embaixo) */
-    font-size: 16px;
-   font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
-}
-
-/* Remove sublinhado padrão de links */
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Botões e inputs com aparência consistente */
- input, textarea, select {
-  font: inherit;
-  border: none;
-  background: none;
-  outline: none;
-  background: rgb(240, 236, 236);
-  font-size: 16px;
-   font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
-  display: block;
-  
-  margin-bottom: 0.5rem;
-  color: #414441; /* Cor do texto */
-  font-size: medium;
-     border-radius: 4px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    background: #24586c22;
-      font-size: 16px;
-}
-
-
-
-/* Previne zoom estranho em dispositivos iOS */
-input, textarea {
-  font-size: 16px;
-}
-
-header{
-   position: fixed;      /* Fixa no topo da tela */
-  top: 0;               /* Alinha no topo */
-  left: 0;              /* Garante que fique alinhada à esquerda */
-  width: 100%;          /* Ocupa toda a largura */
- 
-  background-color: #fff; /* Cor de fundo */
-  z-index: 1000;         /* Fica acima de outros elementos */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Opcional: sombra */
-}
-/* Garantir que seções não criem overflow */
-section,  footer, main, nav, div {
-  max-width: 100%;
-}
-
-/* Forçar palavras grandes a quebrarem e não criarem scroll horizontal */
-body {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-
-.field label {
-  font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
-  display: block;
-  
-  margin-bottom: 0.5rem;
-  color: #414441; /* Cor do texto */
-  font-size: medium;
-
-}
-.p-component{
-  font-size: large;
-}
-
-.p-dropdown{
-   height: 2rem;
-  font-size: 1rem;
+/* =======================================
+   TOPO FIXO
+======================================= */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
   align-items: center;
-  background: #41424211;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
 }
 
-.campo-invalido {
-  border: 2px solid red !important;
-  background-color: #fff0e6;
+/* Tooltip menor do calendario de constancia (PrimeNG append-to-body) */
+.constancia-tooltip .p-tooltip-text {
+  font-size: 0.75rem;
 }
 
-  /* Reduzindo o tamanho dos campos de entrada */
-  .field input,
-  .field textarea,
+.logo img {
+  width: 140px;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text-2);
+}
+
+.btn-modo-leitura {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+/* =======================================
+   CONTAINER PRINCIPAL
+======================================= */
+.container {
+  flex: 1;
+  display: flex;
+
+}
+
+/* =======================================
+   MENU LATERAL
+======================================= */
+.sidebar {
+  width: 240px;
   
  
-  .field p-inputtext {
-      width: 100%;
-      padding: 0.6rem;
-      font-size: 1rem;
-      font-weight: 500;
-      border-radius: 4px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-      color: #063a77;
-    background: #24586c22;
-    }
-
-    .field select{
-      width: 100%;
-      padding: 0.5rem;
-      font-size:1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-
-    
-
-    .p-menubar .p-submenu-list {
-      z-index: 10000;
-    }
-
-    ::ng-deep .custom-dialog-cliente .p-dialog {
-  width: 95vw !important;
-  max-width: 600px !important;
+  border: 1px solid var(--border);
+ 
+  box-shadow: var(--shadow);
 }
 
-::ng-deep .full-width-image {
-   
-    background-size: cover; /* Faz a imagem preencher o container */
-    background-position: center 10%; /* Centraliza a imagem */
-    background-repeat: no-repeat; /* Evita repetiÃ§Ã£o da imagem */
-    width: 100%; /* Ocupa toda a largura da tela */
-    height: 90dvh; /* Altura fixa de 300px */
-    display: flex; /* Alinha o texto sobreposto */
-    
+.menu-flat {
+  width: 100%;
+}
 
-    position: relative; /* NecessÃ¡rio para a sobreposiÃ§Ã£o */
+/* PanelMenu */
+.p-panelmenu .p-menuitem-link {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-2) !important;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+}
+
+.p-panelmenu .p-menuitem-link:hover {
+  background: var(--surface-2) !important;
+}
+
+.p-panelmenu .p-menuitem-link.router-link-active,
+.p-panelmenu .p-menuitem-link-active {
+  font-weight: 600;
+  color: var(--primary) !important;
+ 
+}
+
+.p-panelmenu .p-menuitem-icon {
+  color: inherit !important;
+}
+
+/* =======================================
+   CONTEÚDO
+======================================= */
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =======================================
+   INPUTS / FORMULÁRIOS
+======================================= */
+input,
+textarea,
+select {
+  background: var(--input-bg);
+  color: var(--input-text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+/* =======================================
+   QUILL / P-EDITOR (DARK MODE)
+======================================= */
+body.theme-dark .p-editor-container {
+  border: 1px solid var(--border) !important;
+  background: var(--surface-2) !important;
+}
+
+body.theme-dark .p-editor-toolbar {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+body.theme-dark .p-editor-content,
+body.theme-dark .ql-container {
+  background: rgba(2, 6, 23, 0.55) !important;
+  border-color: var(--border) !important;
+}
+
+body.theme-dark .ql-editor {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+body.theme-dark .ql-editor.ql-blank::before {
+  color: rgba(203, 213, 225, 0.55) !important;
+}
+
+/* =======================================
+   RESPONSIVO
+======================================= */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: inline-block;
   }
 
-  .full-width-image{
-  width: 100%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
+  .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    height: calc(100dvh - 64px);
+    width: 78%;
+    max-width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 60;
+  }
+
+  .sidebar.menu-mobile {
+    transform: translateX(0);
+  }
 }
-/* FLAT total: sem borda/sombra/raio/“cards” e sem espaçamento */
-.p-panelmenu.menu-flat,
-.p-panelmenu.menu-flat .p-panelmenu-panel,
-.p-panelmenu.menu-flat .p-panelmenu-header,
-.p-panelmenu.menu-flat .p-panelmenu-header-content,
-.p-panelmenu.menu-flat .p-panelmenu-header-action,
-.p-panelmenu.menu-flat .p-panelmenu-content,
-.p-panelmenu.menu-flat .p-submenu-list,
-.p-panelmenu.menu-flat .p-menuitem-link {
-  border: 0 !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
+
+/* =======================================
+   ANIMAÇÃO
+======================================= */
+@keyframes fadeInTopbar {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.topbar {
+  animation: fadeInTopbar 0.25s ease-out;
+}
+/* =========================================================
+   PRIME NG (PanelMenu) - DARK MODE OVERRIDE (GLOBAL)
+   Colar no styles.scss (no final)
+========================================================= */
+
+body.theme-dark .sidebar .p-panelmenu,
+body.theme-dark .sidebar .p-panelmenu * {
+  color: var(--text);
+}
+
+/* AQUI é o trecho que está “quebrando” no theme.css */
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content {
+  border: 0px solid rgba(255, 255, 255, 0.12) !important;
+  color: var(--text) !important;
+  background: rgba(15, 23, 42, 0.72) !important;
+  border-radius: 10px !important;
+  transition: box-shadow 0.2s, background 0.15s, border-color 0.15s !important;
+}
+
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* header aberto */
+body.theme-dark .p-panelmenu .p-panelmenu-header.p-highlight .p-panelmenu-header-content {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+}
+
+/* link do header (texto clicável) */
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content .p-panelmenu-header-action {
   background: transparent !important;
+  color: var(--text) !important;
 }
 
-/* Tira o “card” e o espaço entre seções */
-.p-panelmenu.menu-flat .p-panelmenu-panel { margin: 0 !important; }
-
-/* Header como item simples (sem caixinha) */
-.p-panelmenu.menu-flat .p-panelmenu-header-action {
- 
+/* ícones do header */
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content .p-panelmenu-icon,
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content .p-menuitem-icon {
+  color: var(--text-2) !important;
 }
 
-/* Submenu sem box e com leve indentação */
-.p-panelmenu.menu-flat .p-panelmenu-content { padding: 0 !important; }
-.p-panelmenu.menu-flat .p-submenu-list { padding: 0 0 0 14px !important; margin: 0 !important; }
-.p-panelmenu.menu-flat .p-menuitem { margin: 0 !important; }
-
-/* (opcional) hover discreto */
-.p-panelmenu.menu-flat .p-panelmenu-header-action:hover,
-.p-panelmenu.menu-flat .p-menuitem-link:hover {
-  background: rgba(23, 152, 192, 0.396) !important;
-}
-
-/* Garanta que a própria sidebar não tenha linha/sombra */
-.sidebar, nav.sidebar, .layout-sidebar {
+/* conteúdo interno */
+body.theme-dark .p-panelmenu .p-panelmenu-content {
+  background: transparent !important;
   border: 0 !important;
+}
+
+/* links internos */
+body.theme-dark .p-panelmenu .p-menuitem-link {
+  background: transparent !important;
+  color: var(--text-2) !important;
+  border-radius: 10px !important;
+}
+
+body.theme-dark .p-panelmenu .p-menuitem-link:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ativo */
+body.theme-dark .p-panelmenu .p-menuitem-link.router-link-active,
+body.theme-dark .p-panelmenu .p-menuitem-link-active {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: var(--text) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25) inset !important;
+}
+
+body.theme-dark .p-panelmenu .p-menuitem-link.router-link-active .p-menuitem-icon,
+body.theme-dark .p-panelmenu .p-menuitem-link-active .p-menuitem-icon {
+  color: var(--primary) !important;
+}
+/* PRIME NG PanelMenu — tirar bordas quadradas dos itens (dark) */
+body.theme-dark .p-panelmenu .p-menuitem-link {
+  border: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
 }
 
+/* se o Prime estiver aplicando borda no LI */
+body.theme-dark .p-panelmenu .p-menuitem {
+  border: 0 !important;
+}
 
+/* PRIME NG Tooltip - garantir acima de modais */
+.p-tooltip {
+  z-index: 99999 !important;
+}
 
-@media (max-width: 768px) {
+/* PRIME NG Dropdown - garantir acima dos cards */
+.p-dropdown-panel,
+.p-overlay {
+  z-index: 999999 !important;
+}
+
+/* header “pai” (quando existir) também sem borda extra */
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content {
+  box-shadow: none !important;
+}
+
+/* opcional: deixa só um hover suave, sem “moldura” */
+body.theme-dark .p-panelmenu .p-menuitem-link:hover {
+  box-shadow: none !important;
+}
+
+/* opcional: se quiser uma “linha” bem discreta separando itens (em vez de borda) */
+body.theme-dark .p-panelmenu .p-panelmenu-content .p-menuitem-link {
+  border-bottom: none !important;
+}
+body.theme-dark .p-panelmenu .p-panelmenu-content .p-menuitem:last-child .p-menuitem-link {
+  border-bottom: none!important;
+}
+/* =======================================
+   PRIME NG PANELMENU — remover “fundo azul” no DARK
+======================================= */
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-content,
+body.theme-dark .p-panelmenu .p-panelmenu-header .p-panelmenu-header-action {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* se ainda sobrar “placa” atrás ao expandir */
+body.theme-dark .p-panelmenu .p-panelmenu-content {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* garante que o item não carregue cor do tema */
+body.theme-dark .p-panelmenu .p-panelmenu-header:not(.p-disabled) .p-panelmenu-header-action:focus,
+body.theme-dark .p-panelmenu .p-panelmenu-header:not(.p-disabled) .p-panelmenu-header-action:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
 html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow: auto;
- 
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
- height: 100%;
- max-height: 100%;
-  -webkit-text-size-adjust: 100%; /* Para mobile */
-  
-
-  color: #333;
+  margin: 0;
+  overflow-x: hidden;
 }
 
-.field label {
-  font-family: Arial, Helvetica, sans-serif;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
-  display: block;
-  
-  margin-bottom: 0.5rem;
-  color: #414441; /* Cor do texto */
-  font-size: small;
+/* Dashboard (iOS Chrome): libera scroll no html/body quando esta rota esta ativa */
+html.dashboard-scroll,
+body.dashboard-scroll {
+  overflow: auto !important;
+  height: 100%;
 }
-
- .field input,
-  .field textarea,
- 
-  .field p-inputtext {
-      width: 100%;
-      padding: 0.4rem;
-      font-size: 0.8rem;
-      font-weight: 500;
-      border-radius: 2px;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    
-        color: #063a77;
-    background: #41424211;
-    }
-
-    .select-estado{
-  
-      padding: 0.5rem;
-      font-size: 0.5rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-
-       .field select{
-      padding: 0.5rem;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-
-    .p-dropdown{
- height: 1.8rem;
-  font-size: 0.85rem;
-  align-items: center;
+body.app-booting app-root {
+  visibility: hidden;
 }
-
-}
-

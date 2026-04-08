@@ -1,56 +1,78 @@
-<div class="main">
+<div class="login-page">
+  <div class="login-card">
 
-  <div class="topo-login-site">
-
-    <div class="nome-site-topo-login">
-      <img class="logo" src="assets/img/logo/aprovavc.png" alt="Logo" style="margin-right: 10px;">
-      <a routerLink="/home">
-        
-        <h1>
-
-          <span style="color: #ffffff; font-weight: 400; letter-spacing: 0.5px;">Dynamo</span>
-          <span style="color: #79b8ea; font-weight: 400; letter-spacing: 0.5px;">Soft</span>
-        </h1>
-
-      </a>
-      
+    <div class="login-header">
+      <div class="login-logo-wrap">
+        <img class="login-logo" src="assets/img/logo/revizo.png" alt="Logo" />
+      </div>
     </div>
-  </div>
-  <div class="painel">
 
-    <div class="container">
+ 
 
-      <a routerLink="/home">Voltar</a>
-
-      <div class="boas-vindas">
-        Olá! Você já possui uma conta?
-        Digite o seu e-mail e senha:
+    <form class="login-form" (ngSubmit)="login()">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="seu@email.com"
+          [(ngModel)]="email"
+          name="email"
+          required
+          autocomplete="email"
+        />
       </div>
 
-
-      <form (ngSubmit)="login()">
-        <input type="email" placeholder="Email" [(ngModel)]="email" name="email" required />
-        <input type="password" placeholder="Senha" [(ngModel)]="password" name="password" required />
-        <div *ngIf="mensagem" class="success-message">
-          {{mensagem}}
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <div class="password-field">
+          <input
+            id="password"
+            class="password-input"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Digite sua senha"
+            [(ngModel)]="password"
+            name="password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" class="password-toggle" (click)="togglePassword()"
+            [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+            <i class="pi" [ngClass]="showPassword ? 'pi-eye-slash' : 'pi-eye'"></i>
+          </button>
         </div>
-        <button type="submit">LOGIN</button>
-      </form>
+        <a routerLink="/recuperar-senha" class="link-inline">
+          Esqueceu a senha?
+        </a>
+      </div>
 
-
+      <!-- Mensagem de sucesso -->
+      <div *ngIf="mensagem" class="alert alert-success">
+        {{ mensagem }}
+      </div>
 
       <!-- Mensagem de erro -->
-      <div *ngIf="errorMessage" class="error-message">
+      <div *ngIf="errorMessage" class="alert alert-error">
         {{ errorMessage }}
       </div>
-      <p> <a routerLink="/recuperar-senha">ESQUECEU A SENHA?</a></p>
 
-      <div>
-        <p>Ainda não tem uma conta?</p>
-        <p class="cadastro-link"><a routerLink="/configurador">CADASTRE-SE AQUI</a></p>
-      </div>
+      <button type="submit" class="btn-login">
+        Entrar
+      </button>
+    </form>
 
+    <a href="/" class="login-back-inline">Voltar para o site</a>
 
+    <div class="login-links">
+     
 
+      <div class="divider"></div>
 
+      <p class="no-account">
+        Ainda não tem conta?
+        <a routerLink="/configurador" class="link-strong">Criar agora</a>
+      </p>
     </div>
+
+  </div>
+</div>

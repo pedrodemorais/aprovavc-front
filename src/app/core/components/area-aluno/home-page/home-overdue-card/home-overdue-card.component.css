@@ -1,0 +1,48 @@
+.overdue-card {
+  border: 1px solid #fca5a5;
+  border-left-width: 5px;
+  border-radius: 14px;
+  background: #fff5f5;
+  padding: 1rem 1rem 1.1rem;
+}
+
+.overdue-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.overdue-card__header h2 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  color: #9f1239;
+}
+
+.overdue-card__icon {
+  font-size: 1.05rem;
+}
+
+.overdue-card p {
+  margin: 0;
+  color: #7f1d1d;
+  line-height: 1.42;
+}
+
+.overdue-card__tempo {
+  margin-top: 0.6rem !important;
+  font-weight: 700;
+}
+
+.overdue-card__cta {
+  margin-top: 0.8rem;
+  border: 0;
+  border-radius: 10px;
+  background: #b91c1c;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}

@@ -1,0 +1,793 @@
+.hoje-page {
+  min-height: calc(100dvh - 64px);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: linear-gradient(180deg, #f7fbf8 0%, #eef6f1 100%);
+}
+
+.hoje-shell {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  gap: 14px;
+}
+
+.estado-card,
+.progresso-card,
+.risco-card,
+.hero-card,
+.hoje-fim,
+.hoje-vazio,
+.hoje-resumo-dia {
+  border: 1px solid #d8e5dc;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(24, 39, 28, 0.06);
+}
+
+.hoje-resumo-dia {
+  display: grid;
+  gap: 14px;
+}
+
+.hoje-resumo-dia__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hoje-resumo-dia__eyebrow {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #688071;
+}
+
+.hoje-resumo-dia__head h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #1f3529;
+}
+
+.hoje-resumo-dia__pct {
+  min-width: 72px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #f1f8f4;
+  color: #0f8a3c;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.hoje-resumo-dia__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hoje-resumo-dia__metric,
+.hoje-resumo-dia__done {
+  border: 1px solid #e1ebe4;
+  border-radius: 12px;
+  background: #f9fcfa;
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.hoje-resumo-dia__label {
+  font-size: 12px;
+  color: #607164;
+}
+
+.hoje-resumo-dia__metric strong,
+.hoje-resumo-dia__done strong {
+  font-size: 20px;
+  line-height: 1.2;
+  color: #183224;
+}
+
+.hoje-resumo-dia__done span {
+  font-size: 13px;
+  color: #53675b;
+}
+
+.hoje-resumo-dia__bar {
+  height: 10px;
+  border-radius: 999px;
+  background: #e8f0eb;
+  overflow: hidden;
+}
+
+.hoje-resumo-dia__bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0f8a3c 0%, #27ae60 100%);
+  transition: width 180ms ease;
+}
+
+.estado-card-head {
+  display: flex;
+  justify-content: flex-start;
+  gap: 14px;
+  align-items: flex-start;
+  margin-top: 10px;
+}
+
+.estado-metricas {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.estado-card h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #1f3529;
+}
+
+.estado-card p {
+  margin: 5px 0 0;
+  color: #53675b;
+  font-size: 13px;
+}
+
+.estado-card-sub {
+  margin-top: 4px;
+}
+
+.estado-risk-card {
+  min-width: 200px;
+  max-width: 250px;
+  border: 1px solid #dfe9e2;
+  border-radius: 12px;
+  background: #f9fcfa;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.estado-risk-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f4f3f;
+  text-align: center;
+}
+
+.estado-risk-title-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.estado-risk-title-link {
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.estado-risk-info {
+  font-size: 12px;
+  color: #5f7266;
+  cursor: pointer;
+  margin-top: 0;
+}
+
+.estado-risk-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.estado-risk-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.estado-risk-value {
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 800;
+  color: #183224;
+}
+
+.estado-risk-sub {
+  margin-top: -2px;
+  font-size: 11px;
+  color: #607164;
+}
+
+.estado-risk-prioridade {
+  margin-top: -2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8b2f2f;
+}
+
+.risk-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -2px;
+}
+
+.risk-gauge {
+  width: 132px;
+  height: 78px;
+  display: block;
+}
+
+.risk-gauge-track {
+  fill: none;
+  stroke: #d7e2db;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.risk-gauge-fill {
+  fill: none;
+  stroke: #f59e0b;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dashoffset: 0;
+  transition: stroke-dasharray 280ms ease;
+}
+
+.risk-gauge-needle {
+  stroke: #22372b;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.risk-gauge-pivot {
+  fill: #22372b;
+}
+
+.risk-gauge-value {
+  margin-top: -4px;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+  color: #183224;
+}
+
+.risk-gauge-label {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #55695d;
+}
+
+.risk-level--baixo .risk-gauge-fill { stroke: #16a34a; }
+.risk-level--moderado .risk-gauge-fill { stroke: #f59e0b; }
+.risk-level--alto .risk-gauge-fill { stroke: #ef4444; }
+.risk-level--critico .risk-gauge-fill { stroke: #b91c1c; }
+
+.estado-risk-scope {
+  margin-top: -4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #4f6e5c;
+}
+
+.estado-risk-card--streak .estado-risk-value {
+  font-size: 30px;
+}
+
+.estado-risk-card--vence-hoje .estado-risk-value {
+  color: #c16700;
+}
+
+.estado-risk-card--atrasadas .estado-risk-value {
+  color: #be2f2f;
+}
+
+.estado-risk-card--em-dia .estado-risk-value {
+  color: #1f6f3f;
+}
+
+.estado-label {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #2e5f43;
+  font-weight: 600;
+}
+
+.estado-acoes {
+  margin-top: 10px;
+}
+
+.btn-comecar-revisao-prioritaria {
+  border: 0;
+  border-radius: 10px;
+  background: #0f8a3c;
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-comecar-revisao-prioritaria:hover {
+  background: #0c7332;
+}
+
+.btn-comecar-revisao-prioritaria:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.estado-streak-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #8c5b12;
+  font-weight: 600;
+}
+
+.streak-chip {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.streak-chip--open {
+  background: #eef2f0;
+  color: #4a5d50;
+}
+
+.streak-chip--progress {
+  background: #fff4e8;
+  color: #ad5e00;
+}
+
+.streak-chip--done {
+  background: #e8f6ec;
+  color: #1f6f3f;
+}
+
+.progresso-card h2,
+.risco-card h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #1f3529;
+}
+
+.progresso-line {
+  margin-bottom: 10px;
+}
+
+.progresso-line-title {
+  font-size: 14px;
+  color: #274435;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.progresso-line-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #5a6d60;
+}
+
+.progresso-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.progresso-mini-card {
+  border: 1px solid #dfe9e2;
+  border-radius: 12px;
+  background: #f9fcfa;
+  padding: 10px 12px;
+}
+
+.progresso-mini-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #607164;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 5px;
+}
+
+.progresso-mini-value {
+  font-size: 14px;
+  color: #274435;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.progresso-mini-card--hoje {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.progresso-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -2px;
+}
+
+.progresso-gauge {
+  width: 132px;
+  height: 78px;
+  display: block;
+}
+
+.progresso-gauge-track {
+  fill: none;
+  stroke: #d7e2db;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.progresso-gauge-fill {
+  fill: none;
+  stroke: #16a34a;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dashoffset: 0;
+  transition: stroke-dasharray 280ms ease;
+}
+
+.progresso-gauge-needle {
+  stroke: #22372b;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.progresso-gauge-pivot {
+  fill: #22372b;
+}
+
+.progresso-gauge-value {
+  margin-top: -4px;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+  color: #183224;
+}
+
+.progresso-gauge-label {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #55695d;
+}
+
+.progresso-gauge-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #607164;
+}
+
+.progress-level--vermelho .progresso-gauge-fill {
+  stroke: #dc2626;
+}
+
+.progress-level--laranja .progresso-gauge-fill {
+  stroke: #f59e0b;
+}
+
+.progress-level--verde .progresso-gauge-fill {
+  stroke: #16a34a;
+}
+
+.progresso-bar {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid #bfd1c3;
+  background: #d7e3da;
+  overflow: hidden;
+}
+
+.progresso-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #0f8a3c 0%, #1ea851 100%);
+  transition: width 260ms ease;
+}
+
+.progresso-bar-fill--edital {
+  background: linear-gradient(90deg, #0f8a3c 0%, #16964a 100%);
+}
+
+.risco-card {
+  background: #fafcfa;
+}
+
+.risco-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #5b6f62;
+}
+
+.hero-materia {
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #687d6f;
+}
+
+.hero-titulo {
+  margin: 6px 0 10px;
+  font-size: 44px;
+  line-height: 1.08;
+  color: #1a3024;
+}
+
+.hero-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.hero-chip-tempo {
+  border: 1px solid #cfddd3;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #355646;
+  background: #f7fbf8;
+  font-weight: 600;
+}
+
+.hero-feedback {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #2f6844;
+  font-weight: 600;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-critico {
+  background: #fdecea;
+  color: #be2f2f;
+}
+
+.badge-alta {
+  background: #fff1e5;
+  color: #c16700;
+}
+
+.badge-media {
+  background: #eef6ff;
+  color: #2a63a7;
+}
+
+.badge-baixa {
+  background: #ebf8ee;
+  color: #287745;
+}
+
+.btn-comecar {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: #0f8a3c;
+  color: #fff;
+  padding: 14px 18px;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-comecar:hover {
+  background: #0c7332;
+}
+
+.btn-comecar:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.btn-loading-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: hoje-spin 700ms linear infinite;
+}
+
+.btn-link-critico {
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+  color: #a03838;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-link-critico--fim {
+  align-self: center;
+  justify-self: center;
+  margin-top: 0;
+}
+
+.btn-secundario {
+  margin-top: 10px;
+  width: 100%;
+  border: 1px solid #cbd8cd;
+  border-radius: 12px;
+  background: #fff;
+  color: #244432;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secundario:hover {
+  background: #f6faf7;
+}
+
+.btn-secundario-critico {
+  border-color: #e5b7b7;
+  color: #a03838;
+  background: #fff9f9;
+}
+
+.btn-secundario-critico:hover {
+  background: #fff3f3;
+}
+
+.fim-metricas {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.fim-metrica {
+  border: 1px solid #e4ede6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #f9fcfa;
+}
+
+.fim-label {
+  display: block;
+  font-size: 12px;
+  color: #607164;
+  margin-bottom: 4px;
+}
+
+.fim-acoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.hoje-vazio h2,
+.hoje-fim h2 {
+  margin: 0;
+  color: #1f3529;
+}
+
+.hoje-vazio p,
+.hoje-fim p {
+  margin: 6px 0 0;
+  color: #4f6255;
+}
+
+.hoje-loading {
+  min-height: calc(100dvh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #33513d;
+}
+
+.hoje-card-entrando {
+  animation: card-fade-in 200ms ease;
+}
+
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hoje-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 960px) {
+  .hero-titulo {
+    font-size: 34px;
+  }
+
+  .estado-card-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .estado-metricas {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .estado-risk-card {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .hoje-page {
+    padding: 14px;
+  }
+
+  .hoje-shell {
+    gap: 12px;
+  }
+
+  .estado-card,
+  .progresso-card,
+  .risco-card,
+  .hero-card,
+  .hoje-fim,
+  .hoje-vazio {
+    padding: 14px;
+  }
+
+  .hero-titulo {
+    font-size: 30px;
+  }
+
+  .btn-comecar {
+    font-size: 18px;
+  }
+
+  .fim-acoes {
+    grid-template-columns: 1fr;
+  }
+}

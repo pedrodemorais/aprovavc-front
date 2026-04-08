@@ -1,0 +1,120 @@
+.hoje-page {
+  background: #0f1115;
+  color: #e6e8eb;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+/* HEADER */
+.header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.sub {
+  color: #8b90a0;
+  font-size: 14px;
+}
+
+/* BLOCO PRINCIPAL */
+.focus-block {
+  margin-top: 32px;
+  padding: 24px;
+  background: #171a21;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.focus-block:hover {
+  border-color: #3a4150;
+}
+
+.focus-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.focus-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.focus-meta {
+  font-size: 14px;
+  color: #9aa0af;
+}
+
+.focus-footer {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #6f7686;
+}
+
+/* PROGRESSO */
+.progress {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.progress strong {
+  font-weight: 600;
+}
+
+/* DETALHES */
+.details {
+  margin-top: 32px;
+}
+
+.toggle {
+  background: none;
+  border: none;
+  color: #8b90a0;
+  cursor: pointer;
+}
+
+.grid {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.metric {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.metric span {
+  font-size: 18px;
+  font-weight: 600;
+  display: block;
+}
+
+.metric small {
+  font-size: 12px;
+  color: #8b90a0;
+}
+
+.metric.critical {
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.metric.risk {
+  background: rgba(255, 159, 10, 0.1);
+}
+
+.metric.ok {
+  background: rgba(52, 199, 89, 0.1);
+}

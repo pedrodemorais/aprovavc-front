@@ -1,0 +1,25 @@
+.progresso-card {
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0.8rem 0.9rem;
+}
+
+.progresso-card h4 {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.progresso-card ul {
+  margin: 0.45rem 0 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.progresso-card li {
+  color: #334155;
+  font-size: 0.9rem;
+}

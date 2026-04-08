@@ -1,0 +1,261 @@
+<div class="trilhas-page">
+  <div class="trilhas-card-shell">
+
+    <header class="trilhas-topo">
+      <div class="topo-left">
+        <div class="topo-title-row">
+       
+          <h1 class="topo-titulo">Centro de Estudo</h1>
+             <i class="pi pi-info-circle info-icon"
+             pTooltip="Continue do ponto certo em cada matéria."
+             tooltipPosition="top"
+             [showDelay]="150"
+             [hideDelay]="80"
+             tabindex="0"
+             aria-label="Ajuda"></i>
+        </div>
+
+
+    </div>
+
+    <div class="topo-right">
+
+      <div class="topo-controls">
+        <div class="topo-escopo">
+          <label for="escopoSelect">Filtrar por</label>
+          <select id="escopoSelect"
+                  [(ngModel)]="escopoValor"
+                  [disabled]="carregandoEditais"
+                  (ngModelChange)="onEscopoChange($event)">
+            <option value="todas">Tudo</option>
+            <option value="avulsas">Avulsas</option>
+            <option *ngFor="let e of editais" [value]="'edital-' + e.id">
+              {{ e.nome }}
+            </option>
+          </select>
+        </div>
+
+        <div class="topo-busca">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input
+            type="text"
+            [(ngModel)]="termoBusca"
+            placeholder="Buscar matéria..."
+            aria-label="Buscar matéria" />
+          <button type="button" class="topo-clear" *ngIf="termoBusca" (click)="termoBusca=''">
+            <i class="pi pi-times" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="trilhas">
+
+    <!-- Loading matérias -->
+    <div class="estado estado-loading" *ngIf="carregandoMaterias">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      <span>Carregando matérias…</span>
+    </div>
+
+    <!-- Erro (matérias) -->
+    <div class="estado estado-erro" *ngIf="!carregandoMaterias && mensagemErro">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      <span>{{ mensagemErro }}</span>
+    </div>
+
+    <!-- Vazio (matérias) -->
+    <div class="estado estado-vazio" *ngIf="!carregandoMaterias && !mensagemErro && (!materiasFiltradas || materiasFiltradas.length === 0)">
+      <span>Nenhuma matéria encontrada.</span>
+    </div>
+
+<div class="edital-selecionado" *ngIf="editalSelecionado as edital">
+  <div class="edital-card-header">
+    <div class="edital-dashboard-left">
+          <div class="edital-dashboard-logo" [class.edital-dashboard-logo--placeholder]="!activeEditalImagemUrl">
+            <img
+              *ngIf="activeEditalImagemUrl"
+              [src]="activeEditalImagemUrl"
+              (error)="onEditalImagemErro()"
+              alt="Logo do orgao"
+            />
+            <span *ngIf="!activeEditalImagemUrl">{{ edital.nome.slice(0, 1) }}</span>
+          </div>
+          <div class="edital-dashboard-info">
+            <h2 class="edital-nome">
+              {{ getEditalCargo(edital) ? (edital.nome + ' - ' + getEditalCargo(edital)) : edital.nome }}
+            </h2>
+            <div class="edital-dashboard-date">
+              Data da prova: {{ formatData(edital.dataProva) || 'Nao definida' }}
+            </div>
+          </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- CARD POR MATÉRIA -->
+    <section class="curso-card"
+             *ngFor="let m of materiasFiltradas">
+
+      <!-- CABEÇALHO MATÉRIA -->
+      <button type="button"
+              class="curso-header"
+              (click)="toggleMateria(m)"
+              [attr.aria-expanded]="materiaExpandida?.id === m.id">
+
+        <!-- ✅ Progress opcional na lista (por padrão OFF pra ficar clean) -->
+        <div class="curso-progress"
+             *ngIf="mostrarPercentNaLista"
+             [ngStyle]="{'--p': getPercentMateria(m)}"
+             [title]="getPercentMateria(m) + '% concluído'">
+          <span class="curso-progress-text">{{ getPercentMateria(m) }}%</span>
+        </div>
+
+        <div class="curso-info">
+          <div class="curso-title-row">
+            <div class="curso-title">{{ m.nome }}</div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="getResumoMateriaLinha(m) as resumo">
+          <div class="curso-resumo" *ngIf="resumo.total">
+            <span class="curso-resumo-item curso-resumo-item--concluidas">
+              <span class="curso-resumo-num curso-resumo-num--ok">{{ resumo.concluidas }}/{{ resumo.total }}</span> Conclu&iacute;dos
+            </span>
+          </div>
+        </ng-container>
+
+        <i class="pi curso-chevron"
+           [ngClass]="(materiaExpandida?.id === m.id) ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+      </button>
+
+      <!-- CORPO -->
+      <div class="curso-body" *ngIf="materiaExpandida?.id === m.id">
+
+        <!-- Loading tópicos -->
+        <div class="estado estado-loading" *ngIf="carregandoTopicos">
+          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+          <span>Carregando tópicos…</span>
+        </div>
+
+        <!-- Erro tópicos -->
+        <div class="estado estado-erro" *ngIf="!carregandoTopicos && mensagemErro">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <span>{{ mensagemErro }}</span>
+        </div>
+
+        <!-- Vazio tópicos -->
+        <div class="estado estado-vazio"
+             *ngIf="!carregandoTopicos && !mensagemErro && (!topicos || topicos.length === 0)">
+          <span>Nenhuma seção/tópico encontrado.</span>
+        </div>
+
+        <!-- LISTA -->
+        <ng-container *ngIf="!carregandoTopicos && !mensagemErro && topicos?.length">
+
+          <div class="secao" *ngFor="let s of topicos">
+
+            <!-- SEÇÃO -->
+            <ng-container *ngIf="(s.filhos?.length || 0) > 0; else topicoDiretoTpl">
+
+              <button type="button"
+                      class="secao-header"
+                      (click)="toggleSecao(s); $event.stopPropagation()"
+                      [attr.aria-expanded]="secaoAbertaId === $any(s).id">
+
+                <div class="secao-left">
+                  <i class="pi"
+                     [ngClass]="(secaoAbertaId === $any(s).id) ? 'pi-chevron-up' : 'pi-chevron-down'"
+                     aria-hidden="true"></i>
+                  <span class="secao-title">{{ s.descricao }}</span>
+                </div>
+
+                <div class="secao-right">
+                  <span class="mini-ring" [ngStyle]="{'--p': getPercentSecao(s)}" aria-hidden="true"></span>
+                  <span class="secao-meta">{{ getConcluidasSecao(s) }}/{{ getTotalSecao(s) }} subt&oacute;picos</span>
+                </div>
+              </button>
+
+              <div class="secao-lista" *ngIf="secaoAbertaId === $any(s).id">
+
+                <div class="topico-linha"
+                     *ngFor="let t of listarDescendentes(s)"
+                     (click)="selecionarTopico(t)"
+                     [class.is-active]="topicoAtivoId === $any(t).id"
+                     [style.paddingLeft.px]="(t.nivel || 0) * 14">
+
+                  <button type="button"
+                          class="topico-check"
+                          [class.is-done]="isTopicoConcluido(t)"
+                          (click)="onToggleConcluido(t); $event.stopPropagation()"
+                          aria-label="Marcar como concluido">
+                    <i class="pi pi-check" aria-hidden="true"></i>
+                  </button>
+
+                  <button type="button"
+                          class="topico-text-btn"
+                          (click)="selecionarTopico(t); $event.stopPropagation()">
+
+                    <span class="topico-text">{{ t.descricao }}</span>
+                  </button>
+
+                  <div class="topico-ir" *ngIf="topicoAtivoId === $any(t).id">
+                    <button type="button"
+                            class="topico-acao"
+                            (click)="abrirSalaAulaTopico(m, t); $event.stopPropagation()"
+                            aria-label="Acessar tópico">
+                      Acessar
+                    </button>
+                  </div>
+                </div>
+
+                <div class="secao-vazio" *ngIf="!(s.filhos?.length)">
+                  Nenhum tópico nesta seção.
+                </div>
+
+              </div>
+            </ng-container>
+
+            <!-- TÓPICO DIRETO -->
+            <ng-template #topicoDiretoTpl>
+              <div class="topico-linha topico-linha--nivel0"
+                   (click)="selecionarTopico(s)"
+                   [class.is-active]="topicoAtivoId === $any(s).id">
+
+                <button type="button"
+                        class="topico-check"
+                        [class.is-done]="isTopicoConcluido(s)"
+                        (click)="onToggleConcluido(s); $event.stopPropagation()"
+                        aria-label="Marcar como concluido">
+                  <i class="pi pi-check" aria-hidden="true"></i>
+                </button>
+
+                <button type="button"
+                        class="topico-text-btn"
+                        (click)="selecionarTopico(s); $event.stopPropagation()">
+
+                  <span class="topico-text">{{ s.descricao }}</span>
+                </button>
+
+                <div class="topico-ir" *ngIf="topicoAtivoId === $any(s).id">
+                  <button type="button"
+                          class="topico-acao"
+                          (click)="abrirSalaAulaTopico(m, s); $event.stopPropagation()"
+                          aria-label="Acessar tópico">
+                    Acessar
+                  </button>
+                </div>
+              </div>
+            </ng-template>
+
+          </div>
+
+        </ng-container>
+
+      </div>
+    </section>
+
+  </div>
+</div>

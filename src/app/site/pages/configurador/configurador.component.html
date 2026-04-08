@@ -1,0 +1,106 @@
+<div class="main configurador-page">
+
+  <div class="painel">
+    <div class="configurador-container">
+
+      <div class="topo-login-site">
+        <img class="logo" src="assets/img/logo/revizo.png" alt="Logo">
+      </div>
+
+
+      <h2>Bem-vindo ao Cadastro Inicial!</h2>
+
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <form [formGroup]="configuradorForm" (ngSubmit)="onSubmit()">
+
+        <!-- Etapa 1: Dados do Usuário -->
+        <div *ngIf="step === 1">
+          <h3>Dados do Usuário</h3>
+
+          <div class="form-group">
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" class="form-control" placeholder="Digite seu nome" formControlName="nome"
+              required />
+            <p *ngIf="configuradorForm.get('nome')?.invalid && configuradorForm.get('nome')?.touched" class="error">
+              Nome obrigatório.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" class="form-control" placeholder="Digite seu email" formControlName="email"
+              autocapitalize="none" spellcheck="false"
+              required />
+            <p *ngIf="configuradorForm.get('email')?.invalid && configuradorForm.get('email')?.touched" class="error">
+              Email inválido.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" class="form-control" placeholder="Digite sua senha"
+              formControlName="senha" required minlength="6" />
+            <p *ngIf="configuradorForm.get('senha')?.invalid && configuradorForm.get('senha')?.touched" class="error">
+              Senha deve ter pelo menos 6 caracteres.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmSenha">Confirmar Senha</label>
+            <input type="password" id="confirmSenha" class="form-control" placeholder="Confirme sua senha"
+              formControlName="confirmSenha" required />
+            <p *ngIf="configuradorForm.get('confirmSenha')?.value !== configuradorForm.get('senha')?.value && configuradorForm.get('confirmSenha')?.touched"
+              class="error">
+              As senhas não coincidem.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Etapa 2: Endereço (com Município dentro) -->
+        <div *ngIf="step === 2" formGroupName="endereco">
+          <h3>Endereço</h3>
+
+          <!-- Estado e Município dentro de Endereço -->
+          <div formGroupName="municipio">
+            <div class="form-group">
+              <label for="estado">Estado</label>
+              <select id="estado" formControlName="uf" (change)="onEstadoChange()" required>
+                <option value="">Selecione um estado</option>
+                <option *ngFor="let estado of uf" [value]="estado">{{ estado }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cidade">Município</label>
+              <select id="cidade" formControlName="municipioIbge" required>
+                <option value="">Selecione um município</option>
+                <option *ngFor="let municipio of municipios" [value]="municipio.nome">
+                  {{ municipio.nome }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botões de Navegação -->
+        <div class="acoes">
+          <button type="button" class="btn-voltar" (click)="voltar()" *ngIf="step > 1">Voltar</button>
+          <button type="button" class="btn-proximo" (click)="avancar()" *ngIf="step < totalSteps">Próximo</button>
+
+          <button type="submit" class="btn-confirmar" *ngIf="step === totalSteps" [disabled]="isSubmitting">
+            Confirmar
+          </button>
+        </div>
+
+      </form>
+        <a routerLink="/home" class="voltar-site-inline" aria-label="Voltar para o site">
+          Voltar para o site
+        </a>
+
+    </div>
+  </div>
+</div>

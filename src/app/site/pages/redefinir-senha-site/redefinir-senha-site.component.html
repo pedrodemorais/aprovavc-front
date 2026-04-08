@@ -1,0 +1,41 @@
+<div class="page-redefinir">
+  <div class="card">
+    <div class="card-header">
+      <h1>Alterar senha</h1>
+      <p>Atualize sua senha de acesso com seguranca.</p>
+    </div>
+
+    <form [formGroup]="redefinirSenhaForm" (ngSubmit)="redefinirSenha()" class="form">
+      <div class="form-group">
+        <label for="senhaAtual">Senha atual</label>
+        <input type="password" id="senhaAtual" formControlName="senhaAtual" required />
+        <div class="field-error" *ngIf="redefinirSenhaForm.get('senhaAtual')?.touched && redefinirSenhaForm.get('senhaAtual')?.invalid">
+          Informe sua senha atual.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="novaSenha">Nova senha</label>
+        <input type="password" id="novaSenha" formControlName="novaSenha" required />
+        <div class="field-error" *ngIf="redefinirSenhaForm.get('novaSenha')?.touched && redefinirSenhaForm.get('novaSenha')?.invalid">
+          A nova senha deve ter pelo menos 6 caracteres.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmarSenha">Confirmar nova senha</label>
+        <input type="password" id="confirmarSenha" formControlName="confirmarSenha" required />
+        <div class="field-error" *ngIf="redefinirSenhaForm.errors?.['senhasDiferentes']">
+          As senhas nao coincidem.
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="redefinirSenhaForm.invalid">
+        Salvar senha
+      </button>
+    </form>
+
+    <p *ngIf="mensagem" class="mensagem">{{ mensagem }}</p>
+    <p *ngIf="erro" class="erro">{{ erro }}</p>
+  </div>
+</div>

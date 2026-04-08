@@ -1,0 +1,5 @@
+@import '../editais/editais.component.css';
+
+:host {
+  display: block;
+}

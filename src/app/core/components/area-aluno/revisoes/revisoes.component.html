@@ -1,0 +1,149 @@
+<ng-template #listaTpl>
+  <div class="rev-state" *ngIf="carregando">Carregando revis&otilde;es...</div>
+  <div class="rev-state erro" *ngIf="erro">{{ erro }}</div>
+
+  <div class="rev-card" *ngIf="revisoesFiltradas?.length">
+    <div class="rev-table-header" aria-hidden="true">
+      <div class="rev-table-header-col rev-table-header-col-materia">Mat&eacute;ria / t&oacute;pico</div>
+      <div class="rev-table-header-col rev-table-header-col-data">Pr&oacute;xima revis&atilde;o</div>
+    </div>
+    <p-treeTable
+      class="rev-tree-table"
+      [value]="treeNodes"
+      [scrollable]="true"
+      scrollHeight="flex"
+    >
+      <ng-template pTemplate="colgroup">
+        <colgroup>
+          <col class="col-materia" />
+          <col class="col-data" />
+        </colgroup>
+      </ng-template>
+      <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
+        <tr
+          [class.is-selected]="rowData?.source && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          [class.is-materia]="rowData?.isMateria"
+          [class.row-clickable]="rowData?.source"
+          [class.row-vencida]="rowData?.source && rowData.status === 'VENCIDA'"
+          [class.row-hoje]="rowData?.source && rowData.status === 'EM_DIA'"
+          [class.row-futura]="rowData?.source && rowData.status === 'FUTURA'"
+          [class.row-status-vencida]="rowData?.source && rowData.status === 'VENCIDA' && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          [class.row-status-hoje]="rowData?.source && rowData.status === 'EM_DIA' && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          [class.row-status-futura]="rowData?.source && rowData.status === 'FUTURA' && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+          (click)="onTreeRowClick(rowData)"
+        >
+          <td>
+            <div class="tree-label">
+              <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
+              <span
+                class="status-dot"
+                *ngIf="rowData?.isTopico && rowData?.source"
+                [ngClass]="{
+                  'status-vencida': rowData.status === 'VENCIDA',
+                  'status-hoje':   rowData.status === 'EM_DIA',
+                  'status-futura': rowData.status === 'FUTURA'
+                }"
+                [attr.aria-label]="
+                  rowData.status === 'VENCIDA'
+                    ? 'Revisao vencida'
+                    : rowData.status === 'EM_DIA'
+                      ? 'Revisao do dia'
+                      : 'Revisao futura'
+                "
+                [attr.title]="
+                  rowData.status === 'VENCIDA'
+                    ? 'Revisao vencida'
+                    : rowData.status === 'EM_DIA'
+                      ? 'Revisao do dia'
+                    : 'Revisao futura'
+                "
+                role="img"
+              ></span>
+              <span class="tree-text">{{ rowData?.label }}</span>
+            </div>
+          </td>
+          <td class="col-data">
+            <div class="data-wrap">
+              <button
+                *ngIf="rowData?.source && revisaoSelecionada?.materiaId === rowData.source.materiaId && revisaoSelecionada?.topicoId === rowData.source.topicoId"
+                type="button"
+                class="btn-revisar-linha"
+                (click)="irParaSala(rowData.source); $event.stopPropagation()"
+              >
+                Revisar
+              </button>
+              <div class="data-principal" *ngIf="rowData?.dataProximaRevisao">
+                {{ rowData.dataProximaRevisao | date: 'shortDate' }}
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-treeTable>
+  </div>
+</ng-template>
+
+<ng-container *ngIf="modo === 'automatico'; else embedded">
+  <div class="revisoes-page">
+    <div class="revisoes-header">
+            <div class="revisoes-head-row">
+        <div class="revisoes-title">
+          <h2>Fila de revis&otilde;es</h2>
+          <select
+            class="status-filter-select"
+            [ngModel]="filtroStatus"
+            (ngModelChange)="setFiltroStatus($event)"
+            aria-label="Filtrar revis&otilde;es por status"
+          >
+            <option value="atrasadas">Vencidas</option>
+            <option value="hoje">Hoje</option>
+            <option value="emdia">Em dia</option>
+            <option value="todas">Todos</option>
+          </select>
+          <button
+            type="button"
+            class="rev-info-btn"
+            pTooltip="Priorize o que est&aacute; vencido e o que vence hoje."
+            tooltipPosition="top"
+            aria-label="Priorize o que est&aacute; vencido e o que vence hoje.">
+            <i class="pi pi-info-circle" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="revisoes-actions">
+          <div class="revisoes-counters" aria-label="Resumo das revisoes">
+            <span class="counter-item">
+              <span class="counter-dot dot-vencida" aria-hidden="true"></span>
+              <span class="counter-label">Vencidas</span>
+              <span class="counter-value">{{ contagemRevisoes.vencidas }}</span>
+            </span>
+            <span class="counter-item">
+              <span class="counter-dot dot-hoje" aria-hidden="true"></span>
+              <span class="counter-label">Hoje</span>
+              <span class="counter-value">{{ contagemRevisoes.hoje }}</span>
+            </span>
+            <span class="counter-item">
+              <span class="counter-dot dot-emdia" aria-hidden="true"></span>
+              <span class="counter-label">Em dia</span>
+              <span class="counter-value">{{ contagemRevisoes.emDia }}</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            class="btn-ghost btn-acao-principal btn-revisar-cta"
+            [disabled]="!revisaoSelecionada"
+            (click)="irParaSala(revisaoSelecionada!)"
+          >
+            Revisar
+          </button>
+        </div>
+      </div>
+    </div>
+    <ng-container *ngTemplateOutlet="listaTpl"></ng-container>
+  </div>
+</ng-container>
+
+<ng-template #embedded>
+  <ng-container *ngTemplateOutlet="listaTpl"></ng-container>
+</ng-template>
+
+

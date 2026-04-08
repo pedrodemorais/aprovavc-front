@@ -23,22 +23,12 @@ export class EmpresaService {
 
 
 
-  uploadLogo(formData: FormData): Observable<any> {
-    return this.http.post(`${this.apiUrl}/empresas/upload-logo`, formData, {
-       
-        responseType: 'text' // Retorna um texto confirmando o upload
-    });
-}
+ 
 
   
 
 
-  getLogo(): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/empresas/logo`, { 
-      headers: this.getAuthHeaders(), 
-      responseType: 'blob' // 🔥 Recebe a imagem como um Blob
-    });
-  }
+
   
   
 }

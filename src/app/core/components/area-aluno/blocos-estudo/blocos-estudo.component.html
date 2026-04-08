@@ -1,0 +1,261 @@
+<div class="page">
+  <p-toast key="materia-removida" position="bottom-center">
+    <ng-template let-message pTemplate="message">
+      <div class="toast-undo">
+        <span class="toast-undo-text">{{ message?.summary }}</span>
+        <button type="button" class="toast-undo-action" (click)="desfazerRemocao()">Desfazer</button>
+      </div>
+    </ng-template>
+  </p-toast>
+
+  <div class="planner-shell">
+    <div class="header">
+      <div class="header-title">
+        <div class="header-title-row">
+          <h2>Planejamento semanal de estudo</h2>
+          <button
+            type="button"
+            class="header-info-btn"
+            pTooltip='Escolha as materias de cada dia. O plano se repete automaticamente toda semana.'
+            tooltipPosition="top"
+            aria-label='Escolha as materias de cada dia. O plano se repete automaticamente toda semana.'>
+            <i class="pi pi-info-circle"></i>
+          </button>
+        </div>
+       
+      </div>
+
+      <div class="header-alert" *ngIf="mensagemTexto || blocosInvalidos.length > 0">
+        <div class="header-message" *ngIf="mensagemTexto" [ngClass]="'msg-' + mensagemTipo">
+          {{ mensagemTexto }}
+        </div>
+
+        <div class="validation-summary validation-summary--inline" *ngIf="!mensagemTexto && blocosInvalidos.length > 0">
+          <span class="validation-title">Ajuste os blocos:</span>
+          <button
+            type="button"
+            class="validation-link"
+            *ngFor="let invalido of blocosInvalidos"
+            (click)="focoNoBlocoInvalido(invalido.index)">
+            {{ getNomeDiaSemanaSemFeira(invalido.index) }} - {{ invalido.mensagem }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="planner-context">
+      <span class="planner-context-label">Edital ativo:</span>
+      <ng-container *ngIf="temEditalAtivo; else semEditalContexto">
+        <span class="planner-context-chip" *ngFor="let e of activeEditais">{{ e.nome }}</span>
+      </ng-container>
+      <ng-template #semEditalContexto>
+        <span class="planner-context-empty">Nenhum edital selecionado</span>
+      </ng-template>
+      <div class="planner-context-resumo">
+        <span class="planner-context-total">Total semanal: {{ totalCicloTexto }}</span>
+        <span class="equilibrio" [class.warn]="isDistribuicaoSemanalConcentrada">{{ getTextoEquilibrioSemanal() }}</span>
+      </div>
+    </div>
+
+    <div class="planner-row" *ngIf="blocos.length > 0">
+      <div class="planner-row-info">
+        <div class="planner-backlog" *ngIf="materiasOptions.length > 0; else backlogInfo">
+          Backlog: {{ backlogCount }} materias fora do planner
+        </div>
+        <ng-template #backlogInfo>
+          <div class="planner-backlog">Voce pode adicionar novas materias conforme evolui na semana.</div>
+        </ng-template>
+      </div>
+
+      <div class="planner-row-actions">
+        <button type="button" class="btn-secondary" (click)="irParaHoje()">Hoje</button>
+        <button type="button" class="btn-secondary" (click)="toggleWeeklyView()">
+          {{ showWeekly ? 'Ver por dia' : 'Ver semana' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="planner-day-strip" *ngIf="blocos.length > 0 && !showWeekly">
+      <button
+        type="button"
+        class="planner-day-tab"
+        *ngFor="let b of blocos; let i = index"
+        [class.is-active]="selectedDayIndex === i"
+        (click)="selecionarBloco(i)">
+        <span class="planner-day-tab-name">{{ getDiaCurto(i) }}</span>
+        <span class="planner-day-tab-meta">{{ resumoDiaMini(i) }}</span>
+      </button>
+    </div>
+
+    <div class="bloco-single" *ngIf="blocos.length > 0 && !showWeekly">
+      <ng-container *ngFor="let b of blocos; let i = index">
+        <ng-container *ngIf="i === selectedDayIndex">
+          <ng-container *ngTemplateOutlet="blocoCard; context: { $implicit: b, index: i, weekly: false }"></ng-container>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <div class="blocos-grid-weekly" *ngIf="blocos.length > 0 && showWeekly">
+      <div class="blocos-weekly-title">Semana completa</div>
+      <div class="bloco-weekly-item" *ngFor="let item of weeklyOrderedBlocos">
+        <ng-container *ngTemplateOutlet="blocoCard; context: { $implicit: item.bloco, index: item.index, weekly: true }"></ng-container>
+      </div>
+    </div>
+  </div>
+
+  <p-overlayPanel #copiaPanel>
+    <div class="copia-panel">
+      <div class="copia-panel-title">Copiar para</div>
+      <p-dropdown
+        [options]="blocosDestinoOptions"
+        [(ngModel)]="blocoCopiaDestino"
+        placeholder="Selecione o bloco destino">
+      </p-dropdown>
+      <button pButton type="button" label="Copiar" (click)="confirmarCopiaBloco()" [disabled]="blocoCopiaDestino == null"></button>
+    </div>
+  </p-overlayPanel>
+
+  <div class="muted small" *ngIf="!blocos || blocos.length === 0" style="padding: 12px 0;">
+    Carregando blocos...
+  </div>
+</div>
+
+<ng-template #blocoCard let-b let-i="index" let-weekly="weekly">
+  <div
+    [class.bloco-col-wrap-weekly]="weekly"
+    [class.bloco-col-wrap]="!weekly"
+    [class.ativo]="abaAtiva === i"
+    [class.erro]="isBlocoInvalido(i)">
+
+    <div class="bloco-col-dia">
+      <div class="bloco-col-day-nav" *ngIf="!weekly">
+        <button type="button" class="day-nav-btn" (click)="navegarDia(-1)" aria-label="Dia anterior">
+          <i class="pi pi-chevron-left"></i>
+        </button>
+        <span class="bloco-col-dia-primary">{{ diasSemana[i] }} - {{ resumoDia(i) }}</span>
+        <button type="button" class="day-nav-btn" (click)="navegarDia(1)" aria-label="Proximo dia">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
+      <span class="bloco-col-dia-primary bloco-col-dia-primary--weekly" *ngIf="weekly">
+        {{ getNomeDiaSemanaSemFeira(i) }} - {{ getModuloLabel(i) }}
+      </span>
+    </div>
+
+    <div class="bloco-col" [class.ativo]="abaAtiva === i" [class.erro]="isBlocoInvalido(i)">
+      <div class="bloco-col-header" (click)="!weekly && selecionarBloco(i)">
+        <div class="bloco-col-toolbar">
+          <div class="bloco-col-actions" *ngIf="!weekly">
+            <button type="button" class="bloco-action" (click)="abrirCopiaPanel(i, $event)">Copiar</button>
+            <button type="button" class="bloco-action" (click)="limparBloco(i); $event.stopPropagation()">Limpar</button>
+            <button type="button" class="bloco-action" [disabled]="salvarDisabled" (click)="salvarTodos(); $event.stopPropagation()">Salvar</button>
+          </div>
+
+          <div class="bloco-col-horas" *ngIf="!weekly">
+            <div class="bloco-col-horas-row">
+              <label class="bloco-col-horas-label">Horas liquidas</label>
+              <span class="bloco-col-horas-readonly">{{ blocoHoraInputs[i] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bloco-col-erro" *ngIf="!weekly && blocoErroMensagem(i)" [attr.id]="'bloco-erro-' + b.numero">
+          {{ blocoErroMensagem(i) }}
+        </div>
+
+      </div>
+
+      <div class="bloco-col-body">
+        <div
+          class="bloco-linha"
+          *ngFor="let linha of (linhasFixasPorBloco[i] || []); let li = index; trackBy: trackByLinha"
+          [class.linha-vazia]="!linha.item"
+          [ngClass]="linha.item ? ('status-' + statusMateriaKey(linha.item)) : null"
+          [class.revisao-vencida]="linha.item && temRevisaoVencida(linha.item)"
+          [class.revisao-hoje]="linha.item && temRevisaoHoje(linha.item)"
+          [class.revisao-futura]="linha.item && temRevisaoFutura(linha.item)"
+          [attr.tabindex]="!weekly && !linha.item ? 0 : null"
+          (click)="!weekly && !linha.item && iniciarEdicaoLinha(i, li)"
+          (keydown.enter)="!weekly && !linha.item && iniciarEdicaoLinha(i, li)"
+          (keydown.space)="!weekly && !linha.item && iniciarEdicaoLinha(i, li)">
+
+          <ng-container *ngIf="linha.item && !estaSubstituindo(i, li); else linhaEditar">
+            <div class="peso-row">
+              <span class="bloco-item-text" [pTooltip]="getTextoItem(i, linha.item)" tooltipPosition="top">
+                {{ linha.item.materiaNome || nomeMateria(linha.item.materiaEstudoId) }}
+              </span>
+              <span class="materia-meta" *ngIf="!weekly">
+                {{ formatMinutosParaHora(linha.item.peso || 0) }} - {{ getPercentualItemNoDia(i, linha.item) }}%
+              </span>
+              <div class="peso-bar" *ngIf="!weekly">
+                <div class="peso-bar-fill" [style.width]="getBarWidthPercent(i, linha.item)"></div>
+              </div>
+            </div>
+            <div class="bloco-item-horas" *ngIf="!weekly">
+              <span class="bloco-item-horas-label">Hrs:</span>
+              <input
+                type="time"
+                step="60"
+                min="00:00"
+                max="23:59"
+                class="bloco-item-horas-field"
+                [ngModel]="getHorasMateriaInput(i, li, linha.item)"
+                (ngModelChange)="onHorasMateriaChange(i, li, $event)"
+                (blur)="onHorasMateriaBlur(i, li, linha.item)"
+                (focus)="!weekly && abrirPickerHora($event)"
+                [disabled]="weekly" />
+            </div>
+            <div class="bloco-item-actions" *ngIf="!weekly">
+              <button
+                type="button"
+                class="bloco-item-substituir"
+                *ngIf="podeSubstituir(linha.item)"
+                (click)="iniciarSubstituicao(i, li); $event.stopPropagation()">
+                Substituir
+              </button>
+              <button
+                type="button"
+                class="bloco-item-remove"
+                (click)="removerMateriaBloco(i, li); $event.stopPropagation()"
+                aria-label="Remover materia">
+                <i class="pi pi-minus"></i>
+              </button>
+            </div>
+          </ng-container>
+
+          <ng-template #linhaEditar>
+            <ng-container *ngIf="!weekly && (estaSubstituindo(i, li) || estaEditandoLinha(i, li)); else linhaVazia">
+              <div class="bloco-linha-edit" (click)="$event.stopPropagation()">
+                <p-autoComplete
+                  #autoMateria
+                  [suggestions]="materiasFiltradasPorBloco[i]"
+                  (completeMethod)="filtrarMaterias($event, i)"
+                  [(ngModel)]="materiaSelecionadaPorLinha[i][li]"
+                  field="label"
+                  [dropdown]="true"
+                  [completeOnFocus]="true"
+                  [forceSelection]="true"
+                  [minLength]="0"
+                  (onFocus)="abrirSugestoes(i)"
+                  (onSelect)="adicionarMateriaNaLinha(i, li, $event)"
+                  placeholder="Adicionar materia..."
+                  inputId="materia-add-{{ b.numero }}-{{ li }}">
+                </p-autoComplete>
+              </div>
+            </ng-container>
+            <ng-template #linhaVazia>
+              <button
+                type="button"
+                class="bloco-linha-add"
+                *ngIf="!weekly"
+                (click)="iniciarEdicaoLinha(i, li); $event.stopPropagation()">
+                +
+              </button>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>

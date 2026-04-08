@@ -1,129 +1,224 @@
-/* 🎨 Configuração Geral */
+/* ==========================
+   BASE
+========================== */
+
 body {
-    font-family: 'Poppins', sans-serif;
-    
-  
-    height: 100vh;
-    margin: 0;
-  }
-  .main{
-    display: block;
-    width: 100%;
-    height: 100%;
-    justify-content: center !important;
-    align-items: center;
-    background: linear-gradient(135deg, #007bff, #00d4ff);
-    background: linear-gradient(to bottom, #007bff, #00d4ff);
-    
-   
-  }
-  .painel{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-   
-    width: 100dvw;
-    height: 88dvh;
-  
-  }
-  ::ng-deep .topo-login-site{
-    display: flex;
-    align-items: baseline;
-    justify-content: center; /* Centraliza o conteúdo */
-    background: rgb(48, 47, 47);
-    
-    
-    height: 5rem;
-    width: 100%;
-  }
-  ::ng-deep .topo-login-site a{
-    text-decoration: none;
-  }
-  
-  
-  .logo{
-    height: 40px;
-    width: auto;
-  }
-  
+  margin: 0;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+  background: #f3f4f6;
+}
 
-.recuperar-senha-container {
-  max-width: 400px;
-  margin: auto;
-  padding: 20px;
-  text-align: center;
+.page-recuperar {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top left, #e0f2fe 0, #f3f4f6 42%, #f9fafb 100%);
+}
+
+/* ==========================
+   TOPO
+========================== */
+
+.topo-login-site {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
   background: #ffffff;
-  border-radius: 10px;
- 
-  box-shadow: 0 4px 10px rgb(0, 0, 0);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+  box-sizing: border-box;
 }
 
-h2 {
-  font-size: 24px;
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+
+/* ==========================
+   CONTEÚDO CENTRAL
+========================== */
+
+.recuperar-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px 32px;
+  box-sizing: border-box;
+}
+
+/* Card principal */
+
+.recuperar-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px 22px 20px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Cabeçalho do card */
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.card-logo img {
+  height: 28px;
+  width: auto;
+}
+
+.card-title {
+  margin: 4px 0 2px;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  color: #111827;
 }
 
-p {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 20px;
+.card-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* ==========================
+   FORMULÁRIO
+========================== */
+
+.recuperar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   text-align: left;
 }
 
 .input-group label {
-  font-size: 14px;
-  margin-bottom: 5px;
-  color: #333;
+  font-size: 0.85rem;
+  color: #374151;
+  font-weight: 500;
 }
 
 .input-group input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 9px 11px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  background: #f9fafb;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
+
+.input-group input:focus {
+  border-color: #54ba67;
+  box-shadow: 0 0 0 1px rgba(84, 186, 103, 0.25);
+  background: #ffffff;
+}
+
+/* ==========================
+   BOTÃO PRINCIPAL
+========================== */
 
 .btn-enviar {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, rgb(3, 101, 180), #02c9fb);
-  color: #fff;
-  font-size: 16px;
-  font-weight: bold;
+  margin-top: 4px;
   border: none;
-  border-radius: 5px;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 15px;
-  transition: 0.3s;
+  background: #54ba67;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(84, 186, 103, 0.4);
+  transition:
+    background 0.16s ease,
+    transform 0.08s ease,
+    box-shadow 0.16s ease;
 }
 
 .btn-enviar:hover {
-  background: linear-gradient(135deg, #417a03, #074305);
+  background: #3ea653;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(84, 186, 103, 0.5);
 }
+
+/* ==========================
+   MENSAGENS
+========================== */
 
 .mensagem {
-  margin-top: 15px;
-  font-size: 14px;
-  color: green;
-  font-weight: bold;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: left;
 }
 
+.mensagem-sucesso {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.mensagem-erro {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* ==========================
+   LINK VOLTAR
+========================== */
+
 .voltar-link {
-  display: block;
-  margin-top: 15px;
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #2563eb;
   text-decoration: none;
-  color: #007bff;
-  font-size: 14px;
-  font-weight: bold;
 }
 
 .voltar-link:hover {
   text-decoration: underline;
+  color: #1d4ed8;
+}
+
+/* ==========================
+   RESPONSIVO
+========================== */
+
+@media (max-width: 480px) {
+  .recuperar-card {
+    padding: 20px 16px 18px;
+    border-radius: 14px;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
 }

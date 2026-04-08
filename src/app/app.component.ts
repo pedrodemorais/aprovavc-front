@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from './site/services/auth.service';
-import { SwUpdate } from '@angular/service-worker';
+import { ModoLeituraService } from './core/components/area-aluno/services/modo-leitura.service';
 
 @Component({
   selector: 'app-root',
@@ -8,16 +8,16 @@ import { SwUpdate } from '@angular/service-worker';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  constructor(private authService: AuthService,private swUpdate: SwUpdate) {
-     this.swUpdate.versionUpdates.subscribe(() => {
-        console.log('Nova versão detectada! Atualizando...');
-        this.swUpdate.activateUpdate().then(() => document.location.reload());
-      });
+  constructor(private authService: AuthService,private modoLeitura: ModoLeituraService) {
+     
     
   }
 
   ngOnInit() {
- 
+  this.modoLeitura.init();
+  if (typeof document !== 'undefined') {
+    document.body.classList.remove('app-booting');
+  }
     
   }
 }

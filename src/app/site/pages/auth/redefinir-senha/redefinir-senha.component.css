@@ -1,170 +1,240 @@
-html, body {
+/* ==========================
+   BASE / PÁGINA
+========================== */
 
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden; /* Impede rolagem horizontal */
-    display: flex;
-    justify-content: center; /* Centraliza o conteúdo */
-    align-items: center; /* Mantém o conteúdo no centro verticalmente */
-    background: linear-gradient(to bottom, #007bff, #00d4ff);
+body {
+  margin: 0;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+  background: #f3f4f6;
+}
+
+.page-redefinir {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top left, #e0f2fe 0, #f3f4f6 40%, #f9fafb 100%);
+}
+
+/* ==========================
+   TOPO
+========================== */
+
+.topo-login-site {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+  box-sizing: border-box;
+}
+
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo {
+  height: 30px;
+  width: auto;
+  display: block;
+  margin-right: 10px;
+}
+
+.brand {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+.brand-aprova {
+  color: #111827;
+  font-weight: 400;
+  margin-right: 4px;
+}
+
+.brand-vc {
+  color: #54ba67;
+  font-weight: 600;
+}
+
+/* ==========================
+   CONTEÚDO CENTRAL
+========================== */
+
+.redefinir-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px 32px;
+  box-sizing: border-box;
+}
+
+/* Card principal */
+
+.redefinir-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px 22px 22px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Cabeçalho */
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.card-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* ==========================
+   FORMULÁRIO
+========================== */
+
+.redefinir-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.input-group input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 9px 11px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  background: #f9fafb;
+  outline: none;
+  transition: border-color 0.15s ease,
+              box-shadow 0.15s ease,
+              background 0.15s ease;
+}
+
+.input-group input:focus {
+  border-color: #54ba67;
+  box-shadow: 0 0 0 1px rgba(84, 186, 103, 0.25);
+  background: #ffffff;
+}
+
+/* ==========================
+   BOTÃO PRINCIPAL
+========================== */
+
+.btn-confirmar {
+  width: 100%;
+  margin-top: 4px;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #54ba67;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(84, 186, 103, 0.4);
+  transition:
+    background 0.16s ease,
+    transform 0.08s ease,
+    box-shadow 0.16s ease;
+}
+
+.btn-confirmar:hover {
+  background: #3ea653;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(84, 186, 103, 0.5);
+}
+
+/* ==========================
+   MENSAGENS
+========================== */
+
+.mensagem {
+  font-size: 0.85rem;
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.mensagem-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.mensagem-erro,
+.erro {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* ==========================
+   LINK VOLTAR
+========================== */
+
+.voltar-link {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.voltar-link:hover {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+
+/* ==========================
+   RESPONSIVO
+========================== */
+
+@media (max-width: 480px) {
+  .redefinir-card {
+    padding: 20px 16px 18px;
+    border-radius: 14px;
   }
-    ::ng-deep .topo-login-site{
-      display: flex;
-      align-items: baseline;
-      justify-content: center; /* Centraliza o conteúdo */
-      background: rgb(48, 47, 47);
-      
-      height: 5rem;
-      width: 100%;
-    }
-    .topo-login-site a{
-      text-decoration: none;
-  
-    }
-    body {
-      font-family: 'Poppins', sans-serif;
-      
-    
-      height: 100vh;
-      margin: 0;
-    }
-    .main{
-      display: block;
-      width: 100%;
-      height: 100%;
-      justify-content: center !important;
-      align-items: center;
-      background: linear-gradient(135deg, #007bff, #00d4ff);
-      background: linear-gradient(to bottom, #007bff, #00d4ff);
-      
-     
-    }
-    .painel{
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    
-      width: 100dvw;
-      height: 88dvh;
-    
-    }
-  
-    /* Estilização do contêiner central */
-    .container {
-      width: 100%;
-      max-width: 400px;
-      margin: 100px auto;
-      padding: 40px;
-      background: #ffffff;
-      box-shadow: 0 4px 10px rgb(0, 0, 0);
-      border-radius: 8px;
-      text-align: center;
-  
-      overflow: hidden; /* Evita qualquer expansão que cause rolagem */
-    }
-    .error-message{
-      color: red;
-    }
-    
-  
-    /* Título */
-    h2 {
-      margin-bottom: 20px;
-      font-size: 24px;
-      color: #1b1c1c;
-    }
-    
-    /* Input Fields */
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 16px;
-      transition: 0.3s;
-    }
-    
-    input:focus {
-      border-color: #007bff;
-      outline: none;
-      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-    }
-    
-    /* Botão */
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border: none;
-      background: linear-gradient(135deg, rgb(3, 101, 180), #02c9fb);
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    
-    button:hover {
-      background: linear-gradient(135deg, #417a03, #074305);
-    }
-    
-    /* Mensagem de erro */
-    .error {
-      color: red;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-    
-    /* Link para cadastro */
-    p {
-      margin-top: 15px;
-      font-size: 14px;
-    }
-    
-    a {
-      text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
-    }
-    
-    a:hover {
-      text-decoration: underline;
-    }
-  
-    ::ng-deep .cadastro-link {
-      margin-top: -10px !important; /* Reduz o espaçamento entre os parágrafos */
-    }
-  
-    .logo{
-      height: 40px;
-      width: auto;
-    }
-    
-    
-    .boas-vindas {
-     
-      color: #534f4f;
-      font-size: 1.2rem;
-      text-align: center;
-      padding: 15px 20px;
-      border-radius: 8px;
-      
-      margin-bottom: 10px;
-     
-      animation: fadeIn 1s ease-in-out;
-    }
-    
-    .notification {
-      padding: 15px;
-      border-radius: 5px;
-      text-align: center;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
-    
-    .success {
-      background-color: #4caf50;
-      color: white;
-    }
+
+  .card-title {
+    font-size: 1.15rem;
+  }
+}

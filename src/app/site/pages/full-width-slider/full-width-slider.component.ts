@@ -1,43 +1,78 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
+
+type Slide = {
+  image: string;
+  titleHtml: string;     // permite <br/>
+  description: string;
+  link: string;
+  buttonText?: string;
+};
 
 @Component({
   selector: 'app-full-width-slider',
   templateUrl: './full-width-slider.component.html',
   styleUrls: ['./full-width-slider.component.css']
 })
-export class FullWidthSliderComponent implements OnInit {
-  slides = [
+export class FullWidthSliderComponent implements OnInit, OnDestroy {
+
+  slides: Slide[] = [
     {
-      image: 'assets/img/img11.jpg',
-      title: 'Soluções para Microempreendedores',
-      description: 'Descubra ferramentas incríveis para facilitar sua gestão financeira e administrativa.',
-      link: '/solucoes'
+      image: 'assets/img/dyn.png',
+      titleHtml: 'Clareza no plano.<br/>Constância no estudo.<br/>Resultado na aprovação.',
+      description: 'O Revizo organiza sua rotina, acompanha seu progresso e transforma esforço em aprovação real.',
+      link: '/configurador',
+      buttonText: 'Começar agora'
     },
     {
-      image: 'assets/img/img2.jpg',
-      title: 'Organize seu Negócio com Facilidade',
-      description: 'Automatize tarefas e tenha controle total sobre seus clientes, vendas e estoque.',
-      link: '/organizacao'
-    },
-    {
-      image: 'assets/img/img3.jpg',
-      title: 'Transforme sua Rotina',
-      description: 'Aproveite tecnologia acessível para impulsionar seu negócio para o próximo nível.',
-      link: '/tecnologia'
+      image: 'assets/img/estude.png',
+      titleHtml: 'Revisões no tempo certo.<br/>Foco no que importa.<br/>Evolução visível.',
+      description: 'Você estuda com método: metas, ciclos de revisão e acompanhamento claro do que fazer hoje.',
+      link: '/configurador',
+      buttonText: 'Criar minha conta'
     }
   ];
 
-  currentIndex: number = 0;
+  currentIndex = 0;
 
-  constructor() {}
+  isTextAnimating = false;
 
-  ngOnInit() {
-    setInterval(() => {
+  private intervalId: any;
+  private readonly slideIntervalMs = 8000;
+
+  // sincronize com o CSS (opacity transition)
+  private readonly fadeMs = 1200;
+  private readonly textSwapDelayMs = 400;
+
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
+
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (this.slides.length <= 1) return;
+
+    this.intervalId = setInterval(() => {
       this.nextSlide();
-    }, 8000); // Troca de imagem a cada 5 segundos
+    }, this.slideIntervalMs);
   }
 
-  nextSlide() {
-    this.currentIndex = (this.currentIndex + 1) % this.slides.length;
+  ngOnDestroy(): void {
+    if (this.intervalId) clearInterval(this.intervalId);
+  }
+
+  nextSlide(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (this.slides.length <= 1) return;
+
+    // anima o texto (some -> troca -> aparece)
+    this.isTextAnimating = true;
+
+    setTimeout(() => {
+      this.currentIndex = (this.currentIndex + 1) % this.slides.length;
+    }, this.textSwapDelayMs);
+
+    setTimeout(() => {
+      this.isTextAnimating = false;
+    }, this.fadeMs);
   }
 }

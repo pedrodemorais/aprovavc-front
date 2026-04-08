@@ -1,0 +1,17 @@
+<article class="overdue-card">
+  <header class="overdue-card__header">
+    <span class="overdue-card__icon" aria-hidden="true">⚠</span>
+    <h2>REVISÕES ATRASADAS</h2>
+  </header>
+
+  <p>
+    Você tem <strong>{{ quantidade }}</strong> revisões atrasadas.
+    Ignorar essas revisões aumenta o risco de esquecimento.
+  </p>
+
+  <p class="overdue-card__tempo">Tempo estimado: {{ tempoEstimadoMinutos }} minutos</p>
+
+  <button type="button" class="overdue-card__cta" (click)="onResolverAgora()">
+    RESOLVER AGORA
+  </button>
+</article>

@@ -1,5 +1,9 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://dynamosoft.com.br/api'  // URL da API em produção
+    apiUrl: 'https://revizo.com.br/api',  // URL da API em produção
+    featureFlags: {
+      backendBusinessRulesV2: true,
+      salaEstudoSaveLog: false
+    }
   };
   

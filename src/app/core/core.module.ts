@@ -1,139 +1,199 @@
-import { NgModule,CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { QuillModule } from 'ngx-quill';
-import { EmpresaCadastroComponent } from './components/empresa-cadastro/empresa-cadastro.component';
-import { PlannerComponent } from './components/planner/planner.component';
-import { FormsModule,ReactiveFormsModule } from '@angular/forms'; // Importação necessária para ngModel
-import { TimelineModule } from 'primeng/timeline';
-import { TabViewModule } from 'primeng/tabview'; // Adicionado
-import { ToggleButtonModule } from 'primeng/togglebutton';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; // Importação necessária
-// Componentes do CoreModule
-
-import { JanelaPadraoComponent } from './components/janela-padrao/janela-padrao.component';
-import { TimelineComponent } from './components/timeline/timeline.component';
-
-// Módulos de Terceiros (PrimeNG, etc.)
-import { MenubarModule } from 'primeng/menubar';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { MatTableModule } from '@angular/material/table';
-import { DropdownModule } from 'primeng/dropdown';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { SubCategoriaComponent } from './components/sub-categoria/sub-categoria.component';
-import { FormaDePagamentoComponent } from './components/forma-de-pagamento/forma-de-pagamento.component';
+import { NgModule } from '@angular/core';
+import { CommonModule, registerLocaleData, DatePipe } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { NgxMaskModule } from 'ngx-mask';
+
+import { PrimeNGConfig, MessageService, ConfirmationService, TreeDragDropService } from 'primeng/api';
+
+// PrimeNG (usei o que seu HTML/stack usa)
+import { TabViewModule } from 'primeng/tabview';
 import { TableModule } from 'primeng/table';
+import { DragDropModule } from 'primeng/dragdrop';
+import { DragDropModule as CdkDragDropModule } from '@angular/cdk/drag-drop';
+import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputNumberModule } from 'primeng/inputnumber';
+
+import { DialogModule } from 'primeng/dialog';
+import { MenubarModule } from 'primeng/menubar';
+import { TimelineModule } from 'primeng/timeline';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ChartModule } from 'primeng/chart';
 import { CalendarModule } from 'primeng/calendar';
-// Importe a função para registrar o locale
-import { registerLocaleData } from '@angular/common';
-import localePt from '@angular/common/locales/pt';
+import { InputMaskModule } from 'primeng/inputmask';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { EditorModule } from 'primeng/editor';
+import { ToastModule } from 'primeng/toast';
+import { TreeTableModule } from 'primeng/treetable';
+import { TreeModule } from 'primeng/tree';
+import { PickListModule } from 'primeng/picklist';
+import { DataViewModule } from 'primeng/dataview';
+import { CardModule } from 'primeng/card';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { SkeletonModule } from 'primeng/skeleton';
+import { DividerModule } from 'primeng/divider';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { PanelModule } from 'primeng/panel';
 
-// Importe o PrimeNG ConfigService
-import { PrimeNGConfig } from 'primeng/api';
+import { QuillModule } from 'ngx-quill';
+import { NgxMaskModule } from 'ngx-mask';
+
+// Angular Material (se você realmente usa no CoreModule)
+import { MatTableModule } from '@angular/material/table';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputMaskModule } from 'primeng/inputmask';
-import { ConfirmationService } from 'primeng/api';
-import { MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DatePipe } from '@angular/common'; // <-- importe aqui
-import { ConfiguracaoOsComponent } from './components/proposta-os/configuracao-os/configuracao-os.component';
 
-import { AutoCompleteModule } from 'primeng/autocomplete';
+// ✅ Seus componentes
+import { EmpresaCadastroComponent } from '../site/pages/empresa-cadastro/empresa-cadastro.component';
+import { MateriaCadastroComponent } from './components/area-aluno/materia-cadastro/materia-cadastro.component';
+import { SalaEstudoComponent } from './components/area-aluno/sala-estudo/sala-estudo.component';
+import { EditaisComponent } from './components/area-aluno/editais/editais.component';
+import { CadastroEditaisComponent } from './components/area-aluno/cadastro-editais/cadastro-editais.component';
+import { AssinaturaCanceladaComponent } from './components/area-aluno/assinatura-cancelada/assinatura-cancelada.component';
+import { AssinaturaPlanosComponent } from './components/area-aluno/assinatura-planos/assinatura-planos.component';
+import { PerfilAlunoComponent } from './components/area-aluno/perfil-aluno/perfil-aluno.component';
+import { MateriaEstudoComponent } from './components/area-aluno/estudo-por-materia/estudo-por-materia.component';
+import { DashboardRevisaoComponent } from './components/area-aluno/dashboard-revisao/dashboard-revisao.component';
+import { PainelAdminComponent } from './area-admin/pages/painel-admin/painel-admin.component';
+import { BlocosEstudoComponent } from './components/area-aluno/blocos-estudo/blocos-estudo.component';
+import { PlanoDoDiaWidgetComponent } from './components/area-aluno/plano-do-dia-widget/plano-do-dia-widget.component';
+import { RevisoesComponent } from './components/area-aluno/revisoes/revisoes.component';
+import { ProgressoComponent } from './components/area-aluno/progresso/progresso.component';
+import { CadastroBaseComponent } from './area-admin/pages/painel-admin/cadastro-base/cadastro-base.component';
+import { BibliotecaComponent } from './components/area-aluno/biblioteca/biblioteca.component';
+import { BibliotecaResumoComponent } from './components/area-aluno/biblioteca/biblioteca-resumo.component';
+import { CadernoErrosComponent } from './components/area-aluno/caderno-erros/caderno-erros.component';
+import { RetencaoDashboardComponent } from './components/area-aluno/retencao-dashboard/retencao-dashboard.component';
+import { HojeComponent } from './components/area-aluno/hoje/hoje.component';
+import { FocoComponent } from './components/area-aluno/foco/foco.component';
+import { ConfiguracoesComponent } from './components/area-aluno/configuracoes/configuracoes.component';
+import { FlashcardModalComponent } from './components/area-aluno/flashcard-modal/flashcard-modal.component';
+import { HomePageComponent } from './components/area-aluno/home-page/home-page.component';
+import { HomeOverdueCardComponent } from './components/area-aluno/home-page/home-overdue-card/home-overdue-card.component';
+import { HomeMissaoDiaComponent } from './components/area-aluno/home-page/home-missao-dia/home-missao-dia.component';
+import { HomeTreinarFraquezasComponent } from './components/area-aluno/home-page/home-treinar-fraquezas/home-treinar-fraquezas.component';
+import { HomeContinuarEstudoComponent } from './components/area-aluno/home-page/home-continuar-estudo/home-continuar-estudo.component';
+import { HomeProgressoDiaComponent } from './components/area-aluno/home-page/home-progresso-dia/home-progresso-dia.component';
+import { AiTesteComponent } from './components/area-aluno/ai-teste/ai-teste.component';
+import { HojeDoisComponent } from './components/area-aluno/hoje-dois/hoje-dois.component';
+import { RegistrarLivreComponent } from './components/area-aluno/registrar-livre/registrar-livre.component';
+import { BibliotecaCognitivaComponent } from './components/area-aluno/biblioteca-cognitiva/biblioteca-cognitiva.component';
+
+
+// ✅ O COMPONENTE DOS BLOCOS
+
 registerLocaleData(localePt);
-import { LOCALE_ID, isDevMode } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { EditorModule } from 'primeng/editor';
-import { ProvaEstudoComponent } from '../features/revisao/prova-estudo/prova-estudo.component';
-import { TopicoEditalCadastroComponent } from '../features/topico-edital/topico-edital-cadastro/topico-edital-cadastro.component';
-import { EditalVerticalizadoComponent } from '../features/topico-edital/edital-verticalizado/edital-verticalizado.component';
-import { EditalEstudoComponent } from '../area-restrita/estudos/edital-estudo/edital-estudo.component';
-import { SalaEstudoComponent } from '../area-restrita/estudos/sala-estudo/sala-estudo.component';
-import { EditorTesteComponent } from '../editor-teste/editor-teste.component';
-import { RichTextEditorModule } from '@syncfusion/ej2-angular-richtexteditor';
-
-
-
-
-
-
 
 @NgModule({
   declarations: [
-    
-    JanelaPadraoComponent,
-    EmpresaCadastroComponent, 
-    PlannerComponent, 
-    TimelineComponent,
-    SubCategoriaComponent,
-    FormaDePagamentoComponent,
-    ConfiguracaoOsComponent,
-    ProvaEstudoComponent,
-       TopicoEditalCadastroComponent,
-       EditalVerticalizadoComponent,
-       EditalEstudoComponent,
-       SalaEstudoComponent,
-       
-       EditorTesteComponent,
-       EditorTesteComponent,  // <-- adiciona aq
-    
-  
-    
-    
+    EmpresaCadastroComponent,
+    MateriaCadastroComponent,
+    SalaEstudoComponent,
+    EditaisComponent,
+    CadastroEditaisComponent,
+    AssinaturaCanceladaComponent,
+    AssinaturaPlanosComponent,
+    PerfilAlunoComponent,
+    MateriaEstudoComponent,
+    DashboardRevisaoComponent,
+    PainelAdminComponent,
+    BlocosEstudoComponent,
+    BlocosEstudoComponent,
+    PlanoDoDiaWidgetComponent,
+    RevisoesComponent,
+    ProgressoComponent,
+    CadastroBaseComponent,
+    BibliotecaComponent,
+    BibliotecaResumoComponent,
+    CadernoErrosComponent,
+    RetencaoDashboardComponent,
+    HojeComponent,
+    FocoComponent,
+    ConfiguracoesComponent,
+    FlashcardModalComponent,
+    HomePageComponent,
+    HomeOverdueCardComponent,
+    HomeMissaoDiaComponent,
+    HomeTreinarFraquezasComponent,
+    HomeContinuarEstudoComponent,
+    HomeProgressoDiaComponent,
+    AiTesteComponent,
+    HojeDoisComponent,
+    RegistrarLivreComponent,
+    BibliotecaCognitivaComponent,
+
   ],
   imports: [
-    BrowserAnimationsModule,  // importante para Angular Material funcionar
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+
+    // PrimeNG essenciais pro BlocosEstudoComponent
+    TabViewModule,
+    TableModule,
+    DragDropModule,
+    CdkDragDropModule,
+    ButtonModule,
+    DropdownModule,
+    InputNumberModule,
+
+    // Outros que você já usa no projeto
+    MenubarModule,
+    DialogModule,
+    TimelineModule,
+    ToggleButtonModule,
+    ChartModule,
+    CalendarModule,
+    InputMaskModule,
+    ConfirmDialogModule,
+    AutoCompleteModule,
+    TooltipModule,
+    TagModule,
+    OverlayPanelModule,
+    EditorModule,
+    ToastModule,
+    TreeTableModule,
+    TreeModule,
+    PickListModule,
+    DataViewModule,
+    CardModule,
+    ProgressBarModule,
+    SkeletonModule,
+    DividerModule,
+    SelectButtonModule,
+    PanelModule,
+
+    QuillModule.forRoot(),
+    NgxMaskModule.forChild(),
+
+    // Material (se precisar)
+    MatTableModule,
     MatDatepickerModule,
     MatFormFieldModule,
     MatInputModule,
     MatNativeDateModule,
-    CommonModule,
-    CalendarModule,
-    DropdownModule,
-    MenubarModule,
-    DialogModule,
-    ButtonModule,
-    TimelineModule,
-    QuillModule.forRoot(),  // <-- adicione isto
-    BrowserAnimationsModule, // Importe aqui
-    TabViewModule, // Adicionado
-    MatTableModule,
-    RadioButtonModule,
-    ToggleButtonModule, // Importação necessária
-    ReactiveFormsModule, // Adicione aqui
-    FormsModule, // Certifique-se de adicionar aqui
-    HttpClientModule,
-    TableModule,
-    ChartModule,
-    InputNumberModule,
-    InputMaskModule,
-    ConfirmDialogModule,
-     AutoCompleteModule,
-       BrowserAnimationsModule,
-  BrowserAnimationsModule,   // PRECISA estar aqui
-    FormsModule,   
-    BrowserAnimationsModule,  
-     FormsModule,
-   EditorModule, 
-   BrowserModule,
-    BrowserAnimationsModule,
-    RichTextEditorModule,
-  BrowserAnimationsModule,   // PRECISA estar aqui
-    NgxMaskModule.forChild()
+     
+  DragDropModule,
+  CdkDragDropModule,
   ],
-
   providers: [
-    MessageService, // ✅ <-- ISSO AQUI RESOLVE
-     ConfirmationService, // 👈 Adicione isso aqui
-       DatePipe 
+    MessageService,
+    ConfirmationService,
+    TreeDragDropService,
+    DatePipe
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA], // Adicione isso
+  exports: [
+    // Se outros módulos/telas usam esses componentes
+    BlocosEstudoComponent
+  ]
 })
 export class CoreModule {
   constructor(private primengConfig: PrimeNGConfig) {
@@ -155,4 +215,5 @@ export class CoreModule {
       weekHeader: 'Sm',
       firstDayOfWeek: 0
     });
-  }}
+  }
+}

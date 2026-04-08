@@ -1,291 +1,446 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable,tap,of, throwError, Subject, BehaviorSubject } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
-import { EventEmitter } from '@angular/core';
-import { environment } from 'src/environments/environment'; // Importa o environment
-import { HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Observable, tap, of, throwError, BehaviorSubject } from 'rxjs';
+import { map, catchError, switchMap, shareReplay } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
+
+export interface LoginResponse {
+  access_token: string;
+  assinaturaValida: boolean;
+  statusAssinatura: string;
+  planoAtual: string;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
- 
-  tokenAtualizado = new EventEmitter<void>(); 
+
+  private assinaturaValidaSubject = new BehaviorSubject<boolean>(false);
+  assinaturaValida$ = this.assinaturaValidaSubject.asObservable();
+  private userDataCache$?: Observable<any>;
+
+  private statusAssinaturaSubject = new BehaviorSubject<string | null>(null);
+  statusAssinatura$ = this.statusAssinaturaSubject.asObservable();
+
+  private planoAtualSubject = new BehaviorSubject<string | null>(null);
+  planoAtual$ = this.planoAtualSubject.asObservable();
+
+  // 🔥 Evento pra quem quiser ouvir atualização de token
+  tokenAtualizado = new EventEmitter<void>();
+
+  // 🔥 Estado reativo do access_token
   private accessTokenSubject = new BehaviorSubject<string | null>(this.getAccessToken());
- 
-  constructor(private router: Router, private http: HttpClient) {
-   }
 
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private router: Router,
+    private http: HttpClient
+  ) {
+    // 🔥 IMPORTANTE: reidratar estado ao iniciar (inclusive depois de F5)
+    this.recarregarEstadoDoLocalStorage();
+  }
 
-  login(credentials: { email: string, senha: string }): Observable<{ access_token: string }> {
-    return this.http.post<{ access_token: string }>(`${environment.apiUrl}/usuarios/login`, credentials, { withCredentials: true }) // 🚀 Envia e recebe cookies
+  // =====================================================
+  //   🔥 REIDRATA OS SUBJECTS A PARTIR DO LOCALSTORAGE
+  // =====================================================
+  private recarregarEstadoDoLocalStorage(): void {
+    if (!this.isBrowser()) return;
+    const token = localStorage.getItem('access_token');
+    const assinaturaValida = localStorage.getItem('assinaturaValida');
+    const statusAssinatura = localStorage.getItem('statusAssinatura');
+    const planoAtual = localStorage.getItem('planoAtual');
+
+    // token
+    this.accessTokenSubject.next(token);
+
+    // assinatura
+    this.assinaturaValidaSubject.next(assinaturaValida === 'true');
+
+    this.statusAssinaturaSubject.next(
+      statusAssinatura && statusAssinatura !== 'undefined' && statusAssinatura !== 'null'
+        ? statusAssinatura
+        : null
+    );
+
+    this.planoAtualSubject.next(
+      planoAtual && planoAtual !== 'undefined' && planoAtual !== 'null'
+        ? planoAtual
+        : null
+    );
+  }
+
+  // ========= LOGIN =========
+
+  login(credentials: { email: string; senha: string }): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(
+        `${environment.apiUrl}/usuarios/login`,
+        credentials,
+        { withCredentials: true }
+      )
       .pipe(
-        tap(response => {
-          
-          localStorage.setItem('access_token', response.access_token); // ✅ Salva apenas o access_token
+        tap((response) => {
+          // ✅ salva o access_token normalmente
+          localStorage.setItem('access_token', response.access_token);
+
+          // ✅ guarda status da assinatura
+          localStorage.setItem('assinaturaValida', String(response.assinaturaValida));
+          localStorage.setItem('statusAssinatura', response.statusAssinatura);
+          localStorage.setItem('planoAtual', response.planoAtual);
+
+          // 🔥 notifica observers
+          this.accessTokenSubject.next(response.access_token);
+          this.assinaturaValidaSubject.next(response.assinaturaValida);
+          this.statusAssinaturaSubject.next(response.statusAssinatura);
+          this.planoAtualSubject.next(response.planoAtual);
+
+          this.tokenAtualizado.emit();
         }),
         catchError((error: HttpErrorResponse) => {
-         
-  
           if (error.error instanceof ErrorEvent) {
-            // Erro de rede ou no cliente
-            return throwError(() => new Error(`Erro no cliente ou na rede: ${error.error.message}`));
+            return throwError(
+              () => new Error(`Erro no cliente ou na rede: ${error.error.message}`)
+            );
           } else {
-            // Erro vindo do backend
             return throwError(() => error);
           }
         })
       );
   }
 
-  getAccessToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-  
+atualizarStatusAssinaturaFromUser(user: any) {
+  const status = user.statusAssinatura ?? '';
+  const plano = user.planoAtual ?? '';
+  const valida =
+    user.assinaturaValida ??
+    user.assinaturaAtiva ??
+    (status === 'TRIAL' || status === 'ATIVA');
 
-  refreshAccessToken(): void {
-    const token = localStorage.getItem('access_token');
-  
-    if (token) {
-      localStorage.removeItem('access_token'); // 🔹 Remove primeiro
-      localStorage.setItem('access_token', token); // 🔹 Adiciona novamente
-  
-      console.info('🔄 Token atualizado no localStorage.');
-  
-      // 🔥 Dispara evento para notificar que o token foi atualizado
-      this.tokenAtualizado.emit();
-      window.dispatchEvent(new Event('storage'));
-    }
-  }
-  
-  
-  /**
-   * 🔹 Define um novo accessToken no localStorage
-   */
-  setAccessToken(token: string): void {
-    localStorage.setItem('access_token', token);
-    this.accessTokenSubject.next(token); // 🔥 Notifica os observadores
-    this.tokenAtualizado.emit();
-  }
+  const exp = user.dataExpiracaoLicenca ?? null;
 
-
-  isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1])); // Decodifica o JWT
-      const expirationTime = payload.exp * 1000; // Converte para timestamp
-      return Date.now() > expirationTime; // Retorna true se expirado
-    } catch (error) {
-      console.error("❌ Erro ao verificar expiração do token:", error);
-      return true;
-    }
-  }
-
-/**
- * 🔹 Obtém os dados do usuário logado
- */
-getUserData(): Observable<any> {
-    return this.http.get<any>(`${environment.apiUrl}/usuarios/me`, { withCredentials: true }).pipe(
-      tap(user => {
-        console.log("📤 Dados do usuário recebidos:", user.nome);
-        console.log("📤 ID:", user.id);
-      })
-    );
-}
-
-logout(): void {
-    
-    localStorage.removeItem('access_token'); // Remove o token do localStorage
-    
-      this.router.navigate(['/login']); // Redireciona para a tela de login
-  
-  }
-
+  // Se você QUISER continuar guardando, ok. Se quiser tirar, pode remover esse bloco.
  
-decodeToken(token: string): any {
-  try {
-    const payload = token.split('.')[1]; // Pegamos a parte do payload
-    return JSON.parse(atob(payload)); // Decodificamos de Base64 para JSON
-  } catch (error) {
-    console.error("❌ Erro ao decodificar token JWT:", error);
-    return null;
-  }
-}
-getUserNameFromToken(): string | null {
-  const token = this.getAccessTokenFromCookie();
 
-  if (!token) {
-    console.error("❌ Nenhum token encontrado no cookie.");
-    return null;
-  }
-
-  try {
-    const payloadBase64Url = token.split('.')[1]; // Pega a parte do payload
-    const payloadBase64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/'); // Corrige encoding Base64
-    const payloadDecoded = atob(payloadBase64); // Decodifica o Base64
-    const payloadJson = JSON.parse(payloadDecoded); // Converte para objeto JSON
-
-    console.log("📥 Payload do Token:", payloadJson); // Verifica se o name está correto
-
-    return payloadJson.name || null; // Retorna o name, se existir
-  } catch (error) {
-    console.error("❌ Erro ao decodificar o token!", error);
-    return null;
-  }
+  // 🔥 Fonte de verdade para o app inteiro
+  this.statusAssinaturaSubject.next(status);
+  this.planoAtualSubject.next(plano);
+  this.assinaturaValidaSubject.next(valida);
 }
 
-
-isAuthenticated(): Observable<boolean> {
+checarAssinaturaNoBack(): Observable<boolean> {
   const accessToken = this.getAccessToken();
-
   if (!accessToken) {
-    console.warn("🚨 Nenhum token encontrado. Usuário não autenticado.");
+    console.warn('🚨 Sem token, não dá pra checar assinatura no backend.');
+    this.assinaturaValidaSubject.next(false);
     return of(false);
   }
 
-  return this.http.get<{ authenticated: boolean }>(
-    `${environment.apiUrl}/usuarios/is-authenticated`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` } // ✅ Envia o access_token
-    }
-  ).pipe(
-    map(response => response.authenticated),
-    tap(authenticated => console.log("🔍 Usuário autenticado?", authenticated)),
-    catchError(error => {
-      console.error("❌ Erro ao verificar autenticação:", error);
+  return this.getUserData().pipe(
+    tap((user) => {
+      // Atualiza tudo com base no /me
+      this.atualizarStatusAssinaturaFromUser(user);
+    }),
+    map((user) => {
+      const status = user.statusAssinatura ?? '';
+      const valida =
+        user.assinaturaValida ??
+        user.assinaturaAtiva ??
+        (status === 'TRIAL' || status === 'ATIVA');
 
-      // Se o erro for 401 (token expirado), tenta renovar antes de deslogar
-      if (error.status === 401) {
-        console.warn("⚠️ Access token expirado! Tentando renovar...");
-
-        return this.refreshToken().pipe(
-          switchMap(() => this.isAuthenticated()), // 🔄 Tenta autenticar novamente após renovar
-          catchError(err => {
-            console.error("❌ Erro ao renovar token. Forçando logout.");
-            this.logout();
-            return of(false);
-          })
-        );
-      }
-
+      this.assinaturaValidaSubject.next(valida);
+      return valida;
+    }),
+    catchError((err) => {
+      console.error('❌ Erro ao checar assinatura no backend:', err);
+      this.assinaturaValidaSubject.next(false);
       return of(false);
     })
   );
 }
 
-refreshToken(): Observable<string> {
-  console.warn("🔄 Tentando renovar o token...");
 
-  return this.http.post<{ access_token: string }>(
-    `${environment.apiUrl}/usuarios/refresh`, 
-    {}, 
-    { withCredentials: true }
-  ).pipe(
-    map(response => {
-      if (response.access_token) {
-        console.log("✅ Novo access token recebido:", response.access_token);
-        this.setAccessToken(response.access_token);
-        return response.access_token;
-      } else {
-        console.error("❌ O servidor não retornou um novo access_token.");
-        this.logout();
-        return "";
-      }
-    }),
-    catchError(error => {
-      console.error("❌ Erro ao tentar renovar token:", error);
-      this.logout();
-      return of("");
-    })
-  );
-}
+  // ========= HELPERS DE TOKEN =========
 
+  getAccessToken(): string | null {
+    if (!this.isBrowser()) return null;
+    return localStorage.getItem('access_token');
+  }
 
-  // Simulação de cadastro
- register(user: { nome: string; email: string; senha: string }): Observable<any> {
-  return this.http.post<any>(`${environment.apiUrl}/usuarios/cadastrar`, user);
-}
+  refreshAccessToken(): void {
+    if (!this.isBrowser()) return;
+    const token = localStorage.getItem('access_token');
 
-ativarConta(token: string): Observable<any> {
-  return this.http.get(`${environment.apiUrl}/usuarios/ativacao?token=${token}`);
-}
-
-getUser() {
-    const token = this.getAccessTokenFromCookie();
-  
     if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1])); // Decodifica o token JWT
-        console.log("📤 Usuário recuperado do token:", payload);
-        return payload;
-      } catch (error) {
-        console.error("❌ Erro ao decodificar o token JWT:", error);
-        return null;
+      localStorage.removeItem('access_token');
+      localStorage.setItem('access_token', token);
+
+      console.info('🔄 Token atualizado no localStorage.');
+      this.accessTokenSubject.next(token);
+      this.tokenAtualizado.emit();
+      if (this.isBrowser()) {
+        window.dispatchEvent(new Event('storage'));
       }
-    } else {
-      console.log("❌ Nenhum usuário autenticado.");
+    }
+  }
+
+  setAccessToken(token: string): void {
+    if (!this.isBrowser()) return;
+    localStorage.setItem('access_token', token);
+    this.accessTokenSubject.next(token);
+    this.tokenAtualizado.emit();
+    this.userDataCache$ = undefined;
+  }
+
+  isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expirationTime = payload.exp * 1000;
+      return Date.now() > expirationTime;
+    } catch (error) {
+      console.error('❌ Erro ao verificar expiração do token:', error);
+      return true;
+    }
+  }
+
+  // ========= ASSINATURA / PLANO =========
+
+  private getAssinaturaValidaFromStorage(): boolean {
+    if (!this.isBrowser()) return false;
+    const valor = localStorage.getItem('assinaturaValida');
+    return valor === 'true';
+  }
+
+  isAssinaturaValida(): boolean {
+    return this.getAssinaturaValidaFromStorage();
+  }
+
+  getStatusAssinatura(): string | null {
+    if (!this.isBrowser()) return null;
+    return localStorage.getItem('statusAssinatura');
+  }
+
+  getPlanoAtual(): string | null {
+    if (!this.isBrowser()) return null;
+    return localStorage.getItem('planoAtual');
+  }
+
+  // ========= DADOS DO USUÁRIO =========
+
+  getUserData(): Observable<any> {
+    if (!this.userDataCache$) {
+      this.userDataCache$ = this.http
+        .get<any>(`${environment.apiUrl}/usuarios/me`, { withCredentials: true })
+        .pipe(
+          tap((user) => {
+            console.log('📤 Dados do usuário recebidos:', user.nome);
+            console.log('📤 ID:', user.id);
+          }),
+          shareReplay(1)
+        );
+    }
+    return this.userDataCache$;
+  }
+
+  decodeToken(token: string): any {
+    try {
+      const payload = token.split('.')[1];
+      return JSON.parse(atob(payload));
+    } catch (error) {
+      console.error('❌ Erro ao decodificar token JWT:', error);
       return null;
     }
   }
 
-getAccessTokenFromCookie(): string | null {
-   
-    return this.getAccessToken();
-  }
-  
-  
-   /**
-   * 🔹 Solicita um token de recuperação de senha.
-   * @param email Email do usuário
-   * @returns Observable<string>
-   */
-solicitarToken(email: string): Observable<string> {
-    return this.http.post(`${environment.apiUrl}/usuarios/recuperar-senha`, { email }, { responseType: 'text' });
+  getUserNameFromToken(): string | null {
+    const token = this.getAccessTokenFromCookie();
+
+    if (!token) {
+      console.error('❌ Nenhum token encontrado no cookie.');
+      return null;
+    }
+
+    try {
+      const payloadBase64Url = token.split('.')[1];
+      const payloadBase64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payloadDecoded = atob(payloadBase64);
+      const payloadJson = JSON.parse(payloadDecoded);
+
+      console.log('📥 Payload do Token:', payloadJson);
+
+      return payloadJson.name || null;
+    } catch (error) {
+      console.error('❌ Erro ao decodificar o token!', error);
+      return null;
+    }
   }
 
-   // 🔹 Valida o token recebido no link
-   validarToken(token: string): Observable<any> {
+  getUser() {
+    const token = this.getAccessTokenFromCookie();
+
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('📤 Usuário recuperado do token:', payload);
+        return payload;
+      } catch (error) {
+        console.error('❌ Erro ao decodificar o token JWT:', error);
+        return null;
+      }
+    } else {
+      console.log('❌ Nenhum usuário autenticado.');
+      return null;
+    }
+  }
+
+  getAccessTokenFromCookie(): string | null {
+    return this.getAccessToken();
+  }
+
+  // ========= AUTENTICAÇÃO / REFRESH =========
+
+  isAuthenticated(): Observable<boolean> {
+    const accessToken = this.getAccessToken();
+
+    if (!accessToken) {
+      console.warn('🚨 Nenhum token encontrado. Usuário não autenticado.');
+      return of(false);
+    }
+
+    return this.http
+      .get<{ authenticated: boolean }>(`${environment.apiUrl}/usuarios/is-authenticated`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      .pipe(
+        map((response) => response.authenticated),
+        tap((authenticated) => console.log('🔍 Usuário autenticado?', authenticated)),
+        catchError((error) => {
+          console.error('❌ Erro ao verificar autenticação:', error);
+
+          if (error.status === 401) {
+            console.warn('⚠️ Access token expirado! Tentando renovar...');
+
+            return this.refreshToken().pipe(
+              switchMap(() => this.isAuthenticated()),
+              catchError((err) => {
+                console.error('❌ Erro ao renovar token. Forçando logout.');
+                this.logout();
+                return of(false);
+              })
+            );
+          }
+
+          return of(false);
+        })
+      );
+  }
+
+  refreshToken(): Observable<string> {
+    console.warn('🔄 Tentando renovar o token...');
+
+    return this.http
+      .post<{ access_token: string }>(
+        `${environment.apiUrl}/usuarios/refresh`,
+        {},
+        { withCredentials: true }
+      )
+      .pipe(
+        map((response) => {
+          if (response.access_token) {
+            console.log('✅ Novo access token recebido:', response.access_token);
+            this.setAccessToken(response.access_token);
+            return response.access_token;
+          } else {
+            console.error('❌ O servidor não retornou um novo access_token.');
+            this.logout();
+            return '';
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Erro ao tentar renovar token:', error);
+          this.logout();
+          return of('');
+        })
+      );
+  }
+
+  // ========= LOGOUT =========
+
+  logout(): void {
+    if (this.isBrowser()) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('assinaturaValida');
+      localStorage.removeItem('statusAssinatura');
+      localStorage.removeItem('planoAtual');
+    }
+
+    this.accessTokenSubject.next(null);
+    this.assinaturaValidaSubject.next(false);
+    this.statusAssinaturaSubject.next(null);
+    this.planoAtualSubject.next(null);
+    this.userDataCache$ = undefined;
+
+    this.router.navigate(['/login']);
+  }
+
+  // ========= CADASTRO / ATIVAÇÃO / SENHA =========
+
+  register(user: { nome: string; email: string; senha: string }): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/usuarios/cadastrar`, user);
+  }
+
+  ativarConta(token: string): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/usuarios/ativacao?token=${token}`);
+  }
+
+  solicitarToken(email: string): Observable<string> {
+    return this.http.post(
+      `${environment.apiUrl}/usuarios/recuperar-senha`,
+      { email },
+      { responseType: 'text' }
+    );
+  }
+
+  validarToken(token: string): Observable<any> {
     return this.http.get(`${environment.apiUrl}/usuarios/validar-token?token=${token}`);
   }
 
-
-  redefinirSenha(dados: { token: string, novaSenha: string }) {
+  redefinirSenha(dados: { token: string; novaSenha: string }) {
     return this.http.post(`${environment.apiUrl}/usuarios/redefinir-senha`, dados, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
     });
   }
-  
 
- 
   alterarSenha(senhaAtual: string, novaSenha: string): Observable<any> {
-    
     const token = this.getAccessTokenFromCookie();
-  
+
     if (!token) {
-      console.error("🚨 Nenhum token JWT encontrado! O usuário precisa estar autenticado.");
-      return new Observable(observer => {
-        observer.error({ error: "Usuário não autenticado." });
+      console.error('🚨 Nenhum token JWT encontrado! O usuário precisa estar autenticado.');
+      return new Observable((observer) => {
+        observer.error({ error: 'Usuário não autenticado.' });
         observer.complete();
       });
     }
-  
-    console.log("📡 Enviando requisição para alterar senha...");
-    console.log("🔑 Token sendo enviado: ", token);
-  
+
+    console.log('📡 Enviando requisição para alterar senha...');
+    console.log('🔑 Token sendo enviado: ', token);
+
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // 🔥 Enviando token corretamente!
+      Authorization: `Bearer ${token}`,
     });
-    console.log("🔍 Token salvo no sessionStorage:", sessionStorage.getItem("authToken"));
+    if (this.isBrowser()) {
+      console.log('🔍 Token salvo no sessionStorage:', sessionStorage.getItem('authToken'));
+    }
 
     const body = { senhaAtual, novaSenha };
     return this.http.post(`${environment.apiUrl}/usuarios/alterar-senha`, body, { headers });
   }
-  
 
-
-
-
-
+  private isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
+  }
 }

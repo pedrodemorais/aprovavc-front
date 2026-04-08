@@ -2,46 +2,222 @@
 <div class="dashboard">
 
   <!-- 🔹 Topo da Dashboard -->
-  <header class="topbar">
-
-    <div>
-
+  <div class="topbar">
+    <div class="topbar-logo">
       <div class="logo">
-        <img src="assets/img/logo/aprovavc.png" alt="Logo" />
-        <h1 style="font-family: 'Roboto', sans-serif;">
-          <span style="color: #1f1e1e; font-weight: bold; margin-left: 5px;">Aprova.</span>
-          <span style="color: #057cf4; font-weight: lighter;">VC</span>
-        </h1>
+        <img class="logo-full" src="assets/img/logo/revizo.png" alt="Logo" />
+        
+      </div>
+    </div>
+
+    <div class="topbar-menu">
+      <button #menuToggle class="menu-toggle" type="button" (click)="toggleMenu()" aria-label="Abrir menu">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="topbar-actions">
+      <div class="son-e-modo-escuro">
+
+      <!-- MODO ESCURO / CLARO -->
+      <button class="btn-modo-leitura"
+              type="button"
+              (click)="modoLeituraService.toggle()"
+              aria-label="Alternar tema">
+        <i class="pi" [ngClass]="modoLeituraService.isDark() ? 'pi-sun' : 'pi-moon'" aria-hidden="true"></i>
+      </button>
+
+      <!-- SOM DE FOCO (BOTÃO ÍCONE + PAINEL FLUTUANTE) -->
+      <div class="sons-foco-wrap" (click)="$event.stopPropagation()">
+
+        <!-- botão ícone -->
+        <button type="button"
+                class="btn-som-foco"
+                (click)="toggleSonsFoco(); $event.stopPropagation()"
+                [attr.aria-expanded]="sonsFocoAberto"
+                aria-label="Som de foco"
+                title="Som de foco">
+          <i class="pi pi-volume-up" aria-hidden="true"></i>
+        </button>
+
+        <!-- painel flutuante (não empurra layout) -->
+        <div class="sons-foco-panel"
+             [class.is-open]="sonsFocoAberto"
+             (click)="$event.stopPropagation()"
+             role="dialog"
+             aria-label="Sons de foco">
+
+          <div class="sons-foco-panel-head">
+            <div class="sons-foco-panel-title">
+              Som de foco
+              <i class="pi pi-info-circle info-icon info-icon--inline"
+                 pTooltip="Ative um som ambiente para manter a concentração."
+                 tooltipPosition="top"
+                 [showDelay]="150"
+                 [hideDelay]="80"
+                 tabindex="0"
+                 aria-label="Ajuda"></i>
+            </div>
+            <div class="sons-foco-panel-sub">Melhor com fone 🎧</div>
+          </div>
+
+          <div class="icones-sons">
+            <button type="button"
+                    class="som-icone"
+                    *ngFor="let som of sonsFoco"
+                    [class.ativo]="somAtivoId === som.id"
+                    (click)="onClickSomIcone(som.id); $event.stopPropagation()"
+                    [title]="som.nome">
+
+              <div class="som-icone-avatar-wrapper">
+                <img class="som-icone-img" [src]="som.icone" [alt]="som.nome" />
+                <span class="som-icone-badge" *ngIf="somAtivoId === som.id">▶</span>
+              </div>
+
+              <div class="som-icone-textos">
+                <span class="som-icone-nome">{{ som.nome }}</span>
+              </div>
+            </button>
+          </div>
+
+        </div>
       </div>
 
+      <!-- MEU CADASTRO -->
+      <div class="user-menu-wrap" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="btn-user-menu"
+          (click)="toggleUserMenu(); $event.stopPropagation()"
+          [attr.aria-expanded]="userMenuAberto"
+          aria-label="Meu Cadastro"
+          title="Meu Cadastro"
+        >
+          <i class="pi pi-user" aria-hidden="true"></i>
+        </button>
 
+        <div
+          class="user-menu-panel"
+          [class.is-open]="userMenuAberto"
+          (click)="$event.stopPropagation()"
+          role="menu"
+          aria-label="Meu Cadastro"
+        >
+          <a
+            class="user-menu-item"
+            routerLink="/area-restrita/meu-cadastro"
+            (click)="userMenuAberto = false"
+          >
+            Meu Cadastro
+          </a>
+          <a
+            class="user-menu-item"
+            routerLink="/area-restrita/redefinir-senha-site"
+            (click)="userMenuAberto = false"
+          >
+            Alterar senha
+          </a>
+          <a
+            class="user-menu-item"
+            routerLink="/area-restrita/suporte"
+            (click)="userMenuAberto = false"
+          >
+            Suporte
+          </a>
+          <button
+            type="button"
+            class="user-menu-item user-menu-item--logout"
+            (click)="logout(); userMenuAberto = false"
+          >
+            Sair
+          </button>
+      </div>
     </div>
+  </div>
+    </div>
+  </div>
 
-    <!-- 🔹 Botão de menu hambúrguer -->
-    <button #menuToggle class="menu-toggle" (click)="toggleMenu()">
-      <i class="fas fa-bars"></i>
-    </button>
-
-
-
-  </header>
+  <!-- CONTEÚDO -->
   <div class="container">
-    <div class="menu">
-  
+    <div class="menu" #menuWrap>
+      <nav #sidebar
+           class="sidebar"
+           [ngClass]="{ 'menu-mobile': menuAberto, 'menu-expanded': menuExpandido }"
+           role="navigation"
+           aria-label="Menu principal"
+           (click)="$event.stopPropagation()">
+        <div class="menu-actions">
+          <button
+            type="button"
+            class="menu-lock"
+            (click)="toggleMenuExpandido()"
+            [attr.aria-pressed]="menuExpandido"
+            [attr.title]="menuExpandido ? 'Recolher menu' : 'Expandir menu'"
+          >
+            <span class="menu-icon">
+              <i class="pi" [ngClass]="menuExpandido ? 'pi-angle-left' : 'pi-angle-right'"></i>
+            </span>
+            <span class="menu-lock-text">{{ menuExpandido ? 'Recolher menu' : 'Expandir menu' }}</span>
+          </button>
+        </div>
+        <ul class="menu-list">
+          <ng-container *ngFor="let item of items">
+            <ng-container *ngTemplateOutlet="menuItemTpl; context: { $implicit: item }"></ng-container>
+          </ng-container>
+        </ul>
 
-      <nav #sidebar class="sidebar"
-     [ngClass]="{ 'menu-mobile': menuAberto }"
-     role="navigation" aria-label="Menu principal"
-     (click)="$event.stopPropagation()">
-  <p-panelMenu [model]="items" [multiple]="true" styleClass="menu-flat"></p-panelMenu>
-</nav>
+        <ng-template #menuItemTpl let-item>
+          <li class="menu-item" [ngClass]="item.styleClass" [class.has-children]="item.items?.length" [class.menu-item--logout]="item.label === 'Sair'">
+            <a
+              *ngIf="item.routerLink; else menuButton"
+              class="menu-link"
+              [class.menu-link--section]="item.styleClass === 'menu-section-title'"
+              [routerLink]="item.routerLink"
+              routerLinkActive="is-active"
+              [class.is-disabled]="item.disabled"
+              [attr.aria-disabled]="item.disabled || null"
+              [attr.title]="item.title || item.label"
+              (click)="onMenuItemClick($event, item)"
+            >
+              <span class="menu-icon" *ngIf="item.icon">
+                <i class="pi" [ngClass]="item.icon || ''"></i>
+              </span>
+              <span class="menu-text">{{ item.label }}</span>
+            </a>
 
+            <ng-template #menuButton>
+              <button
+                type="button"
+                class="menu-link"
+                [class.menu-link--section]="item.styleClass === 'menu-section-title'"
+                [class.is-disabled]="item.disabled"
+                [attr.aria-disabled]="item.disabled || null"
+                [attr.title]="item.title || item.label"
+                (click)="onMenuItemClick($event, item)"
+              >
+                <span class="menu-icon" *ngIf="item.icon">
+                  <i class="pi" [ngClass]="item.icon || ''"></i>
+                </span>
+                <span class="menu-text">{{ item.label }}</span>
+              </button>
+            </ng-template>
+
+            <ul class="submenu" [class.is-open]="isMenuExpanded(item)" *ngIf="item.items?.length">
+              <ng-container *ngFor="let child of item.items">
+                <ng-container *ngTemplateOutlet="menuItemTpl; context: { $implicit: child }"></ng-container>
+              </ng-container>
+            </ul>
+          </li>
+        </ng-template>
+      </nav>
     </div>
 
-    <div class="content">
-
-      <router-outlet> </router-outlet>
+    <div class="content" #content [style.marginLeft.px]="menuOffset">
+      <router-outlet></router-outlet>
     </div>
   </div>
 
 </div>
+
+
+

@@ -20,7 +20,7 @@ export interface EmpresaParametroDTO {
 })
 
 export class EmpresaParametroService {
-   private apiUrl = `${environment.apiUrl}/empresas/parametros`;
+   private apiUrl = `${environment.apiUrl}/alunos/parametros`;
   
     constructor(private http: HttpClient) { }
     getParametros(): Observable<EmpresaParametro[]> {
@@ -35,6 +35,16 @@ export class EmpresaParametroService {
         return param ? param.valor : null;
       })
     );
+  }
+
+  /** Cria um parametro no backend */
+  salvarParametro(parametro: EmpresaParametroDTO): Observable<any> {
+    return this.http.post(this.apiUrl, parametro, {
+      withCredentials: true,
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    });
   }
 
    /** 🔥 Atualiza um parâmetro no backend */

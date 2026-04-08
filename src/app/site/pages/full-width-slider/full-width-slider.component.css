@@ -1,61 +1,188 @@
-
+/* CONTAINER DO BANNER */
 .full-width-image {
-   
-    background-size: cover; /* Faz a imagem preencher o container */
-    background-position: center 18% !important; /* Centraliza a imagem */
-    background-repeat: no-repeat; /* Evita repetição da imagem */
-    width: 100%; /* Ocupa toda a largura da tela */
-    height: 60dvh; /* Altura fixa de 300px */
-    display: flex; /* Alinha o texto sobreposto */
-    
+  position: relative;
+  overflow: hidden;
+  display: block;
 
-    position: relative; /* Necessário para a sobreposição */
-  }
-  .full-width-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-     object-position: center 40%; /* Move a imagem 20% para baixo */
-  
+  /* ✅ força full width mesmo estando dentro de .container */
+  width: 100vw;
+
+
+  /* ✅ mantém proporção parecida com 1920x950 (não “estreita”) */
+  aspect-ratio: 1920 / 950;
+  min-height: 320px;
+  max-height: 720px;
+
+  /* evita flash branco no crossfade */
+  background: #0b1220;
 }
 
+
+/* SLIDES (empilhados) */
+.full-width-image .slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+
+  /* premium: ocupa a área sem deformar */
+  object-fit: cover;
+
+  /* crossfade */
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 1200ms ease-in-out, transform 8000ms linear;
+
+  /* performance */
+  will-change: opacity, transform;
+  transform: translateZ(0) scale(1.02);
+}
+
+/* slide visível */
+.full-width-image .slide.active {
+  opacity: 1;
+  z-index: 1;
+  transform: translateZ(0) scale(1.07);
+}
+
+/* GRADIENTE POR CIMA DA IMAGEM */
 .full-width-image::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to right, rgb(13, 49, 118), transparent);
-    z-index: 2; /* Mantém o degradê sobre a imagem */
-    pointer-events: none; /* Impede que bloqueie cliques */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(0, 0, 0, 0.05),
+    rgba(0, 0, 0, 0.05)
+  );
+  z-index: 2;
+  pointer-events: none;
 }
 
+/* CONTEÚDO (TEXTO / BOTÃO) POR CIMA DO BANNER */
+.hero-content {
+  position: absolute;
+  top: 50%;
+  left: 72%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
 
-.slide {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity 1.5s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  max-width: 600px;
+  color: #ffffff;
+  font-family: "Inter", sans-serif;
+
+  opacity: 1;
+  transition: opacity 450ms ease;
 }
 
-.slide.active {
-    opacity: 1;
-    z-index: 1;
+/* fade do texto na troca */
+.hero-content.content-fade {
+  opacity: 0;
 }
 
+/* TÍTULO */
+.hero-title {
+  margin: 0;
+  font-size: 2.3rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color: #333333;
+}
 
-  @media (max-width: 768px) {
-.full-width-image {
+/* SUBTÍTULO */
+.hero-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.45;
+  color: #076d0c;
+}
+
+/* BOTÃO */
+.hero-btn {
+  margin-top: 8px;
+  align-self: flex-start;
+
+  background: #22c55e;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.hero-btn:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+/* --- MOBILE --- */
+@media (max-width: 768px) {
+  .full-width-image {
+    height: 45vh;
+    min-height: 260px;
+  }
+
+  .full-width-image::before {
+    background: linear-gradient(
+      to top,
+      rgba(17, 24, 39, 0.9),
+      rgba(17, 24, 39, 0.4),
+      transparent
+    );
+  }
+
+  .hero-content {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 90%;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .hero-title {
+    font-size: 1.8rem;
+  }
+
+  .hero-btn {
+    align-self: center;
+  }
+}
+
+/* TEXTO AGRUPADO */
+.hero-text-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 420px) {
+  .hero-text-card {
+    background: rgba(255, 255, 255, 0.644);
+    padding: 12px 14px;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .hero-title {
+    font-size: 1.1rem;
+    color: #111827;
+  }
+
    
-    background-size: cover; /* Faz a imagem preencher o container */
-    background-position: center 18% !important; /* Centraliza a imagem */
-    background-repeat: no-repeat; /* Evita repetição da imagem */
-    width: 100%; /* Ocupa toda a largura da tela */
-    height: 30dvh; /* Altura fixa de 300px */
-    display: flex; /* Alinha o texto sobreposto */
-    position: relative; /* Necessário para a sobreposição */
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+    color: #14532d;
   }
-  }
+}

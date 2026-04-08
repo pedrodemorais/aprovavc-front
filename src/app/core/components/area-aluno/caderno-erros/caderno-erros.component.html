@@ -1,0 +1,254 @@
+﻿<section class="caderno-erros-page">
+  <header class="cabecalho">
+    <div>
+      <h2>Caderno de Erros</h2>
+      <p>Organize erros por tópico e subtópico para revisar no momento certo.</p>
+    </div>
+    <span class="kpi-pill">{{ totalItens }} registro(s)</span>
+  </header>
+
+  <div class="filtros card">
+    <div class="field">
+      <label>Matéria</label>
+      <select [(ngModel)]="filtros.materiaId" (change)="onFiltroMateriaChange()">
+        <option [ngValue]="null">Todas as matérias</option>
+        <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.nome }}</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Status</label>
+      <select [(ngModel)]="filtros.status" (change)="carregarLista()">
+        <option value="">Todos</option>
+        <option value="ABERTO">Aberto</option>
+        <option value="REVISADO">Revisado</option>
+        <option value="DOMINADO">Dominado</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Busca</label>
+      <input
+        type="text"
+        [(ngModel)]="filtros.busca"
+        (keyup.enter)="carregarLista()"
+        placeholder="Título ou descrição do erro" />
+    </div>
+
+    <button type="button" class="btn" (click)="carregarLista()">Filtrar</button>
+    <button type="button" class="btn btn-sec" (click)="limparFiltros()">Limpar</button>
+  </div>
+
+  <p class="erro" *ngIf="erro">{{ erro }}</p>
+
+  <div class="revisao-erros card" *ngIf="emModoRevisao; else modoCadastroTpl">
+    <ng-container *ngIf="itemRevisaoAtual as atual; else semItensRevisaoTpl">
+      <div class="revisao-head">
+        <div>
+          <strong>Revisão de Erros</strong>
+          <p>Modo revisar da Sala de Estudo: avalie cada erro como revisado ou dominado.</p>
+        </div>
+        <span class="revisao-contador">{{ indiceRevisao + 1 }} / {{ itensParaRevisao.length }}</span>
+      </div>
+
+      <article class="revisao-card" [class.revisao-card--resposta]="mostrarRespostaRevisao">
+        <div class="revisao-chip-row">
+          <span class="status" [ngClass]="'status-' + (atual.status || '').toLowerCase()">{{ atual.status }}</span>
+          <span class="revisao-chip">Erro: {{ atual.dataErro | date: 'dd/MM/yyyy' }}</span>
+          <span class="revisao-chip" *ngIf="atual.dataProximaRevisao">Próx. revisão: {{ atual.dataProximaRevisao | date: 'dd/MM/yyyy' }}</span>
+        </div>
+
+        <h3>{{ atual.titulo }}</h3>
+        <p class="desc">{{ atual.descricaoErro }}</p>
+
+        <div class="meta">
+          <span>Tópico: {{ topicoDescricao(atual.topicoId) }}</span>
+          <span *ngIf="atual.subtopicoId">Subtópico: {{ topicoDescricao(atual.subtopicoId) }}</span>
+          <span>Fonte: {{ atual.fonte }}</span>
+        </div>
+
+        <div class="meta" *ngIf="atual.tags?.length">
+          <span *ngFor="let tag of atual.tags">#{{ tag }}</span>
+        </div>
+
+        <button type="button" class="btn btn-sec revisao-toggle" (click)="toggleRespostaRevisao()">
+          {{ mostrarRespostaRevisao ? 'Ocultar causa e correção' : 'Mostrar causa e correção' }}
+        </button>
+
+        <div class="revisao-resposta" *ngIf="mostrarRespostaRevisao">
+          <div class="revisao-resposta-item">
+            <label>Causa raiz</label>
+            <p>{{ atual.causaRaiz || 'Não informado.' }}</p>
+          </div>
+          <div class="revisao-resposta-item">
+            <label>Correção</label>
+            <p>{{ atual.correcao || 'Não informado.' }}</p>
+          </div>
+        </div>
+      </article>
+
+      <div class="revisao-acoes">
+        <div class="revisao-nav">
+          <button type="button" class="btn btn-sec" (click)="anteriorErroRevisao()" [disabled]="indiceRevisao <= 0">Anterior</button>
+          <button type="button" class="btn btn-sec" (click)="proximoErroRevisao()" [disabled]="indiceRevisao >= itensParaRevisao.length - 1">Próximo</button>
+        </div>
+
+        <div class="revisao-avaliacao">
+          <button type="button" class="btn btn-sec" (click)="proximoErroRevisao()">Manter aberto</button>
+          <button type="button" class="btn" (click)="marcarAtualComo('REVISADO')">Marcar revisado</button>
+          <button type="button" class="btn btn-dominado" (click)="marcarAtualComo('DOMINADO')">Marcar dominado</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #semItensRevisaoTpl>
+      <div class="empty">Nenhum erro disponível para revisão com os filtros atuais.</div>
+    </ng-template>
+  </div>
+
+  <ng-template #modoCadastroTpl>
+    <div class="layout">
+      <div class="lista card">
+        <div class="lista-topo">
+          <div class="lista-titulo">
+            <strong>Registros</strong>
+            <span *ngIf="carregando">Carregando...</span>
+            <span *ngIf="!carregando">Página {{ pagina + 1 }}</span>
+          </div>
+        </div>
+
+        <div class="lista-body" *ngIf="itens.length; else vazioTpl">
+          <article class="item" *ngFor="let item of itens">
+            <div class="item-head">
+              <h3>{{ item.titulo }}</h3>
+              <span class="status" [ngClass]="'status-' + (item.status || '').toLowerCase()">{{ item.status }}</span>
+            </div>
+
+            <p class="desc">{{ item.descricaoErro }}</p>
+
+            <div class="meta">
+              <span>Tópico: {{ topicoDescricao(item.topicoId) }}</span>
+              <span *ngIf="item.subtopicoId">Subtópico: {{ topicoDescricao(item.subtopicoId) }}</span>
+              <span>Erro: {{ item.dataErro | date: 'dd/MM/yyyy' }}</span>
+              <span *ngIf="item.dataProximaRevisao">Próx. revisão: {{ item.dataProximaRevisao | date: 'dd/MM/yyyy' }}</span>
+            </div>
+
+            <div class="acoes">
+              <button type="button" class="btn btn-sec" (click)="editar(item)">Editar</button>
+              <button type="button" class="btn btn-sec" (click)="revisar(item, 'REVISADO')">Revisado</button>
+              <button type="button" class="btn btn-sec" (click)="revisar(item, 'DOMINADO')">Dominado</button>
+              <button type="button" class="btn btn-danger" (click)="excluir(item)">Excluir</button>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #vazioTpl>
+          <div class="empty">Nenhum item encontrado com os filtros atuais.</div>
+        </ng-template>
+
+        <div class="paginacao">
+          <button type="button" class="btn btn-sec" (click)="onPage(-1)">Anterior</button>
+          <span>Página {{ pagina + 1 }}</span>
+          <button type="button" class="btn btn-sec" (click)="onPage(1)">Próxima</button>
+        </div>
+      </div>
+
+      <form class="form card" (ngSubmit)="salvar()">
+        <div class="form-topo">
+          <strong>{{ emEdicao ? 'Editar erro' : 'Novo erro' }}</strong>
+          <button type="button" class="btn btn-sec" (click)="novo()">Limpar formulário</button>
+        </div>
+
+        <div class="field">
+          <label>Matéria</label>
+          <select [(ngModel)]="form.materiaId" name="materiaId" (change)="onMateriaChange(false)">
+            <option [ngValue]="null">Selecione</option>
+            <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.nome }}</option>
+          </select>
+        </div>
+
+        <div class="dupla">
+          <div class="field">
+            <label>Tópico</label>
+            <select [(ngModel)]="form.topicoId" name="topicoId" (change)="onTopicoChange()">
+              <option [ngValue]="null">Selecione</option>
+              <option *ngFor="let t of topicosPrincipais" [ngValue]="t.id">{{ t.descricao }}</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Subtópico (opcional)</label>
+            <select [(ngModel)]="form.subtopicoId" name="subtopicoId">
+              <option [ngValue]="null">Sem subtópico</option>
+              <option *ngFor="let s of subtopicosOpcoes" [ngValue]="s.id">{{ s.descricao }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Título</label>
+          <input type="text" [(ngModel)]="form.titulo" name="titulo" maxlength="160" placeholder="Ex: Erro de interpretação da exceção" />
+        </div>
+
+        <div class="field">
+          <label>Descrição do erro</label>
+          <textarea [(ngModel)]="form.descricaoErro" name="descricaoErro" rows="4" maxlength="4000"></textarea>
+        </div>
+
+        <div class="dupla">
+          <div class="field">
+            <label>Causa raiz</label>
+            <textarea [(ngModel)]="form.causaRaiz" name="causaRaiz" rows="3" maxlength="2000"></textarea>
+          </div>
+          <div class="field">
+            <label>Correção</label>
+            <textarea [(ngModel)]="form.correcao" name="correcao" rows="3" maxlength="4000"></textarea>
+          </div>
+        </div>
+
+        <div class="dupla">
+          <div class="field">
+            <label>Fonte</label>
+            <select [(ngModel)]="form.fonte" name="fonte">
+              <option value="QUESTAO">Questão</option>
+              <option value="SIMULADO">Simulado</option>
+              <option value="MANUAL">Manual</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Data do erro</label>
+            <input type="date" [(ngModel)]="form.dataErro" name="dataErro" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Tags (separadas por vírgula)</label>
+          <input type="text" [(ngModel)]="form.tagsTexto" name="tagsTexto" placeholder="lei seca, jurisprudência, revisão 24h" />
+        </div>
+
+        <div class="trinca">
+          <div class="field">
+            <label>Questão ID</label>
+            <input type="number" [(ngModel)]="form.questaoId" name="questaoId" />
+          </div>
+          <div class="field">
+            <label>Simulado ID</label>
+            <input type="number" [(ngModel)]="form.simuladoId" name="simuladoId" />
+          </div>
+          <div class="field">
+            <label>Tentativa ID</label>
+            <input type="number" [(ngModel)]="form.tentativaId" name="tentativaId" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-sec" (click)="novo()">Novo</button>
+          <button type="submit" class="btn" [disabled]="salvando">
+            {{ salvando ? 'Salvando...' : (emEdicao ? 'Atualizar registro' : 'Salvar registro') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+</section>
+
