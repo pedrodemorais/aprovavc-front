@@ -398,10 +398,15 @@ export class RevisoesComponent implements OnInit {
     this.revisaoSelecionada = item;
   }
 
-  irParaSala(item: RevisaoDashboardItem): void {
+  irParaSala(item?: RevisaoDashboardItem | null): void {
+    const alvo = item || this.revisaoSelecionada;
+    const topicoId = Number(alvo?.topicoId || 0);
+    const materiaId = Number(alvo?.materiaId || 0);
+    if (!topicoId || !materiaId) return;
+
     this.router.navigate(
-      ['/area-restrita/sala-estudo', item.materiaId],
-      { queryParams: { topicoId: item.topicoId, modo: 'revisar', origem: 'revisoes' } }
+      ['/area-restrita/biblioteca/resumo', topicoId],
+      { queryParams: { materiaId } }
     );
   }
 

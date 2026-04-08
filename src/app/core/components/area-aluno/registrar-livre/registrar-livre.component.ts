@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { EstudoLivreService } from '../services/estudo-livre.service';
 import { MateriaTopicosDTO, SalaEstudoService, TopicoNodeDTO, VocabularioDTO } from '../services/sala-estudo.service';
 import { EditalService } from '../services/edital.service';
@@ -81,6 +81,9 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   private timerRef?: ReturnType<typeof setInterval>;
   private timerBaseMs: number | null = null;
   private pomodoroFaseInicioMs: number | null = null;
+  private preencherResumoSub?: Subscription;
+  private resumoLookupSeq = 0;
+  private contextoResumoAutoPreenchido = '';
 
   readonly maxCaracteres = 1200;
   readonly form = this.fb.group({
@@ -185,10 +188,12 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.carregarDadosAutocomplete();
     this.carregarEditaisAgrupador();
+    this.iniciarPreenchimentoResumoExistente();
     setTimeout(() => this.materiaInput?.nativeElement.focus(), 0);
   }
 
   ngOnDestroy(): void {
+    this.preencherResumoSub?.unsubscribe();
     this.pararIntervaloTimer();
   }
 
@@ -1240,6 +1245,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       observacao: ''
     });
     this.observacaoHtml = '';
+    this.contextoResumoAutoPreenchido = '';
     this.tempoManual = '';
     this.mensagemFlashcardErro = '';
     this.mensagemFlashcardSucesso = '';
@@ -1249,6 +1255,63 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.atualizarSugestoes('materiaNome');
     this.atualizarSugestoes('topicoNome');
     this.atualizarSugestoes('subtopicoNome');
+  }
+
+  private iniciarPreenchimentoResumoExistente(): void {
+    this.preencherResumoSub?.unsubscribe();
+    this.preencherResumoSub = this.form.valueChanges.pipe(
+      debounceTime(250),
+      map(() => this.montarChaveContextoResumo()),
+      distinctUntilChanged()
+    ).subscribe((contextoKey) => {
+      if (!contextoKey) {
+        this.contextoResumoAutoPreenchido = '';
+        return;
+      }
+      this.preencherResumoExistente(contextoKey);
+    });
+  }
+
+  private montarChaveContextoResumo(): string {
+    const materiaNome = this.normalizarTexto(String(this.form.value.materiaNome || ''));
+    const topicoNome = this.normalizarTexto(String(this.form.value.topicoNome || ''));
+    const subtopicoNome = this.normalizarTexto(String(this.form.value.subtopicoNome || ''));
+    if (!materiaNome || !topicoNome) return '';
+    return `${this.toKey(materiaNome)}|${this.toKey(topicoNome)}|${this.toKey(subtopicoNome)}`;
+  }
+
+  private preencherResumoExistente(contextoKey: string): void {
+    if (!contextoKey) return;
+    const reqSeq = ++this.resumoLookupSeq;
+
+    this.resolverMateriaTopicoIdsParaFlashcard().pipe(
+      switchMap((ids) => {
+        if (!ids?.topicoId) return of('');
+        return this.salaEstudoService.buscarAnotacoes(ids.topicoId).pipe(
+          map((resp) => this.normalizarHtmlAnotacoes(String(resp?.anotacoes || ''))),
+          catchError(() => of(''))
+        );
+      })
+    ).subscribe((anotacoesHtml) => {
+      if (reqSeq !== this.resumoLookupSeq) return;
+
+      const contextoAtual = this.montarChaveContextoResumo();
+      if (!contextoAtual || contextoAtual !== contextoKey) return;
+
+      if (!anotacoesHtml) {
+        if (this.contextoResumoAutoPreenchido && this.contextoResumoAutoPreenchido !== contextoKey) {
+          this.observacaoHtml = '';
+          this.atualizarContadorCaracteres(0);
+        }
+        this.contextoResumoAutoPreenchido = '';
+        return;
+      }
+
+      this.observacaoHtml = anotacoesHtml;
+      const texto = this.extrairTextoDoHtml(anotacoesHtml);
+      this.atualizarContadorCaracteres(Math.min(this.maxCaracteres, texto.length));
+      this.contextoResumoAutoPreenchido = contextoKey;
+    });
   }
 
   private carregarDadosAutocomplete(): void {

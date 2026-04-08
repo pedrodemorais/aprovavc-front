@@ -17,6 +17,7 @@ import { Materia } from '../models/materia.model';
 import { Edital } from '../models/Edital';
 
 type MateriaOption = { label: string; value: number };
+type MateriaLinhaInput = MateriaOption | string | null;
 
 type BlocoItemForm = FormGroup<{
   id: FormControl<number | null>;
@@ -64,7 +65,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
   materiasFiltradasPorBloco: MateriaOption[][] = [];
   materiaSelecionadaPorBloco: Array<MateriaOption | null> = [];
-  materiaSelecionadaPorLinha: Array<Array<MateriaOption | null>> = [];
+  materiaSelecionadaPorLinha: Array<Array<MateriaLinhaInput>> = [];
   linhasFixasPorBloco: Array<Array<{ item: BlocoEstudoItemDTO | null }>> = [];
   blocoHoraInputs: string[] = [];
   blocoHoraErrors: Array<string | null> = [];
@@ -85,6 +86,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   activeEditais: Edital[] = [];
   editalAtivo: Edital | null = null;
   editalAtivoNome = 'Nenhum edital selecionado';
+  editalFiltroSelecionadoId: number | null = null;
   materiasFiltroIds = new Set<number>();
   editalAtivoImagemUrl = '';
   private editalAtivoImagemObjectUrl: string | null = null;
@@ -94,6 +96,11 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   private tentativaAutoAtivarPadrao = false;
   private autopreenchimentoExecutado = false;
   private autopreenchimentoEmExecucao = false;
+  private carregamentoInicialBlocosConcluido = false;
+  private linhaAddEmProcesso = new Set<string>();
+  private readonly pesoPadraoNovaMateriaMinutos = 60;
+  private snapshotPlanejamentoSalvo = '';
+  private snapshotPlanejamentoInicializado = false;
 
   constructor(
     private fb: FormBuilder,
@@ -206,8 +213,18 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     this.showWeekly = !this.showWeekly;
   }
 
+  abrirDiaNoModoHoje(index: number): void {
+    this.showWeekly = false;
+    this.selecionarBloco(index);
+  }
+
   get salvarDisabled(): boolean {
     return this.salvando || this.temBlocosInvalidos || !this.temBlocoPreenchido;
+  }
+
+  get hasPendenciasSalvar(): boolean {
+    if (!this.snapshotPlanejamentoInicializado) return false;
+    return this.snapshotPlanejamentoSalvo !== this.gerarSnapshotPlanejamentoAtual();
   }
 
   get temBlocosInvalidos(): boolean {
@@ -319,7 +336,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           }
           this.recalcularContextoEditaisAtivos();
 
-          const editaisSemMaterias = this.activeEditais.filter(
+          const editaisSemMaterias = (this.editais || []).filter(
             (e) => !this.editalTemMateriasCarregadas(e) && Number((e as any)?.id) > 0
           );
           if (!editaisSemMaterias.length) {
@@ -360,6 +377,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.activeEditais = [];
           this.editalAtivo = null;
           this.editalAtivoNome = 'Nenhum edital selecionado';
+          this.editalFiltroSelecionadoId = null;
           this.materiasFiltroIds = new Set<number>();
           this.limparImagemEditalAtivo();
           this.atualizarMateriasOptions();
@@ -415,10 +433,16 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     this.editalAtivo = this.activeEditais[0] || null;
     const nomes = this.activeEditais.map((e) => e.nome).filter(Boolean);
     this.editalAtivoNome = nomes.length ? nomes.join(' / ') : 'Nenhum edital selecionado';
-    this.materiasFiltroIds = this.extrairMateriaIdsDeEditais(this.activeEditais);
+    this.sincronizarFiltroEditalSelecionado();
+    this.atualizarFiltroMateriasPorEditalSelecionado();
     this.carregarImagemEditalAtivo();
     this.atualizarMateriasOptions();
     this.tentarAutoPreencherPlanejamentoInicial();
+  }
+
+  onFiltroEditalChange(): void {
+    this.atualizarFiltroMateriasPorEditalSelecionado();
+    this.atualizarMateriasOptions();
   }
 
   private editalTemMateriasCarregadas(edital: Edital): boolean {
@@ -614,12 +638,31 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     const materiasComId = this.materiasTodas.filter(
       (m): m is Materia & { id: number } => m.id != null
     );
-    const aplicarFiltro = this.temEditalAtivo;
+    const aplicarFiltro = this.editalFiltroSelecionadoId != null;
     this.materiasOptions = materiasComId
       .filter((m) => !aplicarFiltro || this.materiasFiltroIds.has(m.id))
       .map(m => ({ label: m.nome, value: m.id }))
       .sort((a, b) => a.label.localeCompare(b.label));
     this.tentarAutoPreencherPlanejamentoInicial();
+  }
+
+  private sincronizarFiltroEditalSelecionado(): void {
+    const editalId = Number(this.editalFiltroSelecionadoId || 0);
+    const existeNoCatalogo = (this.editais || []).some((e) => Number((e as any)?.id || 0) === editalId);
+    if (existeNoCatalogo) return;
+
+    const ativoId = Number((this.editalAtivo as any)?.id || 0);
+    this.editalFiltroSelecionadoId = ativoId > 0 ? ativoId : null;
+  }
+
+  private atualizarFiltroMateriasPorEditalSelecionado(): void {
+    const editalId = Number(this.editalFiltroSelecionadoId || 0);
+    if (!editalId) {
+      this.materiasFiltroIds = new Set<number>();
+      return;
+    }
+    const editalSelecionado = (this.editais || []).find((e) => Number((e as any)?.id || 0) === editalId) || null;
+    this.materiasFiltroIds = this.extrairMateriaIdsDeEditais(editalSelecionado ? [editalSelecionado] : []);
   }
 
   carregarBlocos(): void {
@@ -640,7 +683,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.inicializarLinhasFixas();
           this.atualizarOrdemSemanal();
           this.setMensagem('warn', 'Nenhum bloco veio do backend. Exibindo 7 blocos padrao.');
+          this.carregamentoInicialBlocosConcluido = true;
           this.tentarAutoPreencherPlanejamentoInicial();
+          this.atualizarSnapshotPlanejamentoSalvo();
           return;
         }
 
@@ -651,7 +696,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.sincronizarInputsPorBloco();
           this.inicializarLinhasFixas();
           this.atualizarOrdemSemanal();
+          this.carregamentoInicialBlocosConcluido = true;
           this.tentarAutoPreencherPlanejamentoInicial();
+          this.atualizarSnapshotPlanejamentoSalvo();
         },
         error: () => {
           this.blocos = this.criarBlocosPadrao();
@@ -662,7 +709,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.inicializarLinhasFixas();
           this.atualizarOrdemSemanal();
           this.setMensagem('error', 'Falha ao carregar blocos. Mostrando blocos padrao.');
+          this.carregamentoInicialBlocosConcluido = true;
           this.tentarAutoPreencherPlanejamentoInicial();
+          this.atualizarSnapshotPlanejamentoSalvo();
         }
       });
   }
@@ -893,6 +942,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           if (idx >= 0) this.blocos[idx] = blocoAtualizado;
 
           this.montarForm(blocoAtualizado);
+          this.atualizarSnapshotPlanejamentoSalvo();
           this.setMensagem('success', `Bloco ${blocoNumero} salvo.`);
         },
         error: (err) => {
@@ -972,6 +1022,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           const blocoAtivo = this.blocos[this.abaAtiva];
           if (blocoAtivo) this.montarForm(blocoAtivo);
 
+          this.atualizarSnapshotPlanejamentoSalvo();
           this.setMensagem('success', 'Blocos salvos.');
         },
         error: (err) => {
@@ -1195,26 +1246,16 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
 
   adicionarMateriaNaLinha(blocoIndex: number, linhaIndex: number, event?: { value?: MateriaOption }): void {
-    const selecionada = event?.value || this.materiaSelecionadaPorLinha[blocoIndex]?.[linhaIndex];
-    if (!selecionada?.value) return;
-
-    if (this.substituicaoAtiva && this.substituicaoAtiva.blocoIndex === blocoIndex) {
-      this.substituirMateriaNoBloco(blocoIndex, this.substituicaoAtiva.itemIndex, selecionada.value);
-      this.substituicaoAtiva = null;
-      this.linhaEdicaoAtiva = null;
-      this.materiaSelecionadaPorLinha[blocoIndex][linhaIndex] = null;
-      this.limparAutoCompleteInput(blocoIndex, linhaIndex);
+    const materiaId = this.resolverMateriaIdNaLinha(blocoIndex, linhaIndex, event);
+    if (materiaId) {
+      this.aplicarMateriaNaLinha(blocoIndex, linhaIndex, materiaId);
       return;
     }
 
-    const itens = this.obterItensOrdenados(this.blocos[blocoIndex]);
-    if (linhaIndex < itens.length) return;
+    const nomeNovo = this.resolverNomeNovoMateriaNaLinha(blocoIndex, linhaIndex, event);
+    if (!nomeNovo) return;
 
-    this.adicionarMateriaAoBloco(blocoIndex, selecionada.value);
-    this.linhaEdicaoAtiva = null;
-    this.materiaSelecionadaPorLinha[blocoIndex][linhaIndex] = null;
-    this.limparAutoCompleteInput(blocoIndex, linhaIndex);
-    this.atualizarLinhasFixas(blocoIndex);
+    this.criarMateriaEAdicionarNaLinha(blocoIndex, linhaIndex, nomeNovo);
   }
 
   adicionarMateriaAoBloco(blocoIndex: number, materiaId: number): void {
@@ -1238,7 +1279,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       materiaEstudoId: materiaId,
       materiaNome,
       ordem: itens.length + 1,
-      peso: 0
+      peso: this.pesoPadraoNovaMateriaMinutos
     });
 
     bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
@@ -1309,6 +1350,14 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     this.filtrarMaterias({ query: '' }, blocoIndex);
   }
 
+  mostrarBotaoAdicionarNaLinha(blocoIndex: number, linhaIndex: number): boolean {
+    const bloco = this.blocos[blocoIndex];
+    if (!bloco) return false;
+    const itens = this.obterItensOrdenados(bloco);
+    if (itens.length >= this.linhasPorBloco) return false;
+    return linhaIndex === itens.length;
+  }
+
   fecharEdicaoLinha(blocoIndex: number, linhaIndex: number): void {
     setTimeout(() => {
       if (this.estaEditandoLinha(blocoIndex, linhaIndex)) {
@@ -1331,6 +1380,13 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     }
     this.linhaEdicaoAtiva = null;
     this.substituicaoAtiva = null;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.hasPendenciasSalvar) return;
+    event.preventDefault();
+    event.returnValue = '';
   }
 
   podeSubstituir(item: BlocoEstudoItemDTO): boolean {
@@ -1530,6 +1586,116 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     this.recalcularHorasLiquidasDoBloco(blocoIndex);
   }
 
+  private resolverMateriaIdNaLinha(
+    blocoIndex: number,
+    linhaIndex: number,
+    event?: { value?: MateriaOption }
+  ): number | null {
+    const selecionada = event?.value || this.materiaSelecionadaPorLinha[blocoIndex]?.[linhaIndex];
+    if (!selecionada || typeof selecionada === 'string') return null;
+
+    const materiaId = Number(selecionada.value || 0);
+    return Number.isFinite(materiaId) && materiaId > 0 ? materiaId : null;
+  }
+
+  private resolverNomeNovoMateriaNaLinha(
+    blocoIndex: number,
+    linhaIndex: number,
+    event?: { value?: MateriaOption }
+  ): string {
+    const selecionada = event?.value || this.materiaSelecionadaPorLinha[blocoIndex]?.[linhaIndex];
+    const texto = typeof selecionada === 'string'
+      ? selecionada
+      : String((selecionada as MateriaOption | undefined)?.label || '');
+    const nomeDigitado = this.normalizarNomeMateria(texto);
+    if (!nomeDigitado) return '';
+
+    const existente = this.encontrarMateriaOptionPorNome(nomeDigitado);
+    if (existente?.value) {
+      this.aplicarMateriaNaLinha(blocoIndex, linhaIndex, existente.value);
+      return '';
+    }
+
+    return nomeDigitado;
+  }
+
+  private aplicarMateriaNaLinha(blocoIndex: number, linhaIndex: number, materiaId: number): void {
+    if (this.substituicaoAtiva && this.substituicaoAtiva.blocoIndex === blocoIndex) {
+      this.substituirMateriaNoBloco(blocoIndex, this.substituicaoAtiva.itemIndex, materiaId);
+      this.substituicaoAtiva = null;
+      this.linhaEdicaoAtiva = null;
+      this.materiaSelecionadaPorLinha[blocoIndex][linhaIndex] = null;
+      this.limparAutoCompleteInput(blocoIndex, linhaIndex);
+      return;
+    }
+
+    const itens = this.obterItensOrdenados(this.blocos[blocoIndex]);
+    if (linhaIndex < itens.length) return;
+
+    this.adicionarMateriaAoBloco(blocoIndex, materiaId);
+    this.linhaEdicaoAtiva = null;
+    this.materiaSelecionadaPorLinha[blocoIndex][linhaIndex] = null;
+    this.limparAutoCompleteInput(blocoIndex, linhaIndex);
+    this.atualizarLinhasFixas(blocoIndex);
+  }
+
+  private criarMateriaEAdicionarNaLinha(blocoIndex: number, linhaIndex: number, nomeMateria: string): void {
+    const lockKey = `${blocoIndex}-${linhaIndex}`;
+    if (this.linhaAddEmProcesso.has(lockKey)) return;
+    this.linhaAddEmProcesso.add(lockKey);
+
+    this.materiaService.salvarMateria({ nome: nomeMateria }).pipe(
+      finalize(() => this.linhaAddEmProcesso.delete(lockKey))
+    ).subscribe({
+      next: (materiaCriada) => {
+        const materiaId = Number(materiaCriada?.id || 0);
+        const materiaNome = this.normalizarNomeMateria(String(materiaCriada?.nome || nomeMateria));
+        if (!materiaId || !materiaNome) {
+          this.setMensagem('error', 'Nao foi possivel cadastrar a materia agora.');
+          return;
+        }
+
+        if (!this.materiasMap.has(materiaId)) {
+          this.materiasTodas = [...this.materiasTodas, { id: materiaId, nome: materiaNome }];
+          this.materiasMap.set(materiaId, materiaNome);
+        }
+        // Se houver filtro por edital ativo, garante que a materia criada agora
+        // apareca imediatamente no autocomplete do planner.
+        if (this.editalFiltroSelecionadoId != null) {
+          this.materiasFiltroIds.add(materiaId);
+        }
+        this.atualizarMateriasOptions();
+
+        this.materiaService.notificarMateriasAlteradas();
+        this.aplicarMateriaNaLinha(blocoIndex, linhaIndex, materiaId);
+        this.setMensagem('success', 'Materia criada e adicionada no card.');
+      },
+      error: () => {
+        this.setMensagem('error', 'Nao foi possivel cadastrar a nova materia.');
+      }
+    });
+  }
+
+  private encontrarMateriaOptionPorNome(nome: string): MateriaOption | null {
+    const key = this.normalizarChaveMateria(nome);
+    if (!key) return null;
+    const materiaExistente = this.materiasTodas.find((m) => this.normalizarChaveMateria(m.nome) === key);
+    const materiaId = Number(materiaExistente?.id || 0);
+    if (!materiaExistente || !Number.isFinite(materiaId) || materiaId <= 0) return null;
+    return { label: materiaExistente.nome, value: materiaId };
+  }
+
+  private normalizarNomeMateria(valor: string): string {
+    return String(valor || '').replace(/\s+/g, ' ').trim();
+  }
+
+  private normalizarChaveMateria(valor: string): string {
+    return this.normalizarNomeMateria(valor)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase('pt-BR');
+  }
+
   abrirCopiaPanel(blocoIndex: number, event: Event): void {
     event.stopPropagation();
     this.blocoCopiaOrigem = blocoIndex;
@@ -1696,6 +1862,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   private tentarAutoPreencherPlanejamentoInicial(): void {
     if (this.autopreenchimentoExecutado || this.autopreenchimentoEmExecucao) return;
+    if (!this.carregamentoInicialBlocosConcluido) return;
     if (!this.temEditalAtivo) return;
     if (!this.blocos?.length) return;
     if (!this.semanaEstaVazia()) {
@@ -1761,6 +1928,11 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
             const idx = this.blocos.findIndex((b) => b.numero === blocoAtualizado.numero);
             if (idx >= 0) this.blocos[idx] = blocoAtualizado;
           });
+          const houveMateriasAplicadas = (this.blocos || []).some((bloco) => this.obterItensOrdenados(bloco).length > 0);
+          if (!houveMateriasAplicadas) {
+            this.autopreenchimentoExecutado = false;
+            return;
+          }
           this.blocos = this.blocos.slice().sort((a, b) => a.numero - b.numero);
           this.selectedDayIndex = Math.min(this.getDiaAtualIndex(), this.blocos.length - 1);
           this.abaAtiva = this.selectedDayIndex;
@@ -1768,6 +1940,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           this.sincronizarInputsPorBloco();
           this.inicializarLinhasFixas();
           this.atualizarOrdemSemanal();
+          this.atualizarSnapshotPlanejamentoSalvo();
           this.setMensagem('success', 'Plano semanal inicial preenchido automaticamente.');
         },
         error: () => {
@@ -1845,5 +2018,26 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     }
 
     return distribuicao;
+  }
+
+  private atualizarSnapshotPlanejamentoSalvo(): void {
+    this.snapshotPlanejamentoSalvo = this.gerarSnapshotPlanejamentoAtual();
+    this.snapshotPlanejamentoInicializado = true;
+  }
+
+  private gerarSnapshotPlanejamentoAtual(): string {
+    const base = (this.blocos || [])
+      .slice()
+      .sort((a, b) => Number(a?.numero || 0) - Number(b?.numero || 0))
+      .map((bloco) => ({
+        numero: Number(bloco?.numero || 0),
+        minutosDisponiveis: Number(bloco?.minutosDisponiveis || 0),
+        itens: this.obterItensOrdenados(bloco).map((item, idx) => ({
+          ordem: idx + 1,
+          materiaEstudoId: Number(item?.materiaEstudoId || 0),
+          peso: Number(item?.peso || 0)
+        }))
+      }));
+    return JSON.stringify(base);
   }
 }

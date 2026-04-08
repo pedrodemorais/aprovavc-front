@@ -287,18 +287,18 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: isLocked
       },
       {
-        label: 'Registrar Livre',
-        icon: 'pi pi-plus-circle',
+        label: 'Estudar',
+        icon: 'pi pi-book',
         routerLink: ['/area-restrita/registrar-livre'],
         disabled: isLocked,
       },
-      {
-        label: 'Estudar',
-        icon: 'pi pi-book',
-        routerLink: ['/area-restrita/estudar-materias'],
-        disabled: isLocked || !this.hasMaterias,
-        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-      },
+      // {
+      //   label: 'Estudar',
+      //   icon: 'pi pi-book',
+      //   routerLink: ['/area-restrita/estudar-materias'],
+      //   disabled: isLocked || !this.hasMaterias,
+      //   title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
+      // },
       {
         label: 'Revisar',
         icon: 'pi pi-undo',
@@ -332,7 +332,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
 
       section('ORGANIZACAO'),
       {
-        label: 'Meus Editais',
+        label: 'Meus Estudos',
         icon: 'pi pi-folder-open',
         routerLink: ['/area-restrita/editais'],
         disabled: isLocked

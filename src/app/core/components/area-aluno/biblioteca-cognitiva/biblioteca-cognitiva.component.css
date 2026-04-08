@@ -21,10 +21,26 @@
   color: #0f172a;
 }
 
-.header p {
-  margin: 6px 0 0;
-  color: #475569;
-  font-size: 0.86rem;
+.header-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid #94a3b8;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  user-select: none;
 }
 
 .estado {
