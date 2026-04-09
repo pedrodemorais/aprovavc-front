@@ -264,19 +264,18 @@
           </small>
           <small class="hint">{{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}</small>
         </div>
+        <label class="finalizar-check">
+          <input
+            type="checkbox"
+            formControlName="finalizado"
+            [disabled]="finalizandoTopico || !podeUsarAcoesResumo" />
+          <span>Marcar estudo como finalizado</span>
+        </label>
       </div>
 
       <div class="feedback success" *ngIf="feedbackSucesso">{{ feedbackSucesso }}</div>
       <div class="feedback error" *ngIf="feedbackErro">{{ feedbackErro }}</div>
 
-      <section class="estrutura-feedback fade-in" *ngIf="estruturaCriada">
-        <h2>Estudo registrado</h2>
-        <div class="linha">📘 {{ estruturaCriada.materiaNome }}</div>
-        <div class="linha linha-filho">└── 📂 {{ estruturaCriada.topicoNome }}</div>
-        <div class="linha linha-neto" *ngIf="estruturaCriada.subtopicoNome">
-          └── 📄 {{ estruturaCriada.subtopicoNome }}
-        </div>
-      </section>
     </form>
 
     <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard">

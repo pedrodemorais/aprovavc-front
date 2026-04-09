@@ -1,5 +1,7 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { MateriaService } from '../services/materia.service';
 import {
   CadernoErro,
@@ -28,6 +30,7 @@ export class CadernoErrosComponent implements OnInit {
   carregando = false;
   salvando = false;
   erro?: string;
+  modalAberto = false;
   modoTela: 'cadastro' | 'revisao' = 'cadastro';
   indiceRevisao = 0;
   mostrarRespostaRevisao = false;
@@ -36,6 +39,8 @@ export class CadernoErrosComponent implements OnInit {
   topicosFlat: TopicoFlatNode[] = [];
   topicosPrincipais: TopicoFlatNode[] = [];
   subtopicosOpcoes: TopicoFlatNode[] = [];
+  private readonly topicosPorMateria = new Map<number, TopicoFlatNode[]>();
+  private readonly topicoDescricaoMap = new Map<number, string>();
 
   itens: CadernoErro[] = [];
   totalItens = 0;
@@ -154,6 +159,7 @@ export class CadernoErrosComponent implements OnInit {
         this.itens = resp?.content || [];
         this.totalItens = resp?.totalElements || 0;
         this.pagina = resp?.number ?? this.pagina;
+        this.precarregarDescricoesTopicos(this.itens);
         this.ajustarIndiceRevisao();
       },
       error: () => {
@@ -205,6 +211,18 @@ export class CadernoErrosComponent implements OnInit {
     }
   }
 
+  abrirModalNovo(): void {
+    this.erro = undefined;
+    this.novo();
+    this.modalAberto = true;
+  }
+
+  fecharModal(): void {
+    this.modalAberto = false;
+    this.erro = undefined;
+    this.novo();
+  }
+
   editar(item: CadernoErro): void {
     const tagsTexto = (item.tags || []).join(', ');
     this.form = {
@@ -224,6 +242,8 @@ export class CadernoErrosComponent implements OnInit {
       tentativaId: item.tentativaId ?? null
     };
     this.onMateriaChange(false);
+    this.erro = undefined;
+    this.modalAberto = true;
   }
 
   salvar(): void {
@@ -257,6 +277,7 @@ export class CadernoErrosComponent implements OnInit {
 
     req$.subscribe({
       next: () => {
+        this.modalAberto = false;
         this.novo();
         this.carregarLista();
       },
@@ -333,6 +354,8 @@ export class CadernoErrosComponent implements OnInit {
       next: (arvore) => {
         const flat = this.normalizarArvore(arvore || [], null, 0, []);
         this.topicosFlat = flat;
+        this.topicosPorMateria.set(materiaId, flat);
+        flat.forEach((item) => this.topicoDescricaoMap.set(item.id, item.descricao));
         this.topicosPrincipais = flat.filter((n) => !n.parentId && n.ativo !== false);
 
         if (topicoIdPreferido || subtopicoIdPreferido) {
@@ -356,7 +379,7 @@ export class CadernoErrosComponent implements OnInit {
 
   topicoDescricao(id?: number | null): string {
     if (!id) return '-';
-    return this.topicosFlat.find((t) => t.id === id)?.descricao || String(id);
+    return this.topicoDescricaoMap.get(id) || this.topicosFlat.find((t) => t.id === id)?.descricao || String(id);
   }
 
   private preselecionarTopicoOuSubtopico(topicoIdRecebido: number): void {
@@ -411,6 +434,35 @@ export class CadernoErrosComponent implements OnInit {
       }
     }
     return acc;
+  }
+
+  private precarregarDescricoesTopicos(itens: CadernoErro[]): void {
+    const materiaIdsPendentes = Array.from(
+      new Set(
+        (itens || [])
+          .map((item) => Number(item?.materiaId || 0))
+          .filter((id) => id > 0 && !this.topicosPorMateria.has(id))
+      )
+    );
+
+    if (!materiaIdsPendentes.length) {
+      return;
+    }
+
+    forkJoin(
+      materiaIdsPendentes.map((materiaId) =>
+        this.cadernoErrosService.listarTopicosArvore(materiaId).pipe(
+          catchError(() => of([] as TopicoArvoreNode[]))
+        )
+      )
+    ).subscribe((respostas) => {
+      respostas.forEach((arvore, index) => {
+        const materiaId = materiaIdsPendentes[index];
+        const flat = this.normalizarArvore(arvore || [], null, 0, []);
+        this.topicosPorMateria.set(materiaId, flat);
+        flat.forEach((item) => this.topicoDescricaoMap.set(item.id, item.descricao));
+      });
+    });
   }
 
   private ajustarIndiceRevisao(): void {

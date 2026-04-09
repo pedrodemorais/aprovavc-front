@@ -1,8 +1,29 @@
 <div class="biblioteca-page">
   <header class="biblioteca-header">
-    <div class="biblioteca-title">
-      <h1>Biblioteca</h1>
-      <span>Acesse resumos e flashcards sem entrar na sala de estudo.</span>
+    <div class="biblioteca-topbar">
+      <div class="biblioteca-title">
+        <h1>
+          Biblioteca
+          <i
+            class="pi pi-info-circle info-icon"
+            pTooltip="Acesse resumos e flashcards sem entrar na sala de estudo."
+            tooltipPosition="right"
+            [showDelay]="150"
+            [hideDelay]="80"
+            tabindex="0"
+            aria-label="Informa��o sobre a biblioteca">
+          </i>
+        </h1>
+      </div>
+
+      <div class="controle controle-modo controle-modo--topbar">
+        <button type="button" class="modo-btn" [class.ativo]="modo === 'resumos'" (click)="trocarModo('resumos')">
+          Resumos
+        </button>
+        <button type="button" class="modo-btn" [class.ativo]="modo === 'flashcards'" (click)="trocarModo('flashcards')">
+          Flashcards
+        </button>
+      </div>
     </div>
 
     <div class="biblioteca-controls">
@@ -34,24 +55,6 @@
         </select>
       </div>
 
-      <div class="controle controle-modo">
-        <button type="button" class="modo-btn" [class.ativo]="modo === 'resumos'" (click)="trocarModo('resumos')">
-          Resumos
-        </button>
-        <button type="button" class="modo-btn" [class.ativo]="modo === 'flashcards'" (click)="trocarModo('flashcards')">
-          Flashcards
-        </button>
-        <button type="button" class="modo-btn modo-btn--novo" (click)="abrirNovoFlashcard()">
-          + Novo Flashcard
-        </button>
-      </div>
-
-      <div class="controle controle-busca">
-        <label for="buscaInput">Buscar</label>
-        <input id="buscaInput" type="text" [(ngModel)]="termoBusca" (input)="onBuscaChange()"
-               placeholder="Buscar por texto..." />
-      </div>
-
       <div class="controle controle-checks" *ngIf="modo === 'flashcards'">
         <label class="check-item">
           <input type="checkbox" [(ngModel)]="somentePendentes" (change)="onPendentesChange()" />
@@ -62,52 +65,14 @@
           <span>Criticos</span>
         </label>
       </div>
+
+      <div class="controle controle-busca">
+        <label for="buscaInput">Buscar</label>
+        <input id="buscaInput" type="text" [(ngModel)]="termoBusca" (input)="onBuscaChange()"
+               placeholder="Buscar por texto..." />
+      </div>
     </div>
   </header>
-
-  <section class="criticos-section">
-    <div class="criticos-header">
-      <h2>🔥 Flashcards que salvam sua aprovação</h2>
-      <button
-        type="button"
-        class="modo-btn modo-btn--novo"
-        (click)="treinarFlashcardsCriticos()"
-        [disabled]="!flashcardsCriticos.length || carregandoFlashcardsCriticos">
-        Treinar esses flashcards
-      </button>
-    </div>
-
-    <div class="lista-vazia" *ngIf="carregandoFlashcardsCriticos">
-      Carregando flashcards criticos...
-    </div>
-
-    <div class="lista-vazia" *ngIf="!carregandoFlashcardsCriticos && !flashcardsCriticos.length">
-      Ótimo! Você não possui flashcards críticos no momento.
-    </div>
-
-    <div class="flashcards-tabela-wrap" *ngIf="!carregandoFlashcardsCriticos && flashcardsCriticos.length">
-      <table class="flashcards-tabela">
-        <thead>
-          <tr>
-            <th>Frente</th>
-            <th>Tópico</th>
-            <th>Revisões</th>
-            <th>Acertos</th>
-            <th>Taxa</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let f of flashcardsCriticos">
-            <td>{{ f.frente }}</td>
-            <td>{{ f.topicoDescricao }}</td>
-            <td>{{ getTotalRevisoesCritico(f) }}</td>
-            <td>{{ getTotalAcertosCritico(f) }}</td>
-            <td>{{ formatarTaxaAcertoCritico(f) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 
   <div class="biblioteca-body">
     <div class="estado estado-loading" *ngIf="carregando">
@@ -128,46 +93,57 @@
           Nenhum resumo encontrado para os filtros atuais.
         </div>
 
-        <p-treeTable
-          *ngIf="!carregandoResumos && resumosTreeNodes.length"
-          class="biblioteca-tree"
-          [value]="resumosTreeNodes"
-          [scrollable]="true"
-          scrollHeight="flex"
-        >
-          <ng-template pTemplate="colgroup">
-            <colgroup>
-              <col class="col-topico" />
-              <col class="col-acao" />
-            </colgroup>
-          </ng-template>
-          <ng-template pTemplate="header">
-            <tr>
-              <th class="col-topico">Matéria / Tópico</th>
-              <th class="col-acao">Ação</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
-            <tr [class.is-materia]="rowData?.isMateria">
-              <td>
-                <div class="tree-label">
-                  <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
-                  <span class="tree-text">{{ rowData?.label }}</span>
-                </div>
-              </td>
-              <td class="col-acao">
-                <button
-                  *ngIf="rowData?.source && !rowData?.hasChildren"
-                  type="button"
-                  class="resumo-btn"
-                  (click)="abrirResumo(rowData.source)"
+        <section class="biblioteca-panel" *ngIf="!carregandoResumos && resumosTreeNodes.length">
+          <div class="biblioteca-panel-header">
+            <h2 class="biblioteca-panel-title">Materias e topicos</h2>
+          </div>
+
+          <div class="biblioteca-panel-body">
+            <p-treeTable
+              class="biblioteca-tree"
+              [value]="resumosTreeNodes"
+              [scrollable]="true"
+              scrollHeight="flex"
+            >
+              <ng-template pTemplate="colgroup">
+                <colgroup>
+                  <col class="col-topico" />
+                  <col class="col-acao" />
+                </colgroup>
+              </ng-template>
+              <ng-template pTemplate="header">
+                <tr>
+                  <th class="col-topico">Materia / Topico</th>
+                  <th class="col-acao">Acao</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
+                <tr
+                  [class.is-materia]="rowData?.isMateria"
+                  [class.is-selecionada]="isResumoLinhaSelecionada(rowData)"
+                  (click)="onResumoRowClick($event, rowNode.node, rowData)"
                 >
-                  Abrir resumo
-                </button>
-              </td>
-            </tr>
-          </ng-template>
-        </p-treeTable>
+                  <td>
+                    <div class="tree-label">
+                      <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
+                      <span class="tree-text">{{ rowData?.label }}</span>
+                    </div>
+                  </td>
+                  <td class="col-acao">
+                    <button
+                      *ngIf="rowData?.source && !rowData?.hasChildren && isResumoLinhaSelecionada(rowData)"
+                      type="button"
+                      class="resumo-btn"
+                      (click)="abrirResumo(rowData.source)"
+                    >
+                      Abrir resumo
+                    </button>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-treeTable>
+          </div>
+        </section>
       </ng-container>
 
       <ng-container *ngIf="modo === 'flashcards'">
@@ -179,37 +155,43 @@
           Nenhum flashcard encontrado para os filtros atuais.
         </div>
 
-        <div class="flashcards-tabela-wrap" *ngIf="!carregandoFlashcards && flashcards.length">
-          <table class="flashcards-tabela">
-            <thead>
-              <tr>
-                <th>Frente</th>
-                <th>Verso</th>
-                <th>Dificuldade</th>
-                <th>Revisoes</th>
-                <th>Acertos</th>
-                <th>Taxa</th>
-                <th>Acoes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let f of flashcards">
-                <td>{{ f.frente }}</td>
-                <td>{{ f.verso }}</td>
-                <td>
-                  <span class="flashcard-badge">{{ f.dificuldade }}</span>
-                </td>
-                <td>{{ getTotalRevisoes(f) }}</td>
-                <td>{{ getTotalAcertos(f) }}</td>
-                <td>{{ formatarTaxaAcerto(f) }}</td>
-                <td class="flashcard-acoes">
-                  <button type="button" class="resumo-btn" (click)="editarFlashcard(f)">Editar</button>
-                  <button type="button" class="resumo-btn resumo-btn--danger" (click)="excluirFlashcard(f)">Excluir</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <section class="biblioteca-panel" *ngIf="!carregandoFlashcards && flashcards.length">
+          <div class="biblioteca-panel-header">
+            <h2 class="biblioteca-panel-title">Flashcards</h2>
+          </div>
+
+          <div class="flashcards-tabela-wrap">
+            <table class="flashcards-tabela">
+              <thead>
+                <tr>
+                  <th>Frente</th>
+                  <th>Verso</th>
+                  <th>Dificuldade</th>
+                  <th>Revisoes</th>
+                  <th>Acertos</th>
+                  <th>Taxa</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let f of flashcards">
+                  <td>{{ f.frente }}</td>
+                  <td>{{ f.verso }}</td>
+                  <td>
+                    <span class="flashcard-badge">{{ f.dificuldade }}</span>
+                  </td>
+                  <td>{{ getTotalRevisoes(f) }}</td>
+                  <td>{{ getTotalAcertos(f) }}</td>
+                  <td>{{ formatarTaxaAcerto(f) }}</td>
+                  <td class="flashcard-acoes">
+                    <button type="button" class="resumo-btn" (click)="editarFlashcard(f)">Editar</button>
+                    <button type="button" class="resumo-btn resumo-btn--danger" (click)="excluirFlashcard(f)">Excluir</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </ng-container>
     </ng-container>
   </div>

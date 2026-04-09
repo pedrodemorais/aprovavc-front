@@ -90,25 +90,26 @@
             *ngIf="!carregando && editais.length"
             class="edital-tree"
             [value]="editalTreeNodes"
-            selectionMode="checkbox"
-            [selection]="selectedEditalNodes"
-            (selectionChange)="onEditalTreeSelectionChange($event)"
-            [propagateSelectionDown]="false"
-            [propagateSelectionUp]="false"
-          (onNodeSelect)="onEditalTreeSelect($event)"
-          (onNodeUnselect)="onEditalTreeUnselect($event)"
-        >
+          >
           <ng-template pTemplate="default" let-node>
             <div
               class="edital-tree-line"
-              [class.selected]="node.data?.tipo === 'EDITAL' && editalSelecionado?.id === node.data?.editalId"
+              [class.selected]="currentTreeNodeKey === node.key"
               [class.is-edital]="node.data?.tipo === 'EDITAL'"
               [class.is-materia]="node.data?.tipo === 'MATERIA'"
               [class.is-inativo]="node.data?.tipo === 'MATERIA' && node.data?.ativo === false"
-              (click)="onEditalTreeClick(node, $event)"
+              (click)="onEditalLinhaClick(node, $event)"
             >
               <span class="edital-tree-left">
-                <span class="edital-tree-title">{{ node.label }}</span>
+                <input
+                  *ngIf="editingNodeKey === node.key"
+                  class="edital-tree-edit-input"
+                  [(ngModel)]="editingLabel"
+                  (keydown)="onEditNodeKeydown($event)"
+                  (keyup.enter)="confirmarEdicaoNode(node)"
+                  (blur)="confirmarEdicaoNode(node)"
+                />
+                <span *ngIf="editingNodeKey !== node.key" class="edital-tree-title">{{ node.label }}</span>
               </span>
               <span *ngIf="node.data?.tipo === 'EDITAL'" class="edital-tree-meta">
                 <span class="meta-chip">
@@ -130,8 +131,54 @@
                   {{ node.data?.ativo ? 'Em estudo' : '' }}
                 </span>
               </span>
+              <button
+                *ngIf="node.data?.tipo === 'EDITAL'"
+                type="button"
+                class="status-switch"
+                [class.is-on]="isNodeAtivo(node)"
+                [disabled]="definindoAtivoId === node.data?.editalId"
+                (click)="toggleEditalEmEstudo(node, $event)"
+                [attr.aria-label]="isNodeAtivo(node) ? 'Desativar edital em estudo' : 'Ativar edital em estudo'"
+              >
+                <span class="status-switch__label">{{ isNodeAtivo(node) ? 'Ativo' : 'Inativo' }}</span>
+                <span class="status-switch__track">
+                  <span class="status-switch__thumb"></span>
+                </span>
+              </button>
               <span *ngIf="node.data?.tipo === 'MATERIA' && node.data?.ativo === false" class="edital-tree-status">
                 Inativa
+              </span>
+              <span
+                *ngIf="currentTreeNodeKey === node.key && (node.data?.tipo === 'MATERIA' || node.data?.tipo === 'TOPICO')"
+                class="edital-tree-actions"
+              >
+                <button
+                  type="button"
+                  class="edital-tree-action-btn"
+                  pTooltip="Editar"
+                  tooltipPosition="top"
+                  (click)="iniciarEdicaoNode(node, $event)"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="edital-tree-action-btn add"
+                  pTooltip="Ativar"
+                  tooltipPosition="top"
+                  (click)="ativarConteudo(node, $event)"
+                >
+                  <i class="pi pi-plus"></i>
+                </button>
+                <button
+                  type="button"
+                  class="edital-tree-action-btn danger"
+                  pTooltip="Desativar"
+                  tooltipPosition="top"
+                  (click)="desativarConteudo(node, $event)"
+                >
+                  <i class="pi pi-minus"></i>
+                </button>
               </span>
             </div>
           </ng-template>
@@ -277,10 +324,3 @@
     </div>
   </div>
 </div>
-
-
-
-
-
-
-

@@ -32,6 +32,9 @@ private mensagemTimeout: any; // para guardar o setTimeout
   materias: Materia[] = [];
   editalTreeNodes: TreeNode[] = [];
   selectedEditalNodes: TreeNode[] | null = [];
+  currentTreeNodeKey: string | null = null;
+  editingNodeKey: string | null = null;
+  editingLabel = '';
   materiasDisponiveis: Materia[] = [];
   materiasSelecionadas: Materia[] = [];
 
@@ -157,7 +160,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.carregando = true;
     this.erro = undefined;
 
-    this.editalService.listar().subscribe({
+    this.editalService.listarComInclude(['materias', 'topicos']).subscribe({
       next: (lista) => {
         const editaisRecebidos = lista || [];
         if (this.tentativaAutoAtivarPadrao) {
@@ -502,6 +505,13 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.resetarMudancasPendentes();
 
     if (!edital?.id) {
+      return;
+    }
+
+    if (!mostrarFormularioAoEditar) {
+      this.mensagemSucesso = undefined;
+      this.erro = undefined;
+      this.atualizarPickListMaterias();
       return;
     }
 
@@ -883,22 +893,196 @@ private mensagemTimeout: any; // para guardar o setTimeout
     this.editalSelecionado = edital;
   }
 
-  onEditalTreeClick(node: TreeNode, event?: Event): void {
-    const target = event?.target as HTMLElement | null;
-    const clicouCheckbox = !!target?.closest('.p-checkbox, .p-checkbox-box');
-    if (!clicouCheckbox) {
+  onEditalLinhaClick(node: TreeNode, event?: Event): void {
+    if (this.editingNodeKey && this.editingNodeKey !== String(node?.key || '')) {
+      this.cancelarEdicaoNode();
+    }
+    const target = event?.target instanceof Element ? event.target : null;
+    const clicouToggler = !!target?.closest('.p-tree-toggler, .p-tree-toggler-icon');
+    const clicouAcao = !!target?.closest('.status-switch, .edital-tree-action-btn');
+
+    if (!clicouToggler && !clicouAcao) {
       event?.stopPropagation();
     }
+
+    if (clicouToggler || clicouAcao) {
+      return;
+    }
+
+    this.currentTreeNodeKey = String(node?.key || '');
 
     const editalId = node?.data?.editalId as number | undefined;
     if (!editalId) return;
     if (node?.data?.tipo === 'EDITAL') {
-      this.editaisAbertos.add(editalId);
+      this.toggleEdital(editalId);
+      this.montarArvoreEditais();
     }
+
     const encontrado = this.editais.find(e => e.id === editalId);
     if (encontrado) {
       this.editalSelecionado = encontrado;
       this.editar(encontrado, false);
+    }
+  }
+
+  iniciarEdicaoNode(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    if (!node?.data || node.data.tipo === 'EDITAL') {
+      return;
+    }
+    this.currentTreeNodeKey = String(node?.key || '');
+    this.editingNodeKey = String(node?.key || '');
+    this.editingLabel = String(node?.label || node?.data?.label || '').trim();
+  }
+
+  cancelarEdicaoNode(): void {
+    this.editingNodeKey = null;
+    this.editingLabel = '';
+  }
+
+  onEditNodeKeydown(event: KeyboardEvent): void {
+    event.stopPropagation();
+    if (event.key === 'Escape') {
+      this.cancelarEdicaoNode();
+    }
+  }
+
+  confirmarEdicaoNode(node: TreeNode): void {
+    const label = String(this.editingLabel || '').trim();
+    if (!label || !node?.data) {
+      this.cancelarEdicaoNode();
+      return;
+    }
+
+    if (node.data.tipo === 'MATERIA') {
+      const materiaId = Number(node.data?.materiaId || 0);
+      const materiaAtual = this.materias.find((m) => Number(m?.id || 0) === materiaId);
+      if (!materiaAtual) {
+        this.erro = 'Nao foi possivel localizar a materia para editar.';
+        this.cancelarEdicaoNode();
+        return;
+      }
+
+      this.materiaService.salvarMateria({ ...materiaAtual, nome: label }).subscribe({
+        next: () => {
+          node.label = label;
+          node.data.label = label;
+          materiaAtual.nome = label;
+          const edital = this.editais.find((e) => Number(e?.id || 0) === Number(node.data?.editalId || 0));
+          const materiaEdital = edital?.materias?.find((m) => Number(m?.materiaId || 0) === materiaId);
+          if (materiaEdital) {
+            materiaEdital.materiaNome = label;
+          }
+          this.cancelarEdicaoNode();
+          this.mensagemSucesso = 'Materia atualizada com sucesso.';
+          this.iniciarTimeoutMensagem();
+          this.forcarAtualizacaoArvore();
+        },
+        error: () => {
+          this.erro = 'Erro ao atualizar a materia.';
+          this.cancelarEdicaoNode();
+        }
+      });
+      return;
+    }
+
+    if (node.data.tipo === 'TOPICO') {
+      const materiaId = Number(node.data?.materiaId || 0);
+      const topicoId = Number(node.data?.topicoId || 0);
+      const editalId = Number(node.data?.editalId || 0);
+      const payload: any = {
+        id: topicoId,
+        descricao: label,
+        ativo: node.data?.ativo !== false
+      };
+
+      const parentTopicoId = Number(node.parent?.data?.tipo === 'TOPICO' ? node.parent?.data?.topicoId || 0 : 0);
+      if (parentTopicoId > 0) {
+        payload.topicoPaiId = parentTopicoId;
+      }
+
+      this.materiaService.salvarTopico(materiaId, payload).subscribe({
+        next: () => {
+          node.label = label;
+          node.data.label = label;
+          this.atualizarDescricaoTopicoLocal(editalId, materiaId, topicoId, label);
+          this.cancelarEdicaoNode();
+          this.mensagemSucesso = 'Topico atualizado com sucesso.';
+          this.iniciarTimeoutMensagem();
+          this.forcarAtualizacaoArvore();
+        },
+        error: () => {
+          this.erro = 'Erro ao atualizar o topico.';
+          this.cancelarEdicaoNode();
+        }
+      });
+    }
+  }
+
+  private atualizarDescricaoTopicoLocal(
+    editalId: number,
+    materiaId: number,
+    topicoId: number,
+    descricao: string
+  ): void {
+    const edital = this.editais.find((e) => Number(e?.id || 0) === editalId);
+    const materia = edital?.materias?.find((m) => Number(m?.materiaId || 0) === materiaId);
+    if (!materia) {
+      return;
+    }
+
+    const atualizar = (topicos: any[]): boolean => {
+      for (const topico of topicos || []) {
+        const idAtual = Number(
+          topico?.id ??
+          topico?.topicoId ??
+          topico?.subtopicoId ??
+          topico?.idTopico ??
+          topico?.idSubtopico ??
+          0
+        );
+
+        if (idAtual === topicoId) {
+          topico.descricao = descricao;
+          return true;
+        }
+
+        const filhos = topico?.subtopicos || topico?.filhos || [];
+        if (filhos.length && atualizar(filhos)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    atualizar(materia.topicos || []);
+  }
+
+  ativarConteudo(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.currentTreeNodeKey = String(node?.key || '');
+    if (!node?.data) return;
+    if (node.data.tipo === 'MATERIA') {
+      this.adicionarNodeNaSelecao(node);
+      this.atualizarStatusMateriaNode(node, true);
+      return;
+    }
+    if (node.data.tipo === 'TOPICO') {
+      this.marcarTopicoComFilhos(node);
+    }
+  }
+
+  desativarConteudo(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.currentTreeNodeKey = String(node?.key || '');
+    if (!node?.data) return;
+    if (node.data.tipo === 'MATERIA') {
+      this.removerNodeDaSelecao(node);
+      this.atualizarStatusMateriaNode(node, false);
+      return;
+    }
+    if (node.data.tipo === 'TOPICO') {
+      this.desmarcarTopicoComFilhos(node);
     }
   }
 
@@ -933,6 +1117,14 @@ private mensagemTimeout: any; // para guardar o setTimeout
       return;
     }
     this.selectedEditalNodes = [];
+  }
+
+  isNodeAtivo(node?: TreeNode): boolean {
+    if (!node?.data) return false;
+    if (node.data.tipo === 'EDITAL') {
+      return node.data?.ativo === true;
+    }
+    return this.isNodeSelecionado(node);
   }
 
   onEditalTreeUnselect(event: any): void {
@@ -1154,6 +1346,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
       const editalId = edital.id as number;
       const materias = edital.materias || [];
 
+      const editalAberto = this.editaisAbertos.has(editalId);
       const materiaNodes = materias.map((m) => {
         const topicos = m.topicos || [];
         const selecionadosAntes = selecionados.length;
@@ -1170,8 +1363,9 @@ private mensagemTimeout: any; // para guardar o setTimeout
             nivelDominio: m.nivelDominio
           },
           selectable: true,
+          expanded: editalAberto,
           leaf: topicos.length === 0,
-          children: this.construirTopicosTreeNodes(topicos, editalId, m.materiaId, '', selecionados)
+          children: this.construirTopicosTreeNodes(topicos, editalId, m.materiaId, '', selecionados, editalAberto)
         };
         const selecionadosDepois = selecionados.length;
         if (selecionadosDepois > selecionadosAntes) {
@@ -1193,14 +1387,10 @@ private mensagemTimeout: any; // para guardar o setTimeout
           percentualEstudadoGeral: edital.percentualEstudadoGeral,
           nivelDominioGeral: edital.nivelDominioGeral
         },
-        selectable: true,
-        expanded: this.editaisAbertos.has(editalId),
+        selectable: false,
+        expanded: editalAberto,
         children: materiaNodes
       };
-
-      if (edital.ativo) {
-        selecionados.push(editalNode);
-      }
 
       nodes.push(editalNode);
     });
@@ -1219,6 +1409,10 @@ private mensagemTimeout: any; // para guardar o setTimeout
     }
     this.editais[idx] = { ...this.editais[idx], ...editalAtualizado };
     this.montarArvoreEditais();
+  }
+
+  private forcarAtualizacaoArvore(): void {
+    this.editalTreeNodes = [...(this.editalTreeNodes || [])];
   }
 
   private atualizarStatusMateriaNode(node: TreeNode, ativo: boolean): void {
@@ -1310,14 +1504,15 @@ private mensagemTimeout: any; // para guardar o setTimeout
     editalId: number,
     materiaId: number,
     caminho: string,
-    selecionados: TreeNode[] = []
+    selecionados: TreeNode[] = [],
+    expandido = false
   ): TreeNode[] {
     return (topicos || []).map((t, index) => {
       const id =
         t.id ?? t.topicoId ?? t.subtopicoId ?? t.idTopico ?? t.idSubtopico ?? index;
       const novoCaminho = caminho ? `${caminho}.${index}` : String(index);
       const filhos = t.subtopicos || t.filhos || [];
-      const filhosNodes = this.construirTopicosTreeNodes(filhos, editalId, materiaId, novoCaminho, selecionados);
+      const filhosNodes = this.construirTopicosTreeNodes(filhos, editalId, materiaId, novoCaminho, selecionados, expandido);
       const ativoFilhos = filhosNodes.some((f) => f?.data?.ativo);
       const ativo = (t.ativo === undefined ? true : t.ativo) || ativoFilhos;
       const node: TreeNode = {
@@ -1332,6 +1527,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
           ativo
         },
         selectable: true,
+        expanded: expandido,
         children: filhosNodes
       };
       if (ativo) {

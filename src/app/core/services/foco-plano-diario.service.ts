@@ -32,14 +32,24 @@ export class FocoPlanoDiarioService {
     return this.http.get<FocoPlanoDiarioDTO>(this.baseUrl, { params }).pipe(
       catchError((err) => {
         console.warn('[FOCO] load error', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Falha ao carregar foco',
-          detail: 'Nao foi possivel carregar o plano diario.'
-        });
+        if (!this.isErroSemEditalAtivo(err)) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Falha ao carregar foco',
+            detail: 'Nao foi possivel carregar o plano diario.'
+          });
+        }
         return throwError(() => err);
       })
     );
+  }
+
+  private isErroSemEditalAtivo(err: any): boolean {
+    const status = Number(err?.status || 0);
+    const serverMessage = String(err?.error?.message || '').trim().toLowerCase();
+    const detail = String(err?.error?.detail || '').trim().toLowerCase();
+    const text = `${serverMessage} ${detail}`;
+    return text.includes('nenhum edital ativo') || status === 412;
   }
 
   mapearMetricasPremium(plano: FocoPlanoDiarioDTO | null | undefined): FocoPremiumMetrics {

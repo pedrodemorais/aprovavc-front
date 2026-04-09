@@ -92,10 +92,12 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     topicoNome: ['', [Validators.required]],
     subtopicoNome: [''],
     tempoMinutos: [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
-    observacao: ['']
+    observacao: [''],
+    finalizado: [false]
   });
 
   enviando = false;
+  finalizandoTopico = false;
   feedbackErro = '';
   feedbackSucesso = '';
   estruturaCriada: EstruturaCriada | null = null;
@@ -727,7 +729,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
         this.cadernoForm.materiaId = Number(materia.materiaId || 0) || null;
 
         const topicosRaiz = Array.isArray(materia.topicos) ? materia.topicos : [];
-        const topico = this.encontrarTopicoPorNome(topicosRaiz, topicoNome);
+        const topico = this.encontrarTopicoRaizPorNome(topicosRaiz, topicoNome);
         const subtopico = subtopicoNome ? this.encontrarTopicoPorNome(this.extrairFilhosBusca(topico || {} as TopicoNodeDTO), subtopicoNome) : null;
 
         const topicoIdPreferido = this.getTopicoId(topico);
@@ -1052,6 +1054,9 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   }
 
   onCampoInput(campo: CampoAutocomplete): void {
+    if (campo === 'topicoNome') {
+      this.limparDependenciasAoTrocarTopico();
+    }
     this.campoAutocompleteAberto = campo;
     this.mostrarTodosNoCampo = null;
     this.atualizarSugestoes(campo);
@@ -1109,6 +1114,32 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.atualizarSugestoes(campo);
   }
 
+  private limparDependenciasAoTrocarTopico(): void {
+    const topicoAtual = this.normalizarTexto(String(this.form.value.topicoNome || ''));
+    const topicoSelecionadoExato = this.getTopicoSelecionadoExato();
+
+    // Quando o topico digitado nao corresponde exatamente a um topico existente,
+    // limpa dados herdados do contexto anterior para evitar contaminacao.
+    if (!!topicoAtual && !!topicoSelecionadoExato && this.toKey(topicoAtual) === this.toKey(topicoSelecionadoExato)) {
+      return;
+    }
+
+    if (this.normalizarTexto(String(this.form.value.subtopicoNome || ''))) {
+      this.form.controls.subtopicoNome.setValue('');
+    }
+    this.atualizarSugestoes('subtopicoNome');
+
+    if (this.observacaoHtml || this.contextoResumoAutoPreenchido) {
+      this.observacaoHtml = '';
+      this.contextoResumoAutoPreenchido = '';
+      this.atualizarContadorCaracteres(0);
+    }
+
+    if (this.form.value.finalizado) {
+      this.form.controls.finalizado.setValue(false);
+    }
+  }
+
   registrarEstudo(): void {
     this.feedbackErro = '';
     this.feedbackSucesso = '';
@@ -1126,6 +1157,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     const observacaoHtml = this.normalizarHtmlAnotacoes(this.observacaoHtml || '');
     const observacao = this.extrairTextoDoHtml(observacaoHtml).trim();
     const tempoMinutos = this.resolverTempoMinutosParaRegistro();
+    const marcarComoFinalizado = !!this.form.value.finalizado;
     this.form.controls.tempoMinutos.setValue(tempoMinutos);
 
     if (!materiaNome || !topicoNome || tempoMinutos <= 0) {
@@ -1143,10 +1175,11 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       observacaoHtml: observacao || undefined ? observacaoHtml : undefined
     }).pipe(
       switchMap(() => this.garantirEditalDoAgrupador(agrupador, materiaNome)),
+      switchMap(() => this.finalizarTopicoSeMarcado(marcarComoFinalizado)),
       finalize(() => (this.enviando = false))
     )
       .subscribe({
-        next: () => {
+        next: (finalizacao) => {
           this.materiaService.notificarMateriasAlteradas();
           this.salvarHistorico({
             agrupador,
@@ -1154,7 +1187,12 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
             topicoNome,
             subtopicoNome
           });
-          this.feedbackSucesso = 'Estudo registrado e já entrou no seu ciclo de revisão';
+          this.feedbackSucesso = finalizacao.finalizado
+            ? 'Estudo registrado, entrou no ciclo de revisao e foi marcado como finalizado.'
+            : 'Estudo registrado e ja entrou no seu ciclo de revisao';
+          if (finalizacao.solicitado && !finalizacao.finalizado) {
+            this.feedbackErro = 'O estudo foi registrado, mas nao foi possivel marcar como finalizado.';
+          }
           this.estruturaCriada = {
             materiaNome,
             topicoNome,
@@ -1166,6 +1204,27 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
           this.feedbackErro = this.getErrorMessage(error);
         }
       });
+  }
+
+  private finalizarTopicoSeMarcado(solicitado: boolean): Observable<{ solicitado: boolean; finalizado: boolean }> {
+    if (!solicitado) {
+      return of({ solicitado: false, finalizado: false });
+    }
+
+    this.finalizandoTopico = true;
+    return this.resolverMateriaTopicoIdsParaFlashcard().pipe(
+      switchMap((contexto) => {
+        if (!contexto?.topicoId) {
+          return of({ solicitado: true, finalizado: false });
+        }
+        return this.salaEstudoService.finalizarTopico(contexto.topicoId).pipe(
+          map(() => ({ solicitado: true, finalizado: true })),
+          catchError(() => of({ solicitado: true, finalizado: false }))
+        );
+      }),
+      catchError(() => of({ solicitado: true, finalizado: false })),
+      finalize(() => (this.finalizandoTopico = false))
+    );
   }
 
   private garantirEditalDoAgrupador(agrupador: string, materiaNome: string): Observable<unknown> {
@@ -1242,7 +1301,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       topicoNome: '',
       subtopicoNome: '',
       tempoMinutos: 30,
-      observacao: ''
+      observacao: '',
+      finalizado: false
     });
     this.observacaoHtml = '';
     this.contextoResumoAutoPreenchido = '';
@@ -1695,11 +1755,26 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     localStorage.setItem(this.historicoKey, JSON.stringify(proximo));
     this.agrupadoresHistorico = proximo.agrupadores;
 
-    if (this.usandoFallbackLocal) {
-      this.materiasCatalogo = proximo.materias;
-      this.topicosCatalogo = proximo.topicos;
-      this.subtopicosCatalogo = proximo.subtopicos;
+    // Atualiza o autocomplete imediatamente, mesmo com API online,
+    // para evitar precisar recarregar a tela.
+    this.materiasCatalogo = this.upsertHistorico(this.materiasCatalogo, payload.materiaNome);
+    this.topicosCatalogo = this.upsertHistorico(this.topicosCatalogo, payload.topicoNome);
+    this.subtopicosCatalogo = this.upsertHistorico(this.subtopicosCatalogo, payload.subtopicoNome);
+
+    const materiaKey = this.toKey(payload.materiaNome);
+    const topicoNome = this.normalizarTexto(payload.topicoNome);
+    const subtopicoNome = this.normalizarTexto(payload.subtopicoNome || '');
+    if (materiaKey && topicoNome) {
+      this.pushUnicoNoMapa(this.topicosPorMateria, materiaKey, topicoNome);
     }
+    if (materiaKey && subtopicoNome) {
+      this.pushUnicoNoMapa(this.subtopicosPorMateria, materiaKey, subtopicoNome);
+      this.pushUnicoNoMapa(this.subtopicosPorMateriaTopico, `${materiaKey}|${this.toKey(topicoNome)}`, subtopicoNome);
+    }
+
+    this.atualizarSugestoes('materiaNome');
+    this.atualizarSugestoes('topicoNome');
+    this.atualizarSugestoes('subtopicoNome');
   }
 
   private upsertHistorico(lista: string[], valor?: string): string[] {
@@ -1893,7 +1968,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
         if (!materia || materiaId <= 0) return null;
 
         const topicosRaiz = Array.isArray(materia.topicos) ? materia.topicos : [];
-        const topico = this.encontrarTopicoPorNome(topicosRaiz, topicoNome);
+        const topico = this.encontrarTopicoRaizPorNome(topicosRaiz, topicoNome);
         if (!topico) return null;
 
         if (subtopicoNome) {
@@ -1925,6 +2000,14 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       if (filhos.length) fila.push(...filhos);
     }
     return null;
+  }
+
+  private encontrarTopicoRaizPorNome(topicos: TopicoNodeDTO[], nome: string): TopicoNodeDTO | null {
+    const alvo = this.toKey(nome);
+    if (!alvo) return null;
+
+    const lista = Array.isArray(topicos) ? topicos : [];
+    return lista.find((topico) => this.toKey(String(topico?.descricao || '')) === alvo) || null;
   }
 
   private extrairFilhosBusca(topico: TopicoNodeDTO): TopicoNodeDTO[] {

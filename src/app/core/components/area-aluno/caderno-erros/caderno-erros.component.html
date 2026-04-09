@@ -1,42 +1,46 @@
 ﻿<section class="caderno-erros-page">
   <header class="cabecalho">
     <div>
-      <h2>Caderno de Erros</h2>
-      <p>Organize erros por tópico e subtópico para revisar no momento certo.</p>
+      <h2>
+        Caderno de Erros
+        <i
+          class="pi pi-info-circle info-icon"
+          pTooltip="Organize erros por tópico e subtópico para revisar no momento certo."
+          tooltipPosition="right"
+          [showDelay]="150"
+          [hideDelay]="80"
+          tabindex="0"
+          aria-label="Informação sobre o caderno de erros">
+        </i>
+      </h2>
     </div>
-    <span class="kpi-pill">{{ totalItens }} registro(s)</span>
+    <button type="button" class="btn btn-add-erro" (click)="abrirModalNovo()">Adicionar novo erro</button>
   </header>
 
   <div class="filtros card">
-    <div class="field">
-      <label>Matéria</label>
-      <select [(ngModel)]="filtros.materiaId" (change)="onFiltroMateriaChange()">
-        <option [ngValue]="null">Todas as matérias</option>
-        <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.nome }}</option>
-      </select>
+    <div class="filtros-row filtros-row--top">
+      <div class="field">
+        <label>Matéria</label>
+        <select [(ngModel)]="filtros.materiaId" (change)="onFiltroMateriaChange()">
+          <option [ngValue]="null">Todas as matérias</option>
+          <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.nome }}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <select [(ngModel)]="filtros.status" (change)="carregarLista()">
+          <option value="">Todos</option>
+          <option value="ABERTO">Aberto</option>
+          <option value="REVISADO">Revisado</option>
+          <option value="DOMINADO">Dominado</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn" (click)="carregarLista()">Filtrar</button>
+      <button type="button" class="btn btn-sec" (click)="limparFiltros()">Limpar</button>
     </div>
 
-    <div class="field">
-      <label>Status</label>
-      <select [(ngModel)]="filtros.status" (change)="carregarLista()">
-        <option value="">Todos</option>
-        <option value="ABERTO">Aberto</option>
-        <option value="REVISADO">Revisado</option>
-        <option value="DOMINADO">Dominado</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Busca</label>
-      <input
-        type="text"
-        [(ngModel)]="filtros.busca"
-        (keyup.enter)="carregarLista()"
-        placeholder="Título ou descrição do erro" />
-    </div>
-
-    <button type="button" class="btn" (click)="carregarLista()">Filtrar</button>
-    <button type="button" class="btn btn-sec" (click)="limparFiltros()">Limpar</button>
   </div>
 
   <p class="erro" *ngIf="erro">{{ erro }}</p>
@@ -120,17 +124,42 @@
         <div class="lista-body" *ngIf="itens.length; else vazioTpl">
           <article class="item" *ngFor="let item of itens">
             <div class="item-head">
-              <h3>{{ item.titulo }}</h3>
+              <div class="item-head__content">
+                <h3>{{ item.titulo }}</h3>
+                <p class="desc">{{ item.descricaoErro }}</p>
+              </div>
               <span class="status" [ngClass]="'status-' + (item.status || '').toLowerCase()">{{ item.status }}</span>
             </div>
 
-            <p class="desc">{{ item.descricaoErro }}</p>
-
-            <div class="meta">
-              <span>Tópico: {{ topicoDescricao(item.topicoId) }}</span>
-              <span *ngIf="item.subtopicoId">Subtópico: {{ topicoDescricao(item.subtopicoId) }}</span>
-              <span>Erro: {{ item.dataErro | date: 'dd/MM/yyyy' }}</span>
-              <span *ngIf="item.dataProximaRevisao">Próx. revisão: {{ item.dataProximaRevisao | date: 'dd/MM/yyyy' }}</span>
+            <div class="item-meta-grid">
+              <div class="meta-card meta-card--wide">
+                <span class="meta-card__label">Descrição do erro</span>
+                <strong class="meta-card__value meta-card__value--text">{{ item.descricaoErro }}</strong>
+              </div>
+              <div class="meta-card">
+                <span class="meta-card__label">Tópico</span>
+                <strong class="meta-card__value">{{ topicoDescricao(item.topicoId) }}</strong>
+              </div>
+              <div class="meta-card" *ngIf="item.subtopicoId">
+                <span class="meta-card__label">Subtópico</span>
+                <strong class="meta-card__value">{{ topicoDescricao(item.subtopicoId) }}</strong>
+              </div>
+              <div class="meta-card">
+                <span class="meta-card__label">Data do erro</span>
+                <strong class="meta-card__value">{{ item.dataErro | date: 'dd/MM/yyyy' }}</strong>
+              </div>
+              <div class="meta-card" *ngIf="item.dataProximaRevisao">
+                <span class="meta-card__label">Próx. revisão</span>
+                <strong class="meta-card__value">{{ item.dataProximaRevisao | date: 'dd/MM/yyyy' }}</strong>
+              </div>
+              <div class="meta-card" *ngIf="item.causaRaiz">
+                <span class="meta-card__label">Causa raiz</span>
+                <strong class="meta-card__value meta-card__value--text">{{ item.causaRaiz }}</strong>
+              </div>
+              <div class="meta-card" *ngIf="item.correcao">
+                <span class="meta-card__label">Correção</span>
+                <strong class="meta-card__value meta-card__value--text">{{ item.correcao }}</strong>
+              </div>
             </div>
 
             <div class="acoes">
@@ -152,103 +181,108 @@
           <button type="button" class="btn btn-sec" (click)="onPage(1)">Próxima</button>
         </div>
       </div>
+    </div>
+  </ng-template>
 
-      <form class="form card" (ngSubmit)="salvar()">
-        <div class="form-topo">
-          <strong>{{ emEdicao ? 'Editar erro' : 'Novo erro' }}</strong>
+  <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
+    <form class="form card modal-form" (ngSubmit)="salvar()" (click)="$event.stopPropagation()">
+      <div class="form-topo">
+        <strong>{{ emEdicao ? 'Editar erro' : 'Novo erro' }}</strong>
+        <div class="modal-topo-acoes">
           <button type="button" class="btn btn-sec" (click)="novo()">Limpar formulário</button>
+          <button type="button" class="btn btn-sec" (click)="fecharModal()">Fechar</button>
         </div>
+      </div>
 
+      <div class="field">
+        <label>Matéria</label>
+        <select [(ngModel)]="form.materiaId" name="materiaId" (change)="onMateriaChange(false)">
+          <option [ngValue]="null">Selecione</option>
+          <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.nome }}</option>
+        </select>
+      </div>
+
+      <div class="dupla">
         <div class="field">
-          <label>Matéria</label>
-          <select [(ngModel)]="form.materiaId" name="materiaId" (change)="onMateriaChange(false)">
+          <label>Tópico</label>
+          <select [(ngModel)]="form.topicoId" name="topicoId" (change)="onTopicoChange()">
             <option [ngValue]="null">Selecione</option>
-            <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.nome }}</option>
+            <option *ngFor="let t of topicosPrincipais" [ngValue]="t.id">{{ t.descricao }}</option>
           </select>
         </div>
 
-        <div class="dupla">
-          <div class="field">
-            <label>Tópico</label>
-            <select [(ngModel)]="form.topicoId" name="topicoId" (change)="onTopicoChange()">
-              <option [ngValue]="null">Selecione</option>
-              <option *ngFor="let t of topicosPrincipais" [ngValue]="t.id">{{ t.descricao }}</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Subtópico (opcional)</label>
-            <select [(ngModel)]="form.subtopicoId" name="subtopicoId">
-              <option [ngValue]="null">Sem subtópico</option>
-              <option *ngFor="let s of subtopicosOpcoes" [ngValue]="s.id">{{ s.descricao }}</option>
-            </select>
-          </div>
-        </div>
-
         <div class="field">
-          <label>Título</label>
-          <input type="text" [(ngModel)]="form.titulo" name="titulo" maxlength="160" placeholder="Ex: Erro de interpretação da exceção" />
+          <label>Subtópico (opcional)</label>
+          <select [(ngModel)]="form.subtopicoId" name="subtopicoId">
+            <option [ngValue]="null">Sem subtópico</option>
+            <option *ngFor="let s of subtopicosOpcoes" [ngValue]="s.id">{{ s.descricao }}</option>
+          </select>
         </div>
+      </div>
 
+      <div class="field">
+        <label>Título</label>
+        <input type="text" [(ngModel)]="form.titulo" name="titulo" maxlength="160" placeholder="Ex: Erro de interpretação da exceção" />
+      </div>
+
+      <div class="field">
+        <label>Descrição do erro</label>
+        <textarea [(ngModel)]="form.descricaoErro" name="descricaoErro" rows="4" maxlength="4000"></textarea>
+      </div>
+
+      <div class="dupla">
         <div class="field">
-          <label>Descrição do erro</label>
-          <textarea [(ngModel)]="form.descricaoErro" name="descricaoErro" rows="4" maxlength="4000"></textarea>
+          <label>Causa raiz</label>
+          <textarea [(ngModel)]="form.causaRaiz" name="causaRaiz" rows="3" maxlength="2000"></textarea>
         </div>
-
-        <div class="dupla">
-          <div class="field">
-            <label>Causa raiz</label>
-            <textarea [(ngModel)]="form.causaRaiz" name="causaRaiz" rows="3" maxlength="2000"></textarea>
-          </div>
-          <div class="field">
-            <label>Correção</label>
-            <textarea [(ngModel)]="form.correcao" name="correcao" rows="3" maxlength="4000"></textarea>
-          </div>
-        </div>
-
-        <div class="dupla">
-          <div class="field">
-            <label>Fonte</label>
-            <select [(ngModel)]="form.fonte" name="fonte">
-              <option value="QUESTAO">Questão</option>
-              <option value="SIMULADO">Simulado</option>
-              <option value="MANUAL">Manual</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Data do erro</label>
-            <input type="date" [(ngModel)]="form.dataErro" name="dataErro" />
-          </div>
-        </div>
-
         <div class="field">
-          <label>Tags (separadas por vírgula)</label>
-          <input type="text" [(ngModel)]="form.tagsTexto" name="tagsTexto" placeholder="lei seca, jurisprudência, revisão 24h" />
+          <label>Correção</label>
+          <textarea [(ngModel)]="form.correcao" name="correcao" rows="3" maxlength="4000"></textarea>
         </div>
+      </div>
 
-        <div class="trinca">
-          <div class="field">
-            <label>Questão ID</label>
-            <input type="number" [(ngModel)]="form.questaoId" name="questaoId" />
-          </div>
-          <div class="field">
-            <label>Simulado ID</label>
-            <input type="number" [(ngModel)]="form.simuladoId" name="simuladoId" />
-          </div>
-          <div class="field">
-            <label>Tentativa ID</label>
-            <input type="number" [(ngModel)]="form.tentativaId" name="tentativaId" />
-          </div>
+      <div class="dupla">
+        <div class="field">
+          <label>Fonte</label>
+          <select [(ngModel)]="form.fonte" name="fonte">
+            <option value="QUESTAO">Questão</option>
+            <option value="SIMULADO">Simulado</option>
+            <option value="MANUAL">Manual</option>
+          </select>
         </div>
+        <div class="field">
+          <label>Data do erro</label>
+          <input type="date" [(ngModel)]="form.dataErro" name="dataErro" />
+        </div>
+      </div>
 
-        <div class="form-actions">
-          <button type="button" class="btn btn-sec" (click)="novo()">Novo</button>
-          <button type="submit" class="btn" [disabled]="salvando">
-            {{ salvando ? 'Salvando...' : (emEdicao ? 'Atualizar registro' : 'Salvar registro') }}
-          </button>
+      <div class="field">
+        <label>Tags (separadas por vírgula)</label>
+        <input type="text" [(ngModel)]="form.tagsTexto" name="tagsTexto" placeholder="lei seca, jurisprudência, revisão 24h" />
+      </div>
+
+      <div class="trinca">
+        <div class="field">
+          <label>Questão ID</label>
+          <input type="number" [(ngModel)]="form.questaoId" name="questaoId" />
         </div>
-      </form>
-    </div>
-  </ng-template>
+        <div class="field">
+          <label>Simulado ID</label>
+          <input type="number" [(ngModel)]="form.simuladoId" name="simuladoId" />
+        </div>
+        <div class="field">
+          <label>Tentativa ID</label>
+          <input type="number" [(ngModel)]="form.tentativaId" name="tentativaId" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-sec" (click)="novo()">Novo</button>
+        <button type="submit" class="btn" [disabled]="salvando">
+          {{ salvando ? 'Salvando...' : (emEdicao ? 'Salvar registro' : 'Salvar registro') }}
+        </button>
+      </div>
+    </form>
+  </div>
 </section>
 

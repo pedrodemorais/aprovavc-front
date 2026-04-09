@@ -13,6 +13,7 @@ import { ExecutionQueueItem, ExecutionQueueService } from 'src/app/core/services
 type BibliotecaModo = 'resumos' | 'flashcards';
 
 type BibliotecaTreeRow = {
+  rowKey: string;
   label: string;
   materiaNome?: string;
   source?: BibliotecaResumoDTO;
@@ -48,6 +49,7 @@ export class BibliotecaComponent implements OnInit {
   carregandoFlashcardsCriticos = false;
   resumosDisponiveis: BibliotecaResumoDTO[] = [];
   resumosTreeNodes: TreeNode[] = [];
+  resumoLinhaSelecionadaKey: string | null = null;
   modalFlashcardAberto = false;
   salvandoFlashcard = false;
   mensagemFlashcardSucesso?: string;
@@ -328,6 +330,25 @@ export class BibliotecaComponent implements OnInit {
 
   private atualizarArvoreResumos(): void {
     this.resumosTreeNodes = this.buildResumosTreeNodes();
+    this.garantirSelecaoResumoValida();
+  }
+
+  onResumoRowClick(event: MouseEvent, rowNode: TreeNode, rowData: BibliotecaTreeRow): void {
+    const target = event.target;
+    if (target instanceof Element && target.closest('button, .p-treetable-toggler')) {
+      return;
+    }
+
+    this.resumoLinhaSelecionadaKey = rowData?.rowKey || null;
+
+    if (rowNode?.children?.length) {
+      rowNode.expanded = !rowNode.expanded;
+      this.resumosTreeNodes = [...this.resumosTreeNodes];
+    }
+  }
+
+  isResumoLinhaSelecionada(rowData?: BibliotecaTreeRow | null): boolean {
+    return !!rowData?.rowKey && rowData.rowKey === this.resumoLinhaSelecionadaKey;
   }
 
   private buildResumosTreeNodes(): TreeNode[] {
@@ -367,6 +388,7 @@ export class BibliotecaComponent implements OnInit {
       const filhosFallback = !filhos.length
         ? this.ordenarResumosComoLivro(grupo.itens).map((item) => ({
             data: {
+              rowKey: `resumo-${Number(item.topicoId) || item.topicoDescricao}`,
               label: item.topicoDescricao,
               materiaNome: item.materiaNome,
               source: item,
@@ -378,7 +400,12 @@ export class BibliotecaComponent implements OnInit {
         : filhos;
 
       nodes.push({
-        data: { label: materia.nome, isMateria: true } as BibliotecaTreeRow,
+        data: {
+          rowKey: `materia-${materiaId}`,
+          label: materia.nome,
+          isMateria: true,
+          hasChildren: filhosFallback.length > 0
+        } as BibliotecaTreeRow,
         children: filhosFallback,
         expanded: true
       });
@@ -413,6 +440,7 @@ export class BibliotecaComponent implements OnInit {
       include: true,
       node: {
         data: {
+          rowKey: `topico-${id || topico?.descricao || ''}`,
           label: topico?.descricao || '',
           materiaNome: resumo?.materiaNome,
           source: resumo,
@@ -466,6 +494,30 @@ export class BibliotecaComponent implements OnInit {
 
       return String(a?.topicoDescricao || '').localeCompare(String(b?.topicoDescricao || ''), 'pt-BR');
     });
+  }
+
+  private garantirSelecaoResumoValida(): void {
+    if (!this.resumoLinhaSelecionadaKey) {
+      return;
+    }
+
+    const existe = this.existeRowKeyNasArvores(this.resumosTreeNodes, this.resumoLinhaSelecionadaKey);
+    if (!existe) {
+      this.resumoLinhaSelecionadaKey = null;
+    }
+  }
+
+  private existeRowKeyNasArvores(nodes: TreeNode[], rowKey: string): boolean {
+    for (const node of nodes || []) {
+      const data = node?.data as BibliotecaTreeRow | undefined;
+      if (data?.rowKey === rowKey) {
+        return true;
+      }
+      if (node?.children?.length && this.existeRowKeyNasArvores(node.children, rowKey)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   abrirNovoFlashcard(): void {

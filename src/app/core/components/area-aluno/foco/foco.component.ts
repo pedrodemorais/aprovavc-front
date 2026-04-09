@@ -12,6 +12,8 @@ import { FocoPlanoDiarioService, FocoPremiumMetrics } from 'src/app/core/service
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { PressaoCognitivaDTO, SalaEstudoService, TreinarFraquezaMateriaDTO } from '../services/sala-estudo.service';
+import { BlocosEstudoService } from '../services/blocos-estudo.service';
+import { BlocoEstudoDTO } from '../../dto/blocos-estudo.dto';
 
 type FiltroFila = 'todos' | 'criticos' | 'emRisco';
 type FiltroPremium = 'CRITICO' | 'EM_RISCO' | 'MANUTENCAO';
@@ -39,6 +41,8 @@ export class FocoComponent implements OnInit, OnDestroy {
   loadingPlano = false;
   error: string | null = null;
   planoDiario: FocoPlanoDiarioDTO | null = null;
+  precisaAtivarEdital = false;
+  quantidadeEditaisInativos = 0;
 
   modoHojeLabel = '-';
   headlineHoje = 'Sem headline no momento.';
@@ -123,6 +127,8 @@ export class FocoComponent implements OnInit, OnDestroy {
   private editalAtivoCargoResolved: string | null = null;
   private editalAtivoCargoResolveToken = 0;
   private readonly enableKpiDebugLogs = true;
+  planejamentoSemanalCompleto = false;
+  planejamentoSemanalCarregado = false;
   acaoHoje: FocoAcaoHoje = {
     total: 0,
     criticos: 0,
@@ -143,6 +149,7 @@ export class FocoComponent implements OnInit, OnDestroy {
     private hojeFilaService: HojeFilaService,
     private authService: AuthService,
     private salaEstudoService: SalaEstudoService,
+    private blocosEstudoService: BlocosEstudoService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService
   ) {}
@@ -154,6 +161,7 @@ export class FocoComponent implements OnInit, OnDestroy {
     this.carregarStreak();
     this.carregarTreinoFraquezas();
     this.carregarPressaoCognitiva();
+    this.carregarStatusPlanejamentoSemanal();
   }
 
   ngOnDestroy(): void {
@@ -293,6 +301,17 @@ export class FocoComponent implements OnInit, OnDestroy {
 
   get isModoEstudarPlanejamentoDiario(): boolean {
     return !(this.hasReview && this.exibidosHoje > 0);
+  }
+
+  get devePlanejarSemana(): boolean {
+    if (!this.planejamentoSemanalCarregado) return false;
+    return !this.planejamentoSemanalCompleto;
+  }
+
+  get ctaPrincipalLabel(): string {
+    if (this.hasReview && this.exibidosHoje > 0) return 'Revisar agora';
+    if (this.devePlanejarSemana) return 'Planeje sua semana';
+    return 'Estudar Planejamento Diário';
   }
 
   get hasPreventivo(): boolean {
@@ -1113,6 +1132,10 @@ export class FocoComponent implements OnInit, OnDestroy {
       this.showRevisaoObrigatoriaDialog = true;
       return;
     }
+    if (this.devePlanejarSemana) {
+      this.irParaBlocosEstudo();
+      return;
+    }
     this.iniciarSessaoInteligente();
   }
 
@@ -1279,6 +1302,8 @@ export class FocoComponent implements OnInit, OnDestroy {
   private carregarPlanoDiario(): void {
     this.loadingPlano = true;
     this.error = null;
+    this.precisaAtivarEdital = false;
+    this.quantidadeEditaisInativos = 0;
     const paramsLog = { editalId: null };
     console.log('[FOCO] load start', paramsLog);
 
@@ -1311,9 +1336,17 @@ export class FocoComponent implements OnInit, OnDestroy {
             percentualTopicosEmRisco: null
           };
           this.pressaoLinhaData = null;
+          if (this.isErroSemEditalAtivo(err)) {
+            this.validarEditaisSemAtivo();
+            return;
+          }
           this.error = this.resolverMensagemErro(err);
         }
       });
+  }
+
+  irParaAtivarEdital(): void {
+    this.router.navigate(['/area-restrita/editais']);
   }
 
   private carregarStreak(): void {
@@ -1651,6 +1684,30 @@ export class FocoComponent implements OnInit, OnDestroy {
       .toLowerCase();
   }
 
+  private carregarStatusPlanejamentoSemanal(): void {
+    this.planejamentoSemanalCarregado = false;
+    this.blocosEstudoService.listarBlocos().subscribe({
+      next: (blocos) => {
+        this.planejamentoSemanalCompleto = this.isPlanejamentoSemanalCompleto(blocos || []);
+        this.planejamentoSemanalCarregado = true;
+      },
+      error: () => {
+        this.planejamentoSemanalCompleto = false;
+        this.planejamentoSemanalCarregado = true;
+      }
+    });
+  }
+
+  private isPlanejamentoSemanalCompleto(blocos: BlocoEstudoDTO[]): boolean {
+    const lista = Array.isArray(blocos) ? blocos : [];
+    if (lista.length < 7) return false;
+    return lista.every((bloco) => {
+      const minutos = Number(bloco?.minutosDisponiveis || 0);
+      const itens = Array.isArray(bloco?.itens) ? bloco.itens : [];
+      return minutos > 0 && itens.length > 0;
+    });
+  }
+
   private lerBlobComoTexto(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1714,6 +1771,40 @@ export class FocoComponent implements OnInit, OnDestroy {
     const serverMessage = String(err?.error?.message || '').trim();
     if (serverMessage) return serverMessage;
     return 'Nao foi possivel carregar o plano diario.';
+  }
+
+  private isErroSemEditalAtivo(err: HttpErrorResponse): boolean {
+    const status = Number(err?.status || 0);
+    const serverMessage = String(err?.error?.message || '').trim().toLowerCase();
+    const detail = String(err?.error?.detail || '').trim().toLowerCase();
+    const text = `${serverMessage} ${detail}`;
+    const mencionaSemEditalAtivo = text.includes('nenhum edital ativo');
+    return mencionaSemEditalAtivo || status === 412;
+  }
+
+  private validarEditaisSemAtivo(): void {
+    this.editalService.listar().subscribe({
+      next: (editais) => {
+        const lista = Array.isArray(editais) ? editais : [];
+        if (lista.length === 0) {
+          this.router.navigate(['/area-restrita/registrar-livre']);
+          return;
+        }
+
+        const existeAtivo = lista.some((edital) => edital?.ativo === true);
+        if (existeAtivo) {
+          this.error = 'Nao foi possivel carregar o plano diario.';
+          return;
+        }
+
+        this.error = null;
+        this.precisaAtivarEdital = true;
+        this.quantidadeEditaisInativos = lista.length;
+      },
+      error: () => {
+        this.error = 'Nao foi possivel validar seus editais.';
+      }
+    });
   }
 
   private getCategoriaNorm(item: any): string {

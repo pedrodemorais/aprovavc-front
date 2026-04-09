@@ -20,12 +20,26 @@
   margin: 0;
   font-size: 1.3rem;
   color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .cabecalho p {
   margin: 4px 0 0;
   color: var(--soft-text);
   font-size: 0.9rem;
+}
+
+.info-icon {
+  font-size: 14px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.info-icon:hover,
+.info-icon:focus {
+  color: #64748b;
 }
 
 .kpi-pill {
@@ -49,9 +63,19 @@
 .filtros {
   padding: 10px;
   margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filtros-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.4fr auto auto;
   gap: 8px;
+}
+
+.filtros-row--top {
+  grid-template-columns: 1.2fr 1fr auto auto;
+  align-items: end;
 }
 
 .field {
@@ -95,9 +119,7 @@ textarea:focus {
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 12px;
+  display: block;
 }
 
 .revisao-erros {
@@ -221,6 +243,10 @@ textarea:focus {
   padding: 12px;
 }
 
+.btn-add-erro {
+  white-space: nowrap;
+}
+
 .lista-topo,
 .form-topo {
   display: flex;
@@ -228,6 +254,12 @@ textarea:focus {
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
+}
+
+.modal-topo-acoes {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .lista-titulo {
@@ -254,54 +286,85 @@ textarea:focus {
 
 .item {
   border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 8px;
-  background: #fff;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
 .item-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.item-head__content {
+  flex: 1;
+  min-width: 0;
 }
 
 .item-head h3 {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.3;
+  font-size: 1rem;
+  line-height: 1.25;
   color: #111827;
 }
 
 .desc {
-  margin: 8px 0 0;
-  color: #334155;
-  font-size: 0.85rem;
-  line-height: 1.38;
-}
-
-.meta {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.meta span {
-  font-size: 0.73rem;
+  margin: 6px 0 0;
   color: #475569;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 999px;
-  padding: 3px 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.item-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.meta-card {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
   background: #f8fafc;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.meta-card--wide {
+  grid-column: 1 / -1;
+}
+
+.meta-card__label {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.meta-card__value {
+  font-size: 0.84rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.meta-card__value--text {
+  white-space: pre-wrap;
+  line-height: 1.45;
 }
 
 .acoes {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 8px;
+  padding-top: 2px;
 }
 
 .status {
@@ -335,6 +398,25 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.46);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  z-index: 1200;
+  overflow-y: auto;
+}
+
+.modal-form {
+  width: min(100%, 760px);
+  margin: 0;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
 }
 
 .form-topo strong {
@@ -427,10 +509,6 @@ textarea:focus {
 }
 
 @media (max-width: 960px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
   .lista-body {
     max-height: none;
   }
@@ -453,6 +531,11 @@ textarea:focus {
   .dupla,
   .trinca {
     grid-template-columns: 1fr;
+  }
+
+  .item-head {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .form-actions {
@@ -517,6 +600,10 @@ textarea:focus {
 :host-context(body.theme-dark) .revisao-card {
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.84) 0%, rgba(15, 23, 42, 0.62) 100%);
   border-color: rgba(255, 255, 255, 0.14);
+}
+
+:host-context(body.theme-dark) .modal-form {
+  background: rgba(15, 23, 42, 0.96);
 }
 
 :host-context(body.theme-dark) .revisao-chip {

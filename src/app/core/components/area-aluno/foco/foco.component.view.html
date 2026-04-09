@@ -15,7 +15,16 @@
     </div>
   </div>
 
-  <div class="home-shell" [class.home-shell--revisao]="isModoRevisao" *ngIf="!loadingPlano && !error && planoDiario">
+  <div class="home-shell" *ngIf="!loadingPlano && !error && precisaAtivarEdital">
+    <div class="home-card home-card--error">
+      <h2>Ative um edital para continuar</h2>
+      <p *ngIf="quantidadeEditaisInativos === 1">Você já tem 1 edital cadastrado, mas ele está inativo. Ative-o para carregar seu foco.</p>
+      <p *ngIf="quantidadeEditaisInativos !== 1">Você já tem {{ quantidadeEditaisInativos }} editais cadastrados, mas todos estão inativos. Ative um edital para carregar seu foco.</p>
+      <button type="button" class="btn-primary" (click)="irParaAtivarEdital()">Ir para Editais</button>
+    </div>
+  </div>
+
+  <div class="home-shell" [class.home-shell--revisao]="isModoRevisao" *ngIf="!loadingPlano && !error && !precisaAtivarEdital && planoDiario">
     <div class="welcome-strip">
       <div>
         <h1 class="welcome-title">
@@ -87,7 +96,7 @@
             <button
               class="btn-primary hero-cog__cta hero-cog__cta--inline"
               (click)="hasReview && exibidosHoje>0 ? iniciarRevisao() : onEstudarAgora()">
-              {{ hasReview && exibidosHoje>0 ? 'Revisar agora' : 'Estudar Planejamento Diário' }}
+              {{ ctaPrincipalLabel }}
             </button>
           </div>
 
@@ -232,36 +241,6 @@
       <div class="card foco-review-card" style="margin-top:14px;">
         <div class="header-row">
           <div class="header-row-top">
-            
-            <div class="status-filter" aria-label="Filtros de classificação">
-              <button
-                type="button"
-                class="status-filter__dot status-filter__dot--red"
-                [class.status-filter__dot--inactive]="!isFiltroSelecionado('CRITICO')"
-                [attr.aria-pressed]="isFiltroSelecionado('CRITICO')"
-                aria-label="Filtrar Críticos"
-                title="Críticos"
-                (click)="toggleFiltroSelecionado('CRITICO')">
-              </button>
-              <button
-                type="button"
-                class="status-filter__dot status-filter__dot--orange"
-                [class.status-filter__dot--inactive]="!isFiltroSelecionado('EM_RISCO')"
-                [attr.aria-pressed]="isFiltroSelecionado('EM_RISCO')"
-                aria-label="Filtrar Em risco"
-                title="Em risco"
-                (click)="toggleFiltroSelecionado('EM_RISCO')">
-              </button>
-              <button
-                type="button"
-                class="status-filter__dot status-filter__dot--green"
-                [class.status-filter__dot--inactive]="!isFiltroSelecionado('MANUTENCAO')"
-                [attr.aria-pressed]="isFiltroSelecionado('MANUTENCAO')"
-                aria-label="Filtrar Manutenção"
-                title="Manutenção"
-                (click)="toggleFiltroSelecionado('MANUTENCAO')">
-              </button>
-            </div>
           </div>
 
           <button
