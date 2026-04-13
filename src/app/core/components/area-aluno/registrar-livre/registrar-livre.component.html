@@ -3,14 +3,7 @@
     <header class="quick-study-header">
       <h1>
         Registro rapido de estudo
-        <span
-          class="quick-study-info-icon"
-          role="img"
-          tabindex="0"
-          aria-label="Registre em segundos, sem abrir a sala de estudo."
-          title="Registre em segundos, sem abrir a sala de estudo.">
-          i
-        </span>
+   
       </h1>
       <div class="study-timer-panel">
         <div class="timer-group timer-group--mode" role="tablist" aria-label="Modo de timer">
@@ -36,9 +29,7 @@
           <button type="button" class="timer-action-btn timer-action-btn--primary timer-action-btn--start btn-primary" (click)="alternarTimer()">
             {{ timerRodando ? 'Pausar' : 'Iniciar' }}
           </button>
-          <button type="button" class="timer-action-btn timer-action-btn--reset btn-secondary" (click)="zerarTimer()" [disabled]="!podeZerarTimer">
-            Zerar
-          </button>
+       
         </div>
 
         <div class="timer-group timer-group--status">
