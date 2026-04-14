@@ -52,33 +52,4 @@ export class FocoPlanoDiarioService {
     return text.includes('nenhum edital ativo') || status === 412;
   }
 
-  mapearMetricasPremium(plano: FocoPlanoDiarioDTO | null | undefined): FocoPremiumMetrics {
-    const fila = Array.isArray(plano?.filaRevisao) ? plano!.filaRevisao : [];
-    const baseValida = fila
-      .map((item) => Number(item?.score))
-      .filter((score) => Number.isFinite(score) && score >= 0 && score <= 1);
-
-    const dadosConsolidados = baseValida.length >= 5;
-    const estabilidadeMedia = dadosConsolidados
-      ? Number((baseValida.reduce((acc, score) => acc + score, 0) / baseValida.length).toFixed(2))
-      : null;
-    const riscoMedio = estabilidadeMedia === null ? null : Number((1 - estabilidadeMedia).toFixed(2));
-    const retencao14d = estabilidadeMedia;
-
-    const totalAgora = Number(plano?.resumoAcionavel?.totalAgora);
-    const criticos = Number(plano?.resumoAcionavel?.criticos);
-    const emRisco = Number(plano?.resumoAcionavel?.emRisco);
-    const percentualTopicosEmRisco =
-      Number.isFinite(totalAgora) && totalAgora > 0
-        ? Math.round((((Number.isFinite(criticos) ? criticos : 0) + (Number.isFinite(emRisco) ? emRisco : 0)) * 100) / totalAgora)
-        : null;
-
-    return {
-      dadosConsolidados,
-      estabilidadeMedia,
-      riscoMedio,
-      retencao14d,
-      percentualTopicosEmRisco
-    };
-  }
 }

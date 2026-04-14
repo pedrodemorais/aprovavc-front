@@ -9,14 +9,19 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TreeNode } from 'primeng/api';
 import { ExecutionQueueItem, ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
+import { extrairStatusCanonicoRevisao, statusCanonicoParaDashboard } from '../utils/revisao-status.util';
 
 type BibliotecaModo = 'resumos' | 'flashcards';
+type StatusRevisao = 'VENCIDA' | 'EM_DIA' | 'FUTURA';
 
 type BibliotecaTreeRow = {
   rowKey: string;
   label: string;
   materiaNome?: string;
   source?: BibliotecaResumoDTO;
+  status?: StatusRevisao;
+  proximaRevisaoIso?: string | null;
+  proximaRevisaoLabel?: string;
   hasChildren?: boolean;
   isMateria?: boolean;
   isTopico?: boolean;
@@ -202,6 +207,29 @@ export class BibliotecaComponent implements OnInit {
 
   get folhasDisponiveis(): Topico[] {
     return this.folhasTopicos(this.topicosDisponiveis);
+  }
+
+  get contagemRevisoesResumo(): { vencidas: number; hoje: number; emDia: number } {
+    let vencidas = 0;
+    let hoje = 0;
+    let emDia = 0;
+
+    const walk = (nodes: TreeNode[]): void => {
+      (nodes || []).forEach((node) => {
+        const data = node?.data as BibliotecaTreeRow | undefined;
+        if (data?.isTopico && data?.source && data?.status) {
+          if (data.status === 'VENCIDA') vencidas += 1;
+          else if (data.status === 'EM_DIA') hoje += 1;
+          else if (data.status === 'FUTURA') emDia += 1;
+        }
+        if (node?.children?.length) {
+          walk(node.children);
+        }
+      });
+    };
+
+    walk(this.resumosTreeNodes);
+    return { vencidas, hoje, emDia };
   }
 
   private carregarFlashcards(): void {
@@ -392,6 +420,9 @@ export class BibliotecaComponent implements OnInit {
               label: item.topicoDescricao,
               materiaNome: item.materiaNome,
               source: item,
+              status: this.resolverStatusTopico(null, item),
+              proximaRevisaoIso: null,
+              proximaRevisaoLabel: this.formatarProximaRevisao(null),
               hasChildren: false,
               isTopico: true
             } as BibliotecaTreeRow,
@@ -399,10 +430,14 @@ export class BibliotecaComponent implements OnInit {
           } as TreeNode))
         : filhos;
 
+      const proximaRevisaoMateria = this.obterMenorProximaRevisaoMateria(topicos);
+
       nodes.push({
         data: {
           rowKey: `materia-${materiaId}`,
           label: materia.nome,
+          proximaRevisaoIso: proximaRevisaoMateria,
+          proximaRevisaoLabel: this.formatarProximaRevisao(proximaRevisaoMateria),
           isMateria: true,
           hasChildren: filhosFallback.length > 0
         } as BibliotecaTreeRow,
@@ -444,6 +479,9 @@ export class BibliotecaComponent implements OnInit {
           label: topico?.descricao || '',
           materiaNome: resumo?.materiaNome,
           source: resumo,
+          status: this.resolverStatusTopico(topico, resumo),
+          proximaRevisaoIso: topico?.proximaRevisao ?? null,
+          proximaRevisaoLabel: this.formatarProximaRevisao(topico?.proximaRevisao),
           hasChildren: childNodes.length > 0,
           isTopico: true
         } as BibliotecaTreeRow,
@@ -725,5 +763,57 @@ export class BibliotecaComponent implements OnInit {
       proximaRevisao: dto?.proximaRevisao ?? dto?.dataProximaRevisao ?? null,
       statusRevisao: dto?.statusRevisao
     };
+  }
+
+  private formatarProximaRevisao(valor: string | null | undefined): string {
+    if (!valor) return '-';
+
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) {
+      return String(valor);
+    }
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(data);
+  }
+
+  private obterMenorProximaRevisaoMateria(topicos: Topico[]): string | null {
+    let menorIso: string | null = null;
+    let menorTime = Number.POSITIVE_INFINITY;
+
+    const walk = (lista: Topico[]): void => {
+      (lista || []).forEach((topico) => {
+        const iso = String(topico?.proximaRevisao || '').trim();
+        if (iso) {
+          const data = new Date(iso);
+          const time = data.getTime();
+          if (!Number.isNaN(time) && time < menorTime) {
+            menorTime = time;
+            menorIso = iso;
+          }
+        }
+
+        if (topico?.filhos?.length) {
+          walk(topico.filhos);
+        }
+      });
+    };
+
+    walk(topicos || []);
+    return menorIso;
+  }
+
+  private resolverStatusTopico(topico: Topico | null | undefined, resumo?: BibliotecaResumoDTO): StatusRevisao | undefined {
+    const item = {
+      statusCanonico: (topico as any)?.statusCanonico,
+      statusRevisao: topico?.statusRevisao,
+      status: (topico as any)?.status,
+      proximaRevisao: topico?.proximaRevisao ?? (resumo as any)?.proximaRevisao ?? (resumo as any)?.dataProximaRevisao
+    };
+    const canonico = extrairStatusCanonicoRevisao(item);
+    return statusCanonicoParaDashboard(canonico) || undefined;
   }
 }

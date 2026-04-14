@@ -4,22 +4,20 @@
   --qs-muted: #6b7280;
   --qs-accent: #0b7285;
   --qs-accent-soft: rgba(11, 114, 133, 0.1);
-  height: 100%;
-  min-height: 0;
+  min-height: 100%;
   box-sizing: border-box;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 14px 12px 16px;
   background: var(--bg);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .quick-study-card {
   width: 100%;
   max-width: 1060px;
-  height: 100%;
-  min-height: 0;
   margin: 0 auto;
   background: #ffffff;
   border: 1px solid var(--qs-line);
@@ -27,7 +25,7 @@
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
   padding: 14px;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .quick-study-header h1 {
@@ -109,6 +107,15 @@
 .field textarea:focus {
   border-color: var(--qs-accent);
   box-shadow: 0 0 0 3px var(--qs-accent-soft);
+}
+
+.field input:disabled,
+.field textarea:disabled,
+.autocomplete-trigger:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .field .invalid {
@@ -310,7 +317,101 @@
 }
 
 .autocomplete-wrap:focus-within {
-  z-index: 30;
+  z-index: 120;
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete {
+  width: 100%;
+  position: relative;
+  display: block;
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--qs-line);
+  border-radius: 12px;
+  padding: 10px 40px 10px 12px;
+  font-size: 13px;
+  color: #374151;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-input:enabled:focus {
+  border-color: var(--qs-accent);
+  box-shadow: 0 0 0 3px var(--qs-accent-soft);
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-input.invalid {
+  border-color: #dc2626;
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-dropdown {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 6px;
+  box-shadow: none;
+  z-index: 2;
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-dropdown:hover:not(:disabled) {
+  background: var(--surface-2, #f8fafc);
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-dropdown:focus {
+  box-shadow: none;
+}
+
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-input:disabled,
+:host ::ng-deep .autocomplete-wrap--prime .p-autocomplete-dropdown:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+:host ::ng-deep .autocomplete-dropdown-panel {
+  z-index: 8000 !important;
+  background: #ffffff;
+  border: 1px solid rgba(11, 114, 133, 0.28);
+  border-radius: 14px;
+  box-shadow:
+    0 14px 28px rgba(15, 23, 42, 0.14),
+    0 2px 6px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+:host ::ng-deep .autocomplete-dropdown-panel .p-autocomplete-items {
+  padding: 6px;
+}
+
+:host ::ng-deep .autocomplete-dropdown-panel .p-autocomplete-item {
+  border: 1px solid transparent;
+  background: #ffffff;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #1f2937;
+  border-radius: 10px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+:host ::ng-deep .autocomplete-dropdown-panel .p-autocomplete-item:hover,
+:host ::ng-deep .autocomplete-dropdown-panel .p-autocomplete-item.p-highlight {
+  background: #eaf6fa;
+  border-color: rgba(11, 114, 133, 0.25);
+  color: #1f2937;
 }
 
 .autocomplete-wrap--trigger input {
@@ -342,8 +443,8 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  z-index: 20;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  z-index: 130;
+  background: #ffffff;
   border: 1px solid rgba(11, 114, 133, 0.28);
   border-radius: 14px;
   box-shadow:
@@ -357,7 +458,7 @@
 .autocomplete-item {
   width: 100%;
   border: 1px solid transparent;
-  background: transparent;
+  background: #ffffff;
   text-align: left;
   padding: 9px 12px;
   cursor: pointer;

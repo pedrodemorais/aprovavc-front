@@ -135,8 +135,8 @@ export class BibliotecaCognitivaComponent implements OnInit {
   }
 
   private statusLabel(status: StatusRevisaoCanonico): string {
-    if (status === 'ATRASADA') return 'Atrasado';
-    if (status === 'HOJE') return 'Vence hoje';
-    return 'Em dia';
+    if (status === 'ATRASADA') return 'Vencido';
+    if (status === 'HOJE') return 'Para hoje';
+    return 'Próximo';
   }
 }

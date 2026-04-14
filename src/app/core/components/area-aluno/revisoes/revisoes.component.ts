@@ -1,5 +1,6 @@
-import { Component, HostListener, Input, OnInit } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 import { SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
@@ -38,6 +39,7 @@ export class RevisoesComponent implements OnInit {
   private topicosPorMateria = new Map<number, Topico[]>();
   private materiaIdsEditalAtivo = new Set<number>();
   private filtroEditalAtivoDisponivel = false;
+  private materiasChangedSub?: Subscription;
   treeNodes: TreeNode[] = [];
 
   constructor(
@@ -58,8 +60,15 @@ export class RevisoesComponent implements OnInit {
     });
 
     if (this.modo === 'automatico') {
+      this.materiasChangedSub = this.materiaService.materiasChanged$.subscribe(() => {
+        this.carregarRevisoes();
+      });
       this.carregarEscopoEditalAtivo(() => this.carregarRevisoes());
     }
+  }
+
+  ngOnDestroy(): void {
+    this.materiasChangedSub?.unsubscribe();
   }
 
   setFiltroStatus(status: 'atrasadas' | 'hoje' | 'emdia' | 'todas'): void {

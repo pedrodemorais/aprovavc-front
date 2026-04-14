@@ -112,6 +112,45 @@
   margin-left: auto;
 }
 
+.biblioteca-counters {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin-right: 8px;
+}
+
+.counter-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.counter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.counter-dot.dot-vencida {
+  background: #ef4444;
+}
+
+.counter-dot.dot-hoje {
+  background: #f59e0b;
+}
+
+.counter-dot.dot-emdia {
+  background: #22c55e;
+}
+
+.counter-value {
+  font-weight: 600;
+  color: #374151;
+}
+
 .modo-btn {
   height: 26px;
   padding: 0 12px;
@@ -240,9 +279,24 @@
   font-weight: 600;
 }
 
+.tree-header-labels {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.tree-header-review {
+  margin-left: auto;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: right;
+}
+
 :host ::ng-deep .biblioteca-tree .p-treetable-tbody > tr > td {
-  padding: 2px 0;
+  padding: 6px 0;
   border: 0;
+  border-bottom: 1px solid var(--border);
   background: transparent;
   transition: background 0.12s ease;
 }
@@ -285,9 +339,43 @@
 .tree-text {
   font-size: 0.88rem;
   color: rgba(0, 0, 0, 0.6);
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   font-weight: 400;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  display: inline-block;
+  position: static;
+  transform: none;
+  pointer-events: none;
+  margin-right: 2px;
+  flex: 0 0 auto;
+}
+
+.status-dot.status-vencida {
+  background: #ef4444;
+}
+
+.status-dot.status-hoje {
+  background: #f59e0b;
+}
+
+.status-dot.status-futura {
+  background: #22c55e;
+}
+
+.tree-review-meta {
+  margin-left: auto;
+  padding-left: 16px;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.46);
+  text-align: right;
 }
 
 :host ::ng-deep .biblioteca-tree .p-treetable-tbody > tr.is-materia .tree-text {
@@ -432,8 +520,25 @@
 :host-context(body.theme-dark) .estado,
 :host-context(body.theme-dark) .lista-vazia,
 :host-context(body.theme-dark) .tree-text,
+:host-context(body.theme-dark) .tree-review-meta,
 :host-context(body.theme-dark) .flashcards-tabela td {
   color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .status-dot {
+  background: rgba(148, 163, 184, 0.6) !important;
+}
+
+:host-context(body.theme-dark) .status-dot.status-vencida {
+  background: #f87171 !important;
+}
+
+:host-context(body.theme-dark) .status-dot.status-hoje {
+  background: #fbbf24 !important;
+}
+
+:host-context(body.theme-dark) .status-dot.status-futura {
+  background: #4ade80 !important;
 }
 
 :host-context(body.theme-dark) .controle select,
@@ -456,6 +561,26 @@
 
 :host-context(body.theme-dark) .modo-btn {
   color: rgba(255, 255, 255, 0.75) !important;
+}
+
+:host-context(body.theme-dark) .biblioteca-counters {
+  color: var(--text-2) !important;
+}
+
+:host-context(body.theme-dark) .counter-value {
+  color: var(--text) !important;
+}
+
+:host-context(body.theme-dark) .counter-dot.dot-vencida {
+  background: #f87171 !important;
+}
+
+:host-context(body.theme-dark) .counter-dot.dot-hoje {
+  background: #fbbf24 !important;
+}
+
+:host-context(body.theme-dark) .counter-dot.dot-emdia {
+  background: #4ade80 !important;
 }
 
 :host-context(body.theme-dark) :host ::ng-deep .biblioteca-tree .p-treetable-toggler,

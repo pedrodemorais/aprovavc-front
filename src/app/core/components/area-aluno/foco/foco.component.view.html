@@ -133,38 +133,38 @@
           <div class="hero-cog__kpis">
             <div class="kpi-tile kpi-tile--criticos">
               <span class="kpi-ribbon" *ngIf="contadorCriticos === 0">EM DIA</span>
-              <div class="kpi-label">Críticos</div>
+              <div class="kpi-label">Vencido</div>
               <div class="kpi-value">
                 <ng-container *ngIf="contadorCriticos === 0; else criticosNumero">
                   <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
                 </ng-container>
                 <ng-template #criticosNumero>{{ contadorCriticos }}</ng-template>
               </div>
-              <div class="kpi-sub">Revisões com prioridade máxima</div>
+              <div class="kpi-sub">Revisões atrasadas</div>
             </div>
 
             <div class="kpi-tile kpi-tile--em-risco">
               <span class="kpi-ribbon" *ngIf="contadorEmRisco === 0">EM DIA</span>
-              <div class="kpi-label">Em risco</div>
+              <div class="kpi-label">Para hoje</div>
               <div class="kpi-value">
                 <ng-container *ngIf="contadorEmRisco === 0; else emRiscoNumero">
                   <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
                 </ng-container>
                 <ng-template #emRiscoNumero>{{ contadorEmRisco }}</ng-template>
               </div>
-              <div class="kpi-sub">Revisões que precisam atenção hoje</div>
+              <div class="kpi-sub">Revisões programadas para hoje</div>
             </div>
 
             <div class="kpi-tile kpi-tile--manutencao">
               <span class="kpi-ribbon" *ngIf="contadorManutencao === 0">EM DIA</span>
-              <div class="kpi-label">Manutenção</div>
+              <div class="kpi-label">Próximo</div>
               <div class="kpi-value">
                 <ng-container *ngIf="contadorManutencao === 0; else manutencaoNumero">
                   <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
                 </ng-container>
                 <ng-template #manutencaoNumero>{{ contadorManutencao }}</ng-template>
               </div>
-              <div class="kpi-sub">Revisões para manter conteúdo ativo</div>
+              <div class="kpi-sub">Revisões futuras</div>
             </div>
 
             <div class="kpi-tile kpi-tile--fraquezas">
@@ -177,7 +177,7 @@
                 <ng-template #fraquezasNumero>{{ totalTopicosFraquezas }}</ng-template>
               </div>
               <div class="kpi-sub">
-                {{ treinoFraquezasMaterias.length ? 'Tópicos críticos para reforçar' : 'Nenhuma matéria crítica no momento' }}
+                {{ treinoFraquezasMaterias.length ? 'Tópicos vencidos para reforçar' : 'Nenhuma matéria vencida no momento' }}
               </div>
               <button
                 *ngIf="primeiraMateriaFraquezaId"
@@ -201,7 +201,7 @@
           <div>
             <div class="kpi-label">Reforço preventivo</div>
             <div class="kpi-sub">
-              Recomendamos revisar {{ preventivosSugeridos }} tópico(s) para reduzir risco.
+              Recomendamos revisar {{ preventivosSugeridos }} tópico(s) para adiantar a fila.
             </div>
           </div>
           <button class="btn-primary" (click)="abrirListaPreventivo()">
@@ -255,7 +255,7 @@
         <div class="table-wrap">
           <div class="row header">
             <div>Materia</div>
-            <div>Score</div>
+            <div>Status</div>
             <div>Acao</div>
           </div>
 
@@ -271,18 +271,18 @@
                 <span
                   class="classificacao-dot"
                   [ngClass]="{
-                    'classificacao-dot--critico': item.categoria === 'CRITICO',
-                    'classificacao-dot--risco': item.categoria === 'EM_RISCO',
-                    'classificacao-dot--manut': (item.categoria || '').startsWith('MANUTENCAO')
+                    'classificacao-dot--critico': getItemStatusLabel(item) === 'Vencido',
+                    'classificacao-dot--risco': getItemStatusLabel(item) === 'Para hoje',
+                    'classificacao-dot--manut': getItemStatusLabel(item) === 'Próximo'
                   }"
-                  [attr.aria-label]="formatCategoria(item.categoria || item.classificacao)"
-                  [attr.title]="formatCategoria(item.categoria || item.classificacao)">
+                  [attr.aria-label]="getItemStatusLabel(item)"
+                  [attr.title]="getItemStatusLabel(item)">
                 </span>
                 <span>{{ item.topicoNome }}</span>
               </div>
 
               <div class="score-cell">
-                <span class="score-text">{{ scoreRatio(getItemScore(item)) === null ? 'â€”' : formatScore(getItemScore(item)) }}</span>
+                <span class="score-text">{{ getItemStatusLabel(item) }}</span>
               </div>
               <div>
                 <button

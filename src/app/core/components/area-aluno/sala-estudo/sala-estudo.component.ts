@@ -26,8 +26,6 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 import { environment } from 'src/environments/environment';
 import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
-import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analytics.service';
-import { RetencaoPontoDTO } from 'src/app/core/models/retencao-analytics.models';
 import { RefreshBusService } from 'src/app/core/services/refresh-bus.service';
 import { ExecutionQueueItem, ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
 import { FlashcardService } from '../services/flashcard.service';
@@ -301,14 +299,11 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   private topicosExibidosCacheResultado: TopicoViewModel[] = [];
   private topicosEscopoSemanaIds = new Set<number>();
 
-  avaliacaoFlashcardSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
+  avaliacaoFlashcardSelecionada: 'ERREI' | 'BOM' | null = null;
   enviandoAvaliacaoFlashcard: boolean = false;
   enviandoAvaliacaoAnotacao: boolean = false;
 
-  avaliacaoSelecionada: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL' | null = null;
-  feedbackRetencao?: string;
-  private scoreRetencaoPorTopico = new Map<number, number>();
-  private feedbackRetencaoTimer: ReturnType<typeof setTimeout> | null = null;
+  avaliacaoSelecionada: 'ERREI' | 'BOM' | null = null;
   private refreshBusTimers: Array<ReturnType<typeof setTimeout>> = [];
   private modoExecucaoFila = false;
 
@@ -319,7 +314,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     private salaEstudoService: SalaEstudoService,
     private empresaParametroService: EmpresaParametroService,
     private blocosService: BlocosEstudoService,
-    private retencaoAnalyticsService: RetencaoAnalyticsService,
     private sanitizer: DomSanitizer,
     private ngZone: NgZone,
     private messageService: MessageService,
@@ -444,10 +438,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.flushSaveLogBuffer(true);
     this.destruirObservadorListaTopicos();
-    if (this.feedbackRetencaoTimer) {
-      clearTimeout(this.feedbackRetencaoTimer);
-      this.feedbackRetencaoTimer = null;
-    }
     if (this.recentralizarRafId != null) {
       cancelAnimationFrame(this.recentralizarRafId);
       this.recentralizarRafId = null;
@@ -3202,7 +3192,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  selecionarAvaliacaoFlashcard(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+  selecionarAvaliacaoFlashcard(avaliacao: 'ERREI' | 'BOM'): void {
     this.avaliacaoFlashcardSelecionada = avaliacao;
   }
 
@@ -3240,7 +3230,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         });
         this.proximoFlashcard();
         this.avaliacaoFlashcardSelecionada = null;
-        this.atualizarFeedbackRetencaoTopico(this.topicoSelecionado?.id ?? null);
         this.notificarRevisaoConcluida('flashcard', this.topicoSelecionado?.id ?? undefined);
         this.temTempoNaoSalvoFlag = false;
       },
@@ -3259,7 +3248,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'): void {
+  avaliarRevisaoAnotacao(avaliacao: 'ERREI' | 'BOM'): void {
     if (this.enviandoAvaliacaoAnotacao) return;
     this.avaliacaoSelecionada = avaliacao;
     if (!this.topicoSelecionado) return;
@@ -3296,7 +3285,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
           avaliacao: req.avaliacao,
           horarioIso: new Date().toISOString()
         });
-        this.atualizarFeedbackRetencaoTopico(req.topicoId);
         this.mostrarMensagemRevisao('Revisao das anotacoes registrada!');
         this.notificarRevisaoConcluida('anotacao', req.topicoId);
         this.avancarFilaExecucaoAposConclusao(req.topicoId);
@@ -4397,14 +4385,12 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private aplicarStatusLocalAposRevisao(
     topicoId: number,
-    avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL'
+    avaliacao: 'ERREI' | 'BOM'
   ): void {
     if (!topicoId) return;
 
     const status: StatusRevisao =
-      avaliacao === 'ERREI' ? 'ATRASADA' :
-      avaliacao === 'DIFICIL' ? 'HOJE' :
-      'FUTURA';
+      avaliacao === 'ERREI' ? 'ATRASADA' : 'FUTURA';
 
     const atual = this.revisoesPorTopico.get(topicoId);
     this.revisoesPorTopico.set(topicoId, {
@@ -4496,17 +4482,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => { this.mensagemRevisao = undefined; }, 4000);
   }
 
-  private mostrarFeedbackRetencao(texto: string): void {
-    this.feedbackRetencao = texto;
-    if (this.feedbackRetencaoTimer) {
-      clearTimeout(this.feedbackRetencaoTimer);
-    }
-    this.feedbackRetencaoTimer = setTimeout(() => {
-      this.feedbackRetencao = undefined;
-      this.feedbackRetencaoTimer = null;
-    }, 2000);
-  }
-
   private notificarRevisaoConcluida(
     origem: 'anotacao' | 'flashcard' | 'finalizacao-topico',
     topicoId?: number
@@ -4529,42 +4504,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
       this.refreshBusTimers = this.refreshBusTimers.filter((timer) => timer !== retryTimer);
     }, 2000);
     this.refreshBusTimers.push(retryTimer);
-  }
-
-  private atualizarFeedbackRetencaoTopico(topicoId: number | null): void {
-    if (!topicoId) return;
-
-    const scoreAnterior = this.scoreRetencaoPorTopico.get(topicoId);
-
-    this.retencaoAnalyticsService.buscarSerieTopico(topicoId, 30).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (serie: RetencaoPontoDTO[]) => {
-        const scoreAtual = this.extrairUltimoScoreRetencao(serie);
-        if (scoreAtual === null) return;
-
-        const mensagem = scoreAnterior !== undefined
-          ? `Retencao estimada: ${scoreAnterior.toFixed(2)} -> ${scoreAtual.toFixed(2)}`
-          : `Retencao atual: ${scoreAtual.toFixed(2)}`;
-
-        this.scoreRetencaoPorTopico.set(topicoId, scoreAtual);
-        this.mostrarFeedbackRetencao(mensagem);
-      },
-      error: () => {
-        // Sem impacto no fluxo principal de revisao.
-      }
-    });
-  }
-
-  private extrairUltimoScoreRetencao(serie: RetencaoPontoDTO[] | null | undefined): number | null {
-    if (!Array.isArray(serie) || !serie.length) return null;
-    for (let i = serie.length - 1; i >= 0; i -= 1) {
-      const score = serie[i]?.scoreDia;
-      if (typeof score === 'number' && Number.isFinite(score)) {
-        return score;
-      }
-    }
-    return null;
   }
 
   private getTopicoIdFromDto(dto: TopicoNodeDTO | TopicoViewModel | null | undefined): number | null {

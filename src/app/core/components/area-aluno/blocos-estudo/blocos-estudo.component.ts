@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, ViewChild, ViewChildren, QueryList, HostL
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { OverlayPanel } from 'primeng/overlaypanel';
-import { MessageService } from 'primeng/api';
 import { AutoComplete } from 'primeng/autocomplete';
 import { SalaEstudoService } from '../services/sala-estudo.service';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
@@ -73,7 +72,6 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   blocoCopiaOrigem: number | null = null;
   blocoCopiaDestino: number | null = null;
-  ultimoRemovido: { blocoIndex: number; item: BlocoEstudoItemDTO; index: number } | null = null;
   substituicaoAtiva: { blocoIndex: number; itemIndex: number } | null = null;
   linhaEdicaoAtiva: { blocoIndex: number; linhaIndex: number } | null = null;
   revisaoStatusPorMateria = new Map<number, 'VENCIDA' | 'EM_DIA' | 'FUTURA'>();
@@ -101,6 +99,10 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   private readonly pesoPadraoNovaMateriaMinutos = 60;
   private snapshotPlanejamentoSalvo = '';
   private snapshotPlanejamentoInicializado = false;
+  private autoSaveTimerId: ReturnType<typeof setTimeout> | null = null;
+  private autoSaveEmExecucao = false;
+  private autoSavePendente = false;
+  private readonly autoSaveDelayMs = 700;
 
   constructor(
     private fb: FormBuilder,
@@ -108,13 +110,12 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     private materiaService: MateriaService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
-    private salaEstudoService: SalaEstudoService,
-    private message: MessageService
+    private salaEstudoService: SalaEstudoService
   ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      minutosDisponiveis: this.fb.control(0, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+      minutosDisponiveis: this.fb.control(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
       itens: this.fb.array<BlocoItemForm>([])
     });
 
@@ -134,6 +135,10 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.limparImagemEditalAtivo();
+    if (this.autoSaveTimerId != null) {
+      window.clearTimeout(this.autoSaveTimerId);
+      this.autoSaveTimerId = null;
+    }
     if (this.mensagemTimeoutId != null) {
       window.clearTimeout(this.mensagemTimeoutId);
       this.mensagemTimeoutId = null;
@@ -650,9 +655,10 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     const editalId = Number(this.editalFiltroSelecionadoId || 0);
     const existeNoCatalogo = (this.editais || []).some((e) => Number((e as any)?.id || 0) === editalId);
     if (existeNoCatalogo) return;
-
-    const ativoId = Number((this.editalAtivo as any)?.id || 0);
-    this.editalFiltroSelecionadoId = ativoId > 0 ? ativoId : null;
+    // Nao aplica filtro por edital automaticamente no planner.
+    // A lista de materias deve abrir completa e so ser restringida
+    // quando o usuario escolher um edital explicitamente.
+    this.editalFiltroSelecionadoId = null;
   }
 
   private atualizarFiltroMateriasPorEditalSelecionado(): void {
@@ -754,7 +760,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     this.form = this.fb.group({
       minutosDisponiveis: this.fb.control(bloco.minutosDisponiveis ?? 0, {
         nonNullable: true,
-        validators: [Validators.required, Validators.min(1)]
+        validators: [Validators.required, Validators.min(0)]
       }),
       itens: this.fb.array<BlocoItemForm>([])
     });
@@ -827,6 +833,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.form.controls.minutosDisponiveis.setValue(minutos);
       this.form.markAsDirty();
     }
+    this.solicitarAutoSave();
   }
 
   formatMinutosParaHora(minutos: number): string {
@@ -973,6 +980,15 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   }
 
   salvarTodos(): void {
+    this.persistirTodos(false);
+  }
+
+  private persistirTodos(autoSave: boolean): void {
+    if (this.salvando || this.autoSaveEmExecucao) {
+      if (autoSave) this.autoSavePendente = true;
+      return;
+    }
+
     for (let i = 0; i < this.blocos.length; i += 1) {
       if (!this.sincronizarHorasMateriaNoBloco(i)) {
         return;
@@ -980,17 +996,23 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     }
 
     if (this.temBlocosInvalidos) {
-      this.setMensagem('warn', 'Ajuste os blocos antes de salvar.');
+      if (!autoSave) {
+        this.setMensagem('warn', 'Ajuste os blocos antes de salvar.');
+      }
       return;
     }
 
     this.atualizarBlocoAtualComForm();
+    if (autoSave && !this.hasPendenciasSalvar) return;
 
-    const blocosParaSalvar = this.blocos.filter(
-      (bloco) => (bloco.minutosDisponiveis ?? 0) > 0
-    );
-    if (blocosParaSalvar.length === 0) {
-      this.setMensagem('warn', 'Informe as horas de pelo menos um bloco.');
+    const blocosParaSalvar = this.blocos.filter((bloco) => {
+      const minutos = Number(bloco.minutosDisponiveis || 0);
+      const itens = this.obterItensOrdenados(bloco);
+      return minutos > 0 || itens.length > 0;
+    });
+
+    if (!blocosParaSalvar.length) {
+      this.atualizarSnapshotPlanejamentoSalvo();
       return;
     }
 
@@ -1009,9 +1031,17 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     });
 
     this.salvando = true;
+    this.autoSaveEmExecucao = true;
 
     forkJoin(requests)
-      .pipe(finalize(() => (this.salvando = false)))
+      .pipe(finalize(() => {
+        this.salvando = false;
+        this.autoSaveEmExecucao = false;
+        if (this.autoSavePendente) {
+          this.autoSavePendente = false;
+          this.solicitarAutoSave(true);
+        }
+      }))
       .subscribe({
         next: (blocosAtualizados) => {
           blocosAtualizados.forEach((blocoAtualizado) => {
@@ -1023,7 +1053,9 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
           if (blocoAtivo) this.montarForm(blocoAtivo);
 
           this.atualizarSnapshotPlanejamentoSalvo();
-          this.setMensagem('success', 'Blocos salvos.');
+          if (!autoSave) {
+            this.setMensagem('success', 'Blocos salvos.');
+          }
         },
         error: (err) => {
           const detalhe = this.extrairMensagemErro(err) || 'Falha ao salvar blocos.';
@@ -1291,6 +1323,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.form.markAsDirty();
     }
     this.recalcularHorasLiquidasDoBloco(blocoIndex);
+    this.solicitarAutoSave();
   }
 
   removerMateriaBloco(blocoIndex: number, linha: number): void {
@@ -1302,9 +1335,14 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     const removido = { ...itens[linha] };
     itens.splice(linha, 1);
     bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
-    this.ultimoRemovido = { blocoIndex, item: removido, index: linha };
-    this.message.clear('materia-removida');
-    this.message.add({ key: 'materia-removida', severity: 'info', summary: 'Materia removida', sticky: true });
+
+    const itemId = Number(removido.id || 0);
+    if (itemId > 0) {
+      this.blocosService.removerItem(itemId).subscribe({
+        error: () => this.setMensagem('error', 'Nao foi possivel persistir a remocao da materia.')
+      });
+    }
+
     this.atualizarLinhasFixas(blocoIndex);
 
     if (this.abaAtiva === blocoIndex) {
@@ -1312,6 +1350,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.form.markAsDirty();
     }
     this.recalcularHorasLiquidasDoBloco(blocoIndex);
+    this.solicitarAutoSave();
   }
 
   iniciarSubstituicao(blocoIndex: number, itemIndex: number): void {
@@ -1452,30 +1491,6 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
     return '—';
   }
 
-  desfazerRemocao(): void {
-    if (!this.ultimoRemovido) return;
-    const { blocoIndex, item, index } = this.ultimoRemovido;
-    const bloco = this.blocos[blocoIndex];
-    if (!bloco) return;
-
-    const itens = this.obterItensOrdenados(bloco);
-    const jaExiste = itens.some((it) => it.materiaEstudoId === item.materiaEstudoId);
-    if (!jaExiste) {
-      const pos = Math.min(Math.max(index, 0), itens.length);
-      itens.splice(pos, 0, { ...item, ordem: pos + 1 });
-      bloco.itens = itens.map((it, idx) => ({ ...it, ordem: idx + 1 }));
-    }
-    this.atualizarLinhasFixas(blocoIndex);
-
-    this.message.clear('materia-removida');
-    this.ultimoRemovido = null;
-
-    if (this.abaAtiva === blocoIndex) {
-      this.montarForm(bloco);
-      this.form.markAsDirty();
-    }
-  }
-
   private limparAutoCompleteInput(blocoIndex: number, linhaIndex?: number): void {
     const bloco = this.blocos[blocoIndex];
     if (!bloco) return;
@@ -1545,6 +1560,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.montarForm(bloco);
       this.form.markAsDirty();
     }
+    this.solicitarAutoSave();
   }
 
   private normalizarStatus(status?: string | null): string {
@@ -1569,6 +1585,16 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
   limparBloco(blocoIndex: number): void {
     const bloco = this.blocos[blocoIndex];
     if (!bloco) return;
+    const idsRemocao = this.obterItensOrdenados(bloco)
+      .map((item) => Number(item?.id || 0))
+      .filter((id) => id > 0);
+
+    if (idsRemocao.length) {
+      forkJoin(idsRemocao.map((id) => this.blocosService.removerItem(id))).subscribe({
+        error: () => this.setMensagem('error', 'Nao foi possivel limpar todas as materias no servidor.')
+      });
+    }
+
     bloco.minutosDisponiveis = 0;
     bloco.itens = [];
     this.blocoHoraInputs[blocoIndex] = this.formatMinutosParaHora(0);
@@ -1584,6 +1610,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.form.markAsDirty();
     }
     this.recalcularHorasLiquidasDoBloco(blocoIndex);
+    this.solicitarAutoSave();
   }
 
   private resolverMateriaIdNaLinha(
@@ -1742,6 +1769,7 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       this.form.markAsDirty();
     }
     this.recalcularHorasLiquidasDoBloco(destinoIndex);
+    this.solicitarAutoSave();
   }
 
   private sincronizarInputsPorBloco(): void {
@@ -1785,6 +1813,22 @@ export class BlocosEstudoComponent implements OnInit, OnDestroy {
       }
     }
     this.recalcularHorasLiquidasDoBloco(blocoIndex);
+    this.solicitarAutoSave();
+  }
+
+  private solicitarAutoSave(imediato = false): void {
+    if (!this.carregamentoInicialBlocosConcluido || !this.snapshotPlanejamentoInicializado) return;
+
+    if (this.autoSaveTimerId != null) {
+      window.clearTimeout(this.autoSaveTimerId);
+      this.autoSaveTimerId = null;
+    }
+
+    const delay = imediato ? 0 : this.autoSaveDelayMs;
+    this.autoSaveTimerId = window.setTimeout(() => {
+      this.autoSaveTimerId = null;
+      this.persistirTodos(true);
+    }, delay);
   }
 
   abrirPickerHora(event: Event): void {

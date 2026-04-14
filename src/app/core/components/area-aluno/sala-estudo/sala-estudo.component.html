@@ -409,12 +409,8 @@
                             <div class="timer-modos separado" role="tablist" aria-label="Avaliacao da revisao">
                               <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'ERREI'"
                                 (click)="avaliarRevisaoAnotacao('ERREI')">Errei / N&atilde;o lembrei</button>
-                              <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'DIFICIL'"
-                                (click)="avaliarRevisaoAnotacao('DIFICIL')">Lembrei com dificuldade</button>
                               <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'BOM'"
-                                (click)="avaliarRevisaoAnotacao('BOM')">Lembrei bem</button>
-                              <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoSelecionada === 'FACIL'"
-                                (click)="avaliarRevisaoAnotacao('FACIL')">Muito f&aacute;cil</button>
+                                (click)="avaliarRevisaoAnotacao('BOM')">Lembrei</button>
                             </div>
                           </div>
                           <div class="revisao-next">
@@ -591,19 +587,11 @@
                         <div class="timer-modos separado" role="tablist" aria-label="Avaliaï¿½ï¿½o do flashcard">
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'ERREI'"
                             (click)="selecionarAvaliacaoFlashcard('ERREI')">
-                            Errei
-                          </button>
-                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'DIFICIL'"
-                            (click)="selecionarAvaliacaoFlashcard('DIFICIL')">
-                            Dif&iacute;cil
+                            N&atilde;o lembrei
                           </button>
                           <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'BOM'"
                             (click)="selecionarAvaliacaoFlashcard('BOM')">
-                            Bom
-                          </button>
-                          <button type="button" class="btn-modo-timer" [class.ativo]="avaliacaoFlashcardSelecionada === 'FACIL'"
-                            (click)="selecionarAvaliacaoFlashcard('FACIL')">
-                            F&aacute;cil
+                            Lembrei
                           </button>
                         </div>
                       </div>

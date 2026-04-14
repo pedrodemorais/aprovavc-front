@@ -50,7 +50,7 @@
             type="submit"
             form="registrar-livre-form"
             class="timer-action-btn timer-action-btn--primary timer-action-btn--submit btn-primary"
-            [disabled]="enviando">
+            [disabled]="enviando || form.controls.agrupador.invalid">
             {{ enviando ? 'Registrando...' : 'Registrar' }}
           </button>
         </div>
@@ -59,145 +59,116 @@
 
     <form id="registrar-livre-form" class="quick-study-form" [formGroup]="form" (ngSubmit)="registrarEstudo()">
       <label class="field">
-        <span>Estou estudando para (edital opcional)</span>
-        <div class="autocomplete-wrap autocomplete-wrap--trigger">
-          <input
-            type="text"
+        <span>Estou estudando para</span>
+        <div class="autocomplete-wrap autocomplete-wrap--prime">
+          <p-autoComplete
+            inputId="registrar-livre-agrupador"
             formControlName="agrupador"
+            [suggestions]="sugestoesVisiveis.agrupador"
+            [dropdown]="true"
+            dropdownMode="blank"
+            [minLength]="0"
+            [completeOnFocus]="true"
+            [forceSelection]="false"
+            panelStyleClass="autocomplete-dropdown-panel"
+            [inputStyleClass]="agrupadorInvalido ? 'autocomplete-input invalid' : 'autocomplete-input'"
             placeholder="Ex: TRT, OAB, Receita Federal"
-            autocomplete="off"
-            autocapitalize="words"
-            spellcheck="false"
-            (focus)="onCampoFocus('agrupador')"
-            (input)="onCampoInput('agrupador')"
-            (blur)="onCampoBlur()" />
-          <button
-            type="button"
-            class="autocomplete-trigger"
-            aria-label="Ver editais cadastrados"
-            title="Ver editais cadastrados"
-            (mousedown)="toggleTodosAgrupadores($event)">
-            ▾
-          </button>
-          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('agrupador')">
-            <button
-              type="button"
-              class="autocomplete-item"
-              *ngFor="let sugestao of sugestoesVisiveis.agrupador"
-              (mousedown)="selecionarSugestao('agrupador', sugestao)">
-              {{ sugestao }}
-            </button>
-          </div>
+            (completeMethod)="buscarSugestoes('agrupador', $event)"
+            (onFocus)="onCampoFocus('agrupador')"
+            (onSelect)="onCampoSelecionado('agrupador', $event.value)"
+            (onBlur)="onCampoBlur('agrupador')">
+          </p-autoComplete>
         </div>
+        <small class="error" *ngIf="agrupadorInvalido">Edital obrigatorio.</small>
       </label>
 
       <label class="field">
         <span>Materia</span>
-        <div class="autocomplete-wrap autocomplete-wrap--trigger">
-          <input
-            #materiaInput
-            type="text"
+        <div class="autocomplete-wrap autocomplete-wrap--prime">
+          <p-autoComplete
+            inputId="registrar-livre-materia"
             formControlName="materiaNome"
+            [suggestions]="sugestoesVisiveis.materiaNome"
+            [dropdown]="true"
+            dropdownMode="blank"
+            [minLength]="0"
+            [completeOnFocus]="true"
+            [forceSelection]="false"
+            [disabled]="materiaBloqueada"
+            panelStyleClass="autocomplete-dropdown-panel"
+            [inputStyleClass]="materiaInvalida ? 'autocomplete-input invalid' : 'autocomplete-input'"
             placeholder="Ex: Direito Constitucional"
-            autocomplete="off"
-            autocapitalize="words"
-            spellcheck="false"
-            [class.invalid]="materiaInvalida"
-            (focus)="onCampoFocus('materiaNome')"
-            (input)="onCampoInput('materiaNome')"
-            (blur)="onCampoBlur()" />
-          <button
-            type="button"
-            class="autocomplete-trigger"
-            aria-label="Ver materias cadastradas"
-            title="Ver materias cadastradas"
-            (mousedown)="toggleTodosCampo('materiaNome', $event)">
-            ▾
-          </button>
-          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('materiaNome')">
-            <button
-              type="button"
-              class="autocomplete-item"
-              *ngFor="let sugestao of sugestoesVisiveis.materiaNome"
-              (mousedown)="selecionarSugestao('materiaNome', sugestao)">
-              {{ sugestao }}
-            </button>
-          </div>
+            (completeMethod)="buscarSugestoes('materiaNome', $event)"
+            (onFocus)="onCampoFocus('materiaNome')"
+            (onSelect)="onCampoSelecionado('materiaNome', $event.value)"
+            (onBlur)="onCampoBlur('materiaNome')">
+          </p-autoComplete>
         </div>
         <small class="error" *ngIf="materiaInvalida">Materia obrigatoria.</small>
+        <small class="helper-text" *ngIf="feedbackMateria">{{ feedbackMateria }}</small>
       </label>
 
       <label class="field">
         <span>Topico</span>
-        <div class="autocomplete-wrap autocomplete-wrap--trigger">
-          <input
-            type="text"
+        <div class="autocomplete-wrap autocomplete-wrap--prime">
+          <p-autoComplete
+            inputId="registrar-livre-topico"
             formControlName="topicoNome"
+            [suggestions]="sugestoesVisiveis.topicoNome"
+            [dropdown]="true"
+            dropdownMode="blank"
+            [minLength]="0"
+            [completeOnFocus]="true"
+            [forceSelection]="false"
+            [disabled]="topicoBloqueado"
+            panelStyleClass="autocomplete-dropdown-panel"
+            [inputStyleClass]="topicoInvalido ? 'autocomplete-input invalid' : 'autocomplete-input'"
             placeholder="Ex: Controle de constitucionalidade"
-            autocomplete="off"
-            autocapitalize="sentences"
-            spellcheck="false"
-            [class.invalid]="topicoInvalido"
-            (focus)="onCampoFocus('topicoNome')"
-            (input)="onCampoInput('topicoNome')"
-            (blur)="onCampoBlur()" />
-          <button
-            type="button"
-            class="autocomplete-trigger"
-            aria-label="Ver assuntos cadastrados"
-            title="Ver assuntos cadastrados"
-            (mousedown)="toggleTodosCampo('topicoNome', $event)">
-            ▾
-          </button>
-          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('topicoNome')">
-            <button
-              type="button"
-              class="autocomplete-item"
-              *ngFor="let sugestao of sugestoesVisiveis.topicoNome"
-              (mousedown)="selecionarSugestao('topicoNome', sugestao)">
-              {{ sugestao }}
-            </button>
-          </div>
+            (completeMethod)="buscarSugestoes('topicoNome', $event)"
+            (onFocus)="onCampoFocus('topicoNome')"
+            (onSelect)="onCampoSelecionado('topicoNome', $event.value)"
+            (onBlur)="onCampoBlur('topicoNome')">
+          </p-autoComplete>
         </div>
         <small class="error" *ngIf="topicoInvalido">Assunto obrigatorio.</small>
       </label>
 
       <label class="field">
         <span>Subtopico (opcional)</span>
-        <div class="autocomplete-wrap autocomplete-wrap--trigger">
-          <input
-            type="text"
+        <div class="autocomplete-wrap autocomplete-wrap--prime">
+          <p-autoComplete
+            inputId="registrar-livre-subtopico"
             formControlName="subtopicoNome"
+            [suggestions]="sugestoesVisiveis.subtopicoNome"
+            [dropdown]="true"
+            dropdownMode="blank"
+            [minLength]="0"
+            [completeOnFocus]="true"
+            [forceSelection]="false"
+            [disabled]="subtopicoBloqueado"
+            panelStyleClass="autocomplete-dropdown-panel"
+            inputStyleClass="autocomplete-input"
             placeholder="Ex: ADI e ADC"
-            autocomplete="off"
-            autocapitalize="sentences"
-            spellcheck="false"
-            (focus)="onCampoFocus('subtopicoNome')"
-            (input)="onCampoInput('subtopicoNome')"
-            (blur)="onCampoBlur()" />
-          <button
-            type="button"
-            class="autocomplete-trigger"
-            aria-label="Ver subassuntos cadastrados"
-            title="Ver subassuntos cadastrados"
-            (mousedown)="toggleTodosCampo('subtopicoNome', $event)">
-            ▾
-          </button>
-          <div class="autocomplete-dropdown" *ngIf="exibirDropdown('subtopicoNome')">
-            <button
-              type="button"
-              class="autocomplete-item"
-              *ngFor="let sugestao of sugestoesVisiveis.subtopicoNome"
-              (mousedown)="selecionarSugestao('subtopicoNome', sugestao)">
-              {{ sugestao }}
-            </button>
-          </div>
+            (completeMethod)="buscarSugestoes('subtopicoNome', $event)"
+            (onFocus)="onCampoFocus('subtopicoNome')"
+            (onSelect)="onCampoSelecionado('subtopicoNome', $event.value)"
+            (onBlur)="onCampoBlur('subtopicoNome')">
+          </p-autoComplete>
         </div>
       </label>
 
       <div class="field">
         <div class="resumo-header">
           <span>Resumo / anotacao do estudo (opcional)</span>
+     <span
+          class="quick-study-info-icon"
+          role="img"
+          tabindex="0"
+          aria-label="Se preenchido, esse conteudo sera salvo no topico para revisao futura"
+          title="Se preenchido, esse conteudo sera salvo no topico para revisao futura">
+          i
+        </span>
+
           <div class="resumo-acoes">
             <button type="button" class="resumo-acao-btn" (click)="abrirModalFlashcard()" [disabled]="!podeUsarAcoesResumo">
               <i class="pi pi-copy"></i>
@@ -250,18 +221,16 @@
           </p-editor>
         </div>
         <div class="helper-row">
-          <small class="helper-text">
-            Se preenchido, esse conteudo sera salvo no topico para revisao futura
-          </small>
-          <small class="hint">{{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}</small>
-        </div>
-        <label class="finalizar-check">
+                <small class="hint">{{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}</small>
+                 <label class="finalizar-check">
           <input
             type="checkbox"
             formControlName="finalizado"
             [disabled]="finalizandoTopico || !podeUsarAcoesResumo" />
           <span>Marcar estudo como finalizado</span>
         </label>
+        </div>
+       
       </div>
 
       <div class="feedback success" *ngIf="feedbackSucesso">{{ feedbackSucesso }}</div>

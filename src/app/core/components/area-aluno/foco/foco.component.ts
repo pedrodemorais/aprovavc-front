@@ -11,9 +11,10 @@ import { ExecutionQueueService } from 'src/app/core/services/execution-queue.ser
 import { FocoPlanoDiarioService, FocoPremiumMetrics } from 'src/app/core/services/foco-plano-diario.service';
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
 import { AuthService } from 'src/app/site/services/auth.service';
-import { PressaoCognitivaDTO, SalaEstudoService, TreinarFraquezaMateriaDTO } from '../services/sala-estudo.service';
+import { SalaEstudoService, TreinarFraquezaMateriaDTO } from '../services/sala-estudo.service';
 import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { BlocoEstudoDTO } from '../../dto/blocos-estudo.dto';
+import { extrairStatusCanonicoRevisao, StatusRevisaoCanonico } from '../utils/revisao-status.util';
 
 type FiltroFila = 'todos' | 'criticos' | 'emRisco';
 type FiltroPremium = 'CRITICO' | 'EM_RISCO' | 'MANUTENCAO';
@@ -119,7 +120,6 @@ export class FocoComponent implements OnInit, OnDestroy {
   treinoFraquezasLoading = false;
   treinoFraquezasMaterias: Array<{ materiaId: number; materiaNome: string; topicos: number[] }> = [];
   private materiasPlanoExpandidas = new Set<number>();
-  pressaoCognitiva?: PressaoCognitivaDTO;
   private editaisCache: Edital[] = [];
   private editalAtivoImagemUrlResolved: string | null = null;
   private editalAtivoImagemObjectUrl: string | null = null;
@@ -160,7 +160,6 @@ export class FocoComponent implements OnInit, OnDestroy {
     this.carregarPlanoDiario();
     this.carregarStreak();
     this.carregarTreinoFraquezas();
-    this.carregarPressaoCognitiva();
     this.carregarStatusPlanejamentoSemanal();
   }
 
@@ -330,19 +329,19 @@ export class FocoComponent implements OnInit, OnDestroy {
 
   get contadorCriticos(): number {
     if (this.deveZerarContadoresHoje) return 0;
-    const daFila = this.itensHoje.filter((item) => this.getCategoriaNorm(item) === 'CRITICO').length;
+    const daFila = this.itensHoje.filter((item) => this.getItemStatusCanonico(item) === 'ATRASADA').length;
     return daFila > 0 ? daFila : this.acaoHoje.criticos;
   }
 
   get contadorEmRisco(): number {
     if (this.deveZerarContadoresHoje) return 0;
-    const daFila = this.itensHoje.filter((item) => this.getCategoriaNorm(item) === 'EM_RISCO').length;
+    const daFila = this.itensHoje.filter((item) => this.getItemStatusCanonico(item) === 'HOJE').length;
     return daFila > 0 ? daFila : this.acaoHoje.emRisco;
   }
 
   get contadorManutencao(): number {
     if (this.deveZerarContadoresHoje) return 0;
-    const daFila = this.itensHoje.filter((item) => this.getCategoriaNorm(item).includes('MANUT')).length;
+    const daFila = this.itensHoje.filter((item) => this.getItemStatusCanonico(item) === 'FUTURA').length;
     return daFila > 0 ? daFila : this.acaoHoje.manutencaoHoje;
   }
 
@@ -457,7 +456,7 @@ export class FocoComponent implements OnInit, OnDestroy {
   }
 
   get heroNotaPrioridade(): string {
-    return 'Prioridade: score -> data';
+    return 'Prioridade: vencido -> para hoje -> proximo';
   }
 
   get mostrarHeroKpis(): boolean {
@@ -577,29 +576,6 @@ export class FocoComponent implements OnInit, OnDestroy {
     return this.saude.estabilidadeMedia;
   }
 
-  get tendenciaRiscoPercent(): number | null {
-    const serie = this.extrairSeriePressao7d(this.planoDiario);
-    if (serie.length < 2) return null;
-    const atual = serie[serie.length - 1].value;
-    const anterior = serie[serie.length - 2].value;
-    if (anterior <= 0) return atual > 0 ? 100 : 0;
-    return Number((((atual - anterior) / anterior) * 100).toFixed(1));
-  }
-
-  get tendenciaRiscoLabel(): string {
-    const valor = this.tendenciaRiscoPercent;
-    if (valor === null) return '';
-    if (valor > 0) return `+${valor.toFixed(1)}% vs ontem`;
-    return `${valor.toFixed(1)}% vs ontem`;
-  }
-
-  get textoStatusCognitivo(): string {
-    if (!this.dadosConsolidados || this.riscoMedioHoje === null) return 'Em consolidação';
-    if (this.riscoMedioHoje > 0.5) return 'Você está esquecendo rápido. Revise hoje.';
-    if (this.riscoMedioHoje >= 0.3) return 'Parte do conteúdo pode começar a ser esquecido.';
-    return 'Sua memória está estável.';
-  }
-
   get totalRevisoesHoje(): number {
     return this.acaoHoje.total;
   }
@@ -689,20 +665,6 @@ export class FocoComponent implements OnInit, OnDestroy {
 
   get reforcosFeitosHoje(): number {
     return Number(this.progressoHoje?.reforcosResolvidos ?? 0);
-  }
-
-  get pressaoCognitivaPercentual(): number {
-    const valor = Number(this.pressaoCognitiva?.pressaoPercentual ?? 0);
-    if (!Number.isFinite(valor)) return 0;
-    return Math.max(0, Math.min(100, valor));
-  }
-
-  get pressaoCognitivaFaixa(): 'estavel' | 'moderada' | 'risco' | 'alta' {
-    const p = this.pressaoCognitivaPercentual;
-    if (p <= 25) return 'estavel';
-    if (p <= 50) return 'moderada';
-    if (p <= 75) return 'risco';
-    return 'alta';
   }
 
   get progressoPlanoPercent(): number | null {
@@ -893,13 +855,15 @@ export class FocoComponent implements OnInit, OnDestroy {
     type ExecutionItem = {
       topicoId: number;
       materiaId: number | null;
-      priorityValue: number | null;
+      status: StatusRevisaoCanonico;
+      proximaRevisaoTs: number | null;
       apiIndex: number;
     };
     type ExecutionGroup = {
       materiaId: number | null;
       items: ExecutionItem[];
-      maxPriority: number | null;
+      maxStatusRank: number;
+      earliestTs: number | null;
       firstApiIndex: number;
     };
 
@@ -915,7 +879,8 @@ export class FocoComponent implements OnInit, OnDestroy {
       const executionItem: ExecutionItem = {
         topicoId,
         materiaId,
-        priorityValue: this.getExecutionPriority(item),
+        status: this.getItemStatusCanonico(item),
+        proximaRevisaoTs: this.getItemProximaRevisaoTs(item),
         apiIndex
       };
 
@@ -923,7 +888,8 @@ export class FocoComponent implements OnInit, OnDestroy {
         grupos.set(groupKey, {
           materiaId,
           items: [executionItem],
-          maxPriority: executionItem.priorityValue,
+          maxStatusRank: this.getStatusRank(executionItem.status),
+          earliestTs: executionItem.proximaRevisaoTs,
           firstApiIndex: apiIndex
         });
         return;
@@ -932,7 +898,8 @@ export class FocoComponent implements OnInit, OnDestroy {
       const grupo = grupos.get(groupKey)!;
       grupo.items.push(executionItem);
       grupo.firstApiIndex = Math.min(grupo.firstApiIndex, apiIndex);
-      grupo.maxPriority = this.maxExecutionPriority(grupo.maxPriority, executionItem.priorityValue);
+      grupo.maxStatusRank = Math.max(grupo.maxStatusRank, this.getStatusRank(executionItem.status));
+      grupo.earliestTs = this.minTimestamp(grupo.earliestTs, executionItem.proximaRevisaoTs);
     });
 
     return Array.from(grupos.values())
@@ -947,53 +914,56 @@ export class FocoComponent implements OnInit, OnDestroy {
       );
   }
 
-  private getExecutionPriority(item: PressaoFilaItemDTO | null | undefined): number | null {
-    const raw = item as any;
-    const candidatos = [
-      raw?.risk,
-      raw?.risco,
-      raw?.riskScore,
-      raw?.scoreRisco
-    ];
-    for (const candidato of candidatos) {
-      const valor = this.parseNumeric(candidato);
-      if (valor !== null) return valor;
-    }
-
-    const score = this.parseNumeric(raw?.score);
-    if (score === null) return null;
-    return score <= 1 ? 1 - score : -score;
-  }
-
-  private maxExecutionPriority(current: number | null, candidate: number | null): number | null {
-    if (current === null) return candidate;
-    if (candidate === null) return current;
-    return Math.max(current, candidate);
-  }
-
   private compareExecutionGroups(
-    a: { maxPriority: number | null; firstApiIndex: number },
-    b: { maxPriority: number | null; firstApiIndex: number }
+    a: { maxStatusRank: number; earliestTs: number | null; firstApiIndex: number },
+    b: { maxStatusRank: number; earliestTs: number | null; firstApiIndex: number }
   ): number {
-    const prioridade = this.comparePriorityValues(a.maxPriority, b.maxPriority);
+    const prioridade = b.maxStatusRank - a.maxStatusRank;
     if (prioridade !== 0) return prioridade;
+    const data = this.compareNullableTimestamps(a.earliestTs, b.earliestTs);
+    if (data !== 0) return data;
     return a.firstApiIndex - b.firstApiIndex;
   }
 
   private compareExecutionItems(
-    a: { priorityValue: number | null; apiIndex: number },
-    b: { priorityValue: number | null; apiIndex: number }
+    a: { status: StatusRevisaoCanonico; proximaRevisaoTs: number | null; apiIndex: number },
+    b: { status: StatusRevisaoCanonico; proximaRevisaoTs: number | null; apiIndex: number }
   ): number {
-    const prioridade = this.comparePriorityValues(a.priorityValue, b.priorityValue);
+    const prioridade = this.getStatusRank(b.status) - this.getStatusRank(a.status);
     if (prioridade !== 0) return prioridade;
+    const data = this.compareNullableTimestamps(a.proximaRevisaoTs, b.proximaRevisaoTs);
+    if (data !== 0) return data;
     return a.apiIndex - b.apiIndex;
   }
 
-  private comparePriorityValues(a: number | null, b: number | null): number {
+  private getStatusRank(status: StatusRevisaoCanonico): number {
+    if (status === 'ATRASADA') return 3;
+    if (status === 'HOJE') return 2;
+    return 1;
+  }
+
+  private getItemStatusCanonico(item: PressaoFilaItemDTO | null | undefined): StatusRevisaoCanonico {
+    return extrairStatusCanonicoRevisao(item, new Date());
+  }
+
+  private getItemProximaRevisaoTs(item: PressaoFilaItemDTO | null | undefined): number | null {
+    const raw = String((item as any)?.proximaRevisao || (item as any)?.proxRevisao || '').trim();
+    if (!raw) return null;
+    const parsed = this.parseDateLocal(raw);
+    return parsed ? parsed.getTime() : null;
+  }
+
+  private compareNullableTimestamps(a: number | null, b: number | null): number {
     if (a === null && b === null) return 0;
     if (a === null) return 1;
     if (b === null) return -1;
-    return b - a;
+    return a - b;
+  }
+
+  private minTimestamp(a: number | null, b: number | null): number | null {
+    if (a === null) return b;
+    if (b === null) return a;
+    return Math.min(a, b);
   }
 
   iniciarTreinoFraquezas(materiaId: number): void {
@@ -1037,17 +1007,6 @@ export class FocoComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('[FOCO] erro ao carregar treino de fraquezas:', err);
         this.treinoFraquezasMaterias = [];
-      }
-    });
-  }
-
-  private carregarPressaoCognitiva(): void {
-    this.salaEstudoService.getPressaoCognitiva().subscribe({
-      next: (res) => {
-        this.pressaoCognitiva = res;
-      },
-      error: () => {
-        this.pressaoCognitiva = undefined;
       }
     });
   }
@@ -1204,29 +1163,11 @@ export class FocoComponent implements OnInit, OnDestroy {
     return classificacao === 'ESTUDO' ? 'Estudar' : 'Revisar';
   }
 
-  formatScore(score: number | null | undefined): string {
-    if (score === null || score === undefined || Number.isNaN(Number(score))) return '-';
-    return Number(score).toFixed(2);
-  }
-
-  scoreRatio(score: number | null | undefined): number | null {
-    return this.toNullableRatio(score);
-  }
-
-  getItemScore(item: PressaoFilaItemDTO | null | undefined): number | null {
-    const raw = item as any;
-    const candidatos = [
-      raw?.score,
-      raw?.pontuacao,
-      raw?.scorePrioridade,
-      raw?.prioridadeScore,
-      raw?.risco
-    ];
-    for (const candidato of candidatos) {
-      const valor = this.parseNumeric(candidato);
-      if (valor !== null) return valor;
-    }
-    return null;
+  getItemStatusLabel(item: PressaoFilaItemDTO | null | undefined): string {
+    const status = this.getItemStatusCanonico(item);
+    if (status === 'ATRASADA') return 'Vencido';
+    if (status === 'HOJE') return 'Para hoje';
+    return 'Próximo';
   }
 
   formatLocalDate(dateStr: string | null | undefined): string {
@@ -1235,11 +1176,6 @@ export class FocoComponent implements OnInit, OnDestroy {
     if (parts.length !== 3) return String(dateStr);
     const [y, m, d] = parts;
     return `${d}/${m}/${y}`;
-  }
-
-  formatCategoria(categoria: string | null | undefined): string {
-    const itemMock = { categoria };
-    return this.getCategoriaLabel(itemMock);
   }
 
   formatProxima(isoDate: string | null | undefined): string {
@@ -1378,20 +1314,31 @@ export class FocoComponent implements OnInit, OnDestroy {
     this.manutencaoHoje = this.toInt((resumo as any).manutencaoHoje);
 
     this.acaoHoje = {
-      total: this.toInt(resumo?.totalAgora),
-      criticos: this.toInt(resumo?.criticos),
-      emRisco: this.toInt(resumo?.emRisco),
-      manutencaoHoje: this.toInt(resumo?.manutencaoHoje)
+      total: 0,
+      criticos: 0,
+      emRisco: 0,
+      manutencaoHoje: 0
     };
 
     this.saude = {
-      riscoMedio: this.toNullableRatio(resumo?.riscoMedio) ?? 0,
-      retencao14d: this.toNullableRatio(resumo?.retencao14d) ?? 0,
-      estabilidadeMedia: this.toNullableRatio(resumo?.estabilidadeMedia) ?? 0,
-      percentualEmRisco: this.toPercent(resumo?.percentualTopicosEmRisco)
+      riscoMedio: 0,
+      retencao14d: 0,
+      estabilidadeMedia: 0,
+      percentualEmRisco: 0
     };
 
     this.filaHoje = Array.isArray(dto?.filaRevisao) ? dto.filaRevisao : [];
+    this.acaoHoje = {
+      total: this.filaHoje.length,
+      criticos: this.filaHoje.filter((item) => this.getItemStatusCanonico(item) === 'ATRASADA').length,
+      emRisco: this.filaHoje.filter((item) => this.getItemStatusCanonico(item) === 'HOJE').length,
+      manutencaoHoje: this.filaHoje.filter((item) => this.getItemStatusCanonico(item) === 'FUTURA').length
+    };
+    this.criticos = this.acaoHoje.criticos;
+    this.emRisco = this.acaoHoje.emRisco;
+    this.totalHoje = this.acaoHoje.total;
+    this.manutencaoHoje = this.acaoHoje.manutencaoHoje;
+    this.manutencaoVencida = 0;
     this.filaPreventiva = Array.isArray((dto as any)?.filaPreventiva) ? (dto as any).filaPreventiva : [];
     this.preventivosSugeridos = this.toInt((dto as any)?.resumoAcionavel?.preventivosSugeridos ?? this.filaPreventiva.length);
     this.isPreventivoAberto = false;
@@ -1403,7 +1350,13 @@ export class FocoComponent implements OnInit, OnDestroy {
           revisoesTopicoConcluidas: this.toInt((progressoHojeRaw as any)?.revisoesTopicoConcluidas)
         }
       : null;
-    this.premiumMetrics = this.focoPlanoDiarioService.mapearMetricasPremium(dto);
+    this.premiumMetrics = {
+      dadosConsolidados: false,
+      estabilidadeMedia: null,
+      riscoMedio: null,
+      retencao14d: null,
+      percentualTopicosEmRisco: null
+    };
     this.filtroFila = 'todos';
     this.filtrosSelecionados = ['CRITICO', 'EM_RISCO', 'MANUTENCAO'];
     this.prepararDonut(dto);
@@ -1812,16 +1765,15 @@ export class FocoComponent implements OnInit, OnDestroy {
   }
 
   private isCritico(item: any): boolean {
-    return this.getCategoriaNorm(item).includes('CRITICO');
+    return this.getItemStatusCanonico(item) === 'ATRASADA';
   }
 
   private isEmRisco(item: any): boolean {
-    const c = this.getCategoriaNorm(item);
-    return c.includes('RISCO') && !c.includes('CRITICO');
+    return this.getItemStatusCanonico(item) === 'HOJE';
   }
 
   private isManutencao(item: any): boolean {
-    return this.getCategoriaNorm(item).includes('MANUT');
+    return this.getItemStatusCanonico(item) === 'FUTURA';
   }
 
   private isFraqueza(item: any): boolean {
@@ -1839,10 +1791,10 @@ export class FocoComponent implements OnInit, OnDestroy {
   }
 
   getCategoriaLabel(item: any): string {
-    if (this.isCritico(item)) return 'Crítico';
-    if (this.isEmRisco(item)) return 'Em risco';
-    if (this.getCategoriaNorm(item).includes('MANUTENCAO')) return 'Manutenção';
-    return '—';
+    if (this.isCritico(item)) return 'Vencido';
+    if (this.isEmRisco(item)) return 'Para hoje';
+    if (this.isManutencao(item)) return 'Próximo';
+    return 'Próximo';
   }
 
   getClassificacaoBadgeClass(item: any): string {
@@ -1975,38 +1927,12 @@ export class FocoComponent implements OnInit, OnDestroy {
       .slice(-7);
   }
 
-  private get mediaDosScoresFila(): number | null {
-    const scores = this.itensHoje
-      .map((item) => this.toNullableRatio(item?.score))
-      .filter((item): item is number => item !== null);
-    if (!scores.length) return null;
-    const media = scores.reduce((acc, valor) => acc + valor, 0) / scores.length;
-    return this.clamp01(media);
-  }
-
   private toNullableRatio(value: unknown): number | null {
     const n = Number(value);
     if (!Number.isFinite(n)) return null;
     if (n <= 1) return this.clamp01(n);
     if (n <= 100) return this.clamp01(n / 100);
     return null;
-  }
-
-  private parseNumeric(value: unknown): number | null {
-    if (value === null || value === undefined) return null;
-    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-    const text = String(value).trim();
-    if (!text) return null;
-    const normalized = text.replace(',', '.');
-    const n = Number(normalized);
-    return Number.isFinite(n) ? n : null;
-  }
-
-  private toPercent(value: unknown): number {
-    const n = Number(value);
-    if (!Number.isFinite(n)) return 0;
-    if (n <= 1) return Math.round(this.clamp01(n) * 100);
-    return Math.max(0, Math.min(100, Math.round(n)));
   }
 
   private clamp01(value: number): number {

@@ -11,7 +11,7 @@ import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 
 export interface FlashcardRevisaoRespostaRequest {
   flashcardId: number;
-  avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL';
+  avaliacao: 'ERREI' | 'BOM';
 }
 
 export interface TreinarFraquezaMateriaDTO {
@@ -20,15 +20,9 @@ export interface TreinarFraquezaMateriaDTO {
   topicos?: Array<number | { topicoId?: number | null }>;
 }
 
-export interface PressaoCognitivaDTO {
-  pressao: number;
-  pressaoPercentual: number;
-  totalTopicos: number;
-}
-
 export interface TopicoRevisaoRespostaRequest {
   topicoId: number;
-  avaliacao: 'ERREI' | 'DIFICIL' | 'BOM' | 'FACIL';
+  avaliacao: 'ERREI' | 'BOM';
 }
 
 export interface EstudoTopicoRequest {
@@ -251,16 +245,9 @@ export class SalaEstudoService {
   private topicosApiUrl = `${environment.apiUrl}/topicos`;
   private readonly usarRegrasBackV2 = !!environment?.featureFlags?.backendBusinessRulesV2;
   private readonly cacheTopicosFinalizadosTtlMs = 15000;
-  private readonly cacheRevisoesDashboardTtlMs = 15000;
   private topicosFinalizadosCache: TopicoFinalizadoDTO[] | null = null;
   private topicosFinalizadosCacheTs = 0;
   private topicosFinalizadosInFlight$: Observable<TopicoFinalizadoDTO[]> | null = null;
-  private revisoesDashboardCache: RevisaoDashboardItem[] | null = null;
-  private revisoesDashboardCacheTs = 0;
-  private revisoesDashboardInFlight$: Observable<RevisaoDashboardItem[]> | null = null;
-  private revisoesDashboardUnificadoCache: RevisaoDashboardResponseDTO | null = null;
-  private revisoesDashboardUnificadoCacheTs = 0;
-  private revisoesDashboardUnificadoInFlight$: Observable<RevisaoDashboardResponseDTO> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -366,7 +353,7 @@ export class SalaEstudoService {
 
   /**
    * Lista apenas os flashcards que estao "vencidos" / para hoje,
-   * de acordo com a tabela de revisao (1, 3, 7, 14, 30...).
+   * de acordo com a tabela de revisao (1, 3, 7, 15, 30...).
    *
    * GET /api/sala-estudo/flashcards/revisao?topicoId=123
    */
@@ -382,13 +369,9 @@ export class SalaEstudoService {
     return this.http.get<TreinarFraquezaMateriaDTO[]>(`${this.apiUrl}/treinar-fraquezas`, { params });
   }
 
-  getPressaoCognitiva(): Observable<PressaoCognitivaDTO> {
-    return this.http.get<PressaoCognitivaDTO>(`${this.apiUrl}/pressao-cognitiva`);
-  }
-
   /**
    * Registra a resposta do aluno para um flashcard em revisao:
-   * ERREI / DIFICIL / BOM / FACIL
+   * ERREI / BOM
    *
    * POST /api/sala-estudo/flashcards/revisao/responder
    */
@@ -585,19 +568,6 @@ export class SalaEstudoService {
   }
 
   listarRevisoesDashboard(): Observable<RevisaoDashboardItem[]> {
-    const agora = Date.now();
-    const cacheValido =
-      !!this.revisoesDashboardCache &&
-      (agora - this.revisoesDashboardCacheTs) < this.cacheRevisoesDashboardTtlMs;
-
-    if (cacheValido) {
-      return of(this.revisoesDashboardCache as RevisaoDashboardItem[]);
-    }
-
-    if (this.revisoesDashboardInFlight$) {
-      return this.revisoesDashboardInFlight$;
-    }
-
     const url = `${this.apiUrl}/revisoes/dashboard`;
     const params = new HttpParams().set('_t', String(Date.now()));
     const headers = new HttpHeaders({
@@ -606,18 +576,7 @@ export class SalaEstudoService {
       Expires: '0'
     });
 
-    this.revisoesDashboardInFlight$ = this.http.get<RevisaoDashboardItem[]>(url, { params, headers }).pipe(
-      tap((itens) => {
-        this.revisoesDashboardCache = itens || [];
-        this.revisoesDashboardCacheTs = Date.now();
-      }),
-      finalize(() => {
-        this.revisoesDashboardInFlight$ = null;
-      }),
-      shareReplay(1)
-    );
-
-    return this.revisoesDashboardInFlight$;
+    return this.http.get<RevisaoDashboardItem[]>(url, { params, headers });
   }
 
   listarRevisoesDashboardUnificado(params?: {
@@ -629,19 +588,6 @@ export class SalaEstudoService {
     page?: number;
     size?: number;
   }): Observable<RevisaoDashboardResponseDTO> {
-    const agora = Date.now();
-    const cacheValido =
-      !!this.revisoesDashboardUnificadoCache &&
-      (agora - this.revisoesDashboardUnificadoCacheTs) < this.cacheRevisoesDashboardTtlMs;
-
-    if (cacheValido && !params) {
-      return of(this.revisoesDashboardUnificadoCache as RevisaoDashboardResponseDTO);
-    }
-
-    if (this.revisoesDashboardUnificadoInFlight$ && !params) {
-      return this.revisoesDashboardUnificadoInFlight$;
-    }
-
     let httpParams = new HttpParams().set('_t', String(Date.now()));
     if (params?.alunoId) httpParams = httpParams.set('alunoId', String(params.alunoId));
     if (params?.materiaId) httpParams = httpParams.set('materiaId', String(params.materiaId));
@@ -657,38 +603,14 @@ export class SalaEstudoService {
       Expires: '0'
     });
 
-    const req$ = this.http.get<RevisaoDashboardResponseDTO>(`${environment.apiUrl}/revisoes/dashboard`, {
+    return this.http.get<RevisaoDashboardResponseDTO>(`${environment.apiUrl}/revisoes/dashboard`, {
       params: httpParams,
       headers
-    }).pipe(
-      tap((resp) => {
-        if (!params) {
-          this.revisoesDashboardUnificadoCache = resp || null;
-          this.revisoesDashboardUnificadoCacheTs = Date.now();
-        }
-      }),
-      finalize(() => {
-        if (!params) {
-          this.revisoesDashboardUnificadoInFlight$ = null;
-        }
-      }),
-      shareReplay(1)
-    );
-
-    if (!params) {
-      this.revisoesDashboardUnificadoInFlight$ = req$;
-    }
-
-    return req$;
+    });
   }
 
   limparCacheRevisoesDashboard(): void {
-    this.revisoesDashboardCache = null;
-    this.revisoesDashboardCacheTs = 0;
-    this.revisoesDashboardInFlight$ = null;
-    this.revisoesDashboardUnificadoCache = null;
-    this.revisoesDashboardUnificadoCacheTs = 0;
-    this.revisoesDashboardUnificadoInFlight$ = null;
+    // Sem cache local para revisoes: mantido por compatibilidade com chamadas existentes.
   }
 
 

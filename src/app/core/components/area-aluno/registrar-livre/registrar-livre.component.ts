@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
@@ -54,8 +54,6 @@ type QuillEditorLike = {
   styleUrls: ['./registrar-livre.component.css']
 })
 export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('materiaInput') materiaInput?: ElementRef<HTMLInputElement>;
-
   private readonly historicoKey = 'registrar-livre:historico-v1';
   private readonly limiteSugestoes = 8;
   private readonly limiteSugestoesAgrupador = 20;
@@ -82,12 +80,13 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   private timerBaseMs: number | null = null;
   private pomodoroFaseInicioMs: number | null = null;
   private preencherResumoSub?: Subscription;
+  private bloqueioCamposSub?: Subscription;
   private resumoLookupSeq = 0;
   private contextoResumoAutoPreenchido = '';
 
   readonly maxCaracteres = 1200;
   readonly form = this.fb.group({
-    agrupador: [''],
+    agrupador: ['', [Validators.required]],
     materiaNome: ['', [Validators.required]],
     topicoNome: ['', [Validators.required]],
     subtopicoNome: [''],
@@ -100,6 +99,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   finalizandoTopico = false;
   feedbackErro = '';
   feedbackSucesso = '';
+  feedbackMateria = '';
   estruturaCriada: EstruturaCriada | null = null;
   observacaoHtml = '';
   caracteresUsados = 0;
@@ -167,9 +167,6 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     simuladoId: number | null;
     tentativaId: number | null;
   } = this.novoFormCaderno();
-  campoAutocompleteAberto: CampoAutocomplete | null = null;
-  mostrarTodosNoCampo: CampoAutocomplete | null = null;
-
   sugestoesVisiveis: Record<CampoAutocomplete, string[]> = {
     agrupador: [],
     materiaNome: [],
@@ -190,23 +187,44 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.carregarDadosAutocomplete();
     this.carregarEditaisAgrupador();
+    this.iniciarBloqueioCamposDependentes();
     this.iniciarPreenchimentoResumoExistente();
-    setTimeout(() => this.materiaInput?.nativeElement.focus(), 0);
+    setTimeout(() => this.focarCampoAgrupador(), 0);
   }
 
   ngOnDestroy(): void {
+    this.bloqueioCamposSub?.unsubscribe();
     this.preencherResumoSub?.unsubscribe();
     this.pararIntervaloTimer();
   }
 
   get materiaInvalida(): boolean {
+    if (this.materiaBloqueada) return false;
     const control = this.form.controls.materiaNome;
     return control.invalid && (control.touched || control.dirty);
   }
 
+  get agrupadorInvalido(): boolean {
+    const control = this.form.controls.agrupador;
+    return control.invalid && (control.touched || control.dirty);
+  }
+
   get topicoInvalido(): boolean {
+    if (this.topicoBloqueado) return false;
     const control = this.form.controls.topicoNome;
     return control.invalid && (control.touched || control.dirty);
+  }
+
+  get materiaBloqueada(): boolean {
+    return !String(this.form.controls.agrupador.value || '').trim();
+  }
+
+  get topicoBloqueado(): boolean {
+    return !String(this.form.controls.materiaNome.value || '').trim();
+  }
+
+  get subtopicoBloqueado(): boolean {
+    return !String(this.form.controls.topicoNome.value || '').trim();
   }
 
   get tempoInvalido(): boolean {
@@ -1048,70 +1066,105 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   }
 
   onCampoFocus(campo: CampoAutocomplete): void {
-    this.campoAutocompleteAberto = campo;
-    this.mostrarTodosNoCampo = null;
-    this.atualizarSugestoes(campo);
-  }
-
-  onCampoInput(campo: CampoAutocomplete): void {
-    if (campo === 'topicoNome') {
-      this.limparDependenciasAoTrocarTopico();
+    if (!this.podeProsseguirNoCampo(campo)) {
+      return;
     }
-    this.campoAutocompleteAberto = campo;
-    this.mostrarTodosNoCampo = null;
-    this.atualizarSugestoes(campo);
+    this.atualizarSugestoes(campo, '');
   }
 
-  onCampoBlur(): void {
+  onCampoBlur(campo?: CampoAutocomplete): void {
     setTimeout(() => {
-      this.campoAutocompleteAberto = null;
-      this.mostrarTodosNoCampo = null;
+      if (!campo || campo === 'materiaNome') {
+        this.normalizarMateriaDigitada();
+      }
+
+      if (campo === 'agrupador' && this.materiaBloqueada) {
+        this.limparDependenciasAoTrocarAgrupador();
+      }
+
+      if (campo === 'materiaNome' && this.topicoBloqueado) {
+        this.limparDependenciasAoTrocarMateria();
+      }
+
+      if (campo === 'topicoNome' && this.subtopicoBloqueado) {
+        this.limparDependenciasAoTrocarTopico();
+      }
     }, 120);
   }
 
-  selecionarSugestao(campo: CampoAutocomplete, valor: string): void {
+  buscarSugestoes(campo: CampoAutocomplete, event: { query?: string } | null | undefined): void {
+    if (!this.podeProsseguirNoCampo(campo)) {
+      this.sugestoesVisiveis[campo] = [];
+      return;
+    }
+
+    if (campo === 'materiaNome') {
+      this.feedbackMateria = '';
+    }
+    if (campo === 'topicoNome') {
+      this.limparDependenciasAoTrocarTopico();
+    }
+
+    this.atualizarSugestoes(campo, String(event?.query || ''));
+  }
+
+  onCampoSelecionado(campo: CampoAutocomplete, valor: string): void {
     this.form.controls[campo].setValue(valor);
     this.form.controls[campo].markAsDirty();
 
     if (campo === 'materiaNome') {
-      this.form.controls.topicoNome.setValue('');
-      this.form.controls.subtopicoNome.setValue('');
-      this.atualizarSugestoes('topicoNome');
-      this.atualizarSugestoes('subtopicoNome');
+      this.limparDependenciasAoTrocarMateria();
     } else if (campo === 'agrupador') {
-      this.form.controls.materiaNome.setValue('');
-      this.form.controls.topicoNome.setValue('');
-      this.form.controls.subtopicoNome.setValue('');
-      this.atualizarSugestoes('materiaNome');
-      this.atualizarSugestoes('topicoNome');
-      this.atualizarSugestoes('subtopicoNome');
+      this.limparDependenciasAoTrocarAgrupador();
     } else if (campo === 'topicoNome') {
-      this.form.controls.subtopicoNome.setValue('');
-      this.atualizarSugestoes('subtopicoNome');
+      this.limparDependenciasAoTrocarTopico();
+    }
+  }
+
+  private podeProsseguirNoCampo(campo: CampoAutocomplete): boolean {
+    if (campo === 'agrupador') return true;
+
+    if (campo === 'materiaNome') {
+      return this.garantirCampoPreenchido('agrupador');
     }
 
-    this.campoAutocompleteAberto = null;
-    this.mostrarTodosNoCampo = null;
+    if (campo === 'topicoNome') {
+      return this.garantirCampoPreenchido('materiaNome');
+    }
+
+    return this.garantirCampoPreenchido('topicoNome');
   }
 
-  exibirDropdown(campo: CampoAutocomplete): boolean {
-    return this.campoAutocompleteAberto === campo && this.sugestoesVisiveis[campo].length > 0;
+  private garantirCampoPreenchido(campo: 'agrupador' | 'materiaNome' | 'topicoNome'): boolean {
+    const control = this.form.controls[campo];
+    const valor = String(control.value || '').trim();
+    if (valor) return true;
+
+    control.markAsTouched();
+    setTimeout(() => this.focarCampo(campo), 0);
+    return false;
   }
 
-  toggleTodosAgrupadores(event: Event): void {
-    this.toggleMostrarTodos('agrupador', event);
+  private focarCampoAgrupador(): void {
+    this.focarCampo('agrupador');
   }
 
-  toggleTodosCampo(campo: CampoAutocomplete, event: Event): void {
-    this.toggleMostrarTodos(campo, event);
+  private focarCampo(campo: 'agrupador' | 'materiaNome' | 'topicoNome'): void {
+    const input = document.getElementById(`registrar-livre-${campo === 'agrupador' ? 'agrupador' : campo.replace('Nome', '')}`) as HTMLInputElement | null;
+    input?.focus();
   }
 
-  private toggleMostrarTodos(campo: CampoAutocomplete, event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.campoAutocompleteAberto = campo;
-    this.mostrarTodosNoCampo = campo;
-    this.atualizarSugestoes(campo);
+  private limparDependenciasAoTrocarAgrupador(): void {
+    this.form.controls.materiaNome.setValue('');
+    this.limparDependenciasAoTrocarMateria();
+    this.atualizarSugestoes('materiaNome');
+  }
+
+  private limparDependenciasAoTrocarMateria(): void {
+    this.feedbackMateria = '';
+    this.form.controls.topicoNome.setValue('');
+    this.limparDependenciasAoTrocarTopico();
+    this.atualizarSugestoes('topicoNome');
   }
 
   private limparDependenciasAoTrocarTopico(): void {
@@ -1143,14 +1196,23 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   registrarEstudo(): void {
     this.feedbackErro = '';
     this.feedbackSucesso = '';
+    this.feedbackMateria = '';
     this.estruturaCriada = null;
 
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (!this.podeProsseguirNoCampo('materiaNome')) {
       return;
     }
 
-    const materiaNome = String(this.form.value.materiaNome || '').trim();
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      if (this.form.controls.agrupador.invalid) {
+        setTimeout(() => this.focarCampoAgrupador(), 0);
+      }
+      return;
+    }
+
+    const materiaNomeNormalizado = this.normalizarMateriaDigitada();
+    const materiaNome = String(materiaNomeNormalizado || this.form.value.materiaNome || '').trim();
     const topicoNome = String(this.form.value.topicoNome || '').trim();
     const subtopicoNome = String(this.form.value.subtopicoNome || '').trim();
     const agrupador = String(this.form.value.agrupador || '').trim();
@@ -1162,6 +1224,9 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
     if (!materiaNome || !topicoNome || tempoMinutos <= 0) {
       this.form.markAllAsTouched();
+      if (this.form.controls.agrupador.invalid) {
+        setTimeout(() => this.focarCampoAgrupador(), 0);
+      }
       return;
     }
 
@@ -1198,7 +1263,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
             topicoNome,
             subtopicoNome: subtopicoNome || undefined
           };
-          this.limparMantendoMateria(materiaNome);
+          this.limparMantendoMateria();
         },
         error: (error: HttpErrorResponse) => {
           this.feedbackErro = this.getErrorMessage(error);
@@ -1294,10 +1359,10 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  private limparMantendoMateria(materiaNome: string): void {
+  private limparMantendoMateria(): void {
     this.form.reset({
       agrupador: '',
-      materiaNome,
+      materiaNome: '',
       topicoNome: '',
       subtopicoNome: '',
       tempoMinutos: 30,
@@ -1312,9 +1377,60 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.atualizarContadorCaracteres(0);
     this.form.markAsPristine();
     this.form.markAsUntouched();
+    this.sincronizarBloqueioCamposDependentes();
     this.atualizarSugestoes('materiaNome');
     this.atualizarSugestoes('topicoNome');
     this.atualizarSugestoes('subtopicoNome');
+  }
+
+  private iniciarBloqueioCamposDependentes(): void {
+    this.bloqueioCamposSub?.unsubscribe();
+    this.bloqueioCamposSub = this.form.valueChanges.pipe(
+      map(() => {
+        const agrupador = this.normalizarTexto(String(this.form.controls.agrupador.value || ''));
+        const materia = this.normalizarTexto(String(this.form.controls.materiaNome.value || ''));
+        const topico = this.normalizarTexto(String(this.form.controls.topicoNome.value || ''));
+        return `${agrupador}|${materia}|${topico}`;
+      }),
+      distinctUntilChanged()
+    ).subscribe(() => this.sincronizarBloqueioCamposDependentes());
+
+    this.sincronizarBloqueioCamposDependentes();
+  }
+
+  private sincronizarBloqueioCamposDependentes(): void {
+    const agrupador = this.normalizarTexto(String(this.form.controls.agrupador.value || ''));
+    const materia = this.normalizarTexto(String(this.form.controls.materiaNome.value || ''));
+    const topico = this.normalizarTexto(String(this.form.controls.topicoNome.value || ''));
+
+    if (!agrupador) {
+      this.form.controls.materiaNome.setValue('', { emitEvent: false });
+      this.form.controls.topicoNome.setValue('', { emitEvent: false });
+      this.form.controls.subtopicoNome.setValue('', { emitEvent: false });
+    } else if (!materia) {
+      this.form.controls.topicoNome.setValue('', { emitEvent: false });
+      this.form.controls.subtopicoNome.setValue('', { emitEvent: false });
+    } else if (!topico) {
+      this.form.controls.subtopicoNome.setValue('', { emitEvent: false });
+    }
+
+    this.alternarEstadoControle(this.form.controls.materiaNome, !!agrupador);
+    this.alternarEstadoControle(this.form.controls.topicoNome, !!agrupador && !!materia);
+    this.alternarEstadoControle(this.form.controls.subtopicoNome, !!agrupador && !!materia && !!topico);
+  }
+
+  private alternarEstadoControle(
+    control: { enabled: boolean; disabled: boolean; enable: (opts?: { emitEvent?: boolean }) => void; disable: (opts?: { emitEvent?: boolean }) => void },
+    habilitado: boolean
+  ): void {
+    if (habilitado && control.disabled) {
+      control.enable({ emitEvent: false });
+      return;
+    }
+
+    if (!habilitado && control.enabled) {
+      control.disable({ emitEvent: false });
+    }
   }
 
   private iniciarPreenchimentoResumoExistente(): void {
@@ -1375,8 +1491,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   }
 
   private carregarDadosAutocomplete(): void {
-    const historico = this.lerHistorico();
-    this.agrupadoresHistorico = historico.agrupadores;
+    this.limparHistoricoAutocompleteLocal();
+    this.agrupadoresHistorico = [];
 
     this.salaEstudoService.listarMateriasParaEstudo('todas').subscribe({
       next: (materias) => {
@@ -1385,8 +1501,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
         this.atualizarSugestoesIniciais();
       },
       error: () => {
-        this.usandoFallbackLocal = true;
-        this.aplicarFallbackLocal(historico);
+        this.usandoFallbackLocal = false;
+        this.aplicarFallbackLocal({ agrupadores: [], materias: [], topicos: [], subtopicos: [] });
         this.atualizarSugestoesIniciais();
       }
     });
@@ -1397,8 +1513,10 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       next: (editais) => {
         const lista = editais || [];
         this.hidratarCatalogoEditais(lista);
-        this.aplicarEditalPadraoMaisRecente(lista);
         this.atualizarSugestoes('agrupador');
+        this.atualizarSugestoes('materiaNome');
+        this.atualizarSugestoes('topicoNome');
+        this.atualizarSugestoes('subtopicoNome');
       },
       error: () => {
         this.editalService.listar().subscribe({
@@ -1414,8 +1532,10 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
             this.topicosPorEditalMateria.clear();
             this.subtopicosPorEditalMateria.clear();
             this.subtopicosPorEditalMateriaTopico.clear();
-            this.aplicarEditalPadraoMaisRecente(lista);
             this.atualizarSugestoes('agrupador');
+            this.atualizarSugestoes('materiaNome');
+            this.atualizarSugestoes('topicoNome');
+            this.atualizarSugestoes('subtopicoNome');
           },
           error: () => {
             this.agrupadoresCatalogo = [];
@@ -1469,59 +1589,6 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
     this.agrupadoresCatalogo = this.unicosOrdenados(nomes);
     this.editaisCatalogo = catalogo;
-  }
-
-  private aplicarEditalPadraoMaisRecente(editais: any[]): void {
-    const ultimo = this.obterUltimoEditalCadastrado(editais);
-    if (!ultimo) {
-      this.form.controls.agrupador.setValue('');
-      return;
-    }
-
-    const nome = this.normalizarTexto(String(ultimo?.nome || ''));
-    if (!nome) {
-      this.form.controls.agrupador.setValue('');
-      return;
-    }
-
-    this.form.controls.agrupador.setValue(nome);
-    this.atualizarSugestoes('materiaNome');
-    this.atualizarSugestoes('topicoNome');
-    this.atualizarSugestoes('subtopicoNome');
-  }
-
-  private obterUltimoEditalCadastrado(editais: any[]): any | null {
-    const lista = Array.isArray(editais) ? editais.filter((e) => !!this.normalizarTexto(String(e?.nome || ''))) : [];
-    if (!lista.length) {
-      return null;
-    }
-
-    const scoreData = (edital: any): number => {
-      const raw =
-        edital?.dataCriacao ??
-        edital?.createdAt ??
-        edital?.criadoEm ??
-        edital?.created_at ??
-        null;
-      if (!raw) return Number.NEGATIVE_INFINITY;
-      const ts = Date.parse(String(raw));
-      return Number.isFinite(ts) ? ts : Number.NEGATIVE_INFINITY;
-    };
-
-    const scoreId = (edital: any): number => {
-      const id = Number(edital?.id || 0);
-      return Number.isFinite(id) ? id : 0;
-    };
-
-    return lista.reduce((maisRecente, atual) => {
-      if (!maisRecente) return atual;
-      const dataAtual = scoreData(atual);
-      const dataMaisRecente = scoreData(maisRecente);
-
-      if (dataAtual > dataMaisRecente) return atual;
-      if (dataAtual < dataMaisRecente) return maisRecente;
-      return scoreId(atual) > scoreId(maisRecente) ? atual : maisRecente;
-    }, null as any | null);
   }
 
   private aplicarCatalogoDaApi(materias: MateriaTopicosDTO[]): void {
@@ -1611,20 +1678,43 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.atualizarSugestoes('subtopicoNome');
   }
 
-  private atualizarSugestoes(campo: CampoAutocomplete): void {
-    const valorDigitado = this.normalizarTexto(String(this.form.controls[campo].value || ''));
+  private atualizarSugestoes(campo: CampoAutocomplete, query?: string): void {
+    const valorDigitado = this.normalizarTexto(
+      query != null ? String(query) : String(this.form.controls[campo].value || '')
+    );
     const base = this.obterBaseSugestoes(campo);
     const limite = campo === 'agrupador' ? this.limiteSugestoesAgrupador : this.limiteSugestoes;
 
-    const lista = this.mostrarTodosNoCampo === campo
+    const lista = !valorDigitado
       ? base.slice(0, limite)
-      : (!valorDigitado
-          ? base.slice(0, limite)
-          : base
-          .filter((item) => item.toLowerCase().includes(valorDigitado.toLowerCase()))
-          .slice(0, limite));
+      : base
+      .filter((item) => item.toLowerCase().includes(valorDigitado.toLowerCase()))
+      .slice(0, limite);
 
     this.sugestoesVisiveis[campo] = lista;
+  }
+
+  private normalizarMateriaDigitada(): string {
+    const atual = this.normalizarTexto(String(this.form.value.materiaNome || ''));
+    if (!atual) {
+      this.feedbackMateria = '';
+      return '';
+    }
+
+    const equivalente = this.encontrarMateriaEquivalente(atual);
+    if (!equivalente) {
+      return atual;
+    }
+
+    if (equivalente !== atual) {
+      this.form.controls.materiaNome.setValue(equivalente, { emitEvent: false });
+      this.feedbackMateria = `Materia existente detectada. Usando a cadastrada: ${equivalente}.`;
+      this.atualizarSugestoes('materiaNome');
+      this.atualizarSugestoes('topicoNome');
+      this.atualizarSugestoes('subtopicoNome');
+    }
+
+    return equivalente;
   }
 
   private obterBaseSugestoes(campo: CampoAutocomplete): string[] {
@@ -1716,7 +1806,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     const base = editalSelecionado
       ? (this.materiasPorEdital.get(editalSelecionado.key) || [])
       : this.materiasCatalogo;
-    const encontrada = base.find((m) => this.toKey(m) === this.toKey(atual));
+    const encontrada = this.encontrarMateriaEquivalente(atual, base);
     return encontrada || null;
   }
 
@@ -1745,18 +1835,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     topicoNome: string;
     subtopicoNome?: string;
   }): void {
-    const atual = this.lerHistorico();
-    const proximo: HistoricoRegistroLivre = {
-      agrupadores: this.upsertHistorico(atual.agrupadores, payload.agrupador),
-      materias: this.upsertHistorico(atual.materias, payload.materiaNome),
-      topicos: this.upsertHistorico(atual.topicos, payload.topicoNome),
-      subtopicos: this.upsertHistorico(atual.subtopicos, payload.subtopicoNome)
-    };
-    localStorage.setItem(this.historicoKey, JSON.stringify(proximo));
-    this.agrupadoresHistorico = proximo.agrupadores;
+    this.agrupadoresHistorico = this.upsertHistorico(this.agrupadoresHistorico, payload.agrupador);
 
-    // Atualiza o autocomplete imediatamente, mesmo com API online,
-    // para evitar precisar recarregar a tela.
     this.materiasCatalogo = this.upsertHistorico(this.materiasCatalogo, payload.materiaNome);
     this.topicosCatalogo = this.upsertHistorico(this.topicosCatalogo, payload.topicoNome);
     this.subtopicosCatalogo = this.upsertHistorico(this.subtopicosCatalogo, payload.subtopicoNome);
@@ -1788,20 +1868,14 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   }
 
   private lerHistorico(): HistoricoRegistroLivre {
+    return { agrupadores: [], materias: [], topicos: [], subtopicos: [] };
+  }
+
+  private limparHistoricoAutocompleteLocal(): void {
     try {
-      const raw = localStorage.getItem(this.historicoKey);
-      if (!raw) {
-        return { agrupadores: [], materias: [], topicos: [], subtopicos: [] };
-      }
-      const parsed = JSON.parse(raw) as Partial<HistoricoRegistroLivre>;
-      return {
-        agrupadores: this.sanitizarLista(parsed?.agrupadores),
-        materias: this.sanitizarLista(parsed?.materias),
-        topicos: this.sanitizarLista(parsed?.topicos),
-        subtopicos: this.sanitizarLista(parsed?.subtopicos)
-      };
+      localStorage.removeItem(this.historicoKey);
     } catch {
-      return { agrupadores: [], materias: [], topicos: [], subtopicos: [] };
+      // Ignora indisponibilidade do storage.
     }
   }
 
@@ -1835,6 +1909,40 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
   private toKey(valor: string): string {
     return this.normalizarTexto(valor).toLocaleLowerCase('pt-BR');
+  }
+
+  private toMateriaKey(valor: string): string {
+    const tokens = this.normalizarTexto(valor)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase('pt-BR')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter((token) => !!token)
+      .map((token) => this.expandirTokenMateria(token));
+
+    return tokens.join(' ').trim();
+  }
+
+  private expandirTokenMateria(token: string): string {
+    const mapa: Record<string, string> = {
+      dir: 'direito',
+      adm: 'administrativo',
+      trib: 'tributario',
+      const: 'constitucional'
+    };
+    return mapa[token] || token;
+  }
+
+  private encontrarMateriaEquivalente(valor: string, base?: string[]): string | null {
+    const nome = this.normalizarTexto(valor);
+    if (!nome) return null;
+
+    const lista = Array.isArray(base) ? base : this.materiasCatalogo;
+    const chaveMateria = this.toMateriaKey(nome);
+    if (!chaveMateria) return null;
+
+    return lista.find((item) => this.toMateriaKey(item) === chaveMateria) || null;
   }
 
   private getMateriaIdPorNome(nome: string): number | undefined {

@@ -1,13 +1,4 @@
 <div class="page">
-  <p-toast key="materia-removida" position="bottom-center">
-    <ng-template let-message pTemplate="message">
-      <div class="toast-undo">
-        <span class="toast-undo-text">{{ message?.summary }}</span>
-        <button type="button" class="toast-undo-action" (click)="desfazerRemocao()">Desfazer</button>
-      </div>
-    </ng-template>
-  </p-toast>
-
   <div class="planner-shell">
     <div class="header">
       <div class="header-title">
@@ -132,7 +123,6 @@
             <div class="bloco-col-actions-right">
               <button type="button" class="bloco-action" (click)="abrirCopiaPanel(i, $event)">Copiar</button>
               <button type="button" class="bloco-action" (click)="limparBloco(i); $event.stopPropagation()">Limpar</button>
-              <button type="button" class="bloco-action" [disabled]="salvarDisabled" (click)="salvarTodos(); $event.stopPropagation()">Salvar</button>
             </div>
           </div>
 

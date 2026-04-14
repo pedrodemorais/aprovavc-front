@@ -290,19 +290,14 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         label: 'Estudar',
         icon: 'pi pi-book',
         routerLink: ['/area-restrita/registrar-livre'],
-        disabled: isLocked,
+        disabled: isLocked || !this.hasMaterias,
+        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
       },
-      // {
-      //   label: 'Estudar',
-      //   icon: 'pi pi-book',
-      //   routerLink: ['/area-restrita/estudar-materias'],
-      //   disabled: isLocked || !this.hasMaterias,
-      //   title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-      // },
+    
       {
         label: 'Revisar',
         icon: 'pi pi-undo',
-        routerLink: ['/area-restrita/revisoes'],
+        routerLink: ['/area-restrita/biblioteca'],
         disabled: isLocked || !this.hasMaterias,
         title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
       },
@@ -315,13 +310,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: isLocked || !this.hasMaterias,
         title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
       },
-      {
-        label: 'Retencao',
-        icon: 'pi pi-heart',
-        routerLink: ['/area-restrita/retencao'],
-        disabled: isLocked || !this.hasMaterias,
-        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-      },
+    
       {
         label: 'Planejamento',
         icon: 'pi pi-table',
@@ -331,31 +320,7 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       },
 
       section('ORGANIZACAO'),
-      // {
-      //   label: 'Meus Estudos',
-      //   icon: 'pi pi-folder-open',
-      //   routerLink: ['/area-restrita/editais'],
-      //   disabled: isLocked
-      // },
-      // {
-      //   label: 'Minhas Materias',
-      //   icon: 'pi pi-book',
-      //   routerLink: ['/area-restrita/cad-materias'],
-      //   disabled: isLocked
-      // },
-      {
-        label: 'Biblioteca',
-        icon: 'pi pi-bookmark',
-        routerLink: ['/area-restrita/biblioteca'],
-        disabled: isLocked || !this.hasMaterias,
-        title: !this.hasMaterias ? 'Cadastre materias primeiro' : undefined
-      },
-      {
-        label: 'Biblioteca Cognitiva',
-        icon: 'pi pi-sitemap',
-        routerLink: ['/area-restrita/biblioteca-cognitiva'],
-        disabled: isLocked,
-      },
+
       {
         label: 'Caderno de Erros',
         icon: 'pi pi-file-edit',
