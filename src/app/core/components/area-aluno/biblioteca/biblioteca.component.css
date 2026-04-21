@@ -294,7 +294,7 @@
 }
 
 :host ::ng-deep .biblioteca-tree .p-treetable-tbody > tr > td {
-  padding: 6px 0;
+  padding: 2px 0;
   border: 0;
   border-bottom: 1px solid var(--border);
   background: transparent;
@@ -324,7 +324,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 6px;
+  padding: 1px 6px;
   border-radius: 8px;
 }
 
@@ -337,7 +337,8 @@
 }
 
 .tree-text {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
+  line-height: 1.2;
   color: rgba(0, 0, 0, 0.6);
   flex: 1 1 auto;
   min-width: 0;

@@ -104,19 +104,11 @@ export class DashboardFacade {
   private debugSnapshot(summary: DashboardSummary): void {
     if (environment.production) return;
     const totalAgora = Number(summary?.resumoAcionavel?.totalAgora || 0);
-    const itensLen = Array.isArray(summary?.filaAtiva?.itens) ? summary.filaAtiva.itens.length : 0;
     console.debug('[DASHBOARD][SUMMARY]', {
       asOf: summary?.asOf,
       janelaDias: summary?.janelaDias,
       modoAtivo: summary?.modoAtivo,
-      totalAgora,
-      itensLen
+      totalAgora
     });
-    if (totalAgora !== itensLen) {
-      console.warn('[DASHBOARD][SUMMARY][INCONSISTENCIA]', {
-        totalAgora,
-        itensLen
-      });
-    }
   }
 }

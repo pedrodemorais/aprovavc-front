@@ -2,7 +2,7 @@
   <section class="quick-study-card">
     <header class="quick-study-header">
       <h1>
-        Registro rapido de estudo
+        Registrar Estudo
    
       </h1>
       <div class="study-timer-panel">
@@ -59,102 +59,96 @@
 
     <form id="registrar-livre-form" class="quick-study-form" [formGroup]="form" (ngSubmit)="registrarEstudo()">
       <label class="field">
-        <span>Estou estudando para</span>
-        <div class="autocomplete-wrap autocomplete-wrap--prime">
-          <p-autoComplete
-            inputId="registrar-livre-agrupador"
-            formControlName="agrupador"
-            [suggestions]="sugestoesVisiveis.agrupador"
-            [dropdown]="true"
-            dropdownMode="blank"
-            [minLength]="0"
-            [completeOnFocus]="true"
-            [forceSelection]="false"
-            panelStyleClass="autocomplete-dropdown-panel"
-            [inputStyleClass]="agrupadorInvalido ? 'autocomplete-input invalid' : 'autocomplete-input'"
-            placeholder="Ex: TRT, OAB, Receita Federal"
-            (completeMethod)="buscarSugestoes('agrupador', $event)"
-            (onFocus)="onCampoFocus('agrupador')"
-            (onSelect)="onCampoSelecionado('agrupador', $event.value)"
-            (onBlur)="onCampoBlur('agrupador')">
-          </p-autoComplete>
+        <div class="field-label-row">
+          <span>Estou estudando para</span>
+          <button
+            type="button"
+            class="field-add-btn"
+            (click)="abrirModalNovoAgrupador($event)">
+            + Cadastrar
+          </button>
         </div>
+        <select
+          id="registrar-livre-agrupador"
+          class="autocomplete-input"
+          [class.invalid]="agrupadorInvalido"
+          formControlName="agrupador"
+          (change)="onAgrupadorChange($any($event.target).value)">
+          <option value="">Selecione o estudo</option>
+          <option *ngFor="let item of agrupadoresDisponiveis" [value]="item">{{ item }}</option>
+        </select>
         <small class="error" *ngIf="agrupadorInvalido">Edital obrigatorio.</small>
       </label>
 
       <label class="field">
-        <span>Materia</span>
-        <div class="autocomplete-wrap autocomplete-wrap--prime">
-          <p-autoComplete
-            inputId="registrar-livre-materia"
-            formControlName="materiaNome"
-            [suggestions]="sugestoesVisiveis.materiaNome"
-            [dropdown]="true"
-            dropdownMode="blank"
-            [minLength]="0"
-            [completeOnFocus]="true"
-            [forceSelection]="false"
-            [disabled]="materiaBloqueada"
-            panelStyleClass="autocomplete-dropdown-panel"
-            [inputStyleClass]="materiaInvalida ? 'autocomplete-input invalid' : 'autocomplete-input'"
-            placeholder="Ex: Direito Constitucional"
-            (completeMethod)="buscarSugestoes('materiaNome', $event)"
-            (onFocus)="onCampoFocus('materiaNome')"
-            (onSelect)="onCampoSelecionado('materiaNome', $event.value)"
-            (onBlur)="onCampoBlur('materiaNome')">
-          </p-autoComplete>
+        <div class="field-label-row">
+          <span>Materia</span>
+          <button
+            type="button"
+            class="field-add-btn"
+            (click)="abrirModalNovaMateria($event)"
+            [disabled]="!podeCadastrarMateria">
+            + Cadastrar
+          </button>
         </div>
+        <select
+          id="registrar-livre-materia"
+          class="autocomplete-input"
+          [class.invalid]="materiaInvalida"
+          formControlName="materiaNome"
+          [disabled]="materiaBloqueada"
+          (change)="onMateriaChange($any($event.target).value)">
+          <option value="">Selecione a materia</option>
+          <option *ngFor="let item of materiasDisponiveis" [value]="item">{{ item }}</option>
+        </select>
         <small class="error" *ngIf="materiaInvalida">Materia obrigatoria.</small>
         <small class="helper-text" *ngIf="feedbackMateria">{{ feedbackMateria }}</small>
       </label>
 
       <label class="field">
-        <span>Topico</span>
-        <div class="autocomplete-wrap autocomplete-wrap--prime">
-          <p-autoComplete
-            inputId="registrar-livre-topico"
-            formControlName="topicoNome"
-            [suggestions]="sugestoesVisiveis.topicoNome"
-            [dropdown]="true"
-            dropdownMode="blank"
-            [minLength]="0"
-            [completeOnFocus]="true"
-            [forceSelection]="false"
-            [disabled]="topicoBloqueado"
-            panelStyleClass="autocomplete-dropdown-panel"
-            [inputStyleClass]="topicoInvalido ? 'autocomplete-input invalid' : 'autocomplete-input'"
-            placeholder="Ex: Controle de constitucionalidade"
-            (completeMethod)="buscarSugestoes('topicoNome', $event)"
-            (onFocus)="onCampoFocus('topicoNome')"
-            (onSelect)="onCampoSelecionado('topicoNome', $event.value)"
-            (onBlur)="onCampoBlur('topicoNome')">
-          </p-autoComplete>
+        <div class="field-label-row">
+          <span>Topico</span>
+          <button
+            type="button"
+            class="field-add-btn"
+            (click)="abrirModalNovoTopico($event)"
+            [disabled]="!podeCadastrarTopico">
+            + Cadastrar
+          </button>
         </div>
+        <select
+          id="registrar-livre-topico"
+          class="autocomplete-input"
+          [class.invalid]="topicoInvalido"
+          formControlName="topicoNome"
+          [disabled]="topicoBloqueado"
+          (change)="onTopicoChange($any($event.target).value)">
+          <option value="">Selecione o topico</option>
+          <option *ngFor="let item of topicosDisponiveis" [value]="item">{{ item }}</option>
+        </select>
         <small class="error" *ngIf="topicoInvalido">Assunto obrigatorio.</small>
       </label>
 
       <label class="field">
-        <span>Subtopico (opcional)</span>
-        <div class="autocomplete-wrap autocomplete-wrap--prime">
-          <p-autoComplete
-            inputId="registrar-livre-subtopico"
-            formControlName="subtopicoNome"
-            [suggestions]="sugestoesVisiveis.subtopicoNome"
-            [dropdown]="true"
-            dropdownMode="blank"
-            [minLength]="0"
-            [completeOnFocus]="true"
-            [forceSelection]="false"
-            [disabled]="subtopicoBloqueado"
-            panelStyleClass="autocomplete-dropdown-panel"
-            inputStyleClass="autocomplete-input"
-            placeholder="Ex: ADI e ADC"
-            (completeMethod)="buscarSugestoes('subtopicoNome', $event)"
-            (onFocus)="onCampoFocus('subtopicoNome')"
-            (onSelect)="onCampoSelecionado('subtopicoNome', $event.value)"
-            (onBlur)="onCampoBlur('subtopicoNome')">
-          </p-autoComplete>
+        <div class="field-label-row">
+          <span>Subtopico (opcional)</span>
+          <button
+            type="button"
+            class="field-add-btn"
+            (click)="abrirModalNovoSubtopico($event)"
+            [disabled]="!podeCadastrarSubtopico">
+            + Cadastrar
+          </button>
         </div>
+        <select
+          id="registrar-livre-subtopico"
+          class="autocomplete-input"
+          formControlName="subtopicoNome"
+          [disabled]="subtopicoBloqueado"
+          (change)="onSubtopicoChange($any($event.target).value)">
+          <option value="">Sem subtopico</option>
+          <option *ngFor="let item of subtopicosDisponiveis" [value]="item">{{ item }}</option>
+        </select>
       </label>
 
       <div class="field">
@@ -223,20 +217,25 @@
         <div class="helper-row">
                 <small class="hint">{{ caracteresUsados }}/{{ maxCaracteres }} | faltam {{ caracteresRestantes }}</small>
                  <label class="finalizar-check">
-          <input
-            type="checkbox"
-            formControlName="finalizado"
-            [disabled]="finalizandoTopico || !podeUsarAcoesResumo" />
-          <span>Marcar estudo como finalizado</span>
+          
         </label>
         </div>
        
       </div>
 
-      <div class="feedback success" *ngIf="feedbackSucesso">{{ feedbackSucesso }}</div>
       <div class="feedback error" *ngIf="feedbackErro">{{ feedbackErro }}</div>
 
     </form>
+
+    <div class="aviso-overlay" *ngIf="feedbackSucesso">
+      <div class="aviso-modal" role="dialog" aria-modal="true" aria-label="Aviso de estudo registrado">
+        <h2 class="aviso-titulo">Aviso</h2>
+        <div class="aviso-mensagem">{{ feedbackSucesso }}</div>
+        <div class="aviso-acoes">
+          <button type="button" class="btn-subtopico btn-subtopico-pri" (click)="fecharModalFeedbackSucesso()">OK</button>
+        </div>
+      </div>
+    </div>
 
     <div class="flashcard-overlay" *ngIf="mostrarModalFlashcard">
       <div class="flashcard-modal">
@@ -587,6 +586,159 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="subtopico-overlay" *ngIf="mostrarModalNovoTopico">
+      <div class="subtopico-modal">
+        <header class="subtopico-header">
+          <h2 class="subtopico-titulo">Cadastrar topico</h2>
+          <button type="button" class="subtopico-fechar" (click)="fecharModalNovoTopico()" aria-label="Fechar">x</button>
+        </header>
+
+        <div class="subtopico-contexto">
+          <div><strong>Materia:</strong> {{ form.value.materiaNome || '-' }}</div>
+        </div>
+
+        <label class="subtopico-label">
+          Descricao do topico
+          <input
+            type="text"
+            class="subtopico-input"
+            [(ngModel)]="novoTopicoDescricao"
+            [ngModelOptions]="{ standalone: true }"
+            maxlength="160"
+            placeholder="Ex: Atos administrativos" />
+        </label>
+
+        <div class="subtopico-feedback erro" *ngIf="erroNovoTopico">{{ erroNovoTopico }}</div>
+        <div class="subtopico-feedback sucesso" *ngIf="sucessoNovoTopico">{{ sucessoNovoTopico }}</div>
+
+        <footer class="subtopico-actions">
+          <button type="button" class="btn-subtopico btn-subtopico-sec" (click)="fecharModalNovoTopico()">Cancelar</button>
+          <button
+            type="button"
+            class="btn-subtopico btn-subtopico-pri"
+            (click)="salvarNovoTopico()"
+            [disabled]="salvandoNovoTopico || !(novoTopicoDescricao || '').trim()">
+            {{ salvandoNovoTopico ? 'Salvando...' : 'Salvar topico' }}
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="subtopico-overlay" *ngIf="mostrarModalNovaMateria">
+      <div class="subtopico-modal">
+        <header class="subtopico-header">
+          <h2 class="subtopico-titulo">Cadastrar materia</h2>
+          <button type="button" class="subtopico-fechar" (click)="fecharModalNovaMateria()" aria-label="Fechar">x</button>
+        </header>
+
+        <div class="subtopico-contexto">
+          <div><strong>Estudo:</strong> {{ form.value.agrupador || '-' }}</div>
+        </div>
+
+        <label class="subtopico-label">
+          Nome da materia
+          <input
+            type="text"
+            class="subtopico-input"
+            [(ngModel)]="novaMateriaDescricao"
+            [ngModelOptions]="{ standalone: true }"
+            maxlength="120"
+            placeholder="Ex: Direito Administrativo" />
+        </label>
+
+        <div class="subtopico-feedback erro" *ngIf="erroNovaMateria">{{ erroNovaMateria }}</div>
+        <div class="subtopico-feedback sucesso" *ngIf="sucessoNovaMateria">{{ sucessoNovaMateria }}</div>
+
+        <footer class="subtopico-actions">
+          <button type="button" class="btn-subtopico btn-subtopico-sec" (click)="fecharModalNovaMateria()">Cancelar</button>
+          <button
+            type="button"
+            class="btn-subtopico btn-subtopico-pri"
+            (click)="salvarNovaMateria()"
+            [disabled]="salvandoNovaMateria || !(novaMateriaDescricao || '').trim()">
+            {{ salvandoNovaMateria ? 'Salvando...' : 'Salvar materia' }}
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="subtopico-overlay" *ngIf="mostrarModalNovoAgrupador">
+      <div class="subtopico-modal">
+        <header class="subtopico-header">
+          <h2 class="subtopico-titulo">Cadastrar estudo</h2>
+          <button type="button" class="subtopico-fechar" (click)="fecharModalNovoAgrupador()" aria-label="Fechar">x</button>
+        </header>
+
+        <div class="subtopico-contexto">
+          <div>Crie um novo estudo para aparecer em "Estou estudando para".</div>
+        </div>
+
+        <label class="subtopico-label">
+          Nome do estudo
+          <input
+            type="text"
+            class="subtopico-input"
+            [(ngModel)]="novoAgrupadorDescricao"
+            [ngModelOptions]="{ standalone: true }"
+            maxlength="120"
+            placeholder="Ex: TRT 8, INSS, PF Administrativo" />
+        </label>
+
+        <div class="subtopico-feedback erro" *ngIf="erroNovoAgrupador">{{ erroNovoAgrupador }}</div>
+        <div class="subtopico-feedback sucesso" *ngIf="sucessoNovoAgrupador">{{ sucessoNovoAgrupador }}</div>
+
+        <footer class="subtopico-actions">
+          <button type="button" class="btn-subtopico btn-subtopico-sec" (click)="fecharModalNovoAgrupador()">Cancelar</button>
+          <button
+            type="button"
+            class="btn-subtopico btn-subtopico-pri"
+            (click)="salvarNovoAgrupador()"
+            [disabled]="salvandoNovoAgrupador || !(novoAgrupadorDescricao || '').trim()">
+            {{ salvandoNovoAgrupador ? 'Salvando...' : 'Salvar estudo' }}
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="subtopico-overlay" *ngIf="mostrarModalNovoSubtopico">
+      <div class="subtopico-modal">
+        <header class="subtopico-header">
+          <h2 class="subtopico-titulo">Cadastrar subtopico</h2>
+          <button type="button" class="subtopico-fechar" (click)="fecharModalNovoSubtopico()" aria-label="Fechar">x</button>
+        </header>
+
+        <div class="subtopico-contexto">
+          <div><strong>Materia:</strong> {{ flashcardMateriaContexto }}</div>
+          <div><strong>Topico:</strong> {{ form.value.topicoNome || '-' }}</div>
+        </div>
+
+        <label class="subtopico-label">
+          Descricao do subtopico
+          <input
+            type="text"
+            class="subtopico-input"
+            [(ngModel)]="novoSubtopicoDescricao"
+            [ngModelOptions]="{ standalone: true }"
+            maxlength="160"
+            placeholder="Ex: ADI e ADC" />
+        </label>
+
+        <div class="subtopico-feedback erro" *ngIf="erroNovoSubtopico">{{ erroNovoSubtopico }}</div>
+        <div class="subtopico-feedback sucesso" *ngIf="sucessoNovoSubtopico">{{ sucessoNovoSubtopico }}</div>
+
+        <footer class="subtopico-actions">
+          <button type="button" class="btn-subtopico btn-subtopico-sec" (click)="fecharModalNovoSubtopico()">Cancelar</button>
+          <button
+            type="button"
+            class="btn-subtopico btn-subtopico-pri"
+            (click)="salvarNovoSubtopico()"
+            [disabled]="salvandoNovoSubtopico || !(novoSubtopicoDescricao || '').trim()">
+            {{ salvandoNovoSubtopico ? 'Salvando...' : 'Salvar subtopico' }}
+          </button>
+        </footer>
       </div>
     </div>
   </section>

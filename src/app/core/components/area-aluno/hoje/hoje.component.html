@@ -92,8 +92,8 @@
           type="button"
           class="btn-comecar-revisao-prioritaria"
           (click)="comecarRevisaoPrioritaria()"
-          [disabled]="!podeComecarRevisaoPrioritaria || iniciandoRevisaoPrioritaria">
-          {{ iniciandoRevisaoPrioritaria ? 'Abrindo...' : 'Começar revisão' }}
+          [disabled]="iniciandoRevisaoPrioritaria">
+          {{ iniciandoRevisaoPrioritaria ? 'Abrindo...' : botaoAcaoPrioritariaLabel }}
         </button>
       </div>
       <div class="estado-label" *ngIf="ui.estado.label !== 'Priorizar revisao agora'">{{ ui.estado.label }}</div>

@@ -2,12 +2,12 @@ import { Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
-import { SalaEstudoService } from '../services/sala-estudo.service';
 import { MateriaService } from '../services/materia.service';
 import { Topico } from '../models/topico.model';
 import { TreeNode } from 'primeng/api';
 import { extrairStatusCanonicoRevisao, statusCanonicoParaDashboard } from '../utils/revisao-status.util';
 import { EditalService } from '../services/edital.service';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 
 type StatusRevisao = 'VENCIDA' | 'EM_DIA' | 'FUTURA';
 
@@ -45,7 +45,7 @@ export class RevisoesComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private salaEstudoService: SalaEstudoService,
+    private revisaoHojeService: RevisaoHojeService,
     private materiaService: MateriaService,
     private editalService: EditalService
   ) {}
@@ -89,10 +89,9 @@ export class RevisoesComponent implements OnInit {
     this.carregando = true;
     this.erro = undefined;
 
-    this.salaEstudoService.limparCacheRevisoesDashboard();
-    this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
+    this.revisaoHojeService.getFilaHoje().subscribe({
       next: (resp) => {
-        const itens = resp?.itens || [];
+        const itens = this.mapearFilaParaRevisoes(resp?.itens || []);
         this.revisoesTodas = this.normalizarRevisoes(itens);
         this.aplicarFiltro();
         this.carregando = false;
@@ -102,6 +101,28 @@ export class RevisoesComponent implements OnInit {
         this.carregando = false;
       }
     });
+  }
+
+  private mapearFilaParaRevisoes(itens: any[]): RevisaoDashboardItem[] {
+    return (Array.isArray(itens) ? itens : [])
+      .map((item) => {
+        const statusCanonico = String(item?.statusCanonico || '').toUpperCase();
+        const status = statusCanonico === 'ATRASADA'
+          ? 'VENCIDA'
+          : statusCanonico === 'HOJE'
+            ? 'EM_DIA'
+            : 'FUTURA';
+        return {
+          topicoId: Number(item?.topicoId || 0),
+          materiaId: Number(item?.materiaId || 0),
+          materiaNome: String(item?.materiaNome || '').trim() || 'Materia',
+          topicoDescricao: String(item?.topicoNome || '').trim() || `Topico ${Number(item?.topicoId || 0)}`,
+          statusCanonico,
+          status,
+          dataProximaRevisao: item?.proximaRevisao || null
+        } as RevisaoDashboardItem;
+      })
+      .filter((item) => Number(item.topicoId) > 0 && Number(item.materiaId) > 0);
   }
 
   @HostListener('window:focus')

@@ -12,18 +12,14 @@ import {
 import { EditalResumoRetencaoDTO, RetencaoAnalyticsResponseDTO, RetencaoAnalyticsSerieDTO } from 'src/app/core/models/retencao-analytics.models';
 import { RetencaoCognitivaResumoDTO, TopicoCognitivoDTO } from 'src/app/core/models/cognitive-metrics.models';
 import { CognitiveMetricsService } from 'src/app/core/services/cognitive-metrics.service';
-import { RevisaoDashboardItem } from 'src/app/core/components/area-aluno/models/RevisaoDashboardItem';
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
 import { HojeTrackingService } from 'src/app/core/services/hoje-tracking.service';
 import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analytics.service';
-import {
-  RevisaoDashboardResumoDTO,
-  SalaEstudoService
-} from 'src/app/core/components/area-aluno/services/sala-estudo.service';
+import { RevisaoDashboardResumoDTO } from 'src/app/core/components/area-aluno/services/sala-estudo.service';
 import { EditalService } from 'src/app/core/components/area-aluno/services/edital.service';
 import { Edital } from 'src/app/core/components/area-aluno/models/Edital';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
-import { extrairStatusCanonicoRevisao, statusCanonicoParaDashboard } from 'src/app/core/components/area-aluno/utils/revisao-status.util';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 
 interface HojeExecucaoState {
   pendingAdvance: boolean;
@@ -123,7 +119,7 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   constructor(
     private hojeFilaService: HojeFilaService,
-    private salaEstudoService: SalaEstudoService,
+    private revisaoHojeService: RevisaoHojeService,
     private retencaoAnalyticsService: RetencaoAnalyticsService,
     private cognitiveMetricsService: CognitiveMetricsService,
     private editalService: EditalService,
@@ -233,6 +229,10 @@ export class HojeComponent implements OnInit, OnDestroy {
 
   get temPendenciasGeraisRevisao(): boolean {
     return this.podeComecarRevisaoPrioritaria;
+  }
+
+  get botaoAcaoPrioritariaLabel(): string {
+    return this.temPendenciasGeraisRevisao ? 'Revisar agora' : 'Estudar Agora';
   }
 
   get percentualEditalConsolidado(): number {
@@ -899,44 +899,26 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   comecarRevisaoPrioritaria(): void {
-    if (this.iniciandoRevisaoPrioritaria || !this.podeComecarRevisaoPrioritaria) {
+    if (this.iniciandoRevisaoPrioritaria) {
+      return;
+    }
+
+    if (!this.podeComecarRevisaoPrioritaria) {
+      this.iniciandoRevisaoPrioritaria = true;
+      this.router.navigateByUrl('/area-restrita/registrar-livre').finally(() => {
+        this.iniciandoRevisaoPrioritaria = false;
+      });
       return;
     }
 
     this.iniciandoRevisaoPrioritaria = true;
+    const itens = Array.isArray(this.fila?.itens) ? this.fila.itens : [];
+    const primeiroAtrasado = itens.find((item) => item?.prioridade === PrioridadeFilaHoje.ATRASADA);
+    const primeiroHoje = itens.find((item) => item?.prioridade === PrioridadeFilaHoje.ALTA);
+    const alvo = primeiroAtrasado || primeiroHoje || null;
+    const filtro = primeiroAtrasado ? 'atrasadas' : 'hoje';
 
-    forkJoin({
-      atrasadas: this.salaEstudoService.listarRevisoesDashboardUnificado({
-        status: 'ATRASADA',
-        page: 0,
-        size: 5000
-      }).pipe(catchError(() => of(null))),
-      hoje: this.salaEstudoService.listarRevisoesDashboardUnificado({
-        status: 'HOJE',
-        page: 0,
-        size: 5000
-      }).pipe(catchError(() => of(null)))
-    }).pipe(
-      map(({ atrasadas, hoje }) => {
-        const atrasadasFiltradas = this.filtrarPorEditalAtivo((atrasadas?.itens || []) as RevisaoDashboardItem[]);
-        const primeiroAtrasado = atrasadasFiltradas[0] || null;
-        if (primeiroAtrasado?.materiaId) {
-          return {
-            materiaId: Number(primeiroAtrasado.materiaId),
-            topicoId: Number(primeiroAtrasado.topicoId || 0),
-            filtro: 'atrasadas'
-          };
-        }
-
-        const hojeFiltradas = this.filtrarPorEditalAtivo((hoje?.itens || []) as RevisaoDashboardItem[]);
-        const primeiroHoje = hojeFiltradas[0] || null;
-        return {
-          materiaId: Number(primeiroHoje?.materiaId || 0),
-          topicoId: Number(primeiroHoje?.topicoId || 0),
-          filtro: 'hoje'
-        };
-      })
-    ).subscribe({
+    of(alvo).subscribe({
       next: (alvo) => {
         const materiaId = Number(alvo?.materiaId || 0);
         if (!materiaId) {
@@ -947,7 +929,7 @@ export class HojeComponent implements OnInit, OnDestroy {
         this.router.navigate(['/area-restrita/sala-estudo', materiaId], {
           queryParams: {
             modo: 'revisar',
-            filtro: alvo.filtro,
+            filtro,
             topicoId: Number((alvo as any)?.topicoId || 0) || null
           }
         }).finally(() => {
@@ -1085,34 +1067,19 @@ export class HojeComponent implements OnInit, OnDestroy {
   private carregarFila(): void {
     this.loading = true;
 
-    this.hojeFilaService.getFilaHoje().subscribe({
+    // A fila de revisao e 100% controlada pelo backend.
+    // O frontend nao deve alterar, ordenar ou recalcular nada.
+    this.revisaoHojeService.getFilaHoje().subscribe({
       next: (resp) => {
         const filaNormalizada: HojeFilaResponseDTO = {
           totalItens: Math.max(0, Number(resp?.totalItens || 0)) || (Array.isArray(resp?.itens) ? resp.itens.length : 0),
           tempoEstimadoMinutos: Number(resp?.tempoEstimadoMinutos || 0),
           itens: Array.isArray(resp?.itens) ? resp.itens : [],
-          insights: resp?.insights ?? null
+          insights: null
         };
-        const filaEnriquecida = this.aplicarMapaMateriaNaFila(filaNormalizada);
-        const filaFiltrada = this.filtrarFilaPorEditalAtivo(filaEnriquecida);
-
-        if (filaFiltrada.totalItens > 0 || filaFiltrada.itens.length > 0) {
-          this.aplicarFila(filaFiltrada);
-          this.loading = false;
-          return;
-        }
-
-        this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
-          next: (respRevisoes) => {
-            const fallback = this.montarFilaFallback(respRevisoes?.itens || []);
-            this.aplicarFila(this.filtrarFilaPorEditalAtivo(fallback));
-            this.loading = false;
-          },
-          error: () => {
-            this.aplicarFila(filaFiltrada);
-            this.loading = false;
-          }
-        });
+        this.aplicarFila(filaNormalizada);
+        this.carregarResumoRevisoes();
+        this.loading = false;
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
@@ -1142,53 +1109,16 @@ export class HojeComponent implements OnInit, OnDestroy {
   }
 
   private carregarResumoRevisoes(): void {
-    this.salaEstudoService.limparCacheRevisoesDashboard();
-    this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
-      next: (resp) => {
-        const itensFiltrados = this.filtrarPorEditalAtivo((resp?.itens || []) as RevisaoDashboardItem[]);
-        this.contagemRevisoesCards = this.calcularContagemRevisoesCards(itensFiltrados);
-        this.resumoRevisoes = this.contagemRevisoesCards
-          ? {
-              vencidas: this.contagemRevisoesCards.vencidas,
-              hoje: this.contagemRevisoesCards.hoje,
-              emDia: this.contagemRevisoesCards.emDia,
-              total: this.contagemRevisoesCards.vencidas + this.contagemRevisoesCards.hoje + this.contagemRevisoesCards.emDia
-            }
-          : null;
-      },
-      error: () => {
-        this.resumoRevisoes = null;
-        this.contagemRevisoesCards = null;
-      }
-    });
-  }
-
-  private calcularContagemRevisoesCards(itens: RevisaoDashboardItem[]): { vencidas: number; hoje: number; emDia: number } {
-    const vencidas = new Set<string>();
-    const hoje = new Set<string>();
-    const emDia = new Set<string>();
-    const hojeRef = new Date();
-
-    for (const item of itens || []) {
-      const chave = `${Number(item?.materiaId || 0)}:${Number(item?.topicoId || 0)}`;
-      if (chave === '0:0') continue;
-
-      const statusCanonico = extrairStatusCanonicoRevisao(item, hojeRef);
-      const statusDashboard = statusCanonicoParaDashboard(statusCanonico) || 'FUTURA';
-
-      if (statusDashboard === 'VENCIDA') {
-        vencidas.add(chave);
-      } else if (statusDashboard === 'EM_DIA') {
-        hoje.add(chave);
-      } else if (statusDashboard === 'FUTURA') {
-        emDia.add(chave);
-      }
-    }
-
-    return {
-      vencidas: vencidas.size,
-      hoje: hoje.size,
-      emDia: emDia.size
+    const itens = Array.isArray(this.fila?.itens) ? this.fila.itens : [];
+    const vencidas = itens.filter((item) => item?.prioridade === PrioridadeFilaHoje.ATRASADA).length;
+    const hoje = itens.filter((item) => item?.prioridade === PrioridadeFilaHoje.ALTA).length;
+    const emDia = Math.max(0, itens.length - vencidas - hoje);
+    this.contagemRevisoesCards = { vencidas, hoje, emDia };
+    this.resumoRevisoes = {
+      vencidas,
+      hoje,
+      emDia,
+      total: itens.length
     };
   }
 
@@ -1199,69 +1129,6 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.registrarConclusaoFilaSeNecessario();
   }
 
-  private montarFilaFallback(revisoes: RevisaoDashboardItem[]): HojeFilaResponseDTO {
-    const itens = this.filtrarPorEditalAtivo(revisoes || [])
-      .filter((r) => Number(r?.topicoId) > 0)
-      .filter((r) => this.revisaoEhPendenteParaHoje(r))
-      .map((r) => this.mapearRevisaoDashboardParaHoje(r));
-
-    return {
-      totalItens: itens.length,
-      tempoEstimadoMinutos: itens.reduce((acc, i) => acc + Number(i.tempoEstimadoMinutos || 0), 0),
-      itens
-    };
-  }
-
-  private mapearRevisaoDashboardParaHoje(item: RevisaoDashboardItem): HojeFilaItemDTO {
-    const prioridade = this.normalizarPrioridadeFallback(item?.statusCanonico ?? item?.status);
-    const materiaId = Number(item?.materiaId || 0) || null;
-    const topicoId = Number(item?.topicoId || 0);
-    return {
-      tipo: TipoFilaHoje.TOPICO,
-      topicoId,
-      materiaId,
-      materiaNome: item?.materiaNome || null,
-      topicoNome: item?.topicoDescricao || null,
-      prioridade,
-      motivo: prioridade === PrioridadeFilaHoje.ATRASADA
-        ? 'Revisao atrasada.'
-        : prioridade === PrioridadeFilaHoje.ALTA
-          ? 'Revisao prevista para hoje.'
-          : 'Topico com revisao pendente.',
-      tempoEstimadoMinutos: 3,
-      deepLink: materiaId
-        ? `/area-restrita/sala-estudo/${materiaId}?topicoId=${topicoId}`
-        : '/area-restrita/revisoes'
-    };
-  }
-
-  private aplicarMapaMateriaNaFila(fila: HojeFilaResponseDTO): HojeFilaResponseDTO {
-    if (!fila?.itens?.length || !this.topicoMateriaMap.size) {
-      return fila;
-    }
-
-    const itens = fila.itens.map((item) => {
-      const topicoId = Number(item?.topicoId || 0);
-      const ref = this.topicoMateriaMap.get(topicoId);
-      if (!ref) {
-        return item;
-      }
-
-      const materiaId = ref.materiaId;
-      const materiaNome = ref.materiaNome ?? item.materiaNome ?? null;
-
-      return {
-        ...item,
-        materiaId,
-        materiaNome,
-        deepLink: materiaId
-          ? `/area-restrita/sala-estudo/${materiaId}?topicoId=${topicoId}`
-          : item.deepLink
-      };
-    });
-
-    return { ...fila, itens };
-  }
 
   private carregarMapaTopicoMateria(): void {
     this.editalService.listarComInclude(['materias', 'topicos']).pipe(
@@ -1351,25 +1218,6 @@ export class HojeComponent implements OnInit, OnDestroy {
         this.indexarTopicosMateria(mapa, filhos, ref);
       }
     }
-  }
-
-  private normalizarPrioridadeFallback(status: string | undefined): PrioridadeFilaHoje {
-    const key = String(status || '').toUpperCase();
-    if (key === 'ATRASADA' || key === 'VENCIDA') return PrioridadeFilaHoje.ATRASADA;
-    if (key === 'HOJE') return PrioridadeFilaHoje.ALTA;
-    if (key === 'CRITICO') return PrioridadeFilaHoje.CRITICO;
-    if (key === 'EM_RISCO') return PrioridadeFilaHoje.EM_RISCO;
-    return PrioridadeFilaHoje.MEDIA;
-  }
-
-  private revisaoEhPendenteParaHoje(item: RevisaoDashboardItem): boolean {
-    const statusCanonico = String(item?.statusCanonico || item?.statusRevisao || '').toUpperCase();
-    if (statusCanonico === 'ATRASADA' || statusCanonico === 'HOJE') {
-      return true;
-    }
-
-    const status = String(item?.status || '').toUpperCase();
-    return status === 'VENCIDA' || status === 'EM_DIA';
   }
 
   private atualizarItemAtual(): void {
@@ -1853,17 +1701,6 @@ export class HojeComponent implements OnInit, OnDestroy {
       return valor;
     }
     return 0;
-  }
-
-  private filtrarFilaPorEditalAtivo(fila: HojeFilaResponseDTO): HojeFilaResponseDTO {
-    const itens = this.filtrarPorEditalAtivo(Array.isArray(fila?.itens) ? fila.itens : []);
-    const tempoEstimadoMinutos = itens.reduce((acc, item) => acc + Number(item?.tempoEstimadoMinutos || 0), 0);
-    return {
-      ...fila,
-      totalItens: itens.length,
-      tempoEstimadoMinutos,
-      itens
-    };
   }
 
   private filtrarTopicosCognitivosPorEditalAtivo(topicos: TopicoCognitivoDTO[]): TopicoCognitivoDTO[] {

@@ -4,15 +4,15 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { FocoPlanoDiarioDTO, FocoDistribuicaoMateriaDTO } from 'src/app/core/dto/foco-plano-diario.dto';
 import { DashboardStreakResumoDTO } from 'src/app/core/models/hoje-fila.models';
+import { RevisaoHojeFilaDTO, RevisaoHojeItemDTO } from 'src/app/core/models/revisao-hoje.models';
 import { FocoPlanoDiarioService } from 'src/app/core/services/foco-plano-diario.service';
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 import { ExecutionQueueItem } from 'src/app/core/services/execution-queue.service';
 import {
-  RevisaoDashboardResponseDTO,
   SalaEstudoService,
   TreinarFraquezaMateriaDTO
 } from '../services/sala-estudo.service';
-import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 
 interface HomeTreinarFraquezasVM {
   materiaId: number;
@@ -60,6 +60,7 @@ export class HomePageComponent implements OnInit {
     private focoPlanoDiarioService: FocoPlanoDiarioService,
     private salaEstudoService: SalaEstudoService,
     private hojeFilaService: HojeFilaService,
+    private revisaoHojeService: RevisaoHojeService,
     private router: Router
   ) {}
 
@@ -77,14 +78,12 @@ export class HomePageComponent implements OnInit {
 
     forkJoin({
       plano: this.focoPlanoDiarioService.obterPlanoDiario().pipe(catchError(() => of(null))),
-      revisoes: this.salaEstudoService
-        .listarRevisoesDashboardUnificado({ page: 0, size: 5000 })
-        .pipe(catchError(() => of(null))),
+      filaRevisao: this.revisaoHojeService.getFilaHoje().pipe(catchError(() => of(null))),
       streak: this.hojeFilaService.getDashboardStreak().pipe(catchError(() => of(null))),
       fraquezas: this.salaEstudoService.listarTreinarFraquezas().pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ plano, revisoes, streak, fraquezas }) => {
-        this.aplicarRevisoes(plano, revisoes);
+      next: ({ plano, filaRevisao, streak, fraquezas }) => {
+        this.aplicarRevisoes(filaRevisao);
         this.aplicarProgresso(plano, streak);
         this.aplicarFraquezas(fraquezas || []);
         this.aplicarContinuarEstudo(plano);
@@ -97,39 +96,21 @@ export class HomePageComponent implements OnInit {
     });
   }
 
-  private aplicarRevisoes(
-    plano: FocoPlanoDiarioDTO | null,
-    revisoes: RevisaoDashboardResponseDTO | null
-  ): void {
-    const itens = revisoes?.itens || [];
-    const hojeRef = new Date();
-    hojeRef.setHours(0, 0, 0, 0);
+  // A fila de revisao e 100% controlada pelo backend.
+  // O frontend nao deve alterar, ordenar ou recalcular nada.
+  private aplicarRevisoes(filaRevisao: RevisaoHojeFilaDTO | null): void {
+    const itens = Array.isArray(filaRevisao?.itens) ? filaRevisao!.itens : [];
+    const itensAtrasados = itens.filter((item) => this.isAtrasada(item));
+    const itensHoje = itens.filter((item) => this.isHoje(item));
 
-    const itensAtrasados = itens.filter((item) => extrairStatusCanonicoRevisao(item, hojeRef) === 'ATRASADA');
-    const itensHoje = itens.filter((item) => extrairStatusCanonicoRevisao(item, hojeRef) === 'HOJE');
-    const atrasadasPorItem = itensAtrasados.length;
-    const hojePorItem = itensHoje.length;
-
-    const atrasadasResumo = Number(revisoes?.resumo?.vencidas || 0);
-    const hojeResumo = Number(revisoes?.resumo?.hoje || 0);
-
-    const atrasadasFallback = this.contarFilaPlanoPorStatus(plano, 'ATRASADA');
-    const hojeFallback = this.contarFilaPlanoPorStatus(plano, 'HOJE');
-
-    this.revisoesAtrasadas = this.priorizarNumeroValido(atrasadasResumo, atrasadasPorItem, atrasadasFallback);
-    this.revisoesHoje = this.priorizarNumeroValido(hojeResumo, hojePorItem, hojeFallback);
+    this.revisoesAtrasadas = itensAtrasados.length;
+    this.revisoesHoje = itensHoje.length;
 
     this.tempoAtrasadasMin = this.estimarMinutosRevisao(this.revisoesAtrasadas);
     this.tempoMissaoMin = this.estimarMinutosRevisao(this.revisoesHoje);
 
     this.filaAtrasadas = this.montarFilaExecucao(itensAtrasados);
     this.filaHoje = this.montarFilaExecucao(itensHoje);
-    if (!this.filaAtrasadas.length) {
-      this.filaAtrasadas = this.montarFilaExecucaoPlano(plano, 'ATRASADA');
-    }
-    if (!this.filaHoje.length) {
-      this.filaHoje = this.montarFilaExecucaoPlano(plano, 'HOJE');
-    }
   }
 
   private aplicarProgresso(
@@ -203,23 +184,6 @@ export class HomePageComponent implements OnInit {
     };
   }
 
-  private contarFilaPlanoPorStatus(plano: FocoPlanoDiarioDTO | null, status: 'ATRASADA' | 'HOJE'): number {
-    const fila = Array.isArray(plano?.filaRevisao) ? plano!.filaRevisao : [];
-    return fila.filter((item) => {
-      const canonico = extrairStatusCanonicoRevisao(item, new Date());
-      return canonico === status;
-    }).length;
-  }
-
-  private priorizarNumeroValido(...valores: number[]): number {
-    for (const valor of valores) {
-      if (Number.isFinite(valor) && valor >= 0) {
-        return Math.round(valor);
-      }
-    }
-    return 0;
-  }
-
   private estimarMinutosRevisao(quantidade: number): number {
     return Math.max(0, Math.round(Number(quantidade || 0) * 2));
   }
@@ -290,12 +254,14 @@ export class HomePageComponent implements OnInit {
     return this.deduplicarFila(fila);
   }
 
-  private montarFilaExecucaoPlano(plano: FocoPlanoDiarioDTO | null, status: 'ATRASADA' | 'HOJE'): ExecutionQueueItem[] {
-    const fila = Array.isArray(plano?.filaRevisao) ? plano!.filaRevisao : [];
-    const hojeRef = new Date();
-    hojeRef.setHours(0, 0, 0, 0);
-    const filtrados = fila.filter((item) => extrairStatusCanonicoRevisao(item, hojeRef) === status);
-    return this.montarFilaExecucao(filtrados);
+  private isAtrasada(item: RevisaoHojeItemDTO): boolean {
+    const status = String(item?.statusCanonico || '').toUpperCase();
+    return status === 'ATRASADA';
+  }
+
+  private isHoje(item: RevisaoHojeItemDTO): boolean {
+    const status = String(item?.statusCanonico || '').toUpperCase();
+    return status === 'HOJE';
   }
 
   private deduplicarFila(fila: ExecutionQueueItem[]): ExecutionQueueItem[] {

@@ -23,11 +23,13 @@ import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analyti
 import { CognitiveMetricsService } from 'src/app/core/services/cognitive-metrics.service';
 import { DashboardFacadeService } from 'src/app/core/services/dashboard-facade.service';
 import { DashboardFacade } from 'src/app/core/facades/dashboard.facade';
-import { DashboardSummary, FilaItem } from 'src/app/core/models/dashboard-summary.models';
+import { DashboardSummary } from 'src/app/core/models/dashboard-summary.models';
 import { EditalService } from 'src/app/core/components/area-aluno/services/edital.service';
 import { Edital } from 'src/app/core/components/area-aluno/models/Edital';
 import { RefreshBusService } from 'src/app/core/services/refresh-bus.service';
 import { environment } from 'src/environments/environment';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
+import { RevisaoHojeItemDTO } from 'src/app/core/models/revisao-hoje.models';
 import {
   getSnapshotComparacao,
   getSnapshotHoje,
@@ -251,6 +253,7 @@ export class RetencaoDashboardComponent implements OnInit {
     private cognitiveMetricsService: CognitiveMetricsService,
     private dashboardFacade: DashboardFacadeService,
     private dashboardStore: DashboardFacade,
+    private revisaoHojeService: RevisaoHojeService,
     private editalService: EditalService,
     private refreshBusService: RefreshBusService,
     private messageService: MessageService,
@@ -287,14 +290,15 @@ export class RetencaoDashboardComponent implements OnInit {
 
     forkJoin({
       summary: this.dashboardStore.loadSummary(this.janelaSelecionada, true),
+      filaHoje: this.revisaoHojeService.getFilaHoje().pipe(catchError(() => of(null))),
       analytics: this.retencaoService.buscarAnalyticsRetencao(this.janelaSelecionada).pipe(catchError(() => of(null))),
       topicosCognitivos: this.cognitiveMetricsService.getTopicosCognitivos(30, null, 1000).pipe(catchError(() => of([]))),
       evolucaoMaterias: this.retencaoService.buscarEvolucaoMaterias().pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ summary, analytics, topicosCognitivos, evolucaoMaterias }) => {
+      next: ({ summary, filaHoje, analytics, topicosCognitivos, evolucaoMaterias }) => {
         this.dashboardSummary = summary || null;
         this.resumo = this.mapSummaryToResumo(summary);
-        this.topicosEmRisco = this.aplicarMapaMateria(this.mapSummaryFilaToTopicos(summary?.filaAtiva?.itens || []));
+        this.topicosEmRisco = this.aplicarMapaMateria(this.mapRevisaoFilaToTopicos(filaHoje?.itens || []));
         this.logScoreInconsistenciasPayload();
         this.topicosCognitivosMonitorados = this.aplicarMapaMateria(
           (Array.isArray(topicosCognitivos) ? topicosCognitivos : []).map((item) => ({
@@ -590,9 +594,7 @@ export class RetencaoDashboardComponent implements OnInit {
   get inconsistenciaAcionavelDev(): boolean {
     if (environment.production) return false;
     const totalAgora = Number(this.dashboardSummary?.resumoAcionavel?.totalAgora || 0);
-    const itensLen = Array.isArray(this.dashboardSummary?.filaAtiva?.itens)
-      ? this.dashboardSummary!.filaAtiva.itens.length
-      : 0;
+    const itensLen = this.topicosEmRisco.length;
     return totalAgora !== itensLen;
   }
 
@@ -1267,9 +1269,9 @@ export class RetencaoDashboardComponent implements OnInit {
   }
 
   private montarListaResumoPorFilaAtiva(faixa: 'CRITICO' | 'EM_RISCO'): ResumoListaItem[] {
-    const itens = Array.isArray(this.dashboardSummary?.filaAtiva?.itens) ? this.dashboardSummary!.filaAtiva.itens : [];
+    const itens = Array.isArray(this.topicosEmRisco) ? this.topicosEmRisco : [];
     const filtrados = itens.filter((item) => {
-      const categoria = String(item?.categoria || '').toUpperCase();
+      const categoria = String((item as any)?.categoriaAcionavel || item?.classificacao || '').toUpperCase();
       if (faixa === 'CRITICO') return categoria.includes('CRITICO');
       return categoria.includes('EM_RISCO') || categoria.includes('RISCO');
     });
@@ -1277,8 +1279,8 @@ export class RetencaoDashboardComponent implements OnInit {
     return filtrados
       .map((item) => ({
         topicoId: Number(item?.topicoId || 0),
-        nomeTopico: String(item?.topicoNome || `Topico ${item?.topicoId}`),
-        nomeMateria: '-',
+        nomeTopico: String(item?.nomeTopico || `Topico ${item?.topicoId}`),
+        nomeMateria: String((item as any)?.nomeMateria || '-'),
         score: Number.isFinite(Number(item?.score)) ? Number(item?.score) : null,
         classificacaoLabel: faixa === 'CRITICO' ? 'CRITICO' : 'EM RISCO'
       }))
@@ -1704,12 +1706,14 @@ export class RetencaoDashboardComponent implements OnInit {
     };
   }
 
-  private mapSummaryFilaToTopicos(itens: FilaItem[]): TopicoRiscoDTO[] {
+  // A fila de revisao e 100% controlada pelo backend.
+  // O frontend nao deve alterar, ordenar ou recalcular nada.
+  private mapRevisaoFilaToTopicos(itens: RevisaoHojeItemDTO[]): TopicoRiscoDTO[] {
     return (Array.isArray(itens) ? itens : [])
       .map((item) => {
         const topicoId = Number(item?.topicoId || 0);
         if (topicoId <= 0) return null;
-        const categoria = String(item?.categoria || '').toUpperCase();
+        const categoria = String(item?.categoria || item?.prioridade || item?.statusCanonico || '').toUpperCase();
         const classificacao = categoria.includes('CRITICO')
           ? ClassificacaoRetencaoTopico.CRITICO
           : (categoria.includes('RISCO')
@@ -1720,12 +1724,12 @@ export class RetencaoDashboardComponent implements OnInit {
         return {
           topicoId,
           materiaId: Number(item?.materiaId || 0) || null,
-          nomeTopico: item?.topicoNome ?? null,
+          nomeTopico: item?.topicoNome || null,
           classificacao,
           score: Number.isFinite(Number(item?.score)) ? Number(item?.score) : null,
-          diasDesdeUltimoEvento: Number.isFinite(Number(item?.diasSemEvento)) ? Number(item?.diasSemEvento) : null,
-          proximaRevisao: item?.proxRevisao ?? null,
-          totalErrosNaJanela: Number.isFinite(Number(item?.errosJanela)) ? Number(item?.errosJanela) : null,
+          diasDesdeUltimoEvento: null,
+          proximaRevisao: item?.proximaRevisao ?? null,
+          totalErrosNaJanela: null,
           tendencia: null as any,
           categoriaAcionavel: categoria
         } as TopicoRiscoDTO;
@@ -1766,6 +1770,7 @@ export class RetencaoDashboardComponent implements OnInit {
       janela: this.janelaSelecionada,
       endpoints: [
         `/dashboard/summary?janelaDias=${this.janelaSelecionada}`,
+        `/sala-estudo/revisoes/hoje/fila`,
         `/sala-estudo/revisoes/retencao/analytics?janela=${this.janelaSelecionada}`
       ],
       payloadUsado: {
@@ -1773,7 +1778,7 @@ export class RetencaoDashboardComponent implements OnInit {
           asOf: this.dashboardSummary?.asOf,
           modoAtivo: this.dashboardSummary?.modoAtivo,
           totalAgora: this.dashboardSummary?.resumoAcionavel?.totalAgora,
-          itensLen: this.dashboardSummary?.filaAtiva?.itens?.length
+          itensLen: this.topicosEmRisco.length
         },
         resumo: {
           totalTopicos: this.resumo?.totalTopicos,

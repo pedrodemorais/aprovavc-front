@@ -712,6 +712,35 @@
   color: #dc2626;
 }
 
+.edital-tree-add-materia-btn{
+  margin-left: 6px;
+}
+
+.edital-tree-inline-form{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 8px 34px;
+}
+
+.edital-tree-inline-input{
+  flex: 1 1 auto;
+  min-width: 180px;
+  max-width: 420px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  padding: 0 10px;
+  font-size: 0.85rem;
+  background: #fff;
+}
+
+.edital-tree-inline-input:focus{
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.18);
+}
+
 .status-switch{
   margin-left: auto;
   display: inline-flex;
@@ -1326,6 +1355,12 @@
   border-color: rgba(14, 165, 167, 0.45) !important;
   color: #e5e7eb !important;
   box-shadow: none !important;
+}
+
+:host-context(body.theme-dark) .edital-tree-inline-input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #e5e7eb;
 }
 
 /* Lista header */

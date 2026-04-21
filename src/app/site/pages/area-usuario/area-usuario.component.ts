@@ -320,6 +320,18 @@ export class AreaUsuarioComponent implements OnInit, AfterViewInit, OnDestroy {
       },
 
       section('ORGANIZACAO'),
+      {
+        label: 'Meus Estudos',
+        icon: 'pi pi-file',
+        routerLink: ['/area-restrita/editais'],
+        disabled: isLocked
+      },
+      // {
+      //   label: 'Cadastro de Materias',
+      //   icon: 'pi pi-list',
+      //   routerLink: ['/area-restrita/cad-materias'],
+      //   disabled: isLocked
+      // },
 
       {
         label: 'Caderno de Erros',

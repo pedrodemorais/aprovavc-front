@@ -29,6 +29,7 @@ import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 import { RefreshBusService } from 'src/app/core/services/refresh-bus.service';
 import { ExecutionQueueItem, ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
 import { FlashcardService } from '../services/flashcard.service';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 type TopicoViewModel = {
@@ -319,7 +320,8 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     private messageService: MessageService,
     private refreshBusService: RefreshBusService,
     private executionQueueService: ExecutionQueueService,
-    private flashcardService: FlashcardService
+    private flashcardService: FlashcardService,
+    private revisaoHojeService: RevisaoHojeService
   ) {}
 
   // ================================================================
@@ -603,6 +605,25 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   // CARREGAMENTO DE DADOS
   // ================================================================
 
+  // A fila de revisao e 100% controlada pelo backend.
+  // O frontend nao deve alterar, ordenar ou recalcular nada.
+  private carregarFilaRevisaoHoje$(): Observable<RevisaoTopicoItem[]> {
+    return this.revisaoHojeService.getFilaHoje().pipe(
+      map((resp) => {
+        const itens = Array.isArray(resp?.itens) ? resp.itens : [];
+        return itens.map((item) => ({
+          topicoId: Number(item?.topicoId || 0),
+          proximaRevisao: item?.proximaRevisao || null,
+          dataProximaRevisao: item?.proximaRevisao || null,
+          statusCanonico: String(item?.statusCanonico || '').toUpperCase() || null,
+          status: String(item?.statusCanonico || '').toUpperCase() || null
+        } as RevisaoTopicoItem))
+          .filter((item) => Number(item?.topicoId || 0) > 0);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   private carregarSalaPorMateria$(materiaId: number): Observable<void> {
     this.carregando = true;
     this.resumeTopic = null;
@@ -610,7 +631,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     return forkJoin({
       materias: this.materiaService.listarMaterias(),
       topicosResp: this.obterTopicosComMeta$(materiaId),
-      revisoesResp: this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }),
+      revisoesResp: this.carregarFilaRevisaoHoje$(),
       finalizados: this.salaEstudoService.listarTopicosFinalizados().pipe(catchError(() => of([]))),
       resumeResp: this.salaEstudoService.obterResumeTopic(materiaId).pipe(catchError(() => of(null)))
     }).pipe(
@@ -621,7 +642,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.aplicarTopicosCarregados(topicosResp);
-        this.atualizarMapaRevisoes((revisoesResp?.itens || []) as RevisaoTopicoItem[]);
+        this.atualizarMapaRevisoes(revisoesResp);
         this.revisoesCarregadas = true;
         this.topicosFinalizados = new Set((finalizados || [])
           .map((item: TopicoFinalizadoDTO) => item?.topicoId)
@@ -1872,7 +1893,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const reqs = {
       topicosResp: this.obterTopicosComMeta$(this.materiaId, { force: true }),
-      revisoesResp: this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }),
+      revisoesResp: this.carregarFilaRevisaoHoje$(),
       finalizados: this.salaEstudoService.listarTopicosFinalizados(),
       anotacoes: topicoIdNoInicioReq ? this.salaEstudoService.buscarAnotacoes(topicoIdNoInicioReq) : of(null)
     };
@@ -1885,7 +1906,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.revisoesViewVersion += 1;
         this.invalidarTopicosExibidosCache();
         const selecionadoId = this.topicoSelecionado?.id;
-        this.atualizarMapaRevisoes((revisoesResp?.itens || []) as RevisaoTopicoItem[]);
+        this.atualizarMapaRevisoes(revisoesResp);
 
         // Reprocessa filtros/lista com os status efetivamente carregados
         this.revisoesViewVersion += 1;
@@ -4276,17 +4297,17 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     return forkJoin({
-      revisoesResp: this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 })
+      revisoesResp: this.carregarFilaRevisaoHoje$()
     }).pipe(
       tap(({ revisoesResp }) => {
-        const itens = (revisoesResp?.itens || []) as RevisaoTopicoItem[];
+        const itens = revisoesResp || [];
         console.warn('[SALA-ESTUDO][REVISAO][RELOAD][OK]', {
           elapsedMs: Date.now() - startedAt,
           revisoesItens: itens.length,
           topicoSelecionadoId: Number(this.topicoSelecionado?.id || 0) || null,
           horarioIso: new Date().toISOString()
         });
-        this.atualizarMapaRevisoes((revisoesResp?.itens || []) as RevisaoTopicoItem[]);
+        this.atualizarMapaRevisoes(revisoesResp);
         this.revisoesCarregadas = true;
 
         if (proximoPreferidoId) {

@@ -83,6 +83,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   private bloqueioCamposSub?: Subscription;
   private resumoLookupSeq = 0;
   private contextoResumoAutoPreenchido = '';
+  private ultimaSelecaoAutocompleteMs = 0;
+  private focoInicialAplicado = false;
 
   readonly maxCaracteres = 1200;
   readonly form = this.fb.group({
@@ -147,6 +149,26 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   salvandoCaderno = false;
   mensagemCadernoSucesso = '';
   mensagemCadernoErro = '';
+  mostrarModalNovoAgrupador = false;
+  novoAgrupadorDescricao = '';
+  salvandoNovoAgrupador = false;
+  erroNovoAgrupador = '';
+  sucessoNovoAgrupador = '';
+  mostrarModalNovaMateria = false;
+  novaMateriaDescricao = '';
+  salvandoNovaMateria = false;
+  erroNovaMateria = '';
+  sucessoNovaMateria = '';
+  mostrarModalNovoTopico = false;
+  novoTopicoDescricao = '';
+  salvandoNovoTopico = false;
+  erroNovoTopico = '';
+  sucessoNovoTopico = '';
+  mostrarModalNovoSubtopico = false;
+  novoSubtopicoDescricao = '';
+  salvandoNovoSubtopico = false;
+  erroNovoSubtopico = '';
+  sucessoNovoSubtopico = '';
   cadernoMaterias: MateriaTopicosDTO[] = [];
   cadernoTopicosFlat: TopicoFlatNode[] = [];
   cadernoTopicosPrincipais: TopicoFlatNode[] = [];
@@ -189,7 +211,6 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.carregarEditaisAgrupador();
     this.iniciarBloqueioCamposDependentes();
     this.iniciarPreenchimentoResumoExistente();
-    setTimeout(() => this.focarCampoAgrupador(), 0);
   }
 
   ngOnDestroy(): void {
@@ -356,6 +377,312 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.mostrarModalCaderno = false;
     this.mensagemCadernoErro = '';
     this.mensagemCadernoSucesso = '';
+  }
+
+  fecharModalFeedbackSucesso(): void {
+    this.feedbackSucesso = '';
+  }
+
+  abrirModalNovoAgrupador(event?: MouseEvent): void {
+    if (this.deveIgnorarCliqueAposSelecaoAutocomplete(event)) return;
+    this.mostrarModalNovoAgrupador = true;
+    this.novoAgrupadorDescricao = '';
+    this.erroNovoAgrupador = '';
+    this.sucessoNovoAgrupador = '';
+  }
+
+  fecharModalNovoAgrupador(): void {
+    this.mostrarModalNovoAgrupador = false;
+    this.novoAgrupadorDescricao = '';
+    this.erroNovoAgrupador = '';
+    this.sucessoNovoAgrupador = '';
+  }
+
+  salvarNovoAgrupador(): void {
+    const descricao = this.normalizarTexto(this.novoAgrupadorDescricao);
+    if (!descricao) {
+      this.erroNovoAgrupador = 'Informe o nome do estudo.';
+      return;
+    }
+
+    if (descricao.length > 120) {
+      this.erroNovoAgrupador = 'Use no maximo 120 caracteres.';
+      return;
+    }
+
+    const jaExiste = this.editaisCatalogo.some((item) => item.key === this.toKey(descricao));
+    if (jaExiste) {
+      this.erroNovoAgrupador = 'Esse estudo ja existe na lista.';
+      return;
+    }
+
+    this.salvandoNovoAgrupador = true;
+    this.erroNovoAgrupador = '';
+    this.sucessoNovoAgrupador = '';
+
+    this.editalService.criar({ nome: descricao, materiasIds: [] }).pipe(
+      catchError(() => of(null)),
+      finalize(() => (this.salvandoNovoAgrupador = false))
+    ).subscribe((resultado) => {
+      if (!resultado) {
+        this.erroNovoAgrupador = 'Nao foi possivel cadastrar o estudo agora.';
+        return;
+      }
+
+      // Ao criar um novo estudo, sempre reinicia o contexto de materia/topico
+      // para evitar reaproveitar selecoes do estudo anterior.
+      this.feedbackMateria = '';
+      this.form.controls.materiaNome.setValue('', { emitEvent: false });
+      this.form.controls.topicoNome.setValue('', { emitEvent: false });
+      this.form.controls.subtopicoNome.setValue('', { emitEvent: false });
+      this.sincronizarBloqueioCamposDependentes();
+
+      this.adicionarAgrupadorAoCatalogoLocal(descricao);
+      this.onCampoSelecionado('agrupador', descricao);
+      this.atualizarSugestoes('agrupador');
+      this.atualizarSugestoes('materiaNome');
+      this.atualizarSugestoes('topicoNome');
+      this.atualizarSugestoes('subtopicoNome');
+
+      this.sucessoNovoAgrupador = 'Estudo cadastrado com sucesso.';
+      setTimeout(() => {
+        this.fecharModalNovoAgrupador();
+        this.focarCampo('materiaNome');
+      }, 500);
+    });
+  }
+
+  abrirModalNovaMateria(event?: MouseEvent): void {
+    if (this.deveIgnorarCliqueAposSelecaoAutocomplete(event)) return;
+    if (!this.podeCadastrarMateria) return;
+    this.mostrarModalNovaMateria = true;
+    this.novaMateriaDescricao = '';
+    this.erroNovaMateria = '';
+    this.sucessoNovaMateria = '';
+  }
+
+  fecharModalNovaMateria(): void {
+    this.mostrarModalNovaMateria = false;
+    this.novaMateriaDescricao = '';
+    this.erroNovaMateria = '';
+    this.sucessoNovaMateria = '';
+  }
+
+  salvarNovaMateria(): void {
+    const descricao = this.normalizarTexto(this.novaMateriaDescricao);
+    if (!descricao) {
+      this.erroNovaMateria = 'Informe o nome da materia.';
+      return;
+    }
+
+    if (descricao.length > 120) {
+      this.erroNovaMateria = 'Use no maximo 120 caracteres.';
+      return;
+    }
+
+    const estudoSelecionado = this.getEditalSelecionadoExato();
+    if (!estudoSelecionado) {
+      this.erroNovaMateria = 'Selecione um estudo antes de cadastrar a materia.';
+      return;
+    }
+
+    const jaExiste = (this.obterBaseSugestoes('materiaNome') || [])
+      .some((item) => this.toKey(item) === this.toKey(descricao));
+    if (jaExiste) {
+      this.erroNovaMateria = 'Essa materia ja existe para o estudo selecionado.';
+      return;
+    }
+
+    this.salvandoNovaMateria = true;
+    this.erroNovaMateria = '';
+    this.sucessoNovaMateria = '';
+
+    this.materiaService.salvarMateria({ nome: descricao }).pipe(
+      switchMap((materiaCriada) =>
+        this.garantirEditalDoAgrupador(estudoSelecionado.nome, descricao).pipe(
+          map(() => materiaCriada),
+          catchError(() => of(materiaCriada))
+        )
+      ),
+      catchError(() => of(null)),
+      finalize(() => (this.salvandoNovaMateria = false))
+    ).subscribe((resultado) => {
+      if (!resultado) {
+        this.erroNovaMateria = 'Nao foi possivel cadastrar a materia agora.';
+        return;
+      }
+
+      this.adicionarMateriaAoCatalogoLocal(descricao, estudoSelecionado.nome, Number((resultado as any)?.id || 0));
+      this.onCampoSelecionado('materiaNome', descricao);
+      this.atualizarSugestoes('materiaNome');
+      this.materiaService.notificarMateriasAlteradas();
+
+      this.sucessoNovaMateria = 'Materia cadastrada com sucesso.';
+      setTimeout(() => {
+        this.fecharModalNovaMateria();
+        this.focarCampo('topicoNome');
+      }, 500);
+    });
+  }
+
+  abrirModalNovoTopico(event?: MouseEvent): void {
+    if (this.deveIgnorarCliqueAposSelecaoAutocomplete(event)) return;
+    if (!this.podeCadastrarTopico) return;
+    this.mostrarModalNovoTopico = true;
+    this.novoTopicoDescricao = '';
+    this.erroNovoTopico = '';
+    this.sucessoNovoTopico = '';
+  }
+
+  fecharModalNovoTopico(): void {
+    this.mostrarModalNovoTopico = false;
+    this.novoTopicoDescricao = '';
+    this.erroNovoTopico = '';
+    this.sucessoNovoTopico = '';
+  }
+
+  salvarNovoTopico(): void {
+    const descricao = this.normalizarTexto(this.novoTopicoDescricao);
+    if (!descricao) {
+      this.erroNovoTopico = 'Informe a descricao do topico.';
+      return;
+    }
+
+    if (descricao.length > 160) {
+      this.erroNovoTopico = 'Use no maximo 160 caracteres.';
+      return;
+    }
+
+    const topicoExistente = (this.obterBaseSugestoes('topicoNome') || [])
+      .some((item) => this.toKey(item) === this.toKey(descricao));
+    if (topicoExistente) {
+      this.erroNovoTopico = 'Esse topico ja existe para a materia selecionada.';
+      return;
+    }
+
+    this.salvandoNovoTopico = true;
+    this.erroNovoTopico = '';
+    this.sucessoNovoTopico = '';
+
+    this.resolverContextoMateriaSelecionada().pipe(
+      switchMap((ctx) => {
+        if (!ctx) {
+          this.erroNovoTopico = 'Selecione uma materia valida antes de cadastrar o topico.';
+          return of(null);
+        }
+
+        return this.materiaService.salvarTopico(ctx.materiaId, {
+          descricao,
+          ativo: true,
+          topicoPaiId: null
+        }).pipe(
+          map((res) => ({ ok: true as const, res, ctx })),
+          catchError(() => of({ ok: false as const, res: null, ctx }))
+        );
+      }),
+      finalize(() => (this.salvandoNovoTopico = false))
+    ).subscribe((resultado) => {
+      if (!resultado || !('ok' in resultado) || !resultado.ok) {
+        if (!this.erroNovoTopico) {
+          this.erroNovoTopico = 'Nao foi possivel cadastrar o topico agora.';
+        }
+        return;
+      }
+
+      this.adicionarTopicoAoCatalogoLocal(descricao, resultado.ctx.materiaNome);
+      this.onCampoSelecionado('topicoNome', descricao);
+      this.atualizarSugestoes('topicoNome');
+      this.materiaService.notificarMateriasAlteradas();
+
+      this.sucessoNovoTopico = 'Topico cadastrado com sucesso.';
+      setTimeout(() => {
+        this.fecharModalNovoTopico();
+        this.focarCampo('subtopicoNome');
+      }, 500);
+    });
+  }
+
+  abrirModalNovoSubtopico(event?: MouseEvent): void {
+    if (this.deveIgnorarCliqueAposSelecaoAutocomplete(event)) return;
+    if (!this.podeCadastrarSubtopico) return;
+    this.mostrarModalNovoSubtopico = true;
+    this.novoSubtopicoDescricao = '';
+    this.erroNovoSubtopico = '';
+    this.sucessoNovoSubtopico = '';
+  }
+
+  fecharModalNovoSubtopico(): void {
+    this.mostrarModalNovoSubtopico = false;
+    this.novoSubtopicoDescricao = '';
+    this.erroNovoSubtopico = '';
+    this.sucessoNovoSubtopico = '';
+  }
+
+  salvarNovoSubtopico(): void {
+    const descricao = this.normalizarTexto(this.novoSubtopicoDescricao);
+    if (!descricao) {
+      this.erroNovoSubtopico = 'Informe a descricao do subtopico.';
+      return;
+    }
+
+    if (descricao.length > 160) {
+      this.erroNovoSubtopico = 'Use no maximo 160 caracteres.';
+      return;
+    }
+
+    const materiaNome = this.getMateriaSelecionadaExata();
+    const topicoNome = this.getTopicoSelecionadoExato();
+    if (!materiaNome || !topicoNome) {
+      this.erroNovoSubtopico = 'Selecione materia e topico antes de cadastrar o subtopico.';
+      return;
+    }
+
+    const subExistente = (this.obterBaseSugestoes('subtopicoNome') || [])
+      .some((item) => this.toKey(item) === this.toKey(descricao));
+    if (subExistente) {
+      this.erroNovoSubtopico = 'Esse subtopico ja existe para o topico selecionado.';
+      return;
+    }
+
+    this.salvandoNovoSubtopico = true;
+    this.erroNovoSubtopico = '';
+    this.sucessoNovoSubtopico = '';
+
+    this.resolverContextoMateriaTopicoSelecionado().pipe(
+      switchMap((ctx) => {
+        if (!ctx) {
+          this.erroNovoSubtopico = 'Nao foi possivel identificar materia/topico selecionados.';
+          return of(null);
+        }
+        return this.materiaService.salvarTopico(ctx.materiaId, {
+          descricao,
+          ativo: true,
+          topicoPaiId: ctx.topicoId
+        }).pipe(
+          map((res) => ({ ok: true, res, ctx })),
+          catchError(() => of({ ok: false as const, res: null, ctx }))
+        );
+      }),
+      finalize(() => (this.salvandoNovoSubtopico = false))
+    ).subscribe((resultado) => {
+      if (!resultado || !('ok' in resultado) || !resultado.ok) {
+        if (!this.erroNovoSubtopico) {
+          this.erroNovoSubtopico = 'Nao foi possivel cadastrar o subtopico agora.';
+        }
+        return;
+      }
+
+      this.adicionarSubtopicoAoCatalogoLocal(descricao, resultado.ctx.materiaNome, resultado.ctx.topicoNome);
+      this.onCampoSelecionado('subtopicoNome', descricao);
+      this.atualizarSugestoes('subtopicoNome');
+      this.materiaService.notificarMateriasAlteradas();
+
+      this.sucessoNovoSubtopico = 'Subtopico cadastrado com sucesso.';
+      setTimeout(() => {
+        this.fecharModalNovoSubtopico();
+        this.focarCampoObservacao();
+      }, 500);
+    });
   }
 
   novoCadernoErro(): void {
@@ -1092,6 +1419,38 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     }, 120);
   }
 
+  get agrupadoresDisponiveis(): string[] {
+    return this.obterBaseSugestoes('agrupador');
+  }
+
+  get materiasDisponiveis(): string[] {
+    return this.obterBaseSugestoes('materiaNome');
+  }
+
+  get topicosDisponiveis(): string[] {
+    return this.obterBaseSugestoes('topicoNome');
+  }
+
+  get subtopicosDisponiveis(): string[] {
+    return this.obterBaseSugestoes('subtopicoNome');
+  }
+
+  onAgrupadorChange(valor: string): void {
+    this.onCampoSelecionado('agrupador', String(valor || ''));
+  }
+
+  onMateriaChange(valor: string): void {
+    this.onCampoSelecionado('materiaNome', String(valor || ''));
+  }
+
+  onTopicoChange(valor: string): void {
+    this.onCampoSelecionado('topicoNome', String(valor || ''));
+  }
+
+  onSubtopicoChange(valor: string): void {
+    this.onCampoSelecionado('subtopicoNome', String(valor || ''));
+  }
+
   buscarSugestoes(campo: CampoAutocomplete, event: { query?: string } | null | undefined): void {
     if (!this.podeProsseguirNoCampo(campo)) {
       this.sugestoesVisiveis[campo] = [];
@@ -1109,6 +1468,7 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   }
 
   onCampoSelecionado(campo: CampoAutocomplete, valor: string): void {
+    this.ultimaSelecaoAutocompleteMs = Date.now();
     this.form.controls[campo].setValue(valor);
     this.form.controls[campo].markAsDirty();
 
@@ -1149,9 +1509,20 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.focarCampo('agrupador');
   }
 
-  private focarCampo(campo: 'agrupador' | 'materiaNome' | 'topicoNome'): void {
+  private focarCampo(campo: 'agrupador' | 'materiaNome' | 'topicoNome' | 'subtopicoNome'): void {
     const input = document.getElementById(`registrar-livre-${campo === 'agrupador' ? 'agrupador' : campo.replace('Nome', '')}`) as HTMLInputElement | null;
     input?.focus();
+  }
+
+  private focarCampoObservacao(): void {
+    const editor = document.querySelector('#observacao .ql-editor') as HTMLElement | null;
+    if (editor) {
+      editor.focus();
+      return;
+    }
+
+    const fallback = document.getElementById('observacao') as HTMLElement | null;
+    fallback?.focus();
   }
 
   private limparDependenciasAoTrocarAgrupador(): void {
@@ -1211,11 +1582,42 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const materiaNomeNormalizado = this.normalizarMateriaDigitada();
-    const materiaNome = String(materiaNomeNormalizado || this.form.value.materiaNome || '').trim();
-    const topicoNome = String(this.form.value.topicoNome || '').trim();
-    const subtopicoNome = String(this.form.value.subtopicoNome || '').trim();
-    const agrupador = String(this.form.value.agrupador || '').trim();
+    const agrupadorSelecionado = this.getEditalSelecionadoExato();
+    if (!agrupadorSelecionado) {
+      this.feedbackErro = 'Selecione um edital existente na lista.';
+      this.form.controls.agrupador.markAsTouched();
+      setTimeout(() => this.focarCampoAgrupador(), 0);
+      return;
+    }
+
+    const materiaSelecionada = this.getMateriaSelecionadaExata();
+    if (!materiaSelecionada) {
+      this.feedbackErro = 'Selecione uma materia existente na lista.';
+      this.form.controls.materiaNome.markAsTouched();
+      setTimeout(() => this.focarCampo('materiaNome'), 0);
+      return;
+    }
+
+    const topicoSelecionado = this.getTopicoSelecionadoExato();
+    if (!topicoSelecionado) {
+      this.feedbackErro = 'Selecione um topico existente na lista.';
+      this.form.controls.topicoNome.markAsTouched();
+      setTimeout(() => this.focarCampo('topicoNome'), 0);
+      return;
+    }
+
+    const subtopicoDigitado = this.normalizarTexto(String(this.form.value.subtopicoNome || ''));
+    const subtopicoSelecionado = this.getSubtopicoSelecionadoExato();
+    if (subtopicoDigitado && !subtopicoSelecionado) {
+      this.feedbackErro = 'Selecione um subtopico existente na lista.';
+      this.form.controls.subtopicoNome.markAsTouched();
+      return;
+    }
+
+    const agrupador = agrupadorSelecionado.nome;
+    const materiaNome = materiaSelecionada;
+    const topicoNome = topicoSelecionado;
+    const subtopicoNome = subtopicoSelecionado || '';
     const observacaoHtml = this.normalizarHtmlAnotacoes(this.observacaoHtml || '');
     const observacao = this.extrairTextoDoHtml(observacaoHtml).trim();
     const tempoMinutos = this.resolverTempoMinutosParaRegistro();
@@ -1378,6 +1780,8 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     this.form.markAsPristine();
     this.form.markAsUntouched();
     this.sincronizarBloqueioCamposDependentes();
+    this.aplicarAgrupadorPadraoSeUnico();
+    this.atualizarSugestoes('agrupador');
     this.atualizarSugestoes('materiaNome');
     this.atualizarSugestoes('topicoNome');
     this.atualizarSugestoes('subtopicoNome');
@@ -1511,17 +1915,20 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
   private carregarEditaisAgrupador(): void {
     this.editalService.listarComInclude(['materias', 'topicos']).subscribe({
       next: (editais) => {
-        const lista = editais || [];
+        const lista = (editais || []).filter((edital: any) => this.isEditalAtivo(edital));
         this.hidratarCatalogoEditais(lista);
+        this.garantirAgrupadorSelecionadoValido();
+        this.aplicarAgrupadorPadraoSeUnico();
         this.atualizarSugestoes('agrupador');
         this.atualizarSugestoes('materiaNome');
         this.atualizarSugestoes('topicoNome');
         this.atualizarSugestoes('subtopicoNome');
+        this.aplicarFocoInicial();
       },
       error: () => {
         this.editalService.listar().subscribe({
           next: (editais) => {
-            const lista = editais || [];
+            const lista = (editais || []).filter((edital: any) => this.isEditalAtivo(edital));
             const nomes = lista
               .map((edital: any) => this.normalizarTexto(String(edital?.nome || '')))
               .filter((nome) => !!nome);
@@ -1532,15 +1939,19 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
             this.topicosPorEditalMateria.clear();
             this.subtopicosPorEditalMateria.clear();
             this.subtopicosPorEditalMateriaTopico.clear();
+            this.garantirAgrupadorSelecionadoValido();
+            this.aplicarAgrupadorPadraoSeUnico();
             this.atualizarSugestoes('agrupador');
             this.atualizarSugestoes('materiaNome');
             this.atualizarSugestoes('topicoNome');
             this.atualizarSugestoes('subtopicoNome');
+            this.aplicarFocoInicial();
           },
           error: () => {
             this.agrupadoresCatalogo = [];
             this.editaisCatalogo = [];
             this.atualizarSugestoes('agrupador');
+            this.aplicarFocoInicial();
           }
         });
       }
@@ -1589,6 +2000,51 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
     this.agrupadoresCatalogo = this.unicosOrdenados(nomes);
     this.editaisCatalogo = catalogo;
+  }
+
+  private isEditalAtivo(edital: any): boolean {
+    const ativo = edital?.ativo;
+    if (typeof ativo === 'boolean') return ativo;
+    if (typeof ativo === 'number') return ativo === 1;
+    if (typeof ativo === 'string') {
+      const normalizado = ativo.trim().toLowerCase();
+      return normalizado === 'true' || normalizado === '1' || normalizado === 'ativo';
+    }
+    return false;
+  }
+
+  private garantirAgrupadorSelecionadoValido(): void {
+    const selecionado = this.normalizarTexto(String(this.form.controls.agrupador.value || ''));
+    if (!selecionado) return;
+    const chave = this.toKey(selecionado);
+    const existe = this.editaisCatalogo.some((item) => item.key === chave);
+    if (existe) return;
+
+    this.form.controls.agrupador.setValue('', { emitEvent: false });
+    this.form.controls.materiaNome.setValue('', { emitEvent: false });
+    this.form.controls.topicoNome.setValue('', { emitEvent: false });
+    this.form.controls.subtopicoNome.setValue('', { emitEvent: false });
+    this.sincronizarBloqueioCamposDependentes();
+  }
+
+  private aplicarAgrupadorPadraoSeUnico(): void {
+    const atual = this.normalizarTexto(String(this.form.controls.agrupador.value || ''));
+    if (atual) return;
+    if (this.agrupadoresCatalogo.length !== 1) return;
+
+    const unico = this.agrupadoresCatalogo[0];
+    this.onCampoSelecionado('agrupador', unico);
+    this.form.controls.agrupador.markAsPristine();
+    this.form.controls.agrupador.markAsUntouched();
+  }
+
+  private aplicarFocoInicial(): void {
+    if (this.focoInicialAplicado) return;
+    this.focoInicialAplicado = true;
+
+    const agrupador = this.normalizarTexto(String(this.form.controls.agrupador.value || ''));
+    const campoDestino: 'agrupador' | 'materiaNome' = agrupador ? 'materiaNome' : 'agrupador';
+    setTimeout(() => this.focarCampo(campoDestino), 0);
   }
 
   private aplicarCatalogoDaApi(materias: MateriaTopicosDTO[]): void {
@@ -1683,13 +2139,17 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
       query != null ? String(query) : String(this.form.controls[campo].value || '')
     );
     const base = this.obterBaseSugestoes(campo);
-    const limite = campo === 'agrupador' ? this.limiteSugestoesAgrupador : this.limiteSugestoes;
-
-    const lista = !valorDigitado
-      ? base.slice(0, limite)
-      : base
-      .filter((item) => item.toLowerCase().includes(valorDigitado.toLowerCase()))
-      .slice(0, limite);
+    const filtrados = !valorDigitado
+      ? [...base]
+      : base.filter((item) => String(item || '').toLowerCase().includes(valorDigitado.toLowerCase()));
+    const limite = campo === 'agrupador'
+      ? this.limiteSugestoesAgrupador
+      : (campo === 'topicoNome' || campo === 'materiaNome')
+        ? undefined
+        : this.limiteSugestoes;
+    const lista = typeof limite === 'number'
+      ? filtrados.slice(0, limite)
+      : filtrados;
 
     this.sugestoesVisiveis[campo] = lista;
   }
@@ -1827,6 +2287,142 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
 
     const encontrada = base.find((t) => this.toKey(t) === this.toKey(atual));
     return encontrada || null;
+  }
+
+  private getSubtopicoSelecionadoExato(): string | null {
+    const atual = this.normalizarTexto(String(this.form.value.subtopicoNome || ''));
+    if (!atual) return null;
+    const base = this.obterBaseSugestoes('subtopicoNome');
+    const encontrado = base.find((item) => this.toKey(item) === this.toKey(atual));
+    return encontrado || null;
+  }
+
+  private resolverContextoMateriaTopicoSelecionado(): Observable<{
+    materiaId: number;
+    topicoId: number;
+    materiaNome: string;
+    topicoNome: string;
+  } | null> {
+    const materiaNome = this.getMateriaSelecionadaExata();
+    const topicoNome = this.getTopicoSelecionadoExato();
+    if (!materiaNome || !topicoNome) {
+      return of(null);
+    }
+
+    return this.salaEstudoService.listarMateriasParaEstudo('todas').pipe(
+      map((materias) => {
+        const materia = (materias || []).find((m) => this.toKey(String(m?.materiaNome || '')) === this.toKey(materiaNome));
+        const materiaId = Number(materia?.materiaId || 0);
+        if (!materia || materiaId <= 0) return null;
+
+        const topicosRaiz = Array.isArray(materia.topicos) ? materia.topicos : [];
+        const topico = this.encontrarTopicoRaizPorNome(topicosRaiz, topicoNome);
+        const topicoId = this.getTopicoId(topico);
+        if (topicoId <= 0) return null;
+
+        return { materiaId, topicoId, materiaNome, topicoNome };
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  private resolverContextoMateriaSelecionada(): Observable<{ materiaId: number; materiaNome: string } | null> {
+    const materiaNome = this.getMateriaSelecionadaExata();
+    if (!materiaNome) {
+      return of(null);
+    }
+
+    const materiaIdConhecido = this.getMateriaIdPorNome(materiaNome);
+    if (materiaIdConhecido) {
+      return of({ materiaId: materiaIdConhecido, materiaNome });
+    }
+
+    return this.salaEstudoService.listarMateriasParaEstudo('todas').pipe(
+      tap((materias) => this.aplicarCatalogoDaApi(materias || [])),
+      map(() => {
+        const materiaId = this.getMateriaIdPorNome(materiaNome);
+        if (!materiaId) return null;
+        return { materiaId, materiaNome };
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  private adicionarSubtopicoAoCatalogoLocal(subtopicoNome: string, materiaNome: string, topicoNome: string): void {
+    const sub = this.normalizarTexto(subtopicoNome);
+    const materia = this.normalizarTexto(materiaNome);
+    const topico = this.normalizarTexto(topicoNome);
+    if (!sub || !materia || !topico) return;
+
+    this.subtopicosCatalogo = this.upsertHistorico(this.subtopicosCatalogo, sub);
+
+    const materiaKey = this.toKey(materia);
+    this.pushUnicoNoMapa(this.subtopicosPorMateria, materiaKey, sub);
+    this.pushUnicoNoMapa(this.subtopicosPorMateriaTopico, `${materiaKey}|${this.toKey(topico)}`, sub);
+
+    const editalSelecionado = this.getEditalSelecionadoExato();
+    if (editalSelecionado?.key) {
+      const baseKey = `${editalSelecionado.key}|${materiaKey}`;
+      this.pushUnicoNoMapa(this.subtopicosPorEditalMateria, baseKey, sub);
+      this.pushUnicoNoMapa(this.subtopicosPorEditalMateriaTopico, `${baseKey}|${this.toKey(topico)}`, sub);
+    }
+  }
+
+  private adicionarTopicoAoCatalogoLocal(topicoNome: string, materiaNome: string): void {
+    const topico = this.normalizarTexto(topicoNome);
+    const materia = this.normalizarTexto(materiaNome);
+    if (!topico || !materia) return;
+
+    this.topicosCatalogo = this.upsertHistorico(this.topicosCatalogo, topico);
+    const materiaKey = this.toKey(materia);
+    this.pushUnicoNoMapa(this.topicosPorMateria, materiaKey, topico);
+
+    const editalSelecionado = this.getEditalSelecionadoExato();
+    if (editalSelecionado?.key) {
+      this.pushUnicoNoMapa(this.topicosPorEdital, editalSelecionado.key, topico);
+      this.pushUnicoNoMapa(this.topicosPorEditalMateria, `${editalSelecionado.key}|${materiaKey}`, topico);
+    }
+  }
+
+  private adicionarAgrupadorAoCatalogoLocal(agrupadorNome: string): void {
+    const nome = this.normalizarTexto(agrupadorNome);
+    if (!nome) return;
+
+    this.agrupadoresCatalogo = this.unicosOrdenados([nome, ...this.agrupadoresCatalogo]);
+    this.editaisCatalogo = this.agrupadoresCatalogo.map((item) => ({ nome: item, key: this.toKey(item) }));
+
+    const editalKey = this.toKey(nome);
+    if (!this.materiasPorEdital.has(editalKey)) {
+      this.materiasPorEdital.set(editalKey, []);
+    }
+    if (!this.topicosPorEdital.has(editalKey)) {
+      this.topicosPorEdital.set(editalKey, []);
+    }
+  }
+
+  private adicionarMateriaAoCatalogoLocal(materiaNome: string, agrupadorNome: string, materiaId?: number): void {
+    const materia = this.normalizarTexto(materiaNome);
+    const agrupador = this.normalizarTexto(agrupadorNome);
+    if (!materia) return;
+
+    this.materiasCatalogo = this.upsertHistorico(this.materiasCatalogo, materia);
+    if ((materiaId || 0) > 0) {
+      this.materiaIdPorNomeKey.set(this.toKey(materia), Number(materiaId));
+    }
+
+    if (agrupador) {
+      this.pushUnicoNoMapa(this.materiasPorEdital, this.toKey(agrupador), materia);
+    }
+  }
+
+  private deveIgnorarCliqueAposSelecaoAutocomplete(event?: MouseEvent): boolean {
+    if (!event) return false;
+    const tempoDesdeSelecao = Date.now() - this.ultimaSelecaoAutocompleteMs;
+    if (tempoDesdeSelecao >= 0 && tempoDesdeSelecao < 250) {
+      event.preventDefault();
+      return true;
+    }
+    return false;
   }
 
   private salvarHistorico(payload: {
@@ -2028,6 +2624,18 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     const materia = this.normalizarTexto(String(this.form.value.materiaNome || ''));
     const topico = this.normalizarTexto(String(this.form.value.topicoNome || ''));
     return !!materia && !!topico;
+  }
+
+  get podeCadastrarMateria(): boolean {
+    return !!this.getEditalSelecionadoExato();
+  }
+
+  get podeCadastrarTopico(): boolean {
+    return !!this.getMateriaSelecionadaExata();
+  }
+
+  get podeCadastrarSubtopico(): boolean {
+    return !!this.getMateriaSelecionadaExata() && !!this.getTopicoSelecionadoExato();
   }
 
   private formatarTagsFlashcard(tags: string | undefined | null): string {

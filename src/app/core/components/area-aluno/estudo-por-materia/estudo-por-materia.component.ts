@@ -9,6 +9,7 @@ import { EditalService } from '../services/edital.service';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 import { EditalTemplateService } from '../services/edital-template.service';
 import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 
 type StatusRevisao = 'SEM' | 'FUTURA' | 'HOJE' | 'ATRASADA';
 
@@ -77,6 +78,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
 
   constructor(
     private salaEstudoService: SalaEstudoService,
+    private revisaoHojeService: RevisaoHojeService,
     private editalService: EditalService,
     private editalTemplateService: EditalTemplateService,
     private empresaParametroService: EmpresaParametroService,
@@ -463,10 +465,9 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // DASHBOARD / SEMÃFORO
   // ==========================
   private carregarRevisoesDashboard(): void {
-    this.salaEstudoService.limparCacheRevisoesDashboard();
-    this.salaEstudoService.listarRevisoesDashboardUnificado({ page: 0, size: 5000 }).subscribe({
+    this.revisaoHojeService.getFilaHoje().subscribe({
       next: (resp) => {
-        const itens = resp?.itens || [];
+        const itens = Array.isArray(resp?.itens) ? resp.itens : [];
         this.revisoesPorTopico.clear();
 
         const hoje = new Date();

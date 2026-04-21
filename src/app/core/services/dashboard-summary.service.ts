@@ -31,13 +31,6 @@ export class DashboardSummaryService {
     return this.http.get<DashboardSummary>(this.baseUrl, { params }).pipe(
       tap((summary) => {
         const elapsedMs = Date.now() - startedAt;
-        const fila = Array.isArray(summary?.filaAtiva?.itens) ? summary.filaAtiva.itens : [];
-        const top3 = fila.slice(0, 3).map((i) => ({
-          topicoId: Number(i?.topicoId || 0),
-          categoria: String(i?.categoria || ''),
-          score: Number.isFinite(Number(i?.score)) ? Number(i?.score) : null,
-          proxRevisao: i?.proxRevisao ?? null
-        }));
         console.warn('[DASHBOARD][SUMMARY][OK]', {
           traceId,
           elapsedMs,
@@ -45,9 +38,7 @@ export class DashboardSummaryService {
           modoAtivo: summary?.modoAtivo ?? null,
           totalAgora: Number(summary?.resumoAcionavel?.totalAgora || 0),
           criticos: Number(summary?.resumoAcionavel?.criticos || 0),
-          emRisco: Number(summary?.resumoAcionavel?.emRisco || 0),
-          filaAtivaSize: fila.length,
-          filaTop3: top3
+          emRisco: Number(summary?.resumoAcionavel?.emRisco || 0)
         });
       }),
       catchError((error) => {

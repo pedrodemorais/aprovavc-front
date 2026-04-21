@@ -59,68 +59,6 @@
     <article class="progresso-card progresso-card-cobertura">
       <div class="duo-wrap">
         <div class="duo-quad">
-          <div class="graph-tile">
-            <div class="duo-label">
-              Cobertura
-              <i
-                class="pi pi-info-circle info-icon"
-                pTooltip="Cobertura = % de topicos estudados do edital"
-                tooltipPosition="top"
-                [showDelay]="150"
-                [hideDelay]="80"
-                aria-label="Informacoes sobre cobertura"
-                tabindex="0"></i>
-            </div>
-            <div class="duo-meta" *ngIf="coberturaFracao">{{ coberturaFracao }}</div>
-            <div class="metric-value">{{ formatPercent(editalAtivo?.percentualEstudadoGeral) }}</div>
-            <div class="progress-bar" [style.--percent]="editalAtivo?.percentualEstudadoGeral ?? 0"></div>
-            <div
-              class="duo-trend"
-              *ngIf="tendenciaCobertura != null"
-              [class.duo-trend--up]="tendenciaCobertura > 0"
-              [class.duo-trend--down]="tendenciaCobertura < 0">
-              {{ formatarTendencia(tendenciaCobertura) }}
-            </div>
-          </div>
-          <div class="graph-tile">
-            <div class="duo-label">
-              Dominio
-              <i
-                class="pi pi-info-circle info-icon"
-                pTooltip="Dominio = % de desempenho medio nas revisoes"
-                tooltipPosition="top"
-                [showDelay]="150"
-                [hideDelay]="80"
-                aria-label="Informacoes sobre dominio"
-                tabindex="0"></i>
-            </div>
-            <ng-container *ngIf="dominioSemDados; else dominioPercentTpl">
-              <span
-                class="metric-value metric-value--empty"
-                pTooltip="O dominio aparece apos suas primeiras revisoes/questoes."
-                tooltipPosition="top"
-                [showDelay]="150"
-                [hideDelay]="80"
-                tabindex="0">
-                Sem dados
-              </span>
-              <div class="progress-bar progress-bar--low" [style.--percent]="0"></div>
-            </ng-container>
-            <ng-template #dominioPercentTpl>
-              <span class="metric-value">{{ formatPercent(dominioGeralAjustado) }}</span>
-              <div
-                class="progress-bar"
-                [ngClass]="getDominioClasse(dominioGeralAjustado)"
-                [style.--percent]="dominioGeralAjustado"></div>
-            </ng-template>
-            <div
-              class="duo-trend"
-              *ngIf="tendenciaDominio != null && !dominioSemDados"
-              [class.duo-trend--up]="tendenciaDominio > 0"
-              [class.duo-trend--down]="tendenciaDominio < 0">
-              {{ formatarTendencia(tendenciaDominio) }}
-            </div>
-          </div>
           <div class="graph-tile graph-tile--list">
             <div class="micro-title">Revisoes</div>
             <div class="micro-hbar-list" *ngIf="revisoesResumo.total > 0; else semRevisoesResumo">
@@ -168,46 +106,6 @@
             <div class="micro-sub">Min/dia</div>
           </div>
           <div class="graph-tile graph-tile--list">
-            <div class="micro-title">Cobertura por materia</div>
-            <div class="micro-sub">Estudado vs nao</div>
-            <div class="micro-hbar-list" *ngIf="coberturaMateriasExibidas.length; else semCoberturaMaterias">
-              <div class="micro-hbar" *ngFor="let materia of coberturaMateriasExibidas">
-                <div class="micro-hbar-header">
-                  <span class="micro-hbar-name">{{ materia.nome }}</span>
-                  <span class="micro-hbar-value">{{ materia.label }}</span>
-                </div>
-                <div class="micro-hbar-track micro-hbar-track--split">
-                  <span class="micro-hbar-fill micro-hbar-fill--cobertura" [style.width.%]="materia.percent"></span>
-                  <span class="micro-hbar-rest" [style.width.%]="100 - materia.percent"></span>
-                </div>
-              </div>
-            </div>
-            <ng-template #semCoberturaMaterias>
-              <div class="micro-empty">Sem dados</div>
-            </ng-template>
-          </div>
-          <div class="graph-tile graph-tile--list">
-            <div class="micro-title">Dominio por materia</div>
-            <div class="micro-sub">Pontos fracos</div>
-            <div class="micro-hbar-list" *ngIf="!dominioMateriasSemDados && dominioMateriasExibidas.length; else semDominioMaterias">
-              <div class="micro-hbar" *ngFor="let materia of dominioMateriasExibidas">
-                <div class="micro-hbar-header">
-                  <span class="micro-hbar-name">{{ materia.materiaNome }}</span>
-                  <span class="micro-hbar-value">{{ formatPercent(materia.nivelDominio) }}</span>
-                </div>
-                <div class="micro-hbar-track">
-                  <span
-                    class="micro-hbar-fill micro-hbar-fill--dominio"
-                    [ngClass]="getDominioClasse(materia.nivelDominio)"
-                    [style.width.%]="calcularDominioFraquezaPercent(materia)"></span>
-                </div>
-              </div>
-            </div>
-            <ng-template #semDominioMaterias>
-              <div class="micro-empty">Sem dados</div>
-            </ng-template>
-          </div>
-          <div class="graph-tile graph-tile--list">
             <div class="micro-title">Tempo por materia</div>
             <div class="micro-sub">{{ periodoTempoMateriasLabel }}</div>
             <div class="micro-hbar-list" *ngIf="tempoMateriasDistribuicao.length; else semTempoMaterias">
@@ -227,42 +125,8 @@
               <div class="micro-empty">Sem dados</div>
             </ng-template>
           </div>
-          <div class="graph-tile graph-tile--list">
-            <div class="micro-title">Prazo / Ritmo</div>
-            <div class="micro-sub">Estimativa</div>
-            <div class="micro-metric">
-              <span class="micro-metric-label">Restante:</span>
-              <span class="micro-metric-value">{{ prazoRitmo.labelRestante }}</span>
-            </div>
-            <div class="micro-metric">
-              <span class="micro-metric-label">No ritmo:</span>
-              <span class="micro-metric-value" [class.is-muted]="prazoRitmo.semDados">
-                {{ prazoRitmo.labelDias }}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
-    </article>
-
-    <article class="progresso-card progresso-card-concluidas">
-      <div class="card-head">
-        <div class="card-title">Materias concluidas</div>
-        <div class="card-value">{{ materiasConcluidas.length }}</div>
-      </div>
-      <div class="card-subtitle">Materias concluidas no estudo e dominadas na revisao.</div>
-      <div class="done-list" *ngIf="materiasConcluidas.length; else semMateriasConcluidas">
-        <div class="done-item" *ngFor="let materia of materiasConcluidas">
-          <div class="done-info">
-            <span class="done-name">{{ materia.materiaNome }}</span>
-            <span class="done-tag" *ngIf="isMateriaDominada(materia)">Dominada</span>
-          </div>
-          <span class="done-value">{{ formatPercent(getPercentualConcluido(materia)) }}</span>
-        </div>
-      </div>
-      <ng-template #semMateriasConcluidas>
-        <div class="card-note">Nenhuma materia concluida ainda.</div>
-      </ng-template>
     </article>
 
     <article class="progresso-card progresso-card--wide">

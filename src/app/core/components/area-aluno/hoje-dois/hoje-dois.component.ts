@@ -2,9 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
-import { PressaoFilaItemDTO } from 'src/app/core/api/dto/pressao-do-dia.dto';
-import { FocoPlanoDiarioDTO } from 'src/app/core/dto/foco-plano-diario.dto';
-import { FocoPlanoDiarioService } from 'src/app/core/services/foco-plano-diario.service';
+import { RevisaoHojeItemDTO } from 'src/app/core/models/revisao-hoje.models';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 import { AuthService } from 'src/app/site/services/auth.service';
 
 @Component({
@@ -15,34 +14,38 @@ import { AuthService } from 'src/app/site/services/auth.service';
 export class HojeDoisComponent implements OnInit {
   loading = false;
   error: string | null = null;
-  plano: FocoPlanoDiarioDTO | null = null;
+  fila: RevisaoHojeItemDTO[] = [];
   nomeAluno = 'Aluno(a)';
   mostrarDetalhes = false;
 
   constructor(
-    private focoPlanoDiarioService: FocoPlanoDiarioService,
+    private revisaoHojeService: RevisaoHojeService,
     private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.nomeAluno = String(this.authService.getUserNameFromToken() || '').trim() || 'Aluno(a)';
-    this.carregarPlano();
+    this.carregarFila();
   }
 
-  get filaRevisao(): PressaoFilaItemDTO[] {
-    return Array.isArray(this.plano?.filaRevisao) ? this.plano!.filaRevisao : [];
+  // A fila de revisao e 100% controlada pelo backend.
+  // O frontend nao deve alterar, ordenar ou recalcular nada.
+  get filaRevisao(): RevisaoHojeItemDTO[] {
+    return Array.isArray(this.fila) ? this.fila : [];
   }
 
   get resumoAcionavel(): any {
-    return (this.plano as any)?.resumoAcionavel || {};
+    return {
+      criticos: this.criticos,
+      emRisco: this.emRisco,
+      manutencaoHoje: this.manutencao,
+      totalAgora: this.totalRevisoesPendentes
+    };
   }
 
   get totalRevisoesPendentes(): number {
-    const totalFila = this.filaRevisao.length;
-    if (totalFila > 0) return totalFila;
-    const totalResumo = Number(this.resumoAcionavel?.totalAgora || 0);
-    return Number.isFinite(totalResumo) ? Math.max(0, Math.round(totalResumo)) : 0;
+    return this.filaRevisao.length;
   }
 
   get temRevisaoPendente(): boolean {
@@ -50,8 +53,7 @@ export class HojeDoisComponent implements OnInit {
   }
 
   get concluidosHoje(): number {
-    const progressoHoje = (this.plano as any)?.progressoHoje;
-    return this.toInt(progressoHoje?.revisoesTopicoConcluidas);
+    return 0;
   }
 
   get estimativaMinutos(): number {
@@ -59,15 +61,16 @@ export class HojeDoisComponent implements OnInit {
   }
 
   get criticos(): number {
-    return this.toInt(this.resumoAcionavel?.criticos);
+    return this.filaRevisao.filter((item) => String(item?.categoria || '').toUpperCase().includes('CRITICO')).length;
   }
 
   get emRisco(): number {
-    return this.toInt(this.resumoAcionavel?.emRisco);
+    return this.filaRevisao.filter((item) => String(item?.categoria || '').toUpperCase().includes('RISCO')).length;
   }
 
   get manutencao(): number {
-    return this.toInt(this.resumoAcionavel?.manutencaoHoje);
+    const total = this.totalRevisoesPendentes;
+    return Math.max(0, total - this.criticos - this.emRisco);
   }
 
   get botaoPrincipalTexto(): string {
@@ -116,18 +119,18 @@ export class HojeDoisComponent implements OnInit {
     this.router.navigate(['/area-restrita/sala-estudo/executar']);
   }
 
-  private carregarPlano(): void {
+  private carregarFila(): void {
     this.loading = true;
     this.error = null;
-    this.focoPlanoDiarioService
-      .obterPlanoDiario()
+    this.revisaoHojeService
+      .getFilaHoje()
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (dto) => {
-          this.plano = dto || null;
+          this.fila = Array.isArray(dto?.itens) ? dto.itens : [];
         },
         error: (err: HttpErrorResponse) => {
-          this.plano = null;
+          this.fila = [];
           this.error = this.resolverMensagemErro(err);
         }
       });
@@ -135,11 +138,6 @@ export class HojeDoisComponent implements OnInit {
 
   private resolverMensagemErro(err: HttpErrorResponse): string {
     const serverMessage = String(err?.error?.message || '').trim();
-    return serverMessage || 'Não foi possível carregar o plano de hoje.';
-  }
-
-  private toInt(value: unknown): number {
-    const n = Number(value);
-    return Number.isFinite(n) ? Math.max(0, Math.round(n)) : 0;
+    return serverMessage || 'Nao foi possivel carregar a fila de hoje.';
   }
 }

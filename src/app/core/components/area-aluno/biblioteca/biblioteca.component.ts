@@ -10,6 +10,9 @@ import { catchError } from 'rxjs/operators';
 import { TreeNode } from 'primeng/api';
 import { ExecutionQueueItem, ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
 import { extrairStatusCanonicoRevisao, statusCanonicoParaDashboard } from '../utils/revisao-status.util';
+import { EditalService } from '../services/edital.service';
+import { Edital } from '../models/Edital';
+import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 
 type BibliotecaModo = 'resumos' | 'flashcards';
 type StatusRevisao = 'VENCIDA' | 'EM_DIA' | 'FUTURA';
@@ -64,19 +67,37 @@ export class BibliotecaComponent implements OnInit {
   flashcardModalTopicoNome = '-';
   private flashcardIdPreferido: number | null = null;
   private buscaTimer?: any;
+  private escopoValor = 'todas';
+  private editais: Edital[] = [];
+  private materiasPorEdital = new Map<number, Set<number>>();
+  private materiasAtivasPorEditais = new Set<number>();
 
   constructor(
     private salaEstudoService: SalaEstudoService,
     private flashcardService: FlashcardService,
     private executionQueueService: ExecutionQueueService,
+    private editalService: EditalService,
+    private empresaParametroService: EmpresaParametroService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.aplicarEstadoInicialViaQuery();
-    this.carregarMaterias();
-    this.carregarFlashcardsCriticos();
+    this.carregarContextoEdital();
+  }
+
+  private carregarContextoEdital(): void {
+    forkJoin({
+      escopo: this.empresaParametroService.getParametroPorChave('centro_estudo_filtro_pro_prova').pipe(catchError(() => of(null))),
+      editais: this.editalService.listarComInclude(['materias']).pipe(catchError(() => of([] as Edital[])))
+    }).subscribe(({ escopo, editais }) => {
+      this.escopoValor = String(escopo || 'todas').trim() || 'todas';
+      this.editais = Array.isArray(editais) ? editais : [];
+      this.rebuildEditaisIndex();
+      this.carregarMaterias();
+      this.carregarFlashcardsCriticos();
+    });
   }
 
   private aplicarEstadoInicialViaQuery(): void {
@@ -110,8 +131,9 @@ export class BibliotecaComponent implements OnInit {
   private carregarMaterias(): void {
     this.carregando = true;
     this.erro = undefined;
+    const materiasPermitidas = this.getMateriaIdsPermitidas();
 
-    this.salaEstudoService.listarMateriasParaEstudo('todas').subscribe({
+    this.salaEstudoService.listarMateriasParaEstudo(this.escopoValor || 'todas').subscribe({
       next: (lista) => {
         const materias: Materia[] = [];
         this.topicosPorMateria.clear();
@@ -122,12 +144,19 @@ export class BibliotecaComponent implements OnInit {
           if (!Number.isFinite(materiaId) || materiaId <= 0 || !materiaNome) {
             return;
           }
+          if (materiasPermitidas && !materiasPermitidas.has(materiaId)) {
+            return;
+          }
           materias.push({ id: materiaId, nome: materiaNome });
           const topicos = (item?.topicos || []).map((dto: any) => this.converterDtoParaTopico(dto, 0));
           this.topicosPorMateria.set(materiaId, topicos);
         });
 
         this.materias = materias;
+        if (this.materiaSelecionadaId && !this.materias.some((m) => Number(m.id) === Number(this.materiaSelecionadaId))) {
+          this.materiaSelecionadaId = null;
+          this.topicoSelecionadoId = null;
+        }
         this.carregando = false;
         if (this.modo === 'resumos') {
           this.carregarResumosDisponiveis();
@@ -235,6 +264,7 @@ export class BibliotecaComponent implements OnInit {
   private carregarFlashcards(): void {
     this.flashcards = [];
     this.carregandoFlashcards = true;
+    const materiasPermitidas = this.getMateriaIdsPermitidas();
 
     this.flashcardService.listarBibliotecaFlashcards({
       materiaId: this.materiaSelecionadaId,
@@ -245,7 +275,10 @@ export class BibliotecaComponent implements OnInit {
       criticos: this.somenteCriticos ? true : undefined
     }).subscribe({
       next: (lista) => {
-        this.flashcards = lista || [];
+        const base = lista || [];
+        this.flashcards = materiasPermitidas
+          ? base.filter((item) => materiasPermitidas.has(Number(item?.materiaId || 0)))
+          : base;
         if (this.flashcardIdPreferido) {
           const alvo = this.flashcards.find((item) => Number(item?.flashcardId || 0) === this.flashcardIdPreferido);
           if (alvo) {
@@ -264,9 +297,13 @@ export class BibliotecaComponent implements OnInit {
 
   private carregarFlashcardsCriticos(): void {
     this.carregandoFlashcardsCriticos = true;
+    const materiasPermitidas = this.getMateriaIdsPermitidas();
     this.flashcardService.listarFlashcardsCriticos().subscribe({
       next: (lista) => {
-        this.flashcardsCriticos = lista || [];
+        const base = lista || [];
+        this.flashcardsCriticos = materiasPermitidas
+          ? base.filter((item) => materiasPermitidas.has(Number((item as any)?.materiaId || 0)))
+          : base;
         this.carregandoFlashcardsCriticos = false;
       },
       error: (err) => {
@@ -281,6 +318,7 @@ export class BibliotecaComponent implements OnInit {
     this.resumosDisponiveis = [];
     this.carregandoResumos = true;
     this.erro = undefined;
+    const materiasPermitidas = this.getMateriaIdsPermitidas();
 
     this.salaEstudoService.listarBibliotecaResumos({
       materiaId: this.materiaSelecionadaId,
@@ -288,7 +326,11 @@ export class BibliotecaComponent implements OnInit {
       termo: this.termoBusca
     }).subscribe({
       next: (lista) => {
-        this.resumosDisponiveis = this.ordenarResumosComoLivro(lista || []);
+        const base = lista || [];
+        const filtrada = materiasPermitidas
+          ? base.filter((item) => materiasPermitidas.has(Number(item?.materiaId || 0)))
+          : base;
+        this.resumosDisponiveis = this.ordenarResumosComoLivro(filtrada);
         this.atualizarArvoreResumos();
         this.carregandoResumos = false;
       },
@@ -310,6 +352,7 @@ export class BibliotecaComponent implements OnInit {
     const materiasIds = this.materias
       .map((m) => Number(m.id))
       .filter((id) => Number.isFinite(id) && id > 0);
+    const materiasPermitidas = this.getMateriaIdsPermitidas();
 
     if (!materiasIds.length) {
       this.carregandoResumos = false;
@@ -333,10 +376,13 @@ export class BibliotecaComponent implements OnInit {
     forkJoin(requests).subscribe({
       next: (listas) => {
         const combinado = (listas || []).flat();
-        this.resumosDisponiveis = this.ordenarResumosComoLivro(combinado);
+        const filtrada = materiasPermitidas
+          ? combinado.filter((item) => materiasPermitidas.has(Number(item?.materiaId || 0)))
+          : combinado;
+        this.resumosDisponiveis = this.ordenarResumosComoLivro(filtrada);
         this.atualizarArvoreResumos();
         this.carregandoResumos = false;
-        if (!combinado.length) {
+        if (!filtrada.length) {
           this.erro = 'Nao foi possivel carregar resumos no momento.';
         }
       },
@@ -725,6 +771,56 @@ export class BibliotecaComponent implements OnInit {
       },
       state: { executionQueue: fila }
     });
+  }
+
+  private rebuildEditaisIndex(): void {
+    this.materiasPorEdital.clear();
+    this.materiasAtivasPorEditais.clear();
+
+    (this.editais || []).forEach((edital) => {
+      const editalId = Number(edital?.id || 0);
+      if (editalId <= 0) return;
+
+      const ids = new Set<number>();
+      (edital?.materias || []).forEach((m: any) => {
+        const materiaId = Number(m?.materiaId || m?.id || 0);
+        if (materiaId > 0) ids.add(materiaId);
+      });
+      this.materiasPorEdital.set(editalId, ids);
+
+      if (this.isEditalAtivo(edital)) {
+        ids.forEach((id) => this.materiasAtivasPorEditais.add(id));
+      }
+    });
+  }
+
+  private isEditalAtivo(edital: Edital | null | undefined): boolean {
+    const valor: any = (edital as any)?.ativo;
+    if (valor === undefined || valor === null) return false;
+    if (typeof valor === 'boolean') return valor;
+    if (typeof valor === 'number') return valor === 1;
+    if (typeof valor === 'string') {
+      const normalizado = valor.trim().toLowerCase();
+      return normalizado === 'true' || normalizado === '1' || normalizado === 'ativo';
+    }
+    return false;
+  }
+
+  private getMateriaIdsPermitidas(): Set<number> | null {
+    const escopo = String(this.escopoValor || 'todas').trim().toLowerCase();
+    if (escopo.startsWith('edital-')) {
+      const editalId = Number(escopo.replace('edital-', ''));
+      if (!Number.isFinite(editalId) || editalId <= 0) return new Set<number>();
+      const edital = (this.editais || []).find((e) => Number(e?.id || 0) === editalId);
+      if (!this.isEditalAtivo(edital)) return new Set<number>();
+      return new Set<number>(this.materiasPorEdital.get(editalId) || []);
+    }
+
+    if (this.materiasAtivasPorEditais.size > 0) {
+      return new Set<number>(this.materiasAtivasPorEditais);
+    }
+
+    return null;
   }
 
   private folhasTopicos(lista: Topico[]): Topico[] {

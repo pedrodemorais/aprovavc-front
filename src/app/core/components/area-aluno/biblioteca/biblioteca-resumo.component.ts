@@ -28,6 +28,8 @@ export class BibliotecaResumoComponent implements OnInit {
   resumoIndex = -1;
   materiaFiltroId: number | null = null;
   private topicoIdInicial: number | null = null;
+  private filaTopicosIds: number[] = [];
+  private origemHoje = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -40,13 +42,20 @@ export class BibliotecaResumoComponent implements OnInit {
     this.route.paramMap.subscribe((params) => {
       const topicoId = Number(params.get('topicoId'));
       this.topicoIdInicial = Number.isFinite(topicoId) && topicoId > 0 ? topicoId : null;
-      const materiaId = Number(this.route.snapshot.queryParamMap.get('materiaId'));
+      const queryMap = this.route.snapshot.queryParamMap;
+      const materiaId = Number(queryMap.get('materiaId'));
       this.materiaFiltroId = Number.isFinite(materiaId) && materiaId > 0 ? materiaId : null;
+      this.filaTopicosIds = this.parseTopicosQuery(queryMap.get('topicos'));
+      this.origemHoje = String(queryMap.get('origem') || '').toLowerCase() === 'hoje';
       this.carregarResumosDisponiveis();
     });
   }
 
   voltar(): void {
+    if (this.origemHoje) {
+      this.router.navigate(['/area-restrita/hoje']);
+      return;
+    }
     this.router.navigate(['/area-restrita/biblioteca']);
   }
 
@@ -58,6 +67,24 @@ export class BibliotecaResumoComponent implements OnInit {
   irProximo(): void {
     if (this.resumoIndex < 0 || this.resumoIndex >= this.resumos.length - 1) return;
     this.definirResumoAtual(this.resumoIndex + 1);
+  }
+
+  get progressoFilaLabel(): string {
+    if (!this.resumos.length || this.resumoIndex < 0) return '-/-';
+    return `${this.resumoIndex + 1}/${this.resumos.length}`;
+  }
+
+  get podeIrAnterior(): boolean {
+    return this.resumoIndex > 0;
+  }
+
+  get podeIrProximo(): boolean {
+    return this.resumoIndex >= 0 && this.resumoIndex < this.resumos.length - 1;
+  }
+
+  get progressoPercentual(): number {
+    if (!this.resumos.length || this.resumoIndex < 0) return 0;
+    return Math.max(0, Math.min(100, Math.round(((this.resumoIndex + 1) / this.resumos.length) * 100)));
   }
 
   private carregarResumo(topicoId: number): void {
@@ -83,15 +110,16 @@ export class BibliotecaResumoComponent implements OnInit {
     this.resumoIndex = -1;
 
     this.salaEstudoService.listarBibliotecaResumos({
-      materiaId: this.materiaFiltroId
+      materiaId: this.filaTopicosIds.length ? null : this.materiaFiltroId
     }).subscribe({
       next: (lista: BibliotecaResumoDTO[]) => {
-        this.resumos = (lista || []).map((item) => ({
+        const mapeados = (lista || []).map((item) => ({
           topicoId: item.topicoId,
           topicoDescricao: item.topicoDescricao,
           materiaId: item.materiaId,
           materiaNome: item.materiaNome
         }));
+        this.resumos = this.aplicarFilaPriorizada(mapeados);
         this.carregando = false;
         if (!this.resumos.length) {
           return;
@@ -125,9 +153,45 @@ export class BibliotecaResumoComponent implements OnInit {
     this.topicoIdInicial = item.topicoId;
     this.router.navigate(
       ['/area-restrita/biblioteca/resumo', item.topicoId],
-      { queryParams: { materiaId: item.materiaId } }
+      {
+        queryParams: {
+          materiaId: item.materiaId,
+          topicos: this.filaTopicosIds.length ? this.filaTopicosIds.join(',') : null,
+          origem: this.origemHoje ? 'hoje' : null
+        }
+      }
     );
     this.carregarResumo(item.topicoId);
+  }
+
+  private aplicarFilaPriorizada(lista: ResumoItem[]): ResumoItem[] {
+    if (!this.filaTopicosIds.length) {
+      return lista;
+    }
+
+    const porTopicoId = new Map<number, ResumoItem>();
+    (lista || []).forEach((item) => {
+      const topicoId = Number(item?.topicoId || 0);
+      if (topicoId > 0) porTopicoId.set(topicoId, item);
+    });
+
+    return this.filaTopicosIds
+      .map((topicoId) => porTopicoId.get(topicoId))
+      .filter((item): item is ResumoItem => !!item);
+  }
+
+  private parseTopicosQuery(raw: string | null): number[] {
+    const texto = String(raw || '').trim();
+    if (!texto) return [];
+    const saida: number[] = [];
+    const vistos = new Set<number>();
+    texto.split(',').forEach((parte) => {
+      const id = Number(String(parte || '').trim());
+      if (!Number.isFinite(id) || id <= 0 || vistos.has(id)) return;
+      vistos.add(id);
+      saida.push(id);
+    });
+    return saida;
   }
 
 }

@@ -35,6 +35,9 @@ private mensagemTimeout: any; // para guardar o setTimeout
   currentTreeNodeKey: string | null = null;
   editingNodeKey: string | null = null;
   editingLabel = '';
+  cadastroMateriaNodeKey: string | null = null;
+  novaMateriaNome = '';
+  adicionandoMateriaInline = false;
   materiasDisponiveis: Materia[] = [];
   materiasSelecionadas: Materia[] = [];
 
@@ -914,6 +917,8 @@ private mensagemTimeout: any; // para guardar o setTimeout
     const editalId = node?.data?.editalId as number | undefined;
     if (!editalId) return;
     if (node?.data?.tipo === 'EDITAL') {
+      this.cadastroMateriaNodeKey = null;
+      this.novaMateriaNome = '';
       this.toggleEdital(editalId);
       this.montarArvoreEditais();
     }
@@ -927,7 +932,7 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
   iniciarEdicaoNode(node: TreeNode, event?: Event): void {
     event?.stopPropagation();
-    if (!node?.data || node.data.tipo === 'EDITAL') {
+    if (!node?.data) {
       return;
     }
     this.currentTreeNodeKey = String(node?.key || '');
@@ -954,11 +959,68 @@ private mensagemTimeout: any; // para guardar o setTimeout
       return;
     }
 
+    if (node.data.tipo === 'EDITAL') {
+      const editalId = Number(node.data?.editalId || 0);
+      const editalAtual = this.editais.find((e) => Number(e?.id || 0) === editalId);
+      if (!editalId || !editalAtual?.id) {
+        this.erro = 'Nao foi possivel localizar o edital para editar.';
+        this.cancelarEdicaoNode();
+        return;
+      }
+      if (String(editalAtual.nome || '').trim() === label) {
+        this.cancelarEdicaoNode();
+        return;
+      }
+
+      const materiasIds = Array.from(
+        new Set(
+          (editalAtual.materias || [])
+            .map((m) => Number(m?.materiaId || 0))
+            .filter((id) => id > 0)
+        )
+      );
+
+      const payload: EditalFormPayload = {
+        nome: label,
+        cargo: editalAtual.cargo ?? null,
+        descricao: editalAtual.descricao ?? null,
+        dataProva: editalAtual.dataProva ?? null,
+        materiasIds
+      };
+
+      this.editalService.atualizar(editalId, payload).subscribe({
+        next: () => {
+          node.label = label;
+          node.data.label = label;
+          editalAtual.nome = label;
+          if (this.editalSelecionado?.id === editalId) {
+            this.editalSelecionado = { ...this.editalSelecionado, nome: label };
+          }
+          if (this.editalEmEdicao?.id === editalId) {
+            this.editalEmEdicao = { ...this.editalEmEdicao, nome: label };
+          }
+          this.cancelarEdicaoNode();
+          this.mensagemSucesso = 'Edital atualizado com sucesso.';
+          this.iniciarTimeoutMensagem();
+          this.forcarAtualizacaoArvore();
+        },
+        error: () => {
+          this.erro = 'Erro ao atualizar o edital.';
+          this.cancelarEdicaoNode();
+        }
+      });
+      return;
+    }
+
     if (node.data.tipo === 'MATERIA') {
       const materiaId = Number(node.data?.materiaId || 0);
       const materiaAtual = this.materias.find((m) => Number(m?.id || 0) === materiaId);
       if (!materiaAtual) {
         this.erro = 'Nao foi possivel localizar a materia para editar.';
+        this.cancelarEdicaoNode();
+        return;
+      }
+      if (String(materiaAtual.nome || '').trim() === label) {
         this.cancelarEdicaoNode();
         return;
       }
@@ -990,6 +1052,10 @@ private mensagemTimeout: any; // para guardar o setTimeout
       const materiaId = Number(node.data?.materiaId || 0);
       const topicoId = Number(node.data?.topicoId || 0);
       const editalId = Number(node.data?.editalId || 0);
+      if (String(node.label || '').trim() === label) {
+        this.cancelarEdicaoNode();
+        return;
+      }
       const payload: any = {
         id: topicoId,
         descricao: label,
@@ -1069,6 +1135,21 @@ private mensagemTimeout: any; // para guardar o setTimeout
     }
     if (node.data.tipo === 'TOPICO') {
       this.marcarTopicoComFilhos(node);
+    }
+  }
+
+  adicionarConteudo(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    this.currentTreeNodeKey = String(node?.key || '');
+    if (!node?.data) return;
+
+    if (node.data.tipo === 'MATERIA') {
+      this.criarTopicoOuSubtopico(node, false);
+      return;
+    }
+
+    if (node.data.tipo === 'TOPICO') {
+      this.criarTopicoOuSubtopico(node, true);
     }
   }
 
@@ -1283,6 +1364,132 @@ private mensagemTimeout: any; // para guardar o setTimeout
     const encontrado = (this.editais || []).find(e => e.id === editalId);
     if (!encontrado) return;
     this.definirComoEmEstudo(encontrado);
+  }
+
+  abrirCadastroMateriaInline(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    if (!node?.data || node.data.tipo !== 'EDITAL') {
+      return;
+    }
+
+    const key = String(node.key || '');
+    if (!key) {
+      return;
+    }
+
+    if (this.cadastroMateriaNodeKey === key) {
+      this.cadastroMateriaNodeKey = null;
+      this.novaMateriaNome = '';
+      this.adicionandoMateriaInline = false;
+      return;
+    }
+
+    this.currentTreeNodeKey = key;
+    this.cadastroMateriaNodeKey = key;
+    this.novaMateriaNome = '';
+    this.adicionandoMateriaInline = false;
+    this.definirEditalSelecionadoPorNode(node);
+  }
+
+  cancelarCadastroMateriaInline(event?: Event): void {
+    event?.stopPropagation();
+    this.cadastroMateriaNodeKey = null;
+    this.novaMateriaNome = '';
+    this.adicionandoMateriaInline = false;
+  }
+
+  confirmarCadastroMateriaInline(node: TreeNode, event?: Event): void {
+    event?.stopPropagation();
+    if (this.adicionandoMateriaInline || !node?.data || node.data.tipo !== 'EDITAL') {
+      return;
+    }
+
+    const editalId = Number(node.data?.editalId || 0);
+    const nome = String(this.novaMateriaNome || '').trim();
+    if (!editalId || !nome) {
+      this.erro = 'Informe o nome da materia para cadastrar.';
+      return;
+    }
+
+    const edital = (this.editais || []).find((e) => Number(e?.id || 0) === editalId);
+    if (!edital?.id) {
+      this.erro = 'Nao foi possivel localizar o edital selecionado.';
+      return;
+    }
+
+    this.adicionandoMateriaInline = true;
+    this.erro = undefined;
+    this.mensagemSucesso = undefined;
+
+    const nomeNormalizado = this.normalizarTexto(nome);
+    const materiaExistente = (this.materias || []).find(
+      (m) => this.normalizarTexto(m?.nome || '') === nomeNormalizado
+    );
+
+    const persistirMateria$ = materiaExistente
+      ? of(materiaExistente)
+      : this.materiaService.salvarMateria({ nome } as Materia);
+
+    persistirMateria$
+      .pipe(
+        switchMap((materiaSalva) => {
+          const materiaId = Number(materiaSalva?.id || 0);
+          if (!materiaId) {
+            throw new Error('MATERIA_ID_INVALIDO');
+          }
+
+          const materiasIdsAtuais = Array.from(
+            new Set(
+              (edital.materias || [])
+                .map((m) => Number(m?.materiaId || 0))
+                .filter((id) => id > 0)
+            )
+          );
+          const materiasIds = materiasIdsAtuais.includes(materiaId)
+            ? materiasIdsAtuais
+            : [...materiasIdsAtuais, materiaId];
+
+          const payload: EditalFormPayload = {
+            nome: edital.nome,
+            cargo: edital.cargo ?? null,
+            descricao: edital.descricao ?? null,
+            dataProva: edital.dataProva ?? null,
+            materiasIds
+          };
+
+          return this.editalService.atualizar(editalId, payload);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.adicionandoMateriaInline = false;
+          this.cadastroMateriaNodeKey = null;
+          this.novaMateriaNome = '';
+          this.mensagemSucesso = 'Materia cadastrada no edital com sucesso.';
+          this.iniciarTimeoutMensagem();
+          this.carregarMaterias();
+          this.carregarEditais();
+        },
+        error: (err) => {
+          console.error('[EDITAIS] Erro ao cadastrar materia inline no edital:', err);
+          this.adicionandoMateriaInline = false;
+          this.erro = 'Erro ao cadastrar materia neste edital.';
+          this.iniciarTimeoutMensagem();
+        }
+      });
+  }
+
+  onInlineMateriaInputKeydown(event: KeyboardEvent, node: TreeNode): void {
+    event.stopPropagation();
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.confirmarCadastroMateriaInline(node, event);
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelarCadastroMateriaInline(event);
+    }
   }
 
   acaoEditarSelecionado(): void {
@@ -1535,6 +1742,154 @@ private mensagemTimeout: any; // para guardar o setTimeout
       }
       return node;
     });
+  }
+
+  private criarTopicoOuSubtopico(node: TreeNode, comoSubtopico: boolean): void {
+    const materiaId = Number(node?.data?.materiaId || 0);
+    const editalId = Number(node?.data?.editalId || 0);
+    if (!materiaId || !editalId) {
+      this.erro = 'Nao foi possivel localizar a materia do edital.';
+      return;
+    }
+
+    const parentTopicoId = comoSubtopico
+      ? Number(node?.data?.topicoId || 0)
+      : 0;
+
+    const payload: any = {
+      descricao: comoSubtopico ? 'Novo subtopico' : 'Novo topico',
+      ativo: true
+    };
+    if (parentTopicoId > 0) {
+      payload.topicoPaiId = parentTopicoId;
+    }
+
+    this.materiaService.salvarTopico(materiaId, payload).subscribe({
+      next: (novo: any) => {
+        const topicoId = this.extrairTopicoId(novo);
+        const descricao = String(novo?.descricao || payload.descricao || '').trim() || payload.descricao;
+        if (!topicoId) {
+          this.erro = 'Topico criado, mas sem identificador retornado.';
+          this.carregarEditais();
+          return;
+        }
+
+        const parentKey = String(node?.key || '');
+        const nodeKey = `topico-${editalId}-${materiaId}-${Date.now()}-${topicoId}`;
+        const novoNode: TreeNode = {
+          key: nodeKey,
+          label: descricao,
+          styleClass: 'topico-node',
+          data: {
+            tipo: 'TOPICO',
+            materiaId,
+            topicoId,
+            editalId,
+            ativo: true
+          },
+          selectable: true,
+          expanded: false,
+          children: []
+        };
+
+        if (!Array.isArray(node.children)) {
+          node.children = [];
+        }
+        node.children = [...node.children, novoNode];
+        node.expanded = true;
+        node.leaf = false;
+
+        this.adicionarNodeNaSelecao(novoNode);
+        this.atualizarTopicosLocalAposCriacao(editalId, materiaId, parentTopicoId, topicoId, descricao);
+
+        this.currentTreeNodeKey = nodeKey;
+        this.editingNodeKey = nodeKey;
+        this.editingLabel = descricao;
+        this.mensagemSucesso = comoSubtopico
+          ? 'Subtopico adicionado com sucesso.'
+          : 'Topico adicionado com sucesso.';
+        this.iniciarTimeoutMensagem();
+        this.forcarAtualizacaoArvore();
+      },
+      error: (err) => {
+        console.error('[EDITAIS] Erro ao adicionar topico/subtopico:', err);
+        this.erro = comoSubtopico
+          ? 'Erro ao adicionar subtopico.'
+          : 'Erro ao adicionar topico.';
+      }
+    });
+  }
+
+  private extrairTopicoId(topico: any): number {
+    const id = Number(
+      topico?.id ??
+      topico?.topicoId ??
+      topico?.subtopicoId ??
+      topico?.idTopico ??
+      topico?.idSubtopico ??
+      0
+    );
+    return Number.isFinite(id) && id > 0 ? id : 0;
+  }
+
+  private atualizarTopicosLocalAposCriacao(
+    editalId: number,
+    materiaId: number,
+    parentTopicoId: number,
+    topicoId: number,
+    descricao: string
+  ): void {
+    const edital = this.editais.find((e) => Number(e?.id || 0) === editalId);
+    const materia = edital?.materias?.find((m) => Number(m?.materiaId || 0) === materiaId);
+    if (!materia) {
+      return;
+    }
+
+    const novoTopico = {
+      id: topicoId,
+      topicoId,
+      descricao,
+      ativo: true,
+      subtopicos: [] as any[]
+    };
+
+    if (!parentTopicoId) {
+      if (!Array.isArray(materia.topicos)) {
+        materia.topicos = [];
+      }
+      materia.topicos = [...materia.topicos, novoTopico];
+      return;
+    }
+
+    const adicionarEmPai = (lista: any[]): boolean => {
+      for (const item of lista || []) {
+        const idAtual = Number(
+          item?.id ??
+          item?.topicoId ??
+          item?.subtopicoId ??
+          item?.idTopico ??
+          item?.idSubtopico ??
+          0
+        );
+        if (idAtual === parentTopicoId) {
+          if (!Array.isArray(item.subtopicos)) {
+            item.subtopicos = [];
+          }
+          item.subtopicos = [...item.subtopicos, novoTopico];
+          return true;
+        }
+        const filhos = item?.subtopicos || item?.filhos || [];
+        if (filhos.length && adicionarEmPai(filhos)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (!Array.isArray(materia.topicos)) {
+      materia.topicos = [];
+    }
+    adicionarEmPai(materia.topicos);
   }
 
   // ============= SUBMIT =============

@@ -23,41 +23,6 @@
             </div>
             <div class="acoes-form">
               <div class="segmented-group">
-                <button
-                  type="button"
-                  class="segmented-btn"
-                  [disabled]="salvando"
-                  (click)="acaoPrincipal()"
-                >
-                  {{ labelAcaoPrincipal }}
-                </button>
-                <button
-                  type="button"
-                  class="segmented-btn"
-                  [disabled]="salvando"
-                  (click)="abrirModalTemplates()"
-                >
-                  Escolher template pronto
-                </button>
-
-                <button type="button" class="segmented-btn" (click)="limparFormulario()">
-                  Limpar
-                </button>
-                
-              <button type="button" class="segmented-btn" [disabled]="!editalSelecionado"
-                (click)="acaoEditarSelecionado()" title="Editar edital">
-                Editar
-              </button>
-              <button type="button" class="segmented-btn" [disabled]="!editalSelecionado" title="Duplicar edital">
-                Duplicar
-              </button>
-              <button type="button" class="segmented-btn" [disabled]="!editalSelecionado" title="Arquivar edital">
-                Arquivar
-              </button>
-              <button type="button" class="segmented-btn segmented-btn--danger" [disabled]="!podeExcluirEdital"
-                (click)="$event.stopPropagation(); acaoExcluirSelecionado()" title="Excluir edital">
-                Excluir
-              </button>
               </div>
             </div>
           </div>
@@ -105,31 +70,11 @@
                   *ngIf="editingNodeKey === node.key"
                   class="edital-tree-edit-input"
                   [(ngModel)]="editingLabel"
+                  (click)="$event.stopPropagation()"
                   (keydown)="onEditNodeKeydown($event)"
                   (keyup.enter)="confirmarEdicaoNode(node)"
-                  (blur)="confirmarEdicaoNode(node)"
                 />
                 <span *ngIf="editingNodeKey !== node.key" class="edital-tree-title">{{ node.label }}</span>
-              </span>
-              <span *ngIf="node.data?.tipo === 'EDITAL'" class="edital-tree-meta">
-                <span class="meta-chip">
-                  <span class="meta-label">Data</span>
-                  <span class="meta-valor">{{ formatData(node.data?.dataProva) || 'Não definida' }}</span>
-                </span>
-                <span class="meta-chip">
-                  <span class="meta-label">Progresso</span>
-                  <span class="meta-pill pill-progresso">{{ formatPercent(node.data?.percentualEstudadoGeral) }}</span>
-                </span>
-                <span class="meta-chip">
-                  <span class="meta-label">Domínio</span>
-                  <span class="meta-pill pill-dominio">{{ formatPercent(node.data?.nivelDominioGeral) }}</span>
-                </span>
-                <span
-                  class="badge-edital-ativo badge-edital-info"
-                  [class.is-placeholder]="!node.data?.ativo"
-                >
-                  {{ node.data?.ativo ? 'Em estudo' : '' }}
-                </span>
               </span>
               <button
                 *ngIf="node.data?.tipo === 'EDITAL'"
@@ -144,6 +89,26 @@
                 <span class="status-switch__track">
                   <span class="status-switch__thumb"></span>
                 </span>
+              </button>
+              <button
+                *ngIf="node.data?.tipo === 'EDITAL'"
+                type="button"
+                class="edital-tree-action-btn"
+                (click)="iniciarEdicaoNode(node, $event)"
+                title="Editar edital"
+                aria-label="Editar edital"
+              >
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button
+                *ngIf="node.data?.tipo === 'EDITAL'"
+                type="button"
+                class="edital-tree-action-btn add edital-tree-add-materia-btn"
+                (click)="abrirCadastroMateriaInline(node, $event)"
+                title="Adicionar materia"
+                aria-label="Adicionar materia"
+              >
+                <i class="pi pi-plus"></i>
               </button>
               <span *ngIf="node.data?.tipo === 'MATERIA' && node.data?.ativo === false" class="edital-tree-status">
                 Inativa
@@ -164,9 +129,9 @@
                 <button
                   type="button"
                   class="edital-tree-action-btn add"
-                  pTooltip="Ativar"
+                  [pTooltip]="node.data?.tipo === 'MATERIA' ? 'Adicionar topico' : 'Adicionar subtopico'"
                   tooltipPosition="top"
-                  (click)="ativarConteudo(node, $event)"
+                  (click)="adicionarConteudo(node, $event)"
                 >
                   <i class="pi pi-plus"></i>
                 </button>
@@ -180,6 +145,37 @@
                   <i class="pi pi-minus"></i>
                 </button>
               </span>
+            </div>
+            <div
+              class="edital-tree-inline-form"
+              *ngIf="node.data?.tipo === 'EDITAL' && cadastroMateriaNodeKey === node.key"
+              (click)="$event.stopPropagation()"
+            >
+              <input
+                type="text"
+                class="edital-tree-inline-input"
+                [(ngModel)]="novaMateriaNome"
+                placeholder="Nome da materia"
+                (keydown)="onInlineMateriaInputKeydown($event, node)"
+                (keyup)="$event.stopPropagation()"
+                (keypress)="$event.stopPropagation()"
+              />
+              <button
+                type="button"
+                class="segmented-btn"
+                [disabled]="adicionandoMateriaInline || !novaMateriaNome.trim()"
+                (click)="confirmarCadastroMateriaInline(node, $event)"
+              >
+                {{ adicionandoMateriaInline ? 'Salvando...' : 'Adicionar' }}
+              </button>
+              <button
+                type="button"
+                class="segmented-btn"
+                [disabled]="adicionandoMateriaInline"
+                (click)="cancelarCadastroMateriaInline($event)"
+              >
+                Cancelar
+              </button>
             </div>
           </ng-template>
         </p-tree>

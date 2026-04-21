@@ -73,7 +73,7 @@ interface DashboardStreakResumoRaw {
 
 @Injectable({ providedIn: 'root' })
 export class HojeFilaService {
-  private readonly url = `${environment.apiUrl}/sala-estudo/hoje/fila`;
+  private readonly url = `${environment.apiUrl}/sala-estudo/revisoes/hoje/fila`;
   private readonly resumoUrl = `${environment.apiUrl}/sala-estudo/hoje/resumo`;
   private readonly streakUrl = `${environment.apiUrl}/dashboard/streak`;
   private readonly noCacheHeaders = new HttpHeaders({

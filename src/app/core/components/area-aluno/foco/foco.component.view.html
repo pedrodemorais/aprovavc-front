@@ -39,187 +39,6 @@
       </div>
     </div>
 
-    <section class="edital-ativo-card" aria-label="Edital ativo">
-      <div class="edital-ativo-card__legend">{{ editalAtivoLegenda }}</div>
-      <div class="edital-ativo-card__media" [class.edital-ativo-card__media--fallback]="!editalAtivoImagemUrl">
-        <img *ngIf="editalAtivoImagemUrl; else editalFallback" [src]="editalAtivoImagemUrl" alt="Imagem do edital ativo" />
-        <ng-template #editalFallback>
-          <span>{{ editalAtivoSigla }}</span>
-        </ng-template>
-      </div>
-
-      <div class="edital-ativo-card__content">
-       
-        <div class="progresso-dia progresso-dia--inside progresso-dia--inside-edital">
-          <div class="progresso-bloco">
-            <div class="progresso-metrica">
-              <span class="kpi-label">Tópicos revisados</span>
-              <strong class="progresso-num">
-                <img class="progresso-num__icon" src="assets/img/icon/check.png" alt="Concluído" />
-                {{ revisoesFeitasHoje }}
-              </strong>
-            </div>
-            <div class="progresso-metrica">
-              <span class="kpi-label">Flashcards revisados</span>
-              <strong class="progresso-num">
-                <img class="progresso-num__icon" src="assets/img/icon/flash-card.png" alt="Flashcards" />
-                {{ flashcardsFeitosHoje }}
-              </strong>
-            </div>
-            <div class="progresso-metrica">
-              <span class="kpi-label">Estudos novos</span>
-              <strong class="progresso-num">
-                <img class="progresso-num__icon" src="assets/img/icon/new-file.png" alt="Estudos novos" />
-                {{ estudosFeitosHoje }}
-              </strong>
-            </div>
-            <div class="progresso-metrica">
-              <span class="kpi-label">Reforços resolvidos</span>
-              <strong class="progresso-num">
-                <img class="progresso-num__icon" src="assets/img/icon/gym.png" alt="Reforços resolvidos" />
-                {{ reforcosFeitosHoje }}
-              </strong>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="hero-cog card">
-      <ng-container *ngIf="isModoEstudarPlanejamentoDiario">
-        <ng-container [ngTemplateOutlet]="heroCogKpisTemplate"></ng-container>
-      </ng-container>
-
-      <div class="estudo-plano-panel-wrap" *ngIf="isModoExecucaoPlano || !hasReview">
-        <div class="card estudo-plano-card-list">
-          <div class="header-row">
-            <button
-              class="btn-primary hero-cog__cta hero-cog__cta--inline"
-              (click)="hasReview && exibidosHoje>0 ? iniciarRevisao() : onEstudarAgora()">
-              {{ ctaPrincipalLabel }}
-            </button>
-          </div>
-
-          <div class="plano-materias" *ngIf="distribuicaoPlano.length; else semMateriasPlano">
-            <article class="plano-materia-card" *ngFor="let item of distribuicaoPlano; trackBy: trackByPlanoMateria">
-              <button type="button" class="plano-materia-head" (click)="alternarMateriaPlano(item)">
-                <span class="plano-materia-titulo">{{ item.materiaNome }}</span>
-                <span class="plano-materia-toggle">{{ isMateriaPlanoExpandida(item) ? '-' : '+' }}</span>
-              </button>
-
-              <div class="plano-materia-body" *ngIf="isMateriaPlanoExpandida(item)">
-                <div><strong>Matéria:</strong> {{ item.materiaNome }}</div>
-                <div><strong>Próximo tópico:</strong> {{ item.proximoConteudo?.topicoNome || 'Não informado' }}</div>
-                <div><strong>Total Planejado:</strong> {{ formatMinutos(item.minutosPlanejados) }}</div>
-              </div>
-            </article>
-          </div>
-
-          <ng-template #semMateriasPlano>
-            <div class="estudo-plano-compact__body">
-              <div>Sem matérias planejadas para hoje.</div>
-            </div>
-          </ng-template>
-        </div>
-      </div>
-
-      <div class="hero-cog-main" *ngIf="!isModoEstudarPlanejamentoDiario">
-        <div class="hero-cog__left">
-          <ng-container [ngTemplateOutlet]="heroCogKpisTemplate"></ng-container>
-        </div>
-      </div>
-
-      <ng-template #heroCogKpisTemplate>
-          <div class="hero-cog__kpis">
-            <div class="kpi-tile kpi-tile--criticos">
-              <span class="kpi-ribbon" *ngIf="contadorCriticos === 0">EM DIA</span>
-              <div class="kpi-label">Vencido</div>
-              <div class="kpi-value">
-                <ng-container *ngIf="contadorCriticos === 0; else criticosNumero">
-                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
-                </ng-container>
-                <ng-template #criticosNumero>{{ contadorCriticos }}</ng-template>
-              </div>
-              <div class="kpi-sub">Revisões atrasadas</div>
-            </div>
-
-            <div class="kpi-tile kpi-tile--em-risco">
-              <span class="kpi-ribbon" *ngIf="contadorEmRisco === 0">EM DIA</span>
-              <div class="kpi-label">Para hoje</div>
-              <div class="kpi-value">
-                <ng-container *ngIf="contadorEmRisco === 0; else emRiscoNumero">
-                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
-                </ng-container>
-                <ng-template #emRiscoNumero>{{ contadorEmRisco }}</ng-template>
-              </div>
-              <div class="kpi-sub">Revisões programadas para hoje</div>
-            </div>
-
-            <div class="kpi-tile kpi-tile--manutencao">
-              <span class="kpi-ribbon" *ngIf="contadorManutencao === 0">EM DIA</span>
-              <div class="kpi-label">Próximo</div>
-              <div class="kpi-value">
-                <ng-container *ngIf="contadorManutencao === 0; else manutencaoNumero">
-                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Em dia" />
-                </ng-container>
-                <ng-template #manutencaoNumero>{{ contadorManutencao }}</ng-template>
-              </div>
-              <div class="kpi-sub">Revisões futuras</div>
-            </div>
-
-            <div class="kpi-tile kpi-tile--fraquezas">
-              <span class="kpi-ribbon" *ngIf="totalTopicosFraquezas === 0">EM DIA</span>
-              <div class="kpi-label">Treinar fraquezas</div>
-              <div class="kpi-value">
-                <ng-container *ngIf="totalTopicosFraquezas === 0; else fraquezasNumero">
-                  <img class="kpi-zero-smile" src="assets/img/icon/smile.png" alt="Sem fraquezas" />
-                </ng-container>
-                <ng-template #fraquezasNumero>{{ totalTopicosFraquezas }}</ng-template>
-              </div>
-              <div class="kpi-sub">
-                {{ treinoFraquezasMaterias.length ? 'Tópicos vencidos para reforçar' : 'Nenhuma matéria vencida no momento' }}
-              </div>
-              <button
-                *ngIf="primeiraMateriaFraquezaId"
-                type="button"
-                class="btn-secondary kpi-tile__action"
-                [disabled]="treinoFraquezasLoading"
-                (click)="iniciarTreinoFraquezas(primeiraMateriaFraquezaId)">
-                {{ treinoFraquezasLoading ? 'Iniciando...' : 'Treinar agora' }}
-              </button>
-            </div>
-          </div>
-      </ng-template>
-
-     
-
-    </section>
-
-    <ng-container *ngIf="totalRevisoesHoje === 0 && hasPreventivo">
-      <section class="card preventivo">
-        <div class="preventivo-head">
-          <div>
-            <div class="kpi-label">Reforço preventivo</div>
-            <div class="kpi-sub">
-              Recomendamos revisar {{ preventivosSugeridos }} tópico(s) para adiantar a fila.
-            </div>
-          </div>
-          <button class="btn-primary" (click)="abrirListaPreventivo()">
-            Reforçar agora ({{ preventivosSugeridos }})
-          </button>
-        </div>
-
-        <div *ngIf="isPreventivoAberto" class="preventivo-list">
-          <div class="lista-vazia" *ngIf="filaPreventiva.length===0">Nenhum tópico preventivo.</div>
-          <div class="fila-item preventivo-item" *ngFor="let item of filaPreventiva" (click)="abrirPreventivo(item)">
-            <div class="titulo">{{ item.topicoNome || '-' }}</div>
-            <div class="sub">{{ item.materiaNome || '-' }}</div>
-            <span class="badge preventivo-badge">preventivo</span>
-          </div>
-        </div>
-      </section>
-    </ng-container>
-
     <p-dialog
       [(visible)]="showRevisaoObrigatoriaDialog"
       [modal]="true"
@@ -237,7 +56,7 @@
       </div>
     </p-dialog>
 
-    <div class="foco-review-section" *ngIf="isModoRevisao">
+    <div class="foco-review-section">
       <div class="card foco-review-card" style="margin-top:14px;">
         <div class="header-row">
           <div class="header-row-top">
@@ -247,7 +66,7 @@
             type="button"
             class="btn-revisar-agora-header"
             (click)="iniciarRevisao()">
-            Revisar agora
+            {{ botaoAcaoPrincipalLabel }}
           </button>
         </div>
      
