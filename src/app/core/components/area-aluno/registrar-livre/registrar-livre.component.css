@@ -85,7 +85,7 @@
 .field-label-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
 }
 
@@ -99,6 +99,27 @@
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.field-control-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.field-add-btn--icon {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .field-add-btn:disabled {
@@ -1681,6 +1702,17 @@
     height: 30px;
     padding: 0 12px;
     font-size: 12px;
+  }
+
+  .field-control-row {
+    grid-template-columns: 1fr 40px;
+  }
+
+  .field-add-btn--icon {
+    width: 40px;
+    min-width: 40px;
+    height: 48px;
+    border-radius: 12px;
   }
 
   .field input,

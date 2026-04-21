@@ -61,46 +61,54 @@
       <label class="field">
         <div class="field-label-row">
           <span>Estou estudando para</span>
+        </div>
+        <div class="field-control-row">
+          <select
+            id="registrar-livre-agrupador"
+            class="autocomplete-input"
+            [class.invalid]="agrupadorInvalido"
+            formControlName="agrupador"
+            (change)="onAgrupadorChange($any($event.target).value)">
+            <option value="">Selecione o estudo</option>
+            <option *ngFor="let item of agrupadoresDisponiveis" [value]="item">{{ item }}</option>
+          </select>
           <button
             type="button"
-            class="field-add-btn"
-            (click)="abrirModalNovoAgrupador($event)">
-            + Cadastrar
+            class="field-add-btn field-add-btn--icon"
+            (click)="abrirModalNovoAgrupador($event)"
+            aria-label="Cadastrar estudo"
+            title="Cadastrar estudo">
+            +
           </button>
         </div>
-        <select
-          id="registrar-livre-agrupador"
-          class="autocomplete-input"
-          [class.invalid]="agrupadorInvalido"
-          formControlName="agrupador"
-          (change)="onAgrupadorChange($any($event.target).value)">
-          <option value="">Selecione o estudo</option>
-          <option *ngFor="let item of agrupadoresDisponiveis" [value]="item">{{ item }}</option>
-        </select>
         <small class="error" *ngIf="agrupadorInvalido">Edital obrigatorio.</small>
       </label>
 
       <label class="field">
         <div class="field-label-row">
           <span>Materia</span>
+        </div>
+        <div class="field-control-row">
+          <select
+            id="registrar-livre-materia"
+            class="autocomplete-input"
+            [class.invalid]="materiaInvalida"
+            formControlName="materiaNome"
+            [disabled]="materiaBloqueada"
+            (change)="onMateriaChange($any($event.target).value)">
+            <option value="">Selecione a materia</option>
+            <option *ngFor="let item of materiasDisponiveis" [value]="item">{{ item }}</option>
+          </select>
           <button
             type="button"
-            class="field-add-btn"
+            class="field-add-btn field-add-btn--icon"
             (click)="abrirModalNovaMateria($event)"
-            [disabled]="!podeCadastrarMateria">
-            + Cadastrar
+            [disabled]="!podeCadastrarMateria"
+            aria-label="Cadastrar materia"
+            title="Cadastrar materia">
+            +
           </button>
         </div>
-        <select
-          id="registrar-livre-materia"
-          class="autocomplete-input"
-          [class.invalid]="materiaInvalida"
-          formControlName="materiaNome"
-          [disabled]="materiaBloqueada"
-          (change)="onMateriaChange($any($event.target).value)">
-          <option value="">Selecione a materia</option>
-          <option *ngFor="let item of materiasDisponiveis" [value]="item">{{ item }}</option>
-        </select>
         <small class="error" *ngIf="materiaInvalida">Materia obrigatoria.</small>
         <small class="helper-text" *ngIf="feedbackMateria">{{ feedbackMateria }}</small>
       </label>
@@ -108,47 +116,55 @@
       <label class="field">
         <div class="field-label-row">
           <span>Topico</span>
+        </div>
+        <div class="field-control-row">
+          <select
+            id="registrar-livre-topico"
+            class="autocomplete-input"
+            [class.invalid]="topicoInvalido"
+            formControlName="topicoNome"
+            [disabled]="topicoBloqueado"
+            (change)="onTopicoChange($any($event.target).value)">
+            <option value="">Selecione o topico</option>
+            <option *ngFor="let item of topicosDisponiveis" [value]="item">{{ item }}</option>
+          </select>
           <button
             type="button"
-            class="field-add-btn"
+            class="field-add-btn field-add-btn--icon"
             (click)="abrirModalNovoTopico($event)"
-            [disabled]="!podeCadastrarTopico">
-            + Cadastrar
+            [disabled]="!podeCadastrarTopico"
+            aria-label="Cadastrar topico"
+            title="Cadastrar topico">
+            +
           </button>
         </div>
-        <select
-          id="registrar-livre-topico"
-          class="autocomplete-input"
-          [class.invalid]="topicoInvalido"
-          formControlName="topicoNome"
-          [disabled]="topicoBloqueado"
-          (change)="onTopicoChange($any($event.target).value)">
-          <option value="">Selecione o topico</option>
-          <option *ngFor="let item of topicosDisponiveis" [value]="item">{{ item }}</option>
-        </select>
         <small class="error" *ngIf="topicoInvalido">Assunto obrigatorio.</small>
       </label>
 
       <label class="field">
         <div class="field-label-row">
           <span>Subtopico (opcional)</span>
+        </div>
+        <div class="field-control-row">
+          <select
+            id="registrar-livre-subtopico"
+            class="autocomplete-input"
+            formControlName="subtopicoNome"
+            [disabled]="subtopicoBloqueado"
+            (change)="onSubtopicoChange($any($event.target).value)">
+            <option value="">Sem subtopico</option>
+            <option *ngFor="let item of subtopicosDisponiveis" [value]="item">{{ item }}</option>
+          </select>
           <button
             type="button"
-            class="field-add-btn"
+            class="field-add-btn field-add-btn--icon"
             (click)="abrirModalNovoSubtopico($event)"
-            [disabled]="!podeCadastrarSubtopico">
-            + Cadastrar
+            [disabled]="!podeCadastrarSubtopico"
+            aria-label="Cadastrar subtopico"
+            title="Cadastrar subtopico">
+            +
           </button>
         </div>
-        <select
-          id="registrar-livre-subtopico"
-          class="autocomplete-input"
-          formControlName="subtopicoNome"
-          [disabled]="subtopicoBloqueado"
-          (change)="onSubtopicoChange($any($event.target).value)">
-          <option value="">Sem subtopico</option>
-          <option *ngFor="let item of subtopicosDisponiveis" [value]="item">{{ item }}</option>
-        </select>
       </label>
 
       <div class="field">
