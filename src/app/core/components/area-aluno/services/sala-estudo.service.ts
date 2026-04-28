@@ -346,7 +346,9 @@ export class SalaEstudoService {
   }
 
   buscarAnotacoes(topicoId: number): Observable<AnotacaoTopicoDTO> {
-    return this.http.get<AnotacaoTopicoDTO>(`${this.apiUrl}/topicos/${topicoId}/anotacoes`);
+    return this.http.get<AnotacaoTopicoDTO>(`${this.apiUrl}/topicos/${topicoId}/anotacoes`).pipe(
+      catchError(() => this.buscarResumoBiblioteca(topicoId))
+    );
   }
 
   buscarResumoBiblioteca(topicoId: number): Observable<AnotacaoTopicoDTO> {
