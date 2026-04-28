@@ -23,8 +23,8 @@
         Nenhum resumo encontrado.
       </div>
 
-      <article class="resumo-conteudo" *ngIf="!carregando && !carregandoResumo && !erro && anotacoesHtml">
-        <div class="conteudo-inner" [innerHTML]="anotacoesHtml"></div>
+      <article class="resumo-conteudo" *ngIf="!carregando && !carregandoResumo && !erro && anotacoesHtmlSeguro">
+        <div class="conteudo-inner ql-editor" [innerHTML]="anotacoesHtmlSeguro"></div>
       </article>
 
       <footer class="resumo-footer-nav" *ngIf="!carregando && !carregandoResumo && !erro && resumos.length">

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SalaEstudoService, BibliotecaResumoDTO } from '../services/sala-estudo.service';
 import { Topico } from '../models/topico.model';
 import { Materia } from '../models/materia.model';
@@ -29,6 +30,7 @@ export class BibliotecaResumoComponent implements OnInit {
   materia?: Materia;
   topico?: Topico;
   anotacoesHtml: string | null = null;
+  anotacoesHtmlSeguro: SafeHtml | null = null;
   carregando = false;
   carregandoResumo = false;
   marcandoRevisado = false;
@@ -45,7 +47,8 @@ export class BibliotecaResumoComponent implements OnInit {
     private router: Router,
     private salaEstudoService: SalaEstudoService,
     private revisaoHojeService: RevisaoHojeService,
-    private editalService: EditalService
+    private editalService: EditalService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -126,10 +129,13 @@ export class BibliotecaResumoComponent implements OnInit {
 
   private carregarResumo(topicoId: number): void {
     this.carregandoResumo = true;
+    this.anotacoesHtml = null;
+    this.anotacoesHtmlSeguro = null;
     this.salaEstudoService.buscarResumoBiblioteca(topicoId).subscribe({
       next: (resp) => {
         const anotacoes = resp?.anotacoes || '';
         this.anotacoesHtml = anotacoes;
+        this.anotacoesHtmlSeguro = anotacoes ? this.sanitizer.bypassSecurityTrustHtml(anotacoes) : null;
         this.carregandoResumo = false;
       },
       error: (err) => {
@@ -253,6 +259,7 @@ export class BibliotecaResumoComponent implements OnInit {
       this.topicoIdInicial = null;
       this.topico = undefined;
       this.anotacoesHtml = null;
+      this.anotacoesHtmlSeguro = null;
       this.router.navigate(['/area-restrita/hoje']);
       return;
     }
