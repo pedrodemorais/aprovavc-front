@@ -31,6 +31,14 @@
         <button type="button" class="btn-nav btn-nav--ghost" (click)="irAnterior()" [disabled]="!podeIrAnterior">
           Voltar
         </button>
+        <button
+          type="button"
+          class="btn-nav btn-nav--success"
+          *ngIf="origemHoje"
+          (click)="marcarRevisado()"
+          [disabled]="!podeMarcarRevisado">
+          {{ marcandoRevisado ? 'Marcando...' : 'Marcar revisado' }}
+        </button>
         <button type="button" class="btn-nav btn-nav--primary" (click)="irProximo()" [disabled]="!podeIrProximo">
           Avançar
         </button>

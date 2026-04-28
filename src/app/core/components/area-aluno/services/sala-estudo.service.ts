@@ -1,11 +1,11 @@
 // src/app/core/services/sala-estudo.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FlashcardDTO } from '../models/FlashcardDTO';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
-import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
+import { catchError, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 
 
 
@@ -349,6 +349,18 @@ export class SalaEstudoService {
     return this.http.get<AnotacaoTopicoDTO>(`${this.apiUrl}/topicos/${topicoId}/anotacoes`);
   }
 
+  buscarResumoBiblioteca(topicoId: number): Observable<AnotacaoTopicoDTO> {
+    return this.listarBibliotecaResumos({ topicoId }).pipe(
+      map((resumos) => {
+        const resumo = (resumos || []).find((item) => Number(item?.topicoId) === Number(topicoId)) || resumos?.[0];
+        return {
+          topicoId,
+          anotacoes: resumo?.resumoTexto || ''
+        };
+      })
+    );
+  }
+
   // ================= REVISAO ESPACADA =================
 
   /**
@@ -478,21 +490,60 @@ export class SalaEstudoService {
   }
 
   listarMateriasParaEstudo(escopo: string): Observable<MateriaTopicosDTO[]> {
-    const escopoFinal = (escopo || '').trim().toLowerCase();
-    if (escopoFinal && escopoFinal !== 'todas') {
-      const query = `?escopo=${encodeURIComponent(escopoFinal)}`;
-      return this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias${query}`);
-    }
-
-    return this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias`)
-      .pipe(
-        catchError(() =>
-          this.http.get<MateriaTopicosDTO[]>(`${this.apiUrl}/estudar-materias?escopo=todas`)
-        )
-      );
+    // Contrato novo do backend removeu /sala-estudo/estudar-materias.
+    // Mantemos a tela funcional carregando /materias e completando com /materias/{id}/topicos.
+    return this.listarMateriasComTopicosFallback().pipe(
+      catchError(() => of([]))
+    );
   }
 
-  listarBibliotecaResumos(params?: { materiaId?: number | null; topicoId?: number | null; termo?: string | null })
+  private listarMateriasComTopicosFallback(): Observable<MateriaTopicosDTO[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/materias`).pipe(
+      map((lista) => this.normalizarMateriasBase(lista)),
+      switchMap((materiasBase) => {
+        if (!materiasBase.length) return of([]);
+        return forkJoin(
+          materiasBase.map((materia) =>
+            this.http.get<any[] | { topicos?: any[]; ordemVersion?: string | null; ordem_version?: string | null }>(
+              `${environment.apiUrl}/materias/${materia.materiaId}/topicos`
+            ).pipe(
+              map((resp) => {
+                const topicos = Array.isArray(resp)
+                  ? resp
+                  : (Array.isArray((resp as any)?.topicos) ? (resp as any).topicos : []);
+                const ordemVersion = Array.isArray(resp)
+                  ? null
+                  : ((resp as any)?.ordemVersion ?? (resp as any)?.ordem_version ?? null);
+                return { ...materia, topicos, ordemVersion } as MateriaTopicosDTO;
+              }),
+              catchError(() => of({ ...materia, topicos: [], ordemVersion: null } as MateriaTopicosDTO))
+            )
+          )
+        );
+      })
+    );
+  }
+
+  private normalizarMateriasBase(lista: any[]): Array<{ materiaId: number; materiaNome: string }> {
+    if (!Array.isArray(lista)) return [];
+    return lista
+      .map((item: any) => {
+        const materiaId = Number(item?.materiaId ?? item?.id ?? 0);
+        if (!Number.isFinite(materiaId) || materiaId <= 0) return null;
+        const materiaNome = String(item?.materiaNome ?? item?.nome ?? '').trim() || `Materia ${materiaId}`;
+        return { materiaId, materiaNome };
+      })
+      .filter((item): item is { materiaId: number; materiaNome: string } => !!item);
+  }
+
+  listarBibliotecaResumos(params?: {
+    materiaId?: number | null;
+    topicoId?: number | null;
+    termo?: string | null;
+    topicoIds?: number[] | null;
+    limiteDiarioRevisoes?: number | null;
+    origem?: string | null;
+  })
     : Observable<BibliotecaResumoDTO[]> {
     let httpParams = new HttpParams();
     if (params?.materiaId) {
@@ -503,6 +554,20 @@ export class SalaEstudoService {
     }
     if (params?.termo) {
       httpParams = httpParams.set('termo', String(params.termo));
+    }
+    if (Array.isArray(params?.topicoIds) && params!.topicoIds!.length > 0) {
+      const ids = params!.topicoIds!
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id) && id > 0);
+      if (ids.length > 0) {
+        httpParams = httpParams.set('topicoIds', ids.join(','));
+      }
+    }
+    if (Number.isFinite(Number(params?.limiteDiarioRevisoes)) && Number(params?.limiteDiarioRevisoes) > 0) {
+      httpParams = httpParams.set('limiteDiarioRevisoes', String(Number(params?.limiteDiarioRevisoes)));
+    }
+    if (params?.origem) {
+      httpParams = httpParams.set('origem', String(params.origem));
     }
     return this.http.get<BibliotecaResumoDTO[]>(`${this.apiUrl}/biblioteca/resumos`, { params: httpParams });
   }

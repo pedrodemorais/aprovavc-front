@@ -38,7 +38,7 @@ export class AuthGuard implements CanActivate {
       return this.authService.refreshToken().pipe(
         map((newToken) => {
           if (newToken) {
-            console.log('🔄 Novo token gerado:', newToken);
+            console.log('🔄 Token renovado com sucesso.');
             return true;
           }
           console.error('❌ Falha ao renovar token. Redirecionando para login.');

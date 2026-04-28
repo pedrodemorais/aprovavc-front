@@ -114,6 +114,12 @@
   color: #ffffff;
 }
 
+.btn-nav--success {
+  border: 1px solid #15803d;
+  background: #15803d;
+  color: #ffffff;
+}
+
 .resumo-body {
   margin-top: 16px;
   display: grid;
@@ -177,7 +183,7 @@
   border-radius: 14px;
   padding: 8px 10px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   align-items: center;
   box-shadow: var(--shadow);

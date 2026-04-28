@@ -646,18 +646,17 @@ private mensagemTimeout: any; // para guardar o setTimeout
 
     const acao$ = edital.ativo
       ? this.editalService.desmarcarEdital(edital.id)
-      : this.editalService.selecionarEdital(edital.id);
+      : this.editalService.definirComoAtivo(edital.id);
 
     acao$.subscribe({
       next: () => {
         const novoAtivo = !edital.ativo;
-        edital.ativo = novoAtivo;
-        this.atualizarEditalAtivoLocal(edital.id!, novoAtivo);
-        this.mensagemSucesso = edital.ativo
+        this.mensagemSucesso = novoAtivo
           ? `Edital "${edital.nome}" marcado como em estudo.`
           : `Edital "${edital.nome}" desmarcado.`;
         this.iniciarTimeoutMensagem();
         this.definindoAtivoId = null;
+        this.carregarEditais();
       },
       error: (err) => {
         console.error('[EDITAIS] Erro ao alterar edital em estudo:', err);

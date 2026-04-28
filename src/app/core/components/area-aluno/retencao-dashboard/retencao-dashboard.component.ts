@@ -290,7 +290,7 @@ export class RetencaoDashboardComponent implements OnInit {
 
     forkJoin({
       summary: this.dashboardStore.loadSummary(this.janelaSelecionada, true),
-      filaHoje: this.revisaoHojeService.getFilaHoje().pipe(catchError(() => of(null))),
+      filaHoje: this.revisaoHojeService.getFilaHoje({ origem: 'hoje' }).pipe(catchError(() => of(null))),
       analytics: this.retencaoService.buscarAnalyticsRetencao(this.janelaSelecionada).pipe(catchError(() => of(null))),
       topicosCognitivos: this.cognitiveMetricsService.getTopicosCognitivos(30, null, 1000).pipe(catchError(() => of([]))),
       evolucaoMaterias: this.retencaoService.buscarEvolucaoMaterias().pipe(catchError(() => of([])))
@@ -1770,7 +1770,7 @@ export class RetencaoDashboardComponent implements OnInit {
       janela: this.janelaSelecionada,
       endpoints: [
         `/dashboard/summary?janelaDias=${this.janelaSelecionada}`,
-        `/sala-estudo/revisoes/hoje/fila`,
+        `/sala-estudo/revisoes/fila`,
         `/sala-estudo/revisoes/retencao/analytics?janela=${this.janelaSelecionada}`
       ],
       payloadUsado: {

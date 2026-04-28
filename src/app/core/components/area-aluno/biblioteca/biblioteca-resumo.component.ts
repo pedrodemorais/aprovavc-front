@@ -1,15 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SalaEstudoService, BibliotecaResumoDTO } from '../services/sala-estudo.service';
 import { Topico } from '../models/topico.model';
 import { Materia } from '../models/materia.model';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
+import { EditalService } from '../services/edital.service';
+import { Edital } from '../models/Edital';
 
 type ResumoItem = {
   topicoId: number;
   topicoDescricao: string;
   materiaId: number;
   materiaNome: string;
+};
+
+type EscopoEditalAtivo = {
+  materiaOrder: Map<number, number>;
+  topicoOrder: Map<number, number>;
+  topicosPorMateria: Map<number, Set<number>>;
 };
 
 @Component({
@@ -20,22 +28,24 @@ type ResumoItem = {
 export class BibliotecaResumoComponent implements OnInit {
   materia?: Materia;
   topico?: Topico;
-  anotacoesHtml: SafeHtml | null = null;
+  anotacoesHtml: string | null = null;
   carregando = false;
   carregandoResumo = false;
+  marcandoRevisado = false;
   erro?: string;
   resumos: ResumoItem[] = [];
   resumoIndex = -1;
   materiaFiltroId: number | null = null;
+  origemHoje = false;
   private topicoIdInicial: number | null = null;
   private filaTopicosIds: number[] = [];
-  private origemHoje = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private salaEstudoService: SalaEstudoService,
-    private sanitizer: DomSanitizer
+    private revisaoHojeService: RevisaoHojeService,
+    private editalService: EditalService
   ) {}
 
   ngOnInit(): void {
@@ -69,6 +79,29 @@ export class BibliotecaResumoComponent implements OnInit {
     this.definirResumoAtual(this.resumoIndex + 1);
   }
 
+  marcarRevisado(): void {
+    if (this.marcandoRevisado || this.resumoIndex < 0) return;
+
+    const item = this.resumos[this.resumoIndex];
+    const topicoId = Number(item?.topicoId || 0);
+    if (!Number.isFinite(topicoId) || topicoId <= 0) return;
+
+    this.marcandoRevisado = true;
+    this.erro = undefined;
+
+    this.salaEstudoService.responderRevisaoTopico({ topicoId, avaliacao: 'BOM' }).subscribe({
+      next: () => {
+        this.removerTopicoAtualDaFila(topicoId);
+        this.marcandoRevisado = false;
+      },
+      error: (err) => {
+        console.error('[BIBLIOTECA] Erro ao marcar resumo como revisado:', err);
+        this.erro = 'Erro ao marcar como revisado. Tente novamente.';
+        this.marcandoRevisado = false;
+      }
+    });
+  }
+
   get progressoFilaLabel(): string {
     if (!this.resumos.length || this.resumoIndex < 0) return '-/-';
     return `${this.resumoIndex + 1}/${this.resumos.length}`;
@@ -82,6 +115,10 @@ export class BibliotecaResumoComponent implements OnInit {
     return this.resumoIndex >= 0 && this.resumoIndex < this.resumos.length - 1;
   }
 
+  get podeMarcarRevisado(): boolean {
+    return this.origemHoje && this.resumoIndex >= 0 && !!this.resumos[this.resumoIndex] && !this.marcandoRevisado;
+  }
+
   get progressoPercentual(): number {
     if (!this.resumos.length || this.resumoIndex < 0) return 0;
     return Math.max(0, Math.min(100, Math.round(((this.resumoIndex + 1) / this.resumos.length) * 100)));
@@ -89,10 +126,10 @@ export class BibliotecaResumoComponent implements OnInit {
 
   private carregarResumo(topicoId: number): void {
     this.carregandoResumo = true;
-    this.salaEstudoService.buscarAnotacoes(topicoId).subscribe({
+    this.salaEstudoService.buscarResumoBiblioteca(topicoId).subscribe({
       next: (resp) => {
         const anotacoes = resp?.anotacoes || '';
-        this.anotacoesHtml = this.sanitizer.bypassSecurityTrustHtml(anotacoes);
+        this.anotacoesHtml = anotacoes;
         this.carregandoResumo = false;
       },
       error: (err) => {
@@ -109,31 +146,73 @@ export class BibliotecaResumoComponent implements OnInit {
     this.resumos = [];
     this.resumoIndex = -1;
 
-    this.salaEstudoService.listarBibliotecaResumos({
-      materiaId: this.filaTopicosIds.length ? null : this.materiaFiltroId
-    }).subscribe({
-      next: (lista: BibliotecaResumoDTO[]) => {
-        const mapeados = (lista || []).map((item) => ({
-          topicoId: item.topicoId,
-          topicoDescricao: item.topicoDescricao,
-          materiaId: item.materiaId,
-          materiaNome: item.materiaNome
-        }));
-        this.resumos = this.aplicarFilaPriorizada(mapeados);
-        this.carregando = false;
-        if (!this.resumos.length) {
-          return;
+    const emFluxoRevisao = this.filaTopicosIds.length > 0 || this.origemHoje;
+    if (emFluxoRevisao) {
+      this.carregarEscopoEditalAtivo((escopo) => {
+        this.revisaoHojeService.getFilaHoje({
+          origem: 'biblioteca',
+          materiaId: this.materiaFiltroId,
+          topicoIds: this.filaTopicosIds.length ? this.filaTopicosIds : null
+        }).subscribe({
+          next: (fila) => {
+            const mapeados = ((fila?.itens || []).map((item: any) => ({
+                topicoId: Number(item?.topicoId || 0),
+                topicoDescricao: String(item?.topicoNome || '').trim() || `Topico ${Number(item?.topicoId || 0)}`,
+                materiaId: Number(item?.materiaId || 0),
+                materiaNome: String(item?.materiaNome || '').trim() || 'Materia'
+              })) as ResumoItem[]);
+            this.aplicarResumos(mapeados, escopo);
+          },
+          error: () => {
+            this.erro = 'Erro ao carregar resumos.';
+            this.carregando = false;
+          }
+        });
+      });
+      return;
+    }
+
+    this.carregarEscopoEditalAtivo((escopo) => {
+      this.salaEstudoService.listarBibliotecaResumos({
+        materiaId: this.materiaFiltroId
+      }).subscribe({
+        next: (lista: BibliotecaResumoDTO[]) => {
+          const mapeados = ((lista || []).map((item) => ({
+            topicoId: item.topicoId,
+            topicoDescricao: item.topicoDescricao,
+            materiaId: item.materiaId,
+            materiaNome: item.materiaNome
+          })) as ResumoItem[]);
+          this.aplicarResumos(mapeados, escopo);
+        },
+        error: () => {
+          this.erro = 'Erro ao carregar resumos.';
+          this.carregando = false;
         }
-        const idxInicial = this.topicoIdInicial
-          ? this.resumos.findIndex((r) => r.topicoId === this.topicoIdInicial)
-          : 0;
-        this.definirResumoAtual(idxInicial >= 0 ? idxInicial : 0);
-      },
-      error: () => {
-        this.erro = 'Erro ao carregar resumos.';
-        this.carregando = false;
-      }
+      });
     });
+  }
+
+  private aplicarResumos(lista: ResumoItem[], escopo: EscopoEditalAtivo): void {
+    const priorizada = this.aplicarFilaPriorizada(lista);
+    const porEditalAtivo = this.filtrarPorEditaisAtivos(priorizada, escopo);
+    const base = porEditalAtivo.length > 0 || priorizada.length === 0 ? porEditalAtivo : priorizada;
+    if (priorizada.length > 0 && porEditalAtivo.length === 0 && escopo.materiaOrder.size > 0) {
+      console.warn('[BIBLIOTECA] Filtro de edital ativo nao encontrou itens; mantendo fila original.', {
+        totalOriginal: priorizada.length,
+        materiasAtivas: Array.from(escopo.materiaOrder.keys())
+      });
+    }
+    const ordenada = this.ordenarPorMateriasAtivas(base, escopo);
+    this.resumos = ordenada;
+    this.carregando = false;
+    if (!this.resumos.length) {
+      return;
+    }
+    const idxInicial = this.topicoIdInicial
+      ? this.resumos.findIndex((r) => r.topicoId === this.topicoIdInicial)
+      : 0;
+    this.definirResumoAtual(idxInicial >= 0 ? idxInicial : 0);
   }
 
   private definirResumoAtual(indice: number): void {
@@ -164,6 +243,24 @@ export class BibliotecaResumoComponent implements OnInit {
     this.carregarResumo(item.topicoId);
   }
 
+  private removerTopicoAtualDaFila(topicoId: number): void {
+    const indiceAtual = this.resumoIndex;
+    this.resumos = (this.resumos || []).filter((item) => Number(item?.topicoId || 0) !== topicoId);
+    this.filaTopicosIds = (this.filaTopicosIds || []).filter((id) => Number(id) !== topicoId);
+
+    if (!this.resumos.length) {
+      this.resumoIndex = -1;
+      this.topicoIdInicial = null;
+      this.topico = undefined;
+      this.anotacoesHtml = null;
+      this.router.navigate(['/area-restrita/hoje']);
+      return;
+    }
+
+    const proximoIndice = Math.min(indiceAtual, this.resumos.length - 1);
+    this.definirResumoAtual(proximoIndice);
+  }
+
   private aplicarFilaPriorizada(lista: ResumoItem[]): ResumoItem[] {
     if (!this.filaTopicosIds.length) {
       return lista;
@@ -178,6 +275,115 @@ export class BibliotecaResumoComponent implements OnInit {
     return this.filaTopicosIds
       .map((topicoId) => porTopicoId.get(topicoId))
       .filter((item): item is ResumoItem => !!item);
+  }
+
+  private carregarEscopoEditalAtivo(callback: (escopo: EscopoEditalAtivo) => void): void {
+    this.editalService.listarComInclude(['materias', 'topicos']).subscribe({
+      next: (editais) => callback(this.montarEscopoEditalAtivo(editais || [])),
+      error: () => callback(this.escopoVazio())
+    });
+  }
+
+  private montarEscopoEditalAtivo(editais: Edital[]): EscopoEditalAtivo {
+    const escopo = this.escopoVazio();
+    let materiaSeq = 0;
+    let topicoSeq = 0;
+
+    (editais || [])
+      .filter((edital) => edital?.ativo === true)
+      .forEach((edital) => {
+        (edital.materias || [])
+          .filter((materia: any) => materia?.ativo !== false)
+          .forEach((materia: any) => {
+            const materiaId = Number(materia?.materiaId || 0);
+            if (!Number.isFinite(materiaId) || materiaId <= 0) return;
+
+            if (!escopo.materiaOrder.has(materiaId)) {
+              escopo.materiaOrder.set(materiaId, materiaSeq++);
+            }
+
+            const idsTopicosAtivos = this.coletarTopicosAtivos(materia?.topicos || []);
+            if (idsTopicosAtivos.length > 0) {
+              const set = escopo.topicosPorMateria.get(materiaId) || new Set<number>();
+              idsTopicosAtivos.forEach((topicoId) => {
+                set.add(topicoId);
+                if (!escopo.topicoOrder.has(topicoId)) {
+                  escopo.topicoOrder.set(topicoId, topicoSeq++);
+                }
+              });
+              escopo.topicosPorMateria.set(materiaId, set);
+            }
+          });
+      });
+
+    return escopo;
+  }
+
+  private coletarTopicosAtivos(topicos: any[]): number[] {
+    const ids: number[] = [];
+    const walk = (items: any[]) => {
+      (items || []).forEach((topico: any) => {
+        const id = Number(topico?.id ?? topico?.topicoId ?? topico?.idTopico ?? 0);
+        const ativo = topico?.ativo !== false;
+        if (ativo && Number.isFinite(id) && id > 0) {
+          ids.push(id);
+        }
+        const filhos = topico?.subtopicos || topico?.filhos || topico?.children || [];
+        walk(filhos);
+      });
+    };
+    walk(topicos);
+    return ids;
+  }
+
+  private filtrarPorEditaisAtivos(lista: ResumoItem[], escopo: EscopoEditalAtivo): ResumoItem[] {
+    if (!escopo.materiaOrder.size) {
+      return lista || [];
+    }
+
+    const porMateriaAtiva = (lista || []).filter((item) => {
+      const materiaId = Number(item?.materiaId || 0);
+      return escopo.materiaOrder.has(materiaId);
+    });
+
+    if (!porMateriaAtiva.length) {
+      return [];
+    }
+
+    const porTopicoAtivo = porMateriaAtiva.filter((item) => {
+      const materiaId = Number(item?.materiaId || 0);
+      const topicoId = Number(item?.topicoId || 0);
+      const topicosDaMateria = escopo.topicosPorMateria.get(materiaId);
+      if (topicosDaMateria?.size) {
+        return topicosDaMateria.has(topicoId);
+      }
+
+      return true;
+    });
+
+    return porTopicoAtivo.length > 0 ? porTopicoAtivo : porMateriaAtiva;
+  }
+
+  private ordenarPorMateriasAtivas(lista: ResumoItem[], escopo: EscopoEditalAtivo): ResumoItem[] {
+    return [...(lista || [])].sort((a, b) => {
+      const materiaA = escopo.materiaOrder.get(Number(a.materiaId || 0)) ?? Number.MAX_SAFE_INTEGER;
+      const materiaB = escopo.materiaOrder.get(Number(b.materiaId || 0)) ?? Number.MAX_SAFE_INTEGER;
+      if (materiaA !== materiaB) return materiaA - materiaB;
+
+      const topicoA = escopo.topicoOrder.get(Number(a.topicoId || 0)) ?? Number.MAX_SAFE_INTEGER;
+      const topicoB = escopo.topicoOrder.get(Number(b.topicoId || 0)) ?? Number.MAX_SAFE_INTEGER;
+      if (topicoA !== topicoB) return topicoA - topicoB;
+
+      return Number(a.topicoId || 0) - Number(b.topicoId || 0);
+    });
+  }
+
+  private escopoVazio(): EscopoEditalAtivo {
+    return {
+      materiaOrder: new Map<number, number>(),
+      topicoOrder: new Map<number, number>(),
+      topicosPorMateria: new Map<number, Set<number>>()
+    };
   }
 
   private parseTopicosQuery(raw: string | null): number[] {

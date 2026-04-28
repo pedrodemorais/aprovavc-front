@@ -15,6 +15,11 @@ import { BlocosEstudoService } from '../services/blocos-estudo.service';
 import { BlocoEstudoDTO } from '../../dto/blocos-estudo.dto';
 import { RevisaoDashboardItem } from '../models/RevisaoDashboardItem';
 import { DashboardResumoService } from '../services/dashboard-resumo.service';
+import { BibliotecaResumoDTO, TopicoNodeDTO } from '../services/sala-estudo.service';
+import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
+import { AlunoParametroService } from 'src/app/core/services/aluno-parametro.service';
+import { AlunoParametroDTO } from 'src/app/core/dto/aluno-parametro.dto';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 
 @Component({
   selector: 'app-progresso',
@@ -22,6 +27,8 @@ import { DashboardResumoService } from '../services/dashboard-resumo.service';
   styleUrls: ['./progresso.component.css']
 })
 export class ProgressoComponent implements OnInit {
+  private readonly CHAVE_LIMITE_DIARIO_REVISOES = 'LIMITE_DIARIO_REVISOES';
+  private readonly FALLBACK_LIMITE_REVISOES_DIARIAS = 40;
   carregando = false;
   erro?: string;
   editais: Edital[] = [];
@@ -97,6 +104,12 @@ export class ProgressoComponent implements OnInit {
   private constanciaMensalMap = new Map<string, ConstanciaEstudoDiaDTO[]>();
   private constanciaMensalInFlight = new Map<string, Observable<ConstanciaEstudoDiaDTO[]>>();
   private revisoesDashboard: RevisaoDashboardItem[] = [];
+  private revisoesFilaHoje: Array<{
+    topicoId: number;
+    materiaId: number | null;
+    statusCanonico: 'ATRASADA' | 'HOJE';
+    proximaRevisao: string | null;
+  }> = [];
   private weakColors = [
     '#ef4444',
     '#f59e0b',
@@ -113,11 +126,14 @@ export class ProgressoComponent implements OnInit {
     private salaEstudoService: SalaEstudoService,
     private blocosEstudoService: BlocosEstudoService,
     private dashboardResumoService: DashboardResumoService,
+    private revisaoHojeService: RevisaoHojeService,
+    private alunoParametroService: AlunoParametroService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.carregarDadosIniciais();
+    this.carregarFilaRevisoesAtual();
   }
 
   private carregarDadosIniciais(): void {
@@ -247,8 +263,25 @@ export class ProgressoComponent implements OnInit {
   }
 
   irParaRevisoes(): void {
-    const filtro = this.revisoesResumo.atrasadas > 0 ? 'atrasadas' : this.revisoesResumo.hoje > 0 ? 'hoje' : 'emdia';
-    this.irParaFilaRevisoes(filtro);
+    const topicosPriorizados = this.obterTopicosPriorizadosFilaHoje();
+    if (!topicosPriorizados.length) {
+      const filtro = this.revisoesResumo.atrasadas > 0 ? 'atrasadas' : this.revisoesResumo.hoje > 0 ? 'hoje' : 'emdia';
+      this.irParaFilaRevisoes(filtro);
+      return;
+    }
+
+    const primeiroTopicoId = topicosPriorizados[0];
+    const materiaId = Number(
+      this.revisoesFilaHoje.find((item) => Number(item?.topicoId || 0) === primeiroTopicoId)?.materiaId || 0
+    );
+
+    this.router.navigate(['/area-restrita/biblioteca/resumo', primeiroTopicoId], {
+      queryParams: {
+        topicos: topicosPriorizados.join(','),
+        origem: 'hoje',
+        materiaId: materiaId > 0 ? materiaId : null
+      }
+    });
   }
 
   irParaFilaRevisoes(filtro: 'atrasadas' | 'hoje' | 'emdia', materiaId?: number): void {
@@ -335,9 +368,158 @@ export class ProgressoComponent implements OnInit {
 
   private aplicarRevisoes(itens: RevisaoDashboardItem[]): void {
     this.revisoesDashboard = itens || [];
-    this.revisoesVencidasCount = (itens || []).filter((item) => item.status === 'VENCIDA').length;
+    this.revisoesVencidasCount = this.revisoesFilaHoje.length
+      ? this.revisoesFilaHoje.filter((item) => item.statusCanonico === 'ATRASADA').length
+      : (itens || []).filter((item) => item.status === 'VENCIDA').length;
     this.atualizarResumoRevisoes(itens || []);
     this.atualizarPlanoAtaque();
+  }
+
+  private carregarFilaRevisoesAtual(): void {
+    this.revisaoHojeService.getFilaHoje({ origem: 'progresso' }).subscribe({
+      next: (resp) => {
+        this.revisoesFilaHoje = (resp?.itens || [])
+          .map((item) => {
+            const topicoId = Number(item?.topicoId || 0);
+            if (!Number.isFinite(topicoId) || topicoId <= 0) return null;
+            const materiaIdNum = Number(item?.materiaId || 0);
+            const materiaId = Number.isFinite(materiaIdNum) && materiaIdNum > 0 ? materiaIdNum : null;
+            const status = String(item?.statusCanonico || '').toUpperCase() === 'ATRASADA' ? 'ATRASADA' : 'HOJE';
+            return {
+              topicoId,
+              materiaId,
+              statusCanonico: status as 'ATRASADA' | 'HOJE',
+              proximaRevisao: String(item?.proximaRevisao || '').trim() || null
+            };
+          })
+          .filter((item): item is { topicoId: number; materiaId: number | null; statusCanonico: 'ATRASADA' | 'HOJE'; proximaRevisao: string | null } => !!item);
+        this.revisoesVencidasCount = this.revisoesFilaHoje.filter((item) => item.statusCanonico === 'ATRASADA').length;
+      },
+      error: () => {
+        this.revisoesFilaHoje = [];
+      }
+    });
+  }
+
+  private mapBibliotecaResumoParaFilaHoje(
+    item: BibliotecaResumoDTO | null | undefined,
+    topicoInfo: { statusRevisao: string | null; proximaRevisao: string | null } | null
+  ): { topicoId: number; materiaId: number | null; statusCanonico: 'ATRASADA' | 'HOJE'; proximaRevisao: string | null } | null {
+    const topicoId = Number((item as any)?.topicoId || 0);
+    if (!Number.isFinite(topicoId) || topicoId <= 0) return null;
+
+    const materiaIdRaw = Number((item as any)?.materiaId || 0);
+    const materiaId = Number.isFinite(materiaIdRaw) && materiaIdRaw > 0 ? materiaIdRaw : null;
+
+    const status = this.normalizarStatusCanonicoFilaHoje(item, topicoInfo);
+    if (status !== 'ATRASADA' && status !== 'HOJE') return null;
+
+    const proximaRevisao = String(
+      topicoInfo?.proximaRevisao ??
+      (item as any)?.proximaRevisao ??
+      (item as any)?.dataProximaRevisao ??
+      ''
+    ).trim() || null;
+
+    return { topicoId, materiaId, statusCanonico: status, proximaRevisao };
+  }
+
+  private normalizarStatusCanonicoFilaHoje(
+    item: BibliotecaResumoDTO | null | undefined,
+    topicoInfo: { statusRevisao: string | null; proximaRevisao: string | null } | null
+  ): 'ATRASADA' | 'HOJE' | 'FUTURA' {
+    const canonico = extrairStatusCanonicoRevisao({
+      statusCanonico: (item as any)?.statusCanonico,
+      statusRevisao: topicoInfo?.statusRevisao ?? (item as any)?.statusRevisao,
+      status: (item as any)?.status,
+      proximaRevisao:
+        topicoInfo?.proximaRevisao ??
+        (item as any)?.proximaRevisao ??
+        (item as any)?.dataProximaRevisao
+    });
+
+    if (canonico === 'ATRASADA') return 'ATRASADA';
+    if (canonico === 'HOJE') return 'HOJE';
+    return 'FUTURA';
+  }
+
+  private indexarTopicosFilaHoje(
+    materias: any[]
+  ): Map<number, { statusRevisao: string | null; proximaRevisao: string | null }> {
+    const index = new Map<number, { statusRevisao: string | null; proximaRevisao: string | null }>();
+    (materias || []).forEach((m) => {
+      const topicos = Array.isArray((m as any)?.topicos) ? ((m as any)?.topicos as TopicoNodeDTO[]) : [];
+      this.walkTopicosFilaHoje(topicos, index);
+    });
+    return index;
+  }
+
+  private walkTopicosFilaHoje(
+    topicos: TopicoNodeDTO[],
+    index: Map<number, { statusRevisao: string | null; proximaRevisao: string | null }>
+  ): void {
+    (topicos || []).forEach((topico) => {
+      const topicoId = Number((topico as any)?.id ?? (topico as any)?.topicoId ?? (topico as any)?.subtopicoId ?? 0);
+      if (Number.isFinite(topicoId) && topicoId > 0) {
+        index.set(topicoId, {
+          statusRevisao: String((topico as any)?.statusRevisao || '').trim() || null,
+          proximaRevisao: String((topico as any)?.proximaRevisao || '').trim() || null
+        });
+      }
+
+      const filhos = Array.isArray((topico as any)?.subtopicos)
+        ? ((topico as any)?.subtopicos as TopicoNodeDTO[])
+        : (Array.isArray((topico as any)?.filhos) ? ((topico as any)?.filhos as TopicoNodeDTO[]) : []);
+
+      if (filhos.length) {
+        this.walkTopicosFilaHoje(filhos, index);
+      }
+    });
+  }
+
+  private ordenarFilaHoje(
+    fila: Array<{ topicoId: number; materiaId: number | null; statusCanonico: 'ATRASADA' | 'HOJE'; proximaRevisao: string | null }>
+  ): Array<{ topicoId: number; materiaId: number | null; statusCanonico: 'ATRASADA' | 'HOJE'; proximaRevisao: string | null }> {
+    const peso = (status: 'ATRASADA' | 'HOJE'): number => (status === 'ATRASADA' ? 0 : 1);
+    const toTime = (valor: string | null): number => {
+      const texto = String(valor || '').trim();
+      if (!texto) return Number.POSITIVE_INFINITY;
+      const time = new Date(texto).getTime();
+      return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+    };
+    return [...(fila || [])].sort((a, b) => {
+      const p = peso(a.statusCanonico) - peso(b.statusCanonico);
+      if (p !== 0) return p;
+      return toTime(a.proximaRevisao) - toTime(b.proximaRevisao);
+    });
+  }
+
+  private obterLimiteDiarioRevisoes(): Observable<number> {
+    return this.alunoParametroService.listarParametros().pipe(
+      map((parametros) => this.extrairLimiteDiarioRevisoes(parametros))
+    );
+  }
+
+  private extrairLimiteDiarioRevisoes(parametros: AlunoParametroDTO[]): number {
+    const parametro = (parametros || []).find((p) => p?.chave === this.CHAVE_LIMITE_DIARIO_REVISOES);
+    const valor = Number(parametro?.valor);
+    if (Number.isInteger(valor) && valor > 0) {
+      return valor;
+    }
+    return this.FALLBACK_LIMITE_REVISOES_DIARIAS;
+  }
+
+  private obterTopicosPriorizadosFilaHoje(): number[] {
+    const vistos = new Set<number>();
+    const saida: number[] = [];
+    (this.revisoesFilaHoje || []).forEach((item) => {
+      const id = Number(item?.topicoId || 0);
+      if (id > 0 && !vistos.has(id)) {
+        vistos.add(id);
+        saida.push(id);
+      }
+    });
+    return saida;
   }
 
   private extrairEditaisResumo(resumo: any): Edital[] {

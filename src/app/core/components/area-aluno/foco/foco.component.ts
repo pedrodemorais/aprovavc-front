@@ -1,18 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { FocoPlanoDiarioDTO } from 'src/app/core/dto/foco-plano-diario.dto';
-import { PrioridadeFilaHoje, TipoFilaHoje } from 'src/app/core/models/hoje-fila.models';
 import { RevisaoHojeItemDTO } from 'src/app/core/models/revisao-hoje.models';
 import { ExecutionQueueService } from 'src/app/core/services/execution-queue.service';
 import { FocoPlanoDiarioService } from 'src/app/core/services/foco-plano-diario.service';
 import { HojeFilaService } from 'src/app/core/services/hoje-fila.service';
+import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { EditalService } from '../services/edital.service';
-import { BibliotecaResumoDTO, SalaEstudoService, TopicoNodeDTO } from '../services/sala-estudo.service';
-import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
 
 @Component({
   selector: 'app-foco',
@@ -38,7 +35,7 @@ export class FocoComponent implements OnInit {
     private router: Router,
     private executionQueueService: ExecutionQueueService,
     private hojeFilaService: HojeFilaService,
-    private salaEstudoService: SalaEstudoService,
+    private revisaoHojeService: RevisaoHojeService,
     private authService: AuthService,
     private editalService: EditalService
   ) {}
@@ -145,115 +142,12 @@ export class FocoComponent implements OnInit {
   }
 
   private carregarFilaRevisaoHoje(): void {
-    forkJoin({
-      resumos: this.salaEstudoService.listarBibliotecaResumos(),
-      materias: this.salaEstudoService.listarMateriasParaEstudo('todas')
-    }).subscribe({
-      next: ({ resumos, materias }) => {
-        const topicosIndex = this.indexarTopicos(materias || []);
-        const itens = (resumos || [])
-          .map((item) => this.mapBibliotecaResumoParaFila(item, topicosIndex.get(Number((item as any)?.topicoId || 0)) || null))
-          .filter((item): item is RevisaoHojeItemDTO => !!item);
-        this.filaHoje = this.ordenarFilaPorPrioridade(itens);
+    this.revisaoHojeService.getFilaHoje({ origem: 'foco' }).subscribe({
+      next: (resp) => {
+        this.filaHoje = Array.isArray(resp?.itens) ? resp.itens : [];
       },
       error: () => {
         this.filaHoje = [];
-      }
-    });
-  }
-
-  private mapBibliotecaResumoParaFila(
-    item: BibliotecaResumoDTO | null | undefined,
-    topicoInfo: { statusRevisao: string | null; proximaRevisao: string | null; materiaNome: string | null; topicoNome: string | null } | null
-  ): RevisaoHojeItemDTO | null {
-    const topicoId = Number((item as any)?.topicoId || 0);
-    if (!Number.isFinite(topicoId) || topicoId <= 0) return null;
-
-    const materiaIdRaw = Number((item as any)?.materiaId || 0);
-    const materiaId = Number.isFinite(materiaIdRaw) && materiaIdRaw > 0 ? materiaIdRaw : null;
-    const statusCanonico = this.normalizarStatusCanonicoBiblioteca(item, topicoInfo);
-    if (statusCanonico !== 'ATRASADA' && statusCanonico !== 'HOJE') return null;
-
-    const prioridade = statusCanonico === 'ATRASADA'
-      ? PrioridadeFilaHoje.ATRASADA
-      : PrioridadeFilaHoje.ALTA;
-
-    const proximaRevisao = String(
-      (item as any)?.proximaRevisao ??
-      (item as any)?.dataProximaRevisao ??
-      ''
-    ).trim() || null;
-
-    return {
-      topicoId,
-      materiaId,
-      materiaNome: String(topicoInfo?.materiaNome || (item as any)?.materiaNome || '').trim() || null,
-      topicoNome: String(topicoInfo?.topicoNome || (item as any)?.topicoDescricao || (item as any)?.topicoNome || '').trim() || null,
-      prioridade,
-      statusCanonico,
-      proximaRevisao,
-      motivo: statusCanonico === 'ATRASADA' ? 'Revisao atrasada.' : 'Revisao prevista para hoje.',
-      tempoEstimadoMinutos: null,
-      deepLink: materiaId
-        ? `/area-restrita/sala-estudo/${materiaId}?topicoId=${topicoId}&modo=revisar&origem=foco`
-        : '/area-restrita/revisoes',
-      tipo: TipoFilaHoje.TOPICO,
-      categoria: null,
-      score: null
-    };
-  }
-
-  private normalizarStatusCanonicoBiblioteca(
-    item: BibliotecaResumoDTO | null | undefined,
-    topicoInfo: { statusRevisao: string | null; proximaRevisao: string | null } | null
-  ): 'ATRASADA' | 'HOJE' | 'FUTURA' {
-    const canonico = extrairStatusCanonicoRevisao({
-      statusCanonico: (item as any)?.statusCanonico,
-      statusRevisao: topicoInfo?.statusRevisao ?? (item as any)?.statusRevisao,
-      status: (item as any)?.status,
-      proximaRevisao:
-        topicoInfo?.proximaRevisao ??
-        (item as any)?.proximaRevisao ??
-        (item as any)?.dataProximaRevisao
-    });
-
-    if (canonico === 'ATRASADA') return 'ATRASADA';
-    if (canonico === 'HOJE') return 'HOJE';
-    return 'FUTURA';
-  }
-
-  private indexarTopicos(materias: any[]): Map<number, { statusRevisao: string | null; proximaRevisao: string | null; materiaNome: string | null; topicoNome: string | null }> {
-    const index = new Map<number, { statusRevisao: string | null; proximaRevisao: string | null; materiaNome: string | null; topicoNome: string | null }>();
-    (materias || []).forEach((m) => {
-      const materiaNome = String((m as any)?.materiaNome || '').trim() || null;
-      const topicos = Array.isArray((m as any)?.topicos) ? ((m as any)?.topicos as TopicoNodeDTO[]) : [];
-      this.walkTopicos(topicos, materiaNome, index);
-    });
-    return index;
-  }
-
-  private walkTopicos(
-    topicos: TopicoNodeDTO[],
-    materiaNome: string | null,
-    index: Map<number, { statusRevisao: string | null; proximaRevisao: string | null; materiaNome: string | null; topicoNome: string | null }>
-  ): void {
-    (topicos || []).forEach((topico) => {
-      const topicoId = Number((topico as any)?.id ?? (topico as any)?.topicoId ?? (topico as any)?.subtopicoId ?? 0);
-      if (Number.isFinite(topicoId) && topicoId > 0) {
-        index.set(topicoId, {
-          statusRevisao: String((topico as any)?.statusRevisao || '').trim() || null,
-          proximaRevisao: String((topico as any)?.proximaRevisao || '').trim() || null,
-          materiaNome,
-          topicoNome: String((topico as any)?.descricao || '').trim() || null
-        });
-      }
-
-      const filhos = Array.isArray((topico as any)?.subtopicos)
-        ? ((topico as any)?.subtopicos as TopicoNodeDTO[])
-        : (Array.isArray((topico as any)?.filhos) ? ((topico as any)?.filhos as TopicoNodeDTO[]) : []);
-
-      if (filhos.length > 0) {
-        this.walkTopicos(filhos, materiaNome, index);
       }
     });
   }
@@ -295,42 +189,13 @@ export class FocoComponent implements OnInit {
 
   private obterTopicosPriorizados(filaRevisao: RevisaoHojeItemDTO[]): number[] {
     const unicos = new Set<number>();
-    const ordenada = this.ordenarFilaPorPrioridade(filaRevisao || []);
-    (ordenada || []).forEach((item) => {
+    (filaRevisao || []).forEach((item) => {
       const topicoId = Number(item?.topicoId || 0);
       if (topicoId > 0) {
         unicos.add(topicoId);
       }
     });
     return Array.from(unicos.values());
-  }
-
-  private ordenarFilaPorPrioridade(filaRevisao: RevisaoHojeItemDTO[]): RevisaoHojeItemDTO[] {
-    const peso = (item: RevisaoHojeItemDTO): number => {
-      const status = String(item?.statusCanonico || '').toUpperCase();
-      if (status === 'ATRASADA') return 0;
-      if (status === 'HOJE') return 1;
-      return 2;
-    };
-
-    const toTime = (iso: string | null | undefined): number => {
-      const texto = String(iso || '').trim();
-      if (!texto) return Number.POSITIVE_INFINITY;
-      const t = new Date(texto).getTime();
-      return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
-    };
-
-    return [...(filaRevisao || [])].sort((a, b) => {
-      const p = peso(a) - peso(b);
-      if (p !== 0) return p;
-
-      const d = toTime(a?.proximaRevisao) - toTime(b?.proximaRevisao);
-      if (d !== 0) return d;
-
-      const m = String(a?.materiaNome || '').localeCompare(String(b?.materiaNome || ''), 'pt-BR');
-      if (m !== 0) return m;
-      return String(a?.topicoNome || '').localeCompare(String(b?.topicoNome || ''), 'pt-BR');
-    });
   }
 
   private normalizarMateriaNome(value: unknown): string {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -27,14 +27,7 @@ export class EditalTemplateService {
   constructor(private http: HttpClient) {}
 
   private options() {
-    const token = localStorage.getItem('access_token');
-
-    let headers = new HttpHeaders();
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return { headers, withCredentials: true };
+    return { withCredentials: true };
   }
 
   listarTemplates(): Observable<EditalTemplateDTO[]> {

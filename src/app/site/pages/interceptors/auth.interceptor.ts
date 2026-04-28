@@ -9,6 +9,7 @@ import {
 import { Observable, throwError } from 'rxjs';
 import { AuthService } from 'src/app/site/services/auth.service';
 import { catchError, switchMap, finalize } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -18,11 +19,16 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const apiRequest = this.isApiRequest(req.url);
     let token = this.authService.getAccessToken();
 
     // Avoid intercepting the refresh request itself to prevent loops.
     if (req.url.includes('/refresh')) {
       return next.handle(req);
+    }
+
+    if (apiRequest && !req.withCredentials) {
+      req = req.clone({ withCredentials: true });
     }
 
     // If token is expired, try refresh before sending the request.
@@ -37,8 +43,7 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
-          // Sem token, não tenta refresh nem força logout (ex: rotas públicas).
-          if (!token) {
+          if (!apiRequest) {
             return throwError(() => error);
           }
           return this.handle401(req, next);
@@ -65,7 +70,7 @@ export class AuthInterceptor implements HttpInterceptor {
           this.authService.logout();
           return throwError(() => new Error('Token refresh failed.'));
         }
-        const retryReq = this.addToken(req, newToken);
+        const retryReq = this.addToken(req, newToken).clone({ withCredentials: true });
         return next.handle(retryReq);
       }),
       catchError((err) => {
@@ -81,5 +86,11 @@ export class AuthInterceptor implements HttpInterceptor {
         Authorization: `Bearer ${token}`
       }
     });
+  }
+
+  private isApiRequest(url: string): boolean {
+    if (!url) return false;
+    if (url.startsWith('/api/')) return true;
+    return url.startsWith(environment.apiUrl);
   }
 }

@@ -123,7 +123,7 @@ export class HojeDoisComponent implements OnInit {
     this.loading = true;
     this.error = null;
     this.revisaoHojeService
-      .getFilaHoje()
+      .getFilaHoje({ origem: 'hoje' })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (dto) => {

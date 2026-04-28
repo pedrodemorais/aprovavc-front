@@ -78,7 +78,7 @@ export class HomePageComponent implements OnInit {
 
     forkJoin({
       plano: this.focoPlanoDiarioService.obterPlanoDiario().pipe(catchError(() => of(null))),
-      filaRevisao: this.revisaoHojeService.getFilaHoje().pipe(catchError(() => of(null))),
+      filaRevisao: this.revisaoHojeService.getFilaHoje({ origem: 'home' }).pipe(catchError(() => of(null))),
       streak: this.hojeFilaService.getDashboardStreak().pipe(catchError(() => of(null))),
       fraquezas: this.salaEstudoService.listarTreinarFraquezas().pipe(catchError(() => of([])))
     }).subscribe({

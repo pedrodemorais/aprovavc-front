@@ -22,7 +22,6 @@ import {
   TopicoNodeDTO,
   ResumeTopicResponseDTO
 } from '../services/sala-estudo.service';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmpresaParametroService } from 'src/app/site/services/empresa-parametro.service';
 import { environment } from 'src/environments/environment';
 import { extrairStatusCanonicoRevisao } from '../utils/revisao-status.util';
@@ -93,7 +92,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   mensagemFlashcardSucesso?: string;
   salvandoFlashcard = false;
-  anotacoesHtmlSeguras: SafeHtml | null = null;
+  anotacoesHtmlSeguras: string | null = null;
 
   anotacoes: string = '';
   mensagemEstudoSalvo?: string;
@@ -315,7 +314,6 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
     private salaEstudoService: SalaEstudoService,
     private empresaParametroService: EmpresaParametroService,
     private blocosService: BlocosEstudoService,
-    private sanitizer: DomSanitizer,
     private ngZone: NgZone,
     private messageService: MessageService,
     private refreshBusService: RefreshBusService,
@@ -608,7 +606,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
   // A fila de revisao e 100% controlada pelo backend.
   // O frontend nao deve alterar, ordenar ou recalcular nada.
   private carregarFilaRevisaoHoje$(): Observable<RevisaoTopicoItem[]> {
-    return this.revisaoHojeService.getFilaHoje().pipe(
+    return this.revisaoHojeService.getFilaHoje({ origem: 'hoje' }).pipe(
       map((resp) => {
         const itens = Array.isArray(resp?.itens) ? resp.itens : [];
         return itens.map((item) => ({
@@ -1064,7 +1062,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         next: (resp) => {
           this.anotacoes = resp.anotacoes || '';
           this.atualizarMarcaAnotacoes(this.topicoSelecionado?.id, this.hasConteudoAnotacoes(this.anotacoes));
-          this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+          this.anotacoesHtmlSeguras = this.anotacoes;
           this.atualizarContadorCaracteresFromHtml(this.anotacoes);
         },
         error: () => {
@@ -1265,7 +1263,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.anotacoes = resp.anotacoes || '';
         this.atualizarMarcaAnotacoes(t.id, this.hasConteudoAnotacoes(this.anotacoes));
-        this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+        this.anotacoesHtmlSeguras = this.anotacoes;
         this.atualizarContadorCaracteresFromHtml(this.anotacoes);
         this.centralizarTopicoSelecionado();
         if (reqSeq === this.anotacoesReqSeq) {
@@ -1324,7 +1322,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.editorTopicoId = topicoId;
         this.anotacoes = resp.anotacoes || '';
         this.atualizarMarcaAnotacoes(topicoId, this.hasConteudoAnotacoes(this.anotacoes));
-        this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+        this.anotacoesHtmlSeguras = this.anotacoes;
         this.atualizarContadorCaracteresFromHtml(this.anotacoes);
         if (reqSeq === this.anotacoesReqSeq) this.carregandoAnotacoes = false;
       },
@@ -1939,7 +1937,7 @@ export class SalaEstudoComponent implements OnInit, AfterViewInit, OnDestroy {
             const resp = anotacoes as AnotacoesPayload;
             this.anotacoes = resp.anotacoes || '';
             this.atualizarMarcaAnotacoes(topicoIdNoInicioReq, this.hasConteudoAnotacoes(this.anotacoes));
-            this.anotacoesHtmlSeguras = this.sanitizer.bypassSecurityTrustHtml(this.anotacoes);
+            this.anotacoesHtmlSeguras = this.anotacoes;
             this.atualizarContadorCaracteresFromHtml(this.anotacoes);
           }
         } else if (topicoIdNoInicioReq && topicoAtualId !== topicoIdNoInicioReq) {

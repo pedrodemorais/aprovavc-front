@@ -142,7 +142,9 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
         });
 
         this.materias = materias;
-        this.materiasFiltradasPorEscopo = true;
+        // O backend novo nao filtra mais por escopo neste endpoint.
+        // Mantemos o filtro por escopo no client.
+        this.materiasFiltradasPorEscopo = false;
         this.carregandoMaterias = false;
       },
       error: (err) => {
@@ -465,7 +467,7 @@ export class MateriaEstudoComponent implements OnInit, OnDestroy {
   // DASHBOARD / SEMÃFORO
   // ==========================
   private carregarRevisoesDashboard(): void {
-    this.revisaoHojeService.getFilaHoje().subscribe({
+    this.revisaoHojeService.getFilaHoje({ origem: 'hoje' }).subscribe({
       next: (resp) => {
         const itens = Array.isArray(resp?.itens) ? resp.itens : [];
         this.revisoesPorTopico.clear();

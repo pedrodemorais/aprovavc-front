@@ -32,6 +32,7 @@ export class AuthService {
   // 🔥 Evento pra quem quiser ouvir atualização de token
   tokenAtualizado = new EventEmitter<void>();
 
+  private accessTokenMemory: string | null = null;
   // 🔥 Estado reativo do access_token
   private accessTokenSubject = new BehaviorSubject<string | null>(this.getAccessToken());
 
@@ -49,13 +50,9 @@ export class AuthService {
   // =====================================================
   private recarregarEstadoDoLocalStorage(): void {
     if (!this.isBrowser()) return;
-    const token = localStorage.getItem('access_token');
     const assinaturaValida = localStorage.getItem('assinaturaValida');
     const statusAssinatura = localStorage.getItem('statusAssinatura');
     const planoAtual = localStorage.getItem('planoAtual');
-
-    // token
-    this.accessTokenSubject.next(token);
 
     // assinatura
     this.assinaturaValidaSubject.next(assinaturaValida === 'true');
@@ -84,8 +81,7 @@ export class AuthService {
       )
       .pipe(
         tap((response) => {
-          // ✅ salva o access_token normalmente
-          localStorage.setItem('access_token', response.access_token);
+          this.setAccessToken(response.access_token);
 
           // ✅ guarda status da assinatura
           localStorage.setItem('assinaturaValida', String(response.assinaturaValida));
@@ -93,12 +89,10 @@ export class AuthService {
           localStorage.setItem('planoAtual', response.planoAtual);
 
           // 🔥 notifica observers
-          this.accessTokenSubject.next(response.access_token);
           this.assinaturaValidaSubject.next(response.assinaturaValida);
           this.statusAssinaturaSubject.next(response.statusAssinatura);
           this.planoAtualSubject.next(response.planoAtual);
 
-          this.tokenAtualizado.emit();
         }),
         catchError((error: HttpErrorResponse) => {
           if (error.error instanceof ErrorEvent) {
@@ -132,13 +126,6 @@ atualizarStatusAssinaturaFromUser(user: any) {
 }
 
 checarAssinaturaNoBack(): Observable<boolean> {
-  const accessToken = this.getAccessToken();
-  if (!accessToken) {
-    console.warn('🚨 Sem token, não dá pra checar assinatura no backend.');
-    this.assinaturaValidaSubject.next(false);
-    return of(false);
-  }
-
   return this.getUserData().pipe(
     tap((user) => {
       // Atualiza tudo com base no /me
@@ -166,30 +153,20 @@ checarAssinaturaNoBack(): Observable<boolean> {
   // ========= HELPERS DE TOKEN =========
 
   getAccessToken(): string | null {
-    if (!this.isBrowser()) return null;
-    return localStorage.getItem('access_token');
+    return this.accessTokenMemory;
   }
 
   refreshAccessToken(): void {
-    if (!this.isBrowser()) return;
-    const token = localStorage.getItem('access_token');
+    const token = this.accessTokenMemory;
 
     if (token) {
-      localStorage.removeItem('access_token');
-      localStorage.setItem('access_token', token);
-
-      console.info('🔄 Token atualizado no localStorage.');
       this.accessTokenSubject.next(token);
       this.tokenAtualizado.emit();
-      if (this.isBrowser()) {
-        window.dispatchEvent(new Event('storage'));
-      }
     }
   }
 
   setAccessToken(token: string): void {
-    if (!this.isBrowser()) return;
-    localStorage.setItem('access_token', token);
+    this.accessTokenMemory = token || null;
     this.accessTokenSubject.next(token);
     this.tokenAtualizado.emit();
     this.userDataCache$ = undefined;
@@ -234,13 +211,7 @@ checarAssinaturaNoBack(): Observable<boolean> {
     if (!this.userDataCache$) {
       this.userDataCache$ = this.http
         .get<any>(`${environment.apiUrl}/usuarios/me`, { withCredentials: true })
-        .pipe(
-          tap((user) => {
-            console.log('📤 Dados do usuário recebidos:', user.nome);
-            console.log('📤 ID:', user.id);
-          }),
-          shareReplay(1)
-        );
+        .pipe(shareReplay(1));
     }
     return this.userDataCache$;
   }
@@ -269,8 +240,6 @@ checarAssinaturaNoBack(): Observable<boolean> {
       const payloadDecoded = atob(payloadBase64);
       const payloadJson = JSON.parse(payloadDecoded);
 
-      console.log('📥 Payload do Token:', payloadJson);
-
       return payloadJson.name || null;
     } catch (error) {
       console.error('❌ Erro ao decodificar o token!', error);
@@ -284,7 +253,6 @@ checarAssinaturaNoBack(): Observable<boolean> {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('📤 Usuário recuperado do token:', payload);
         return payload;
       } catch (error) {
         console.error('❌ Erro ao decodificar o token JWT:', error);
@@ -304,15 +272,14 @@ checarAssinaturaNoBack(): Observable<boolean> {
 
   isAuthenticated(): Observable<boolean> {
     const accessToken = this.getAccessToken();
-
-    if (!accessToken) {
-      console.warn('🚨 Nenhum token encontrado. Usuário não autenticado.');
-      return of(false);
-    }
+    const headers = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : undefined;
 
     return this.http
       .get<{ authenticated: boolean }>(`${environment.apiUrl}/usuarios/is-authenticated`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers,
+        withCredentials: true
       })
       .pipe(
         map((response) => response.authenticated),
@@ -350,7 +317,6 @@ checarAssinaturaNoBack(): Observable<boolean> {
       .pipe(
         map((response) => {
           if (response.access_token) {
-            console.log('✅ Novo access token recebido:', response.access_token);
             this.setAccessToken(response.access_token);
             return response.access_token;
           } else {
@@ -371,12 +337,12 @@ checarAssinaturaNoBack(): Observable<boolean> {
 
   logout(): void {
     if (this.isBrowser()) {
-      localStorage.removeItem('access_token');
       localStorage.removeItem('assinaturaValida');
       localStorage.removeItem('statusAssinatura');
       localStorage.removeItem('planoAtual');
     }
 
+    this.accessTokenMemory = null;
     this.accessTokenSubject.next(null);
     this.assinaturaValidaSubject.next(false);
     this.statusAssinaturaSubject.next(null);
@@ -393,7 +359,7 @@ checarAssinaturaNoBack(): Observable<boolean> {
   }
 
   ativarConta(token: string): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/usuarios/ativacao?token=${token}`);
+    return this.http.post(`${environment.apiUrl}/usuarios/ativacao`, { token });
   }
 
   solicitarToken(email: string): Observable<string> {
@@ -405,7 +371,7 @@ checarAssinaturaNoBack(): Observable<boolean> {
   }
 
   validarToken(token: string): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/usuarios/validar-token?token=${token}`);
+    return this.http.post(`${environment.apiUrl}/usuarios/validar-token`, { token });
   }
 
   redefinirSenha(dados: { token: string; novaSenha: string }) {
@@ -416,28 +382,16 @@ checarAssinaturaNoBack(): Observable<boolean> {
 
   alterarSenha(senhaAtual: string, novaSenha: string): Observable<any> {
     const token = this.getAccessTokenFromCookie();
-
-    if (!token) {
-      console.error('🚨 Nenhum token JWT encontrado! O usuário precisa estar autenticado.');
-      return new Observable((observer) => {
-        observer.error({ error: 'Usuário não autenticado.' });
-        observer.complete();
-      });
-    }
-
-    console.log('📡 Enviando requisição para alterar senha...');
-    console.log('🔑 Token sendo enviado: ', token);
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    });
-    if (this.isBrowser()) {
-      console.log('🔍 Token salvo no sessionStorage:', sessionStorage.getItem('authToken'));
+    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
     const body = { senhaAtual, novaSenha };
-    return this.http.post(`${environment.apiUrl}/usuarios/alterar-senha`, body, { headers });
+    return this.http.post(`${environment.apiUrl}/usuarios/alterar-senha`, body, {
+      headers,
+      withCredentials: true
+    });
   }
 
   private isBrowser(): boolean {

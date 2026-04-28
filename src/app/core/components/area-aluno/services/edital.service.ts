@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -21,7 +21,11 @@ export class EditalService {
 
   private apiUrl = `${environment.apiUrl}/editais`;
   private alunosUrl = `${environment.apiUrl}/alunos`;
-  private readonly onboardingTemplateKey = 'onboarding:editalTemplateId';
+  private readonly noCacheHeaders = new HttpHeaders({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0'
+  });
 
   constructor(
     private http: HttpClient,
@@ -30,7 +34,8 @@ export class EditalService {
   ) {}
 
   listar(): Observable<Edital[]> {
-    return this.http.get<Edital[]>(this.apiUrl);
+    const params = new HttpParams().set('_t', String(Date.now()));
+    return this.http.get<Edital[]>(this.apiUrl, { params, headers: this.noCacheHeaders });
   }
 
   listarComInclude(include?: string[]): Observable<Edital[]> {
@@ -38,12 +43,15 @@ export class EditalService {
       return this.listar();
     }
 
-    const params = new HttpParams().set('include', include.join(','));
-    return this.http.get<Edital[]>(this.apiUrl, { params });
+    const params = new HttpParams()
+      .set('include', include.join(','))
+      .set('_t', String(Date.now()));
+    return this.http.get<Edital[]>(this.apiUrl, { params, headers: this.noCacheHeaders });
   }
 
   buscarPorId(id: number): Observable<Edital> {
-    return this.http.get<Edital>(`${this.apiUrl}/${id}`);
+    const params = new HttpParams().set('_t', String(Date.now()));
+    return this.http.get<Edital>(`${this.apiUrl}/${id}`, { params, headers: this.noCacheHeaders });
   }
 
   criar(payload: EditalFormPayload): Observable<Edital> {
@@ -61,7 +69,9 @@ export class EditalService {
   }
 
   definirComoAtivo(id: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${id}/ativar`, {});
+    return this.http.post<any>(`${this.alunosUrl}/${id}/selecionar-edital`, {}).pipe(
+      map(() => void 0)
+    );
   }
 
   selecionarEdital(editalId: number): Observable<any> {
@@ -76,12 +86,11 @@ export class EditalService {
     const lista = editais || [];
     const jaTemAtivo = lista.some((e) => e?.ativo);
     if (jaTemAtivo) {
-      this.limparTemplatePendente();
       return of(false);
     }
 
     return this.authService.getUserData().pipe(
-      map((user) => this.obterTemplatePadraoDoUsuario(user) ?? this.obterTemplatePendente()),
+      map((user) => this.obterTemplatePadraoDoUsuario(user)),
       switchMap((templateId) => {
         if (!templateId) {
           return of(false);
@@ -90,10 +99,7 @@ export class EditalService {
         const editalParaAtivar = lista.find((e) => this.obterTemplateIdDoEdital(e) === templateId);
         if (editalParaAtivar?.id) {
           return this.selecionarEdital(editalParaAtivar.id).pipe(
-            map(() => {
-              this.limparTemplatePendente();
-              return true;
-            }),
+            map(() => true),
             catchError((err) => {
               console.error('[EDITAL SERVICE] Erro ao ativar edital padrao:', err);
               return of(false);
@@ -109,10 +115,7 @@ export class EditalService {
             }
 
             return this.selecionarEdital(editalId).pipe(
-              map(() => {
-                this.limparTemplatePendente();
-                return true;
-              }),
+              map(() => true),
               catchError((err) => {
                 console.error('[EDITAL SERVICE] Erro ao ativar edital clonado padrao:', err);
                 return of(false);
@@ -163,22 +166,6 @@ export class EditalService {
     );
 
     return Number.isFinite(templateId) && templateId > 0 ? templateId : null;
-  }
-
-  private obterTemplatePendente(): number | null {
-    try {
-      const raw = localStorage.getItem(this.onboardingTemplateKey);
-      const templateId = Number(raw);
-      return Number.isFinite(templateId) && templateId > 0 ? templateId : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private limparTemplatePendente(): void {
-    try {
-      localStorage.removeItem(this.onboardingTemplateKey);
-    } catch {}
   }
 }
 

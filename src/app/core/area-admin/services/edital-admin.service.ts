@@ -1,7 +1,7 @@
 // src/app/core/area-admin/services/edital-admin.service.ts
 
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -43,14 +43,7 @@ export class EditalAdminService {
   constructor(private http: HttpClient) {}
 
   private options() {
-    const token = localStorage.getItem('access_token');
-
-    let headers = new HttpHeaders();
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return { headers, withCredentials: true };
+    return { withCredentials: true };
   }
 
   // =========================

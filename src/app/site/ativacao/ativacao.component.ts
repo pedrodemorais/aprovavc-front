@@ -13,6 +13,13 @@ sucesso = false;
 
   ngOnInit(): void {
     const token = this.route.snapshot.queryParamMap.get('token');
+    if (token) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true
+      });
+    }
      if (token) {
     this.authService.ativarConta(token).subscribe({
       next: () => {

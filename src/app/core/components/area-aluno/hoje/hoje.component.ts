@@ -18,7 +18,7 @@ import { RetencaoAnalyticsService } from 'src/app/core/services/retencao-analyti
 import { RevisaoDashboardResumoDTO } from 'src/app/core/components/area-aluno/services/sala-estudo.service';
 import { EditalService } from 'src/app/core/components/area-aluno/services/edital.service';
 import { Edital } from 'src/app/core/components/area-aluno/models/Edital';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { RevisaoHojeService } from 'src/app/core/services/revisao-hoje.service';
 
 interface HojeExecucaoState {
@@ -1067,9 +1067,7 @@ export class HojeComponent implements OnInit, OnDestroy {
   private carregarFila(): void {
     this.loading = true;
 
-    // A fila de revisao e 100% controlada pelo backend.
-    // O frontend nao deve alterar, ordenar ou recalcular nada.
-    this.revisaoHojeService.getFilaHoje().subscribe({
+    this.revisaoHojeService.getFilaHoje({ origem: 'hoje' }).subscribe({
       next: (resp) => {
         const filaNormalizada: HojeFilaResponseDTO = {
           totalItens: Math.max(0, Number(resp?.totalItens || 0)) || (Array.isArray(resp?.itens) ? resp.itens.length : 0),
@@ -1088,7 +1086,7 @@ export class HojeComponent implements OnInit, OnDestroy {
         this.messageService.add({
           severity: 'error',
           summary: 'Hoje',
-          detail: err?.error?.message || 'NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o foi possÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel carregar a fila de hoje.'
+          detail: err?.error?.message || 'Nao foi possivel carregar a fila de hoje.'
         });
       }
     });
@@ -1737,6 +1735,7 @@ export class HojeComponent implements OnInit, OnDestroy {
     this.carregarQtdTopicosEmRiscoJanela30();
   }
 }
+
 
 
 

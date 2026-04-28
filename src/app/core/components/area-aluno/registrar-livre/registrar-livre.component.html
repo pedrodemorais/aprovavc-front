@@ -69,7 +69,7 @@
             [class.invalid]="agrupadorInvalido"
             formControlName="agrupador"
             (change)="onAgrupadorChange($any($event.target).value)">
-            <option value="">Selecione o estudo</option>
+            <option value="">{{ placeholderAgrupadorOption }}</option>
             <option *ngFor="let item of agrupadoresDisponiveis" [value]="item">{{ item }}</option>
           </select>
           <button
@@ -96,7 +96,7 @@
             formControlName="materiaNome"
             [disabled]="materiaBloqueada"
             (change)="onMateriaChange($any($event.target).value)">
-            <option value="">Selecione a materia</option>
+            <option value="">{{ placeholderMateriaOption }}</option>
             <option *ngFor="let item of materiasDisponiveis" [value]="item">{{ item }}</option>
           </select>
           <button
@@ -125,7 +125,7 @@
             formControlName="topicoNome"
             [disabled]="topicoBloqueado"
             (change)="onTopicoChange($any($event.target).value)">
-            <option value="">Selecione o topico</option>
+            <option value="">{{ placeholderTopicoOption }}</option>
             <option *ngFor="let item of topicosDisponiveis" [value]="item">{{ item }}</option>
           </select>
           <button
@@ -152,7 +152,7 @@
             formControlName="subtopicoNome"
             [disabled]="subtopicoBloqueado"
             (change)="onSubtopicoChange($any($event.target).value)">
-            <option value="">Sem subtopico</option>
+            <option value="">{{ placeholderSubtopicoOption }}</option>
             <option *ngFor="let item of subtopicosDisponiveis" [value]="item">{{ item }}</option>
           </select>
           <button

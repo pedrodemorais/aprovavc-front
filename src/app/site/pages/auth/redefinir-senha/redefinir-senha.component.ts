@@ -23,7 +23,13 @@ export class RedefinirSenhaComponent implements OnInit {
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.token = params['token'];
-      console.log("🔑 Token extraído da URL:", this.token);
+      if (this.token) {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
   
       if (!this.token) {
         this.erro = "❌ Token inválido ou ausente.";

@@ -73,7 +73,7 @@ interface DashboardStreakResumoRaw {
 
 @Injectable({ providedIn: 'root' })
 export class HojeFilaService {
-  private readonly url = `${environment.apiUrl}/sala-estudo/revisoes/hoje/fila`;
+  private readonly url = `${environment.apiUrl}/revisoes/dashboard`;
   private readonly resumoUrl = `${environment.apiUrl}/sala-estudo/hoje/resumo`;
   private readonly streakUrl = `${environment.apiUrl}/dashboard/streak`;
   private readonly noCacheHeaders = new HttpHeaders({
@@ -85,7 +85,12 @@ export class HojeFilaService {
   constructor(private http: HttpClient) {}
 
   getFilaHoje(): Observable<HojeFilaResponseDTO> {
-    const params = new HttpParams().set('_t', String(Date.now()));
+    const params = new HttpParams()
+      .set('_t', String(Date.now()))
+      .set('status', 'TODOS')
+      .set('page', '0')
+      .set('size', '50')
+      .set('janelaDias', '30');
     return this.http.get<HojeFilaResponseRaw | HojeFilaItemRaw[]>(this.url, {
       params,
       headers: this.noCacheHeaders
@@ -121,12 +126,13 @@ export class HojeFilaService {
         Array.isArray(raw?.itens) ? raw!.itens! :
         Array.isArray(raw?.fila) ? raw!.fila! :
         Array.isArray(raw?.items) ? raw!.items! :
+        Array.isArray((raw as any)?.itens) ? (raw as any).itens :
         []
       );
     return {
       totalItens: Number((Array.isArray(raw) ? itensRaw.length : (raw?.totalItens ?? raw?.total)) || itensRaw.length || 0),
       tempoEstimadoMinutos: Number(Array.isArray(raw) ? 0 : (raw?.tempoEstimadoMinutos ?? raw?.tempoEstimadoMin ?? 0)),
-      itens: itensRaw.map((item) => this.normalizarItem(item)),
+      itens: itensRaw.map((item: HojeFilaItemRaw) => this.normalizarItem(item)),
       insights: Array.isArray(raw) ? null : this.normalizarInsights(raw?.insights)
     };
   }

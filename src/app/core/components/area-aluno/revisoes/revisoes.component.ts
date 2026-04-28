@@ -89,7 +89,7 @@ export class RevisoesComponent implements OnInit {
     this.carregando = true;
     this.erro = undefined;
 
-    this.revisaoHojeService.getFilaHoje().subscribe({
+    this.revisaoHojeService.getFilaHoje({ origem: 'biblioteca' }).subscribe({
       next: (resp) => {
         const itens = this.mapearFilaParaRevisoes(resp?.itens || []);
         this.revisoesTodas = this.normalizarRevisoes(itens);

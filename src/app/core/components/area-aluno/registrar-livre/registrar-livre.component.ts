@@ -1435,6 +1435,25 @@ export class RegistrarLivreComponent implements AfterViewInit, OnDestroy {
     return this.obterBaseSugestoes('subtopicoNome');
   }
 
+  get placeholderAgrupadorOption(): string {
+    return this.agrupadoresDisponiveis.length ? 'Selecione o estudo' : 'Cadastre um estudo';
+  }
+
+  get placeholderMateriaOption(): string {
+    if (this.materiaBloqueada) return 'Selecione o estudo primeiro';
+    return this.materiasDisponiveis.length ? 'Selecione a materia' : 'Cadastre uma materia';
+  }
+
+  get placeholderTopicoOption(): string {
+    if (this.topicoBloqueado) return 'Selecione a materia primeiro';
+    return this.topicosDisponiveis.length ? 'Selecione o topico' : 'Cadastre um topico';
+  }
+
+  get placeholderSubtopicoOption(): string {
+    if (this.subtopicoBloqueado) return 'Selecione o topico primeiro';
+    return this.subtopicosDisponiveis.length ? 'Sem subtopico' : 'Cadastre um subtopico';
+  }
+
   onAgrupadorChange(valor: string): void {
     this.onCampoSelecionado('agrupador', String(valor || ''));
   }

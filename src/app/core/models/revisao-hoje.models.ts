@@ -20,4 +20,14 @@ export interface RevisaoHojeFilaDTO {
   totalItens: number;
   tempoEstimadoMinutos: number;
   itens: RevisaoHojeItemDTO[];
+  meta?: {
+    origem?: string | null;
+    limiteAplicado?: number | null;
+    totalAntesDoLimite?: number | null;
+    totalDepoisDoLimite?: number | null;
+    page?: number | null;
+    size?: number | null;
+    hasNext?: boolean | null;
+    generatedAt?: string | null;
+  } | null;
 }
