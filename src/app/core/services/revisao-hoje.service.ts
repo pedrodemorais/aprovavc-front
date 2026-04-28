@@ -1,10 +1,17 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { PrioridadeFilaHoje, TipoFilaHoje } from '../models/hoje-fila.models';
 import { RevisaoHojeFilaDTO, RevisaoHojeItemDTO } from '../models/revisao-hoje.models';
 import { environment } from 'src/environments/environment';
 import { AlunoParametroService } from './aluno-parametro.service';
+import { Edital } from '../components/area-aluno/models/Edital';
+import { EditalService } from '../components/area-aluno/services/edital.service';
+
+interface EscopoEditalAtivo {
+  materiaIds: Set<number>;
+  topicosPorMateria: Map<number, Set<number>>;
+}
 
 interface RevisaoHojeFilaRaw {
   totalItens?: number | null;
@@ -82,7 +89,8 @@ export class RevisaoHojeService {
 
   constructor(
     private http: HttpClient,
-    private alunoParametroService: AlunoParametroService
+    private alunoParametroService: AlunoParametroService,
+    private editalService: EditalService
   ) {}
 
   getFilaHoje(params?: {
@@ -108,8 +116,11 @@ export class RevisaoHojeService {
       ? Number(params?.limite)
       : null;
 
-    return this.resolverLimiteFila(limiteInformado).pipe(
-      switchMap((limitePadrao) => {
+    return forkJoin({
+      limitePadrao: this.resolverLimiteFila(limiteInformado),
+      escopoAtivo: this.resolverEscopoEditalAtivo()
+    }).pipe(
+      switchMap(({ limitePadrao, escopoAtivo }) => {
         const limiteEfetivo = Math.max(1, sizeInformado ?? limiteInformado ?? limitePadrao);
         let queryParams = new HttpParams().set('_t', String(Date.now()));
         if (Number.isFinite(Number(params?.materiaId)) && Number(params?.materiaId) > 0) {
@@ -123,7 +134,7 @@ export class RevisaoHojeService {
 
         return this.http.get<RevisaoHojeFilaRaw | RevisaoHojeItemRaw[] | RevisaoDashboardRaw>(this.url, { params: queryParams, headers: this.noCacheHeaders }).pipe(
           map((raw) => this.normalizarResposta(raw)),
-          map((resp) => this.aplicarFiltrosLocais(resp, topicoIdsFiltro, statusFiltro, limiteEfetivo))
+          map((resp) => this.aplicarFiltrosLocais(resp, topicoIdsFiltro, statusFiltro, limiteEfetivo, escopoAtivo))
         );
       })
     );
@@ -143,19 +154,101 @@ export class RevisaoHojeService {
     );
   }
 
+  private resolverEscopoEditalAtivo(): Observable<EscopoEditalAtivo | null> {
+    return this.editalService.listarComInclude(['materias', 'topicos']).pipe(
+      switchMap((editais) => {
+        const ativos = (editais || []).filter((edital) => edital?.ativo === true && Number(edital?.id) > 0);
+        if (!ativos.length) return of(this.escopoVazio());
+
+        const pendentes = ativos.filter((edital) => !this.editalTemTopicos(edital));
+        if (!pendentes.length) return of(this.montarEscopoEditalAtivo(ativos));
+
+        const requisicoes = pendentes.map((edital) =>
+          this.editalService.buscarPorId(Number(edital.id)).pipe(catchError(() => of(edital)))
+        );
+
+        return forkJoin(requisicoes).pipe(
+          map((hidratados) => {
+            const porId = new Map<number, Edital>();
+            (hidratados || []).forEach((edital) => {
+              const id = Number(edital?.id);
+              if (id > 0) porId.set(id, edital);
+            });
+            return this.montarEscopoEditalAtivo(ativos.map((edital) => porId.get(Number(edital.id)) || edital));
+          })
+        );
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  private editalTemTopicos(edital: Edital | null | undefined): boolean {
+    return Boolean((edital?.materias || []).some((materia: any) => Array.isArray(materia?.topicos) && materia.topicos.length > 0));
+  }
+
+  private montarEscopoEditalAtivo(editais: Edital[]): EscopoEditalAtivo {
+    const escopo = this.escopoVazio();
+    (editais || [])
+      .filter((edital) => edital?.ativo === true)
+      .forEach((edital) => {
+        (edital.materias || [])
+          .filter((materia: any) => materia?.ativo !== false)
+          .forEach((materia: any) => {
+            const materiaId = Number(materia?.materiaId ?? materia?.id ?? 0);
+            if (!Number.isFinite(materiaId) || materiaId <= 0) return;
+            escopo.materiaIds.add(materiaId);
+
+            const topicosAtivos = this.coletarTopicosAtivos(materia?.topicos || []);
+            if (topicosAtivos.length) {
+              const set = escopo.topicosPorMateria.get(materiaId) || new Set<number>();
+              topicosAtivos.forEach((topicoId) => set.add(topicoId));
+              escopo.topicosPorMateria.set(materiaId, set);
+            }
+          });
+      });
+    return escopo;
+  }
+
+  private coletarTopicosAtivos(topicos: any[]): number[] {
+    const ids: number[] = [];
+    const walk = (items: any[]) => {
+      (items || []).forEach((topico: any) => {
+        const id = Number(topico?.id ?? topico?.topicoId ?? topico?.idTopico ?? 0);
+        if (topico?.ativo !== false && Number.isFinite(id) && id > 0) {
+          ids.push(id);
+        }
+        const filhos = topico?.subtopicos || topico?.filhos || topico?.children || [];
+        if (Array.isArray(filhos) && filhos.length) {
+          walk(filhos);
+        }
+      });
+    };
+    walk(topicos);
+    return ids;
+  }
+
+  private escopoVazio(): EscopoEditalAtivo {
+    return {
+      materiaIds: new Set<number>(),
+      topicosPorMateria: new Map<number, Set<number>>()
+    };
+  }
+
   private aplicarFiltrosLocais(
     resp: RevisaoHojeFilaDTO,
     topicoIdsFiltro: number[],
     statusFiltro: string[],
-    limite: number
+    limite: number,
+    escopoAtivo: EscopoEditalAtivo | null
   ): RevisaoHojeFilaDTO {
     const topicosSet = new Set(topicoIdsFiltro);
     const statusSet = new Set(statusFiltro);
-    const filtrados = (resp.itens || []).filter((item) => {
-      if (topicosSet.size > 0 && !topicosSet.has(Number(item.topicoId || 0))) return false;
-      if (statusSet.size > 1 && !statusSet.has(String(item.statusCanonico || '').toUpperCase())) return false;
-      return true;
-    });
+    const filtrados = this.removerDuplicados(resp.itens || [])
+      .filter((item) => {
+        if (topicosSet.size > 0 && !topicosSet.has(Number(item.topicoId || 0))) return false;
+        if (statusSet.size > 1 && !statusSet.has(String(item.statusCanonico || '').toUpperCase())) return false;
+        return this.pertenceAoEscopoAtivo(item, escopoAtivo);
+      });
     const itens = filtrados.slice(0, Math.max(1, limite));
     return {
       ...resp,
@@ -169,6 +262,38 @@ export class RevisaoHojeService {
         totalDepoisDoLimite: itens.length
       }
     };
+  }
+
+  private removerDuplicados(itens: RevisaoHojeItemDTO[]): RevisaoHojeItemDTO[] {
+    const vistos = new Set<string>();
+    const saida: RevisaoHojeItemDTO[] = [];
+    (itens || []).forEach((item) => {
+      const chave = [
+        String(item?.tipo || TipoFilaHoje.TOPICO).toUpperCase(),
+        Number(item?.materiaId || 0),
+        Number(item?.topicoId || 0)
+      ].join(':');
+      if (vistos.has(chave)) return;
+      vistos.add(chave);
+      saida.push(item);
+    });
+    return saida;
+  }
+
+  private pertenceAoEscopoAtivo(item: RevisaoHojeItemDTO, escopoAtivo: EscopoEditalAtivo | null): boolean {
+    if (!escopoAtivo) return true;
+    if (!escopoAtivo.materiaIds.size) return false;
+
+    const materiaId = Number(item?.materiaId || 0);
+    if (!Number.isFinite(materiaId) || materiaId <= 0 || !escopoAtivo.materiaIds.has(materiaId)) {
+      return false;
+    }
+
+    const topicosAtivos = escopoAtivo.topicosPorMateria.get(materiaId);
+    if (!topicosAtivos?.size) return true;
+
+    const topicoId = Number(item?.topicoId || 0);
+    return Number.isFinite(topicoId) && topicoId > 0 && topicosAtivos.has(topicoId);
   }
 
   private normalizarResposta(raw: RevisaoHojeFilaRaw | RevisaoHojeItemRaw[] | RevisaoDashboardRaw | null | undefined): RevisaoHojeFilaDTO {
